@@ -1,0 +1,135 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: server
+    main: ./cmd/genexec-server
+    binary: genexec-server
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w -extldflags "-static" -X "github.com/genexec/genexec/pkg/version.String={{.Version}}" -X "github.com/genexec/genexec/pkg/version.Revision={{.Commit}}" -X "github.com/genexec/genexec/pkg/version.Date={{.Date}}"
+    tags:
+      - netgo
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - 386
+      - arm64
+      - arm
+    ignore:
+      - goos: darwin
+        goarch: 386
+      - goos: windows
+        goarch: arm
+  - id: runner
+    main: ./cmd/genexec-runner
+    binary: genexec-runner
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w -extldflags "-static" -X "github.com/genexec/genexec/pkg/version.String={{.Version}}" -X "github.com/genexec/genexec/pkg/version.Revision={{.Commit}}" -X "github.com/genexec/genexec/pkg/version.Date={{.Date}}"
+    tags:
+      - netgo
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - 386
+      - arm64
+      - arm
+    ignore:
+      - goos: darwin
+        goarch: 386
+      - goos: windows
+        goarch: arm
+  - id: client
+    main: ./cmd/genexec-client
+    binary: genexec-client
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w -extldflags "-static" -X "github.com/genexec/genexec/pkg/version.String={{.Version}}" -X "github.com/genexec/genexec/pkg/version.Revision={{.Commit}}" -X "github.com/genexec/genexec/pkg/version.Date={{.Date}}"
+    tags:
+      - netgo
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - 386
+      - arm64
+      - arm
+    ignore:
+      - goos: darwin
+        goarch: 386
+      - goos: windows
+        goarch: arm
+
+archives:
+  - id: server
+    builds:
+      - server
+    name_template: "{{ .ProjectName }}-server-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}-{{ . }}{{ end }}"
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - LICENSE
+      - CHANGELOG.md
+      - src: cmd/genexec-server/README.md
+        dst: README.md
+
+  - id: runner
+    builds:
+      - runner
+    name_template: "{{ .ProjectName }}-runner-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}-{{ . }}{{ end }}"
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - LICENSE
+      - CHANGELOG.md
+      - src: cmd/genexec-runner/README.md
+        dst: README.md
+
+  - id: client
+    builds:
+      - client
+    name_template: "{{ .ProjectName }}-client-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}-{{ . }}{{ end }}"
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - LICENSE
+      - CHANGELOG.md
+      - src: cmd/genexec-client/README.md
+        dst: README.md
+
+checksum:
+  disable: false
+  split: true
+
+# TODO:
+# * https://goreleaser.com/customization/binary_sign/
+# * https://goreleaser.com/customization/nfpm/
+# * https://goreleaser.com/customization/docker/
+# * https://goreleaser.com/customization/docker_manifest/
+# * https://goreleaser.com/customization/release/
+# * https://goreleaser.com/customization/blob/
+# * https://goreleaser.com/customization/cloudsmith/
+# * https://goreleaser.com/customization/dockerhub/
+# * https://goreleaser.com/customization/changelog/
+# * https://goreleaser.com/customization/milestone/
+# * https://goreleaser.com/customization/announce/discord/
+# * https://goreleaser.com/customization/sbom/

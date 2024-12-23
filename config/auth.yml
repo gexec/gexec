@@ -1,0 +1,121 @@
+---
+providers:
+  - driver: entraid
+    name: entraid
+    display: Sign in with EntraID
+    icon: fa-brands fa-microsoft
+    callback: http://localhost:8080/api/v1/auth/entraid/callback
+    client_id: your-client-id # altneratively file://path/to/client_id
+    client_secret: your-client-secret # altneratively file://path/to/client_secret
+    admins:
+      emails:
+        - *@webhippie.de
+
+  - driver: google
+    name: google
+    display: Sign in with Google
+    icon: fa-brands fa-google
+    callback: http://localhost:8080/api/v1/auth/google/callback
+    client_id: your-client-id # altneratively file://path/to/client_id
+    client_secret: your-client-secret # altneratively file://path/to/client_secret
+    admins:
+      emails:
+        - *@webhippie.de
+
+  - driver: github
+    name: github
+    display: Sign in with GitHub
+    icon: fa-brands fa-github
+    callback: http://localhost:8080/api/v1/auth/github/callback
+    client_id: your-client-id # altneratively file://path/to/client_id
+    client_secret: your-client-secret # altneratively file://path/to/client_secret
+    endpoints:
+      auth: https://github.com/login/oauth/authorize
+      token: https://github.com/login/oauth/access_token
+      profile: https://api.github.com/user
+      email: https://api.github.com/user/emails
+    admins:
+      users:
+        - your-username
+
+  - driver: gitea
+    name: gitea
+    display: Sign in with Gitea
+    icon: fa-solid fa-code-merge
+    callback: http://localhost:8080/api/v1/auth/gitea/callback
+    client_id: your-client-id # altneratively file://path/to/client_id
+    client_secret: your-client-secret # altneratively file://path/to/client_secret
+    endpoints:
+      auth: https://gitea.com/login/oauth/authorize
+      token: https://gitea.com/login/oauth/access_token
+      profile: https://gitea.com/api/v1/user
+    admins:
+      users:
+        - your-username
+
+  - driver: gitlab
+    name: gitlab
+    display: Sign in with Gitlab
+    icon: fa-brands fa-gitlab
+    callback: http://localhost:8080/api/v1/auth/gitlab/callback
+    client_id: your-client-id # altneratively file://path/to/client_id
+    client_secret: your-client-secret # altneratively file://path/to/client_secret
+    endpoints:
+      auth: https://gitlab.com/oauth/authorize
+      token: https://gitlab.com/oauth/token
+      profile: https://gitlab.com/api/v3/user
+    admins:
+      users:
+        - your-username
+
+  - driver: oidc
+    name: keycloak
+    display: Sign in with Keycloak
+    icon: fa-brands fa-openid
+    callback: http://localhost:8080/api/v1/auth/keycloak/callback
+    client_id: your-client-id # altneratively file://path/to/client_id
+    client_secret: your-client-secret # altneratively file://path/to/client_secret
+    endpoints:
+      discovery: http://keycloak.example.com/auth/realms/example/
+    mappings:
+      login: preferred_username
+      name: name
+      email: email
+      role: roles
+    admins:
+      roles:
+        - Admins
+
+  - driver: oidc
+    name: authentik
+    display: Sign in with Authentik
+    icon: fa-brands fa-openid
+    callback: http://localhost:8080/api/v1/auth/authentik/callback
+    client_id: your-client-id # altneratively file://path/to/client_id
+    client_secret: your-client-secret # altneratively file://path/to/client_secret
+    endpoints:
+      discovery: https://authentik.example.com/application/o/genexec/
+    mappings:
+      login: preferred_username
+      name: name
+      email: email
+      role: groups
+    admins:
+      roles:
+        - Admins
+
+  - driver: oidc
+    name: kanidm
+    display: Sign in with Kanidm
+    icon: fa-brands fa-openid
+    callback: http://localhost:8080/api/v1/auth/kanidm/callback
+    client_id: your-client-id # altneratively file://path/to/client_id
+    client_secret: your-client-secret # altneratively file://path/to/client_secret
+    endpoints:
+      discovery: https://kanidm.example.com/oauth2/openid/genexec/
+    mappings:
+      login: preferred_username
+      name: name
+      email: email
+
+...

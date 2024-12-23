@@ -1,0 +1,4611 @@
+---
+openapi: "3.0.0"
+
+info:
+  version: "1.0.0-alpha1"
+  description: "API definition for Genexec, a generic execution platform for IaC"
+  title: "Genexec OpenAPI"
+  contact:
+    name: "Genexec"
+    email: "genexec@webhippie.de"
+    url: "https://genexec.eu"
+  license:
+    name: "Apache-2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+
+servers:
+  - url: "https://try.genexec.eu/api/v1"
+
+security:
+  - Header: []
+  - Bearer: []
+  - Basic: []
+
+paths:
+  /auth/{provider}:
+    get:
+      summary: "Callback for available auth providers"
+      operationId: "CallbackProvider"
+      tags:
+        - "auth"
+      parameters:
+        - $ref: "#/components/parameters/AuthProviderParam"
+        - $ref: "#/components/parameters/AuthStateParam"
+        - $ref: "#/components/parameters/AuthCodeParam"
+      security: []
+      responses:
+        "200":
+          $ref: "#/components/responses/CallbackResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "412":
+          $ref: "#/components/responses/ProviderInitError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /auth/providers:
+    get:
+      summary: "Fetch the available auth providers"
+      operationId: "ListProvider"
+      tags:
+        - "auth"
+      security: []
+      responses:
+        "200":
+          $ref: "#/components/responses/ProviderResponse"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /auth/login:
+    post:
+      summary: "Authenticate an user by credentials"
+      operationId: "LoginAuth"
+      tags:
+        - "auth"
+      requestBody:
+        $ref: "#/components/requestBodies/LoginAuthBody"
+      security: []
+      responses:
+        "200":
+          $ref: "#/components/responses/LoginResponse"
+        "401":
+          $ref: "#/components/responses/BadCredentialsError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /auth/refresh:
+    get:
+      summary: "Refresh an auth token before it expires"
+      operationId: "RefreshAuth"
+      tags:
+        - "auth"
+      responses:
+        "200":
+          $ref: "#/components/responses/RefreshResponse"
+        "401":
+          $ref: "#/components/responses/InvalidTokenError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /auth/verify:
+    get:
+      summary: "Verify validity for an authentication token"
+      operationId: "VerifyAuth"
+      tags:
+        - "auth"
+      responses:
+        "200":
+          $ref: "#/components/responses/VerifyResponse"
+        "401":
+          $ref: "#/components/responses/InvalidTokenError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /profile/token:
+    get:
+      summary: "Retrieve an unlimited auth token"
+      operationId: "TokenProfile"
+      tags:
+        - "profile"
+      responses:
+        "200":
+          $ref: "#/components/responses/TokenResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /profile/self:
+    get:
+      summary: "Fetch profile details of the personal account"
+      operationId: "ShowProfile"
+      tags:
+        - "profile"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProfileResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    put:
+      summary: "Update your own profile information"
+      operationId: "UpdateProfile"
+      tags:
+        - "profile"
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateProfileBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProfileResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /ws:
+    get:
+      summary: "Handler for websocket connection"
+      operationId: "Websockets"
+      schemes:
+        - "ws"
+        - "wss"
+      responses:
+        "101":
+          $ref: "#/components/responses/UpgradeConnection"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /events:
+    get:
+      summary: "Fetch all available events"
+      operationId: "ListEvents"
+      tags:
+        - "event"
+      parameters:
+        - $ref: "#/components/parameters/SearchQueryParam"
+        - $ref: "#/components/parameters/PagingLimitParam"
+        - $ref: "#/components/parameters/PagingOffsetParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/EventsResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects:
+    get:
+      summary: "Fetch all available projects"
+      operationId: "ListProjects"
+      tags:
+        - "project"
+      parameters:
+        - $ref: "#/components/parameters/SearchQueryParam"
+        - $ref: "#/components/parameters/SortColumnParam"
+        - $ref: "#/components/parameters/SortOrderParam"
+        - $ref: "#/components/parameters/PagingLimitParam"
+        - $ref: "#/components/parameters/PagingOffsetParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectsResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    post:
+      summary: "Create a new project"
+      operationId: "CreateProject"
+      tags:
+        - "project"
+      requestBody:
+        $ref: "#/components/requestBodies/CreateProjectBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects/{project_id}:
+    get:
+      summary: "Fetch a specific project"
+      operationId: "ShowProject"
+      tags:
+        - "project"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    put:
+      summary: "Update a specific project"
+      operationId: "UpdateProject"
+      tags:
+        - "project"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateProjectBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      summary: "Delete a specific project"
+      operationId: "DeleteProject"
+      tags:
+        - "project"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "400":
+          $ref: "#/components/responses/ActionFailedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects/{project_id}/users:
+    get:
+      summary: "Fetch all users attached to project"
+      operationId: "ListProjectUsers"
+      tags:
+        - "project"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/SearchQueryParam"
+        - $ref: "#/components/parameters/SortColumnParam"
+        - $ref: "#/components/parameters/SortOrderParam"
+        - $ref: "#/components/parameters/PagingLimitParam"
+        - $ref: "#/components/parameters/PagingOffsetParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectUsersResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    post:
+      summary: "Attach a user to project"
+      operationId: "AttachProjectToUser"
+      tags:
+        - "project"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+      requestBody:
+        $ref: "#/components/requestBodies/ProjectUserPermBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "412":
+          $ref: "#/components/responses/AlreadyAttachedError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    put:
+      summary: "Update user perms for project"
+      operationId: "PermitProjectUser"
+      tags:
+        - "project"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+      requestBody:
+        $ref: "#/components/requestBodies/ProjectUserPermBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "412":
+          $ref: "#/components/responses/NotAttachedError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      summary: "Unlink a user from project"
+      operationId: "DeleteProjectFromUser"
+      tags:
+        - "project"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+      requestBody:
+        $ref: "#/components/requestBodies/ProjectUserDropBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "412":
+          $ref: "#/components/responses/NotAttachedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects/{project_id}/teams:
+    get:
+      summary: "Fetch all teams attached to project"
+      operationId: "ListProjectTeams"
+      tags:
+        - "project"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/SearchQueryParam"
+        - $ref: "#/components/parameters/SortColumnParam"
+        - $ref: "#/components/parameters/SortOrderParam"
+        - $ref: "#/components/parameters/PagingLimitParam"
+        - $ref: "#/components/parameters/PagingOffsetParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectTeamsResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    post:
+      summary: "Attach a team to project"
+      operationId: "AttachProjectToTeam"
+      tags:
+        - "project"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+      requestBody:
+        $ref: "#/components/requestBodies/ProjectTeamPermBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "412":
+          $ref: "#/components/responses/AlreadyAttachedError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    put:
+      summary: "Update team perms for project"
+      operationId: "PermitProjectTeam"
+      tags:
+        - "project"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+      requestBody:
+        $ref: "#/components/requestBodies/ProjectTeamPermBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "412":
+          $ref: "#/components/responses/NotAttachedError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      summary: "Unlink a team from project"
+      operationId: "DeleteProjectFromTeam"
+      tags:
+        - "project"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+      requestBody:
+        $ref: "#/components/requestBodies/ProjectTeamDropBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "412":
+          $ref: "#/components/responses/NotAttachedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects/{project_id}/credentials:
+    get:
+      summary: "Fetch all credentials for a project"
+      operationId: "ListProjectCredentials"
+      tags:
+        - "project"
+        - "credential"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/SearchQueryParam"
+        - $ref: "#/components/parameters/SortColumnParam"
+        - $ref: "#/components/parameters/SortOrderParam"
+        - $ref: "#/components/parameters/PagingLimitParam"
+        - $ref: "#/components/parameters/PagingOffsetParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectCredentialsResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    post:
+      summary: "Create a new credential"
+      operationId: "CreateProjectCredential"
+      tags:
+        - "project"
+        - "credential"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+      requestBody:
+        $ref: "#/components/requestBodies/CreateProjectCredentialBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectCredentialResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects/{project_id}/credentials/{credential_id}:
+    get:
+      summary: "Fetch a specific credential for a project"
+      operationId: "ShowProjectCredential"
+      tags:
+        - "project"
+        - "credential"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/CredentialParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectCredentialResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    put:
+      summary: "Update a specific credential for a project"
+      operationId: "UpdateProjectCredential"
+      tags:
+        - "project"
+        - "credential"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/CredentialParam"
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateProjectCredentialBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectCredentialResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      summary: "Delete a specific credential for a project"
+      operationId: "DeleteProjectCredential"
+      tags:
+        - "project"
+        - "credential"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/CredentialParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "400":
+          $ref: "#/components/responses/ActionFailedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects/{project_id}/repositories:
+    get:
+      summary: "Fetch all repositories for a project"
+      operationId: "ListProjectRepositories"
+      tags:
+        - "project"
+        - "repository"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/SearchQueryParam"
+        - $ref: "#/components/parameters/SortColumnParam"
+        - $ref: "#/components/parameters/SortOrderParam"
+        - $ref: "#/components/parameters/PagingLimitParam"
+        - $ref: "#/components/parameters/PagingOffsetParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectRepositoriesResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    post:
+      summary: "Create a new repository"
+      operationId: "CreateProjectRepository"
+      tags:
+        - "project"
+        - "repository"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+      requestBody:
+        $ref: "#/components/requestBodies/CreateProjectRepositoryBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectRepositoryResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects/{project_id}/repositories/{repository_id}:
+    get:
+      summary: "Fetch a specific repository for a project"
+      operationId: "ShowProjectRepository"
+      tags:
+        - "project"
+        - "repository"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/RepositoryParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectRepositoryResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    put:
+      summary: "Update a specific repository for a project"
+      operationId: "UpdateProjectRepository"
+      tags:
+        - "project"
+        - "repository"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/RepositoryParam"
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateProjectRepositoryBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectRepositoryResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      summary: "Delete a specific repository for a project"
+      operationId: "DeleteProjectRepository"
+      tags:
+        - "project"
+        - "repository"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/RepositoryParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "400":
+          $ref: "#/components/responses/ActionFailedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects/{project_id}/inventories:
+    get:
+      summary: "Fetch all inventories for a project"
+      operationId: "ListProjectInventories"
+      tags:
+        - "project"
+        - "inventory"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/SearchQueryParam"
+        - $ref: "#/components/parameters/SortColumnParam"
+        - $ref: "#/components/parameters/SortOrderParam"
+        - $ref: "#/components/parameters/PagingLimitParam"
+        - $ref: "#/components/parameters/PagingOffsetParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectInventoriesResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    post:
+      summary: "Create a new inventory"
+      operationId: "CreateProjectInventory"
+      tags:
+        - "project"
+        - "inventory"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+      requestBody:
+        $ref: "#/components/requestBodies/CreateProjectInventoryBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectInventoryResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects/{project_id}/inventories/{inventory_id}:
+    get:
+      summary: "Fetch a specific inventory for a project"
+      operationId: "ShowProjectInventory"
+      tags:
+        - "project"
+        - "inventory"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/InventoryParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectInventoryResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    put:
+      summary: "Update a specific inventory for a project"
+      operationId: "UpdateProjectInventory"
+      tags:
+        - "project"
+        - "inventory"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/InventoryParam"
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateProjectInventoryBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectInventoryResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      summary: "Delete a specific inventory for a project"
+      operationId: "DeleteProjectInventory"
+      tags:
+        - "project"
+        - "inventory"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/InventoryParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "400":
+          $ref: "#/components/responses/ActionFailedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects/{project_id}/environments:
+    get:
+      summary: "Fetch all environments for a project"
+      operationId: "ListProjectEnvironments"
+      tags:
+        - "project"
+        - "environment"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/SearchQueryParam"
+        - $ref: "#/components/parameters/SortColumnParam"
+        - $ref: "#/components/parameters/SortOrderParam"
+        - $ref: "#/components/parameters/PagingLimitParam"
+        - $ref: "#/components/parameters/PagingOffsetParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectEnvironmentsResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    post:
+      summary: "Create a new environment"
+      operationId: "CreateProjectEnvironment"
+      tags:
+        - "project"
+        - "environment"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+      requestBody:
+        $ref: "#/components/requestBodies/CreateProjectEnvironmentBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectEnvironmentyResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects/{project_id}/environments/{environment_id}:
+    get:
+      summary: "Fetch a specific environment for a project"
+      operationId: "ShowProjectEnvironment"
+      tags:
+        - "project"
+        - "environment"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/EnvironmentParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectEnvironmentyResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    put:
+      summary: "Update a specific environment for a project"
+      operationId: "UpdateProjectEnvironment"
+      tags:
+        - "project"
+        - "environment"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/EnvironmentParam"
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateProjectEnvironmentBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectEnvironmentyResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      summary: "Delete a specific environment for a project"
+      operationId: "DeleteProjectEnvironment"
+      tags:
+        - "project"
+        - "environment"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/EnvironmentParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "400":
+          $ref: "#/components/responses/ActionFailedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects/{project_id}/templates:
+    get:
+      summary: "Fetch all templates for a project"
+      operationId: "ListProjectTemplates"
+      tags:
+        - "project"
+        - "template"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/SearchQueryParam"
+        - $ref: "#/components/parameters/SortColumnParam"
+        - $ref: "#/components/parameters/SortOrderParam"
+        - $ref: "#/components/parameters/PagingLimitParam"
+        - $ref: "#/components/parameters/PagingOffsetParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectTemplatesResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    post:
+      summary: "Create a new template"
+      operationId: "CreateProjectTemplate"
+      tags:
+        - "project"
+        - "template"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+      requestBody:
+        $ref: "#/components/requestBodies/CreateProjectTemplateBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectTemplateResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects/{project_id}/templates/{template_id}:
+    get:
+      summary: "Fetch a specific template for a project"
+      operationId: "ShowProjectTemplate"
+      tags:
+        - "project"
+        - "template"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/TemplateParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectTemplateResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    put:
+      summary: "Update a specific template for a project"
+      operationId: "UpdateProjectTemplate"
+      tags:
+        - "project"
+        - "template"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/TemplateParam"
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateProjectTemplateBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectTemplateResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      summary: "Delete a specific template for a project"
+      operationId: "DeleteProjectTemplate"
+      tags:
+        - "project"
+        - "template"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/TemplateParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "400":
+          $ref: "#/components/responses/ActionFailedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects/{project_id}/schedules:
+    get:
+      summary: "Fetch all schedules for a project"
+      operationId: "ListProjectSchedules"
+      tags:
+        - "project"
+        - "schedule"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/SearchQueryParam"
+        - $ref: "#/components/parameters/SortColumnParam"
+        - $ref: "#/components/parameters/SortOrderParam"
+        - $ref: "#/components/parameters/PagingLimitParam"
+        - $ref: "#/components/parameters/PagingOffsetParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectSchedulesResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    post:
+      summary: "Create a new schedule"
+      operationId: "CreateProjectSchedule"
+      tags:
+        - "project"
+        - "schedule"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+      requestBody:
+        $ref: "#/components/requestBodies/CreateProjectScheduleBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectScheduleResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects/{project_id}/schedules/{schedule_id}:
+    get:
+      summary: "Fetch a specific schedule for a project"
+      operationId: "ShowProjectSchedule"
+      tags:
+        - "project"
+        - "schedule"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/ScheduleParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectScheduleResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    put:
+      summary: "Update a specific schedule for a project"
+      operationId: "UpdateProjectSchedule"
+      tags:
+        - "project"
+        - "schedule"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/ScheduleParam"
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateProjectScheduleBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectScheduleResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      summary: "Delete a specific schedule for a project"
+      operationId: "DeleteProjectSchedule"
+      tags:
+        - "project"
+        - "schedule"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/ScheduleParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "400":
+          $ref: "#/components/responses/ActionFailedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects/{project_id}/tasks:
+    get:
+      summary: "Fetch all tasks for a project"
+      operationId: "ListProjectTasks"
+      tags:
+        - "project"
+        - "task"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/SearchQueryParam"
+        - $ref: "#/components/parameters/SortColumnParam"
+        - $ref: "#/components/parameters/SortOrderParam"
+        - $ref: "#/components/parameters/PagingLimitParam"
+        - $ref: "#/components/parameters/PagingOffsetParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectTasksResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    post:
+      summary: "Create a new task"
+      operationId: "CreateProjectTask"
+      tags:
+        - "project"
+        - "task"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+      requestBody:
+        $ref: "#/components/requestBodies/CreateProjectTaskBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectTaskResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects/{project_id}/tasks/{task_id}:
+    get:
+      summary: "Fetch a specific task for a project"
+      operationId: "ShowProjectTask"
+      tags:
+        - "project"
+        - "task"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/TaskParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectTaskResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      summary: "Delete a specific task for a project"
+      operationId: "DeleteProjectTask"
+      tags:
+        - "project"
+        - "task"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/TaskParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "400":
+          $ref: "#/components/responses/ActionFailedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects/{project_id}/tasks/{task_id}/stop:
+    get:
+      summary: "Stop a specific task for a project"
+      operationId: "StopProjectTask"
+      tags:
+        - "project"
+        - "task"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/TaskParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "400":
+          $ref: "#/components/responses/ActionFailedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects/{project_id}/tasks/{task_id}/output:
+    get:
+      summary: "Output a specific task for a project"
+      operationId: "OutputProjectTask"
+      tags:
+        - "project"
+        - "task"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/TaskParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectLoggingResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /runners:
+    get:
+      summary: "Fetch all available runners"
+      operationId: "ListRunners"
+      tags:
+        - "runner"
+      parameters:
+        - $ref: "#/components/parameters/SearchQueryParam"
+        - $ref: "#/components/parameters/SortColumnParam"
+        - $ref: "#/components/parameters/SortOrderParam"
+        - $ref: "#/components/parameters/PagingLimitParam"
+        - $ref: "#/components/parameters/PagingOffsetParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/RunnersResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    post:
+      summary: "Create a new runner"
+      operationId: "CreateRunner"
+      tags:
+        - "runner"
+      requestBody:
+        $ref: "#/components/requestBodies/CreateRunnerBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/RunnerResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /runners/{runner_id}:
+    get:
+      summary: "Fetch a specific runner"
+      operationId: "ShowRunner"
+      tags:
+        - "shared"
+        - "runner"
+      parameters:
+        - $ref: "#/components/parameters/RunnerParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/RunnerResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    put:
+      summary: "Update a specific runner"
+      operationId: "UpdateRunner"
+      tags:
+        - "runner"
+      parameters:
+        - $ref: "#/components/parameters/RunnerParam"
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateRunnerBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/RunnerResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      summary: "Delete a specific runner"
+      operationId: "DeleteRunner"
+      tags:
+        - "shared"
+        - "runner"
+      parameters:
+        - $ref: "#/components/parameters/RunnerParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "400":
+          $ref: "#/components/responses/ActionFailedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /teams:
+    get:
+      summary: "Fetch all available teams"
+      operationId: "ListTeams"
+      tags:
+        - "team"
+      parameters:
+        - $ref: "#/components/parameters/SearchQueryParam"
+        - $ref: "#/components/parameters/SortColumnParam"
+        - $ref: "#/components/parameters/SortOrderParam"
+        - $ref: "#/components/parameters/PagingLimitParam"
+        - $ref: "#/components/parameters/PagingOffsetParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/TeamsResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    post:
+      summary: "Create a new team"
+      operationId: "CreateTeam"
+      tags:
+        - "team"
+      requestBody:
+        $ref: "#/components/requestBodies/CreateTeamBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/TeamResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /teams/{team_id}:
+    get:
+      summary: "Fetch a specific team"
+      operationId: "ShowTeam"
+      tags:
+        - "team"
+      parameters:
+        - $ref: "#/components/parameters/TeamParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/TeamResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    put:
+      summary: "Update a specific team"
+      operationId: "UpdateTeam"
+      tags:
+        - "team"
+      parameters:
+        - $ref: "#/components/parameters/TeamParam"
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateTeamBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/TeamResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      summary: "Delete a specific team"
+      operationId: "DeleteTeam"
+      tags:
+        - "team"
+      parameters:
+        - $ref: "#/components/parameters/TeamParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "400":
+          $ref: "#/components/responses/ActionFailedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /teams/{team_id}/users:
+    get:
+      summary: "Fetch all users attached to team"
+      operationId: "ListTeamUsers"
+      tags:
+        - "team"
+      parameters:
+        - $ref: "#/components/parameters/TeamParam"
+        - $ref: "#/components/parameters/SearchQueryParam"
+        - $ref: "#/components/parameters/SortColumnParam"
+        - $ref: "#/components/parameters/SortOrderParam"
+        - $ref: "#/components/parameters/PagingLimitParam"
+        - $ref: "#/components/parameters/PagingOffsetParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/TeamUsersResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    post:
+      summary: "Attach a user to team"
+      operationId: "AttachTeamToUser"
+      tags:
+        - "team"
+      parameters:
+        - $ref: "#/components/parameters/TeamParam"
+      requestBody:
+        $ref: "#/components/requestBodies/TeamUserPermBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "412":
+          $ref: "#/components/responses/AlreadyAttachedError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    put:
+      summary: "Update user perms for team"
+      operationId: "PermitTeamUser"
+      tags:
+        - "team"
+      parameters:
+        - $ref: "#/components/parameters/TeamParam"
+      requestBody:
+        $ref: "#/components/requestBodies/TeamUserPermBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "412":
+          $ref: "#/components/responses/NotAttachedError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      summary: "Unlink a user from team"
+      operationId: "DeleteTeamFromUser"
+      tags:
+        - "team"
+      parameters:
+        - $ref: "#/components/parameters/TeamParam"
+      requestBody:
+        $ref: "#/components/requestBodies/TeamUserDropBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "412":
+          $ref: "#/components/responses/NotAttachedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /teams/{team_id}/projects:
+    get:
+      summary: "Fetch all projects attached to team"
+      operationId: "ListTeamProjects"
+      tags:
+        - "team"
+      parameters:
+        - $ref: "#/components/parameters/TeamParam"
+        - $ref: "#/components/parameters/SearchQueryParam"
+        - $ref: "#/components/parameters/SortColumnParam"
+        - $ref: "#/components/parameters/SortOrderParam"
+        - $ref: "#/components/parameters/PagingLimitParam"
+        - $ref: "#/components/parameters/PagingOffsetParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/TeamProjectsResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    post:
+      summary: "Attach a project to team"
+      operationId: "AttachTeamToProject"
+      tags:
+        - "team"
+      parameters:
+        - $ref: "#/components/parameters/TeamParam"
+      requestBody:
+        $ref: "#/components/requestBodies/TeamProjectPermBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "412":
+          $ref: "#/components/responses/AlreadyAttachedError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    put:
+      summary: "Update project perms for team"
+      operationId: "PermitTeamProject"
+      tags:
+        - "team"
+      parameters:
+        - $ref: "#/components/parameters/TeamParam"
+      requestBody:
+        $ref: "#/components/requestBodies/TeamProjectPermBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "412":
+          $ref: "#/components/responses/NotAttachedError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      summary: "Unlink a project from team"
+      operationId: "DeleteTeamFromProject"
+      tags:
+        - "team"
+      parameters:
+        - $ref: "#/components/parameters/TeamParam"
+      requestBody:
+        $ref: "#/components/requestBodies/TeamProjectDropBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "412":
+          $ref: "#/components/responses/NotAttachedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /users:
+    get:
+      summary: "Fetch all available users"
+      operationId: "ListUsers"
+      tags:
+        - "user"
+      parameters:
+        - $ref: "#/components/parameters/SearchQueryParam"
+        - $ref: "#/components/parameters/SortColumnParam"
+        - $ref: "#/components/parameters/SortOrderParam"
+        - $ref: "#/components/parameters/PagingLimitParam"
+        - $ref: "#/components/parameters/PagingOffsetParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/UsersResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    post:
+      summary: "Create a new user"
+      operationId: "CreateUser"
+      tags:
+        - "user"
+      requestBody:
+        $ref: "#/components/requestBodies/CreateUserBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/UserResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /users/{user_id}:
+    get:
+      summary: "Fetch a specific user"
+      operationId: "ShowUser"
+      tags:
+        - "user"
+      parameters:
+        - $ref: "#/components/parameters/UserParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/UserResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    put:
+      summary: "Update a specific user"
+      operationId: "UpdateUser"
+      tags:
+        - "user"
+      parameters:
+        - $ref: "#/components/parameters/UserParam"
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateUserBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/UserResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      summary: "Delete a specific user"
+      operationId: "DeleteUser"
+      tags:
+        - "user"
+      parameters:
+        - $ref: "#/components/parameters/UserParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "400":
+          $ref: "#/components/responses/ActionFailedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /users/{user_id}/teams:
+    get:
+      summary: "Fetch all teams attached to user"
+      operationId: "ListUserTeams"
+      tags:
+        - "user"
+      parameters:
+        - $ref: "#/components/parameters/UserParam"
+        - $ref: "#/components/parameters/SearchQueryParam"
+        - $ref: "#/components/parameters/SortColumnParam"
+        - $ref: "#/components/parameters/SortOrderParam"
+        - $ref: "#/components/parameters/PagingLimitParam"
+        - $ref: "#/components/parameters/PagingOffsetParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/UserTeamsResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    post:
+      summary: "Attach a team to user"
+      operationId: "AttachUserToTeam"
+      tags:
+        - "user"
+      parameters:
+        - $ref: "#/components/parameters/UserParam"
+      requestBody:
+        $ref: "#/components/requestBodies/UserTeamPermBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "412":
+          $ref: "#/components/responses/AlreadyAttachedError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    put:
+      summary: "Update team perms for user"
+      operationId: "PermitUserTeam"
+      tags:
+        - "user"
+      parameters:
+        - $ref: "#/components/parameters/UserParam"
+      requestBody:
+        $ref: "#/components/requestBodies/UserTeamPermBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "412":
+          $ref: "#/components/responses/NotAttachedError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      summary: "Unlink a team from user"
+      operationId: "DeleteUserFromTeam"
+      tags:
+        - "user"
+      parameters:
+        - $ref: "#/components/parameters/UserParam"
+      requestBody:
+        $ref: "#/components/requestBodies/UserTeamDropBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "412":
+          $ref: "#/components/responses/NotAttachedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /users/{user_id}/projects:
+    get:
+      summary: "Fetch all projects attached to user"
+      operationId: "ListUserProjects"
+      tags:
+        - "user"
+      parameters:
+        - $ref: "#/components/parameters/UserParam"
+        - $ref: "#/components/parameters/SearchQueryParam"
+        - $ref: "#/components/parameters/SortColumnParam"
+        - $ref: "#/components/parameters/SortOrderParam"
+        - $ref: "#/components/parameters/PagingLimitParam"
+        - $ref: "#/components/parameters/PagingOffsetParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/UserProjectsResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    post:
+      summary: "Attach a project to user"
+      operationId: "AttachUserToProject"
+      tags:
+        - "user"
+      parameters:
+        - $ref: "#/components/parameters/UserParam"
+      requestBody:
+        $ref: "#/components/requestBodies/UserProjectPermBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "412":
+          $ref: "#/components/responses/AlreadyAttachedError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    put:
+      summary: "Update project perms for user"
+      operationId: "PermitUserProject"
+      tags:
+        - "user"
+      parameters:
+        - $ref: "#/components/parameters/UserParam"
+      requestBody:
+        $ref: "#/components/requestBodies/UserProjectPermBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "412":
+          $ref: "#/components/responses/NotAttachedError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      summary: "Unlink a project from user"
+      operationId: "DeleteUserFromProject"
+      tags:
+        - "user"
+      parameters:
+        - $ref: "#/components/parameters/UserParam"
+      requestBody:
+        $ref: "#/components/requestBodies/UserProjectDropBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "412":
+          $ref: "#/components/responses/NotAttachedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    Header:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    Bearer:
+      type: http
+      scheme: bearer
+    Basic:
+      type: http
+      scheme: basic
+
+  parameters:
+    SearchQueryParam:
+      name: "search"
+      in: "query"
+      required: false
+      schema:
+        type: "string"
+      description: "Search query"
+
+    PagingLimitParam:
+      name: "limit"
+      in: "query"
+      required: false
+      schema:
+        type: "integer"
+        default: 100
+      description: "Paging limit"
+      x-example: 100
+    PagingOffsetParam:
+      name: "offset"
+      in: "query"
+      required: false
+      schema:
+        type: "integer"
+        default: 0
+      description: "Paging offset"
+      x-example: 0
+
+    SortColumnParam:
+      name: "sort"
+      in: "query"
+      required: false
+      schema:
+        type: "string"
+      description: "Sorting column"
+    SortOrderParam:
+      name: "order"
+      in: "query"
+      required: false
+      schema:
+        type: "string"
+        default: "asc"
+        enum:
+          - "asc"
+          - "desc"
+      description: "Sorting order"
+      x-example: "desc"
+
+    AuthProviderParam:
+      in: "path"
+      name: "provider"
+      description: "An identifier for the auth provider"
+      schema:
+        type: "string"
+      required: true
+      x-example: "github"
+    AuthStateParam:
+      name: "state"
+      in: "query"
+      required: false
+      schema:
+        type: "string"
+      description: "Auth state"
+    AuthCodeParam:
+      name: "code"
+      in: "query"
+      required: false
+      schema:
+        type: "string"
+      description: "Auth code"
+
+    ProjectParam:
+      in: "path"
+      name: "project_id"
+      description: "A project identifier or slug"
+      schema:
+        type: "string"
+      required: true
+      x-example: "project-1"
+    CredentialParam:
+      in: "path"
+      name: "credential_id"
+      description: "A credential identifier or slug"
+      schema:
+        type: "string"
+      required: true
+      x-example: "credential-1"
+    RepositoryParam:
+      in: "path"
+      name: "repository_id"
+      description: "A repository identifier or slug"
+      schema:
+        type: "string"
+      required: true
+      x-example: "repository-1"
+    InventoryParam:
+      in: "path"
+      name: "inventory_id"
+      description: "A inventory identifier or slug"
+      schema:
+        type: "string"
+      required: true
+      x-example: "inventory-1"
+    EnvironmentParam:
+      in: "path"
+      name: "environment_id"
+      description: "A environment identifier or slug"
+      schema:
+        type: "string"
+      required: true
+      x-example: "environment-1"
+    TemplateParam:
+      in: "path"
+      name: "template_id"
+      description: "A template identifier or slug"
+      schema:
+        type: "string"
+      required: true
+      x-example: "template-1"
+    ScheduleParam:
+      in: "path"
+      name: "schedule_id"
+      description: "A schedule identifier or slug"
+      schema:
+        type: "string"
+      required: true
+      x-example: "schedule-1"
+    RunnerParam:
+      in: "path"
+      name: "runner_id"
+      description: "A runner identifier or slug"
+      schema:
+        type: "string"
+      required: true
+      x-example: "runner-1"
+    TaskParam:
+      in: "path"
+      name: "task_id"
+      description: "A task identifier or slug"
+      schema:
+        type: "string"
+      required: true
+      x-example: "task-1"
+    TeamParam:
+      in: "path"
+      name: "team_id"
+      description: "A team identifier or slug"
+      schema:
+        type: "string"
+      required: true
+      x-example: "team-1"
+    UserParam:
+      in: "path"
+      name: "user_id"
+      description: "A user identifier or slug"
+      schema:
+        type: "string"
+      required: true
+      x-example: "jdoe"
+
+  requestBodies:
+    LoginAuthBody:
+      description: "The credentials to authenticate"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "username"
+              - "password"
+            properties:
+              username:
+                type: "string"
+              password:
+                type: "string"
+                format: "password"
+
+    UpdateProfileBody:
+      description: "The profile data to update"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            properties:
+              username:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              password:
+                type: "string"
+                format: "password"
+                x-omitempty: true
+                x-nullable: true
+              email:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              fullname:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+
+    CreateProjectBody:
+      description: "The project data to create"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "name"
+            properties:
+              slug:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              name:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+    UpdateProjectBody:
+      description: "The project data to update"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            properties:
+              slug:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              name:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+    ProjectUserPermBody:
+      description: "The project user data to permit"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "user"
+              - "perm"
+            properties:
+              user:
+                type: "string"
+              perm:
+                type: "string"
+    ProjectUserDropBody:
+      description: "The project user data to unlink"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "user"
+            properties:
+              user:
+                type: "string"
+    ProjectTeamPermBody:
+      description: "The project team data to permit"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "team"
+              - "perm"
+            properties:
+              team:
+                type: "string"
+              perm:
+                type: "string"
+    ProjectTeamDropBody:
+      description: "The project team data to unlink"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "team"
+            properties:
+              team:
+                type: "string"
+
+    CreateProjectCredentialBody:
+      description: "The credential data to create"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "name"
+              - "kind"
+            properties:
+              slug:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              name:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              kind:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              override:
+                type: "boolean"
+                x-omitempty: true
+                x-nullable: true
+              shell:
+                x-omitempty: true
+                x-nullable: true
+                $ref: "#/components/schemas/CredentialShell"
+              login:
+                x-omitempty: true
+                x-nullable: true
+                $ref: "#/components/schemas/CredentialLogin"
+    UpdateProjectCredentialBody:
+      description: "The credential data to update"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            properties:
+              slug:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              name:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              kind:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              override:
+                type: "boolean"
+                x-omitempty: true
+                x-nullable: true
+              shell:
+                x-omitempty: true
+                x-nullable: true
+                $ref: "#/components/schemas/CredentialShell"
+              login:
+                x-omitempty: true
+                x-nullable: true
+                $ref: "#/components/schemas/CredentialLogin"
+
+    CreateProjectRepositoryBody:
+      description: "The repository data to create"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "credential_id"
+              - "name"
+              - "url"
+              - "branch"
+            properties:
+              credential_id:
+                type: "string"
+              slug:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              name:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              url:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              branch:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+    UpdateProjectRepositoryBody:
+      description: "The repository data to update"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            properties:
+              credential_id:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              slug:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              name:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              url:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              branch:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+
+    CreateProjectInventoryBody:
+      description: "The inventory data to create"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "repository_id"
+              - "name"
+              - "kind"
+            properties:
+              repository_id:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              credential_id:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              become_id:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              slug:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              name:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              kind:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              content:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+    UpdateProjectInventoryBody:
+      description: "The inventory data to update"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            properties:
+              repository_id:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              credential_id:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              become_id:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              slug:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              name:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              kind:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              content:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+
+    CreateProjectEnvironmentBody:
+      description: "The environment data to create"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "name"
+            properties:
+              slug:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              name:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              content:
+                type: "array"
+                x-omitempty: true
+                x-nullable: true
+                items:
+                  $ref: "#/components/schemas/EnvironmentSecret"
+              secrets:
+                type: "array"
+                x-omitempty: true
+                x-nullable: true
+                items:
+                  $ref: "#/components/schemas/EnvironmentSecret"
+    UpdateProjectEnvironmentBody:
+      description: "The environment data to update"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            properties:
+              slug:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              name:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              content:
+                type: "array"
+                x-omitempty: true
+                x-nullable: true
+                items:
+                  $ref: "#/components/schemas/EnvironmentSecret"
+              secrets:
+                type: "array"
+                x-omitempty: true
+                x-nullable: true
+                items:
+                  $ref: "#/components/schemas/EnvironmentSecret"
+
+    CreateProjectTemplateBody:
+      description: "The template data to create"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "repository_id"
+              - "inventory_id"
+              - "environment_id"
+              - "name"
+              - "executor"
+            properties:
+              repository_id:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              inventory_id:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              environment_id:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              slug:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              name:
+                type: "string"
+              description:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              playbook:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              arguments:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              limit:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              executor:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              branch:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              allow_override:
+                type: "boolean"
+                x-omitempty: true
+                x-nullable: true
+              survey:
+                type: "array"
+                x-omitempty: true
+                x-nullable: true
+                items:
+                  $ref: "#/components/schemas/TemplateSurvey"
+              vaults:
+                type: "array"
+                x-omitempty: true
+                x-nullable: true
+                items:
+                  $ref: "#/components/schemas/TemplateVault"
+    UpdateProjectTemplateBody:
+      description: "The template data to update"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            properties:
+              repository_id:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              inventory_id:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              environment_id:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              slug:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              name:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              description:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              playbook:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              arguments:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              limit:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              executor:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              branch:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              allow_override:
+                type: "boolean"
+                x-omitempty: true
+                x-nullable: true
+              survey:
+                type: "array"
+                x-omitempty: true
+                x-nullable: true
+                items:
+                  $ref: "#/components/schemas/TemplateSurvey"
+              vaults:
+                type: "array"
+                x-omitempty: true
+                x-nullable: true
+                items:
+                  $ref: "#/components/schemas/TemplateVault"
+
+    CreateProjectScheduleBody:
+      description: "The schedule data to create"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "template_id"
+              - "name"
+              - "cron"
+            properties:
+              template_id:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              slug:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              name:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              cron:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              active:
+                type: "boolean"
+                x-omitempty: true
+                x-nullable: true
+    UpdateProjectScheduleBody:
+      description: "The schedule data to update"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            properties:
+              template_id:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              slug:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              name:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              cron:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              active:
+                type: "boolean"
+                x-omitempty: true
+                x-nullable: true
+
+    CreateProjectTaskBody:
+      description: "The task data to create"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "template_id"
+            properties:
+              template_id:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              status:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              debug:
+                type: "boolean"
+                x-omitempty: true
+                x-nullable: true
+              playbook:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              environment:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              secret:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              limit:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              branch:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+
+    CreateRunnerBody:
+      description: "The runner data to create"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "name"
+            properties:
+              slug:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              name:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              token:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+    UpdateRunnerBody:
+      description: "The runner data to update"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            properties:
+              slug:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              name:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              token:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+
+    CreateTeamBody:
+      description: "The team data to create"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "name"
+            properties:
+              slug:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              name:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+    UpdateTeamBody:
+      description: "The team data to update"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            properties:
+              slug:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              name:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+    TeamUserPermBody:
+      description: "The team user data to permit"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "user"
+              - "perm"
+            properties:
+              user:
+                type: "string"
+              perm:
+                type: "string"
+    TeamUserDropBody:
+      description: "The team user data to unlink"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "user"
+            properties:
+              user:
+                type: "string"
+    TeamProjectPermBody:
+      description: "The team project data to permit"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "project"
+              - "perm"
+            properties:
+              project:
+                type: "string"
+              perm:
+                type: "string"
+    TeamProjectDropBody:
+      description: "The team project data to unlink"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "project"
+            properties:
+              project:
+                type: "string"
+
+    CreateUserBody:
+      description: "The user data to create"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "username"
+              - "password"
+              - "email"
+              - "fullname"
+            properties:
+              username:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              password:
+                type: "string"
+                format: "password"
+                x-omitempty: true
+                x-nullable: true
+              email:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              fullname:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              admin:
+                type: "boolean"
+                x-omitempty: true
+                x-nullable: true
+                default: false
+              active:
+                type: "boolean"
+                x-omitempty: true
+                x-nullable: true
+                default: true
+    UpdateUserBody:
+      description: "The user data to update"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            properties:
+              username:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              password:
+                type: "string"
+                format: "password"
+                x-omitempty: true
+                x-nullable: true
+              email:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              fullname:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              admin:
+                type: "boolean"
+                x-omitempty: true
+                x-nullable: true
+              active:
+                type: "boolean"
+                x-omitempty: true
+                x-nullable: true
+    UserTeamPermBody:
+      description: "The user team data to permit"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "team"
+              - "perm"
+            properties:
+              team:
+                type: "string"
+              perm:
+                type: "string"
+    UserTeamDropBody:
+      description: "The user team data to unlink"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "team"
+            properties:
+              team:
+                type: "string"
+    UserProjectPermBody:
+      description: "The user project data to permit"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "project"
+              - "perm"
+            properties:
+              project:
+                type: "string"
+              perm:
+                type: "string"
+    UserProjectDropBody:
+      description: "The user project data to unlink"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "project"
+            properties:
+              project:
+                type: "string"
+
+  responses:
+    UpgradeConnection:
+      description: "Upgrade to websocket connection"
+
+    SuccessMessage:
+      description: "Plain success message"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Notification"
+    ValidationError:
+      description: "Failed to validate request"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Notification"
+    NotAuthorizedError:
+      description: "User is not authorized"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Notification"
+    NotFoundError:
+      description: "Resource not found"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Notification"
+    AlreadyAttachedError:
+      description: "Resource is already attached"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Notification"
+    NotAttachedError:
+      description: "Resource is not attached"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Notification"
+    InternalServerError:
+      description: "Some internal server error"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Notification"
+    ActionFailedError:
+      description: "Failed to execute action for resource"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Notification"
+
+    InvalidTokenError:
+      description: "Failed to generate or validate token"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Notification"
+
+    BadCredentialsError:
+      description: "Unauthorized with wrong credentials"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Notification"
+    ProviderInitError:
+      description: "Failed to initialize provider"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Notification"
+
+    GeneralError:
+      description: "Some error unrelated to the handler"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Notification"
+
+    ProviderResponse:
+      description: "A collection of auth providers"
+      content:
+        application/json:
+          schema:
+            type: "array"
+            items:
+              $ref: "#/components/schemas/Provider"
+    CallbackResponse:
+      description: "Generated token with expire date"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AuthToken"
+
+    VerifyResponse:
+      description: "Metadata of the auth token"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AuthVerify"
+    LoginResponse:
+      description: "Generated token with expire date"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AuthToken"
+    RefreshResponse:
+      description: "Refreshed token with expire date"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AuthToken"
+    TokenResponse:
+      description: "Generated token never expiring"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AuthToken"
+    ProfileResponse:
+      description: "The current profile details"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Profile"
+
+    EventsResponse:
+      description: "A collection of events"
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "total"
+              - "limit"
+              - "offset"
+              - "events"
+            properties:
+              total:
+                type: integer
+                format: int64
+              limit:
+                type: integer
+                format: int64
+              offset:
+                type: integer
+                format: int64
+              events:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Event"
+
+    ProjectsResponse:
+      description: "A collection of projects"
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "total"
+              - "limit"
+              - "offset"
+              - "projects"
+            properties:
+              total:
+                type: integer
+                format: int64
+              limit:
+                type: integer
+                format: int64
+              offset:
+                type: integer
+                format: int64
+              projects:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Project"
+    ProjectResponse:
+      description: "The details for a project"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Project"
+    ProjectUsersResponse:
+      description: "A collection of project users"
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "total"
+              - "limit"
+              - "offset"
+              - "users"
+            properties:
+              total:
+                type: integer
+                format: int64
+              limit:
+                type: integer
+                format: int64
+              offset:
+                type: integer
+                format: int64
+              project:
+                $ref: "#/components/schemas/Project"
+                readOnly: true
+              users:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/UserProject"
+    ProjectTeamsResponse:
+      description: "A collection of project teams"
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "total"
+              - "limit"
+              - "offset"
+              - "teams"
+            properties:
+              total:
+                type: integer
+                format: int64
+              limit:
+                type: integer
+                format: int64
+              offset:
+                type: integer
+                format: int64
+              project:
+                $ref: "#/components/schemas/Project"
+                readOnly: true
+              teams:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/TeamProject"
+
+    ProjectCredentialsResponse:
+      description: "A collection of credentials for a project"
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "total"
+              - "limit"
+              - "offset"
+              - "credentials"
+            properties:
+              total:
+                type: integer
+                format: int64
+              limit:
+                type: integer
+                format: int64
+              offset:
+                type: integer
+                format: int64
+              project:
+                readOnly: true
+                $ref: "#/components/schemas/Project"
+              credentials:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Credential"
+    ProjectCredentialResponse:
+      description: "The details for a credential of a project"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Credential"
+
+    ProjectRepositoriesResponse:
+      description: "A collection of repositories for a project"
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "total"
+              - "limit"
+              - "offset"
+              - "repositories"
+            properties:
+              total:
+                type: integer
+                format: int64
+              limit:
+                type: integer
+                format: int64
+              offset:
+                type: integer
+                format: int64
+              project:
+                readOnly: true
+                $ref: "#/components/schemas/Project"
+              repositories:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Repository"
+    ProjectRepositoryResponse:
+      description: "The details for a repository of a project"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Repository"
+
+    ProjectInventoriesResponse:
+      description: "A collection of inventories for a project"
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "total"
+              - "limit"
+              - "offset"
+              - "inventories"
+            properties:
+              total:
+                type: integer
+                format: int64
+              limit:
+                type: integer
+                format: int64
+              offset:
+                type: integer
+                format: int64
+              project:
+                readOnly: true
+                $ref: "#/components/schemas/Project"
+              inventories:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Inventory"
+    ProjectInventoryResponse:
+      description: "The details for a inventory of a project"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Inventory"
+
+    ProjectEnvironmentsResponse:
+      description: "A collection of environments for a project"
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "total"
+              - "limit"
+              - "offset"
+              - "environments"
+            properties:
+              total:
+                type: integer
+                format: int64
+              limit:
+                type: integer
+                format: int64
+              offset:
+                type: integer
+                format: int64
+              project:
+                readOnly: true
+                $ref: "#/components/schemas/Project"
+              environments:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Environment"
+    ProjectEnvironmentyResponse:
+      description: "The details for a environment of a project"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Environment"
+
+    ProjectTemplatesResponse:
+      description: "A collection of templates for a project"
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "total"
+              - "limit"
+              - "offset"
+              - "templates"
+            properties:
+              total:
+                type: integer
+                format: int64
+              limit:
+                type: integer
+                format: int64
+              offset:
+                type: integer
+                format: int64
+              project:
+                readOnly: true
+                $ref: "#/components/schemas/Project"
+              templates:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Template"
+    ProjectTemplateResponse:
+      description: "The details for a template of a project"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Template"
+
+    ProjectSchedulesResponse:
+      description: "A collection of schedules for a project"
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "total"
+              - "limit"
+              - "offset"
+              - "schedules"
+            properties:
+              total:
+                type: integer
+                format: int64
+              limit:
+                type: integer
+                format: int64
+              offset:
+                type: integer
+                format: int64
+              project:
+                readOnly: true
+                $ref: "#/components/schemas/Project"
+              schedules:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Schedule"
+    ProjectScheduleResponse:
+      description: "The details for a schedule of a project"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Schedule"
+
+    ProjectTasksResponse:
+      description: "A collection of schedules for a project"
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "total"
+              - "limit"
+              - "offset"
+              - "tasks"
+            properties:
+              total:
+                type: integer
+                format: int64
+              limit:
+                type: integer
+                format: int64
+              offset:
+                type: integer
+                format: int64
+              project:
+                readOnly: true
+                $ref: "#/components/schemas/Project"
+              tasks:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Task"
+    ProjectTaskResponse:
+      description: "The details for a schedule of a project"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Task"
+
+    ProjectLoggingResponse:
+      description: "The logging for a task of a project"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Logging"
+
+    RunnersResponse:
+      description: "A collection of runners"
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "total"
+              - "limit"
+              - "offset"
+              - "runners"
+            properties:
+              total:
+                type: integer
+                format: int64
+              limit:
+                type: integer
+                format: int64
+              offset:
+                type: integer
+                format: int64
+              runners:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Runner"
+    RunnerResponse:
+      description: "The details for a runner"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Runner"
+
+    TeamsResponse:
+      description: "A collection of teams"
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "total"
+              - "limit"
+              - "offset"
+              - "teams"
+            properties:
+              total:
+                type: integer
+                format: int64
+              limit:
+                type: integer
+                format: int64
+              offset:
+                type: integer
+                format: int64
+              teams:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Team"
+    TeamResponse:
+      description: "The details for a team"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Team"
+    TeamUsersResponse:
+      description: "A collection of team users"
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "total"
+              - "limit"
+              - "offset"
+              - "users"
+            properties:
+              total:
+                type: integer
+                format: int64
+              limit:
+                type: integer
+                format: int64
+              offset:
+                type: integer
+                format: int64
+              team:
+                $ref: "#/components/schemas/Team"
+                readOnly: true
+              users:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/UserTeam"
+    TeamProjectsResponse:
+      description: "A collection of team projects"
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "total"
+              - "limit"
+              - "offset"
+              - "projects"
+            properties:
+              total:
+                type: integer
+                format: int64
+              limit:
+                type: integer
+                format: int64
+              offset:
+                type: integer
+                format: int64
+              team:
+                $ref: "#/components/schemas/Team"
+                readOnly: true
+              projects:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/TeamProject"
+
+    UsersResponse:
+      description: "A collection of users"
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "total"
+              - "limit"
+              - "offset"
+              - "users"
+            properties:
+              total:
+                type: integer
+                format: int64
+              limit:
+                type: integer
+                format: int64
+              offset:
+                type: integer
+                format: int64
+              users:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/User"
+    UserResponse:
+      description: "The details for an user"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/User"
+    UserTeamsResponse:
+      description: "A collection of user teams"
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "total"
+              - "limit"
+              - "offset"
+              - "teams"
+            properties:
+              total:
+                type: integer
+                format: int64
+              limit:
+                type: integer
+                format: int64
+              offset:
+                type: integer
+                format: int64
+              user:
+                $ref: "#/components/schemas/User"
+                readOnly: true
+              teams:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/UserTeam"
+    UserProjectsResponse:
+      description: "A collection of user projects"
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "total"
+              - "limit"
+              - "offset"
+              - "projects"
+            properties:
+              total:
+                type: integer
+                format: int64
+              limit:
+                type: integer
+                format: int64
+              offset:
+                type: integer
+                format: int64
+              user:
+                $ref: "#/components/schemas/User"
+                readOnly: true
+              projects:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/UserProject"
+
+  schemas:
+    AuthToken:
+      type: "object"
+      required:
+        - "token"
+      properties:
+        token:
+          type: "string"
+          readOnly: true
+        expires_at:
+          type: "string"
+          format: "date-time"
+          x-omitempty: true
+          x-nullable: true
+          readOnly: true
+
+    AuthVerify:
+      type: "object"
+      required:
+        - "username"
+      properties:
+        username:
+          type: "string"
+          readOnly: true
+        created_at:
+          type: "string"
+          format: "date-time"
+          x-omitempty: true
+          x-nullable: true
+          readOnly: true
+
+    Profile:
+      title: "Profile"
+      description: "Model to represent profile"
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          readOnly: true
+        username:
+          type: "string"
+          x-omitempty: true
+          x-nullable: true
+        password:
+          type: "string"
+          format: "password"
+          x-omitempty: true
+          x-nullable: true
+        email:
+          type: "string"
+          x-omitempty: true
+          x-nullable: true
+        fullname:
+          type: "string"
+          x-omitempty: true
+          x-nullable: true
+        profile:
+          type: "string"
+          x-omitempty: true
+          x-nullable: true
+        admin:
+          type: "boolean"
+          readOnly: true
+        active:
+          type: "boolean"
+          readOnly: true
+        created_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+        updated_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+        auths:
+          type: "array"
+          x-omitempty: true
+          x-nullable: true
+          readOnly: true
+          items:
+            $ref: "#/components/schemas/UserAuth"
+        teams:
+          type: "array"
+          x-omitempty: true
+          x-nullable: true
+          readOnly: true
+          items:
+            $ref: "#/components/schemas/UserTeam"
+        projects:
+          type: "array"
+          x-omitempty: true
+          x-nullable: true
+          readOnly: true
+          items:
+            $ref: "#/components/schemas/UserProject"
+
+    Event:
+      title: "Event"
+      description: "Model to represent event"
+      type: "object"
+      properties:
+        user_id:
+          type: "string"
+          x-omitempty: true
+          x-nullable: true
+        user_display:
+          type: "string"
+          x-omitempty: true
+          x-nullable: true
+        project_id:
+          type: "string"
+          x-omitempty: true
+          x-nullable: true
+        project_display:
+          type: "string"
+          x-omitempty: true
+          x-nullable: true
+        object_id:
+          type: "string"
+        object_display:
+          type: "string"
+        object_type:
+          type: "string"
+        action:
+          type: "string"
+        description:
+          type: "string"
+        created_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+
+    Logging:
+      title: "Logging"
+      description: "Model to represent logging"
+      type: "object"
+      properties:
+        task_id:
+          type: "string"
+          readOnly: true
+        task:
+          x-omitempty: true
+          x-nullable: true
+          readOnly: true
+          $ref: "#/components/schemas/Task"
+        time:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+        output:
+          type: "string"
+          readOnly: true
+
+    Project:
+      title: "Project"
+      description: "Model to represent project"
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          readOnly: true
+        slug:
+          type: "string"
+        name:
+          type: "string"
+        created_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+        updated_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+
+    Credential:
+      title: "Credential"
+      description: "Model to represent credential"
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          readOnly: true
+        project_id:
+          type: "string"
+        slug:
+          type: "string"
+        name:
+          type: "string"
+        kind:
+          type: "string"
+          enum:
+            - "empty"
+            - "ssh"
+            - "login"
+        override:
+          type: "boolean"
+        shell:
+          x-omitempty: true
+          x-nullable: true
+          $ref: "#/components/schemas/CredentialShell"
+        login:
+          x-omitempty: true
+          x-nullable: true
+          $ref: "#/components/schemas/CredentialLogin"
+        created_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+        updated_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+
+    CredentialShell:
+      title: "Credential Shell"
+      description: "Model to represent credential shell"
+      type: "object"
+      properties:
+        username:
+          type: "string"
+        password:
+          type: "string"
+        private_key:
+          type: "string"
+
+    CredentialLogin:
+      title: "Credential Login"
+      description: "Model to represent credential login"
+      type: "object"
+      properties:
+        username:
+          type: "string"
+        password:
+          type: "string"
+
+    Repository:
+      title: "Repository"
+      description: "Model to represent repository"
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          readOnly: true
+        project_id:
+          type: "string"
+        credential_id:
+          type: "string"
+        credential:
+          x-omitempty: true
+          x-nullable: true
+          readOnly: true
+          $ref: "#/components/schemas/Credential"
+        slug:
+          type: "string"
+        name:
+          type: "string"
+        url:
+          type: "string"
+        branch:
+          type: "string"
+        created_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+        updated_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+
+    Inventory:
+      title: "Inventory"
+      description: "Model to represent inventory"
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          readOnly: true
+        project_id:
+          type: "string"
+        repository_id:
+          type: "string"
+        repository:
+          x-omitempty: true
+          x-nullable: true
+          readOnly: true
+          $ref: "#/components/schemas/Repository"
+        credential_id:
+          type: "string"
+        credential:
+          x-omitempty: true
+          x-nullable: true
+          readOnly: true
+          $ref: "#/components/schemas/Credential"
+        become_id:
+          type: "string"
+        become:
+          x-omitempty: true
+          x-nullable: true
+          readOnly: true
+          $ref: "#/components/schemas/Credential"
+        slug:
+          type: "string"
+        name:
+          type: "string"
+        kind:
+          type: "string"
+          enum:
+            - "static"
+            - "file"
+            - "workspace"
+        content:
+          type: "string"
+        created_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+        updated_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+
+    Environment:
+      title: "Environment"
+      description: "Model to represent environment"
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          readOnly: true
+        project_id:
+          type: "string"
+        slug:
+          type: "string"
+        name:
+          type: "string"
+        content:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/EnvironmentSecret"
+        secrets:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/EnvironmentSecret"
+        created_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+        updated_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+
+    EnvironmentSecret:
+      title: "Environment Secret"
+      description: "Model to represent environment secret"
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          readOnly: true
+        name:
+          type: "string"
+        kind:
+          type: "string"
+          enum:
+            - "var"
+            - "env"
+        content:
+          type: "string"
+
+    Template:
+      title: "Template"
+      description: "Model to represent template"
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          readOnly: true
+        project_id:
+          type: "string"
+        repository_id:
+          type: "string"
+        repository:
+          x-omitempty: true
+          x-nullable: true
+          readOnly: true
+          $ref: "#/components/schemas/Repository"
+        inventory_id:
+          type: "string"
+        inventory:
+          x-omitempty: true
+          x-nullable: true
+          readOnly: true
+          $ref: "#/components/schemas/Inventory"
+        environment_id:
+          type: "string"
+        environment:
+          x-omitempty: true
+          x-nullable: true
+          readOnly: true
+          $ref: "#/components/schemas/Environment"
+        slug:
+          type: "string"
+        name:
+          type: "string"
+        description:
+          type: "string"
+        playbook:
+          type: "string"
+        arguments:
+          type: "string"
+        limit:
+          type: "string"
+        executor:
+          type: "string"
+        branch:
+          type: "string"
+        allow_override:
+          type: "boolean"
+        survey:
+          type: "array"
+          x-omitempty: true
+          x-nullable: true
+          items:
+            $ref: "#/components/schemas/TemplateSurvey"
+        vaults:
+          type: "array"
+          x-omitempty: true
+          x-nullable: true
+          items:
+            $ref: "#/components/schemas/TemplateVault"
+        created_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+        updated_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+
+    TemplateSurvey:
+      title: "Template Survey"
+      description: "Model to represent template survey"
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          readOnly: true
+        credential_id:
+          type: "string"
+          x-omitempty: true
+          x-nullable: true
+        credential:
+          x-omitempty: true
+          x-nullable: true
+          readOnly: true
+          $ref: "#/components/schemas/Credential"
+        name:
+          type: "string"
+        title:
+          type: "string"
+        description:
+          type: "string"
+        kind:
+          type: "string"
+          enum:
+            - "string"
+            - "number"
+            - "enum"
+            - "secret"
+        required:
+          type: "boolean"
+        values:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/TemplateValue"
+
+    TemplateValue:
+      title: "Template Value"
+      description: "Model to represent template value"
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          readOnly: true
+        name:
+          type: "string"
+        value:
+          type: "string"
+
+    TemplateVault:
+      title: "Template Vault"
+      description: "Model to represent template vault"
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          readOnly: true
+        credential_id:
+          type: "string"
+          x-omitempty: true
+          x-nullable: true
+        credential:
+          x-omitempty: true
+          x-nullable: true
+          readOnly: true
+          $ref: "#/components/schemas/Credential"
+        name:
+          type: "string"
+        kind:
+          type: "string"
+          enum:
+            - "password"
+            - "script"
+        script:
+          type: "string"
+          x-omitempty: true
+          x-nullable: true
+
+    Schedule:
+      title: "Schedule"
+      description: "Model to represent schedule"
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          readOnly: true
+        project_id:
+          type: "string"
+        template_id:
+          type: "string"
+        template:
+          x-omitempty: true
+          x-nullable: true
+          readOnly: true
+          $ref: "#/components/schemas/Template"
+        slug:
+          type: "string"
+        name:
+          type: "string"
+        cron:
+          type: "string"
+        active:
+          type: "boolean"
+        created_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+        updated_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+
+    Runner:
+      title: "Runner"
+      description: "Model to represent runner"
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          readOnly: true
+        slug:
+          type: "string"
+        name:
+          type: "string"
+        token:
+          type: "string"
+        created_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+        updated_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+
+    Task:
+      title: "Task"
+      description: "Model to represent task"
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          readOnly: true
+        project_id:
+          type: "string"
+        template_id:
+          type: "string"
+        template:
+          x-omitempty: true
+          x-nullable: true
+          readOnly: true
+          $ref: "#/components/schemas/Template"
+        status:
+          type: "string"
+        debug:
+          type: "boolean"
+        playbook:
+          type: "string"
+        environment:
+          type: "string"
+        secret:
+          type: "string"
+        limit:
+          type: "string"
+        branch:
+          type: "string"
+        created_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+        updated_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+
+    Team:
+      title: "Team"
+      description: "Model to represent team"
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          readOnly: true
+        slug:
+          type: "string"
+          x-omitempty: true
+          x-nullable: true
+        name:
+          type: "string"
+          x-omitempty: true
+          x-nullable: true
+        created_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+        updated_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+        auths:
+          type: "array"
+          x-omitempty: true
+          x-nullable: true
+          readOnly: true
+          items:
+            $ref: "#/components/schemas/TeamAuth"
+
+    TeamAuth:
+      title: "Team Auth"
+      description: "Model to represent team auth"
+      type: "object"
+      properties:
+        provider:
+          type: "string"
+        ref:
+          type: "string"
+        created_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+        updated_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+
+    TeamProject:
+      title: "Team Project"
+      description: "Model to represent team project"
+      type: "object"
+      required:
+        - "team_id"
+        - "project_id"
+      properties:
+        team_id:
+          type: "string"
+        team:
+          x-omitempty: true
+          x-nullable: true
+          readOnly: true
+          $ref: "#/components/schemas/Team"
+        project_id:
+          type: "string"
+        project:
+          x-omitempty: true
+          x-nullable: true
+          readOnly: true
+          $ref: "#/components/schemas/Project"
+        perm:
+          type: "string"
+          default: "user"
+          enum:
+            - "user"
+            - "admin"
+        created_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+        updated_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+
+    User:
+      title: "User"
+      description: "Model to represent user"
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          readOnly: true
+        username:
+          type: "string"
+          x-omitempty: true
+          x-nullable: true
+        password:
+          type: "string"
+          format: "password"
+          x-omitempty: true
+          x-nullable: true
+        email:
+          type: "string"
+          x-omitempty: true
+          x-nullable: true
+        fullname:
+          type: "string"
+          x-omitempty: true
+          x-nullable: true
+        profile:
+          type: "string"
+          x-omitempty: true
+          x-nullable: true
+        admin:
+          type: "boolean"
+          x-omitempty: true
+          x-nullable: true
+        active:
+          type: "boolean"
+          x-omitempty: true
+          x-nullable: true
+        created_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+        updated_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+        auths:
+          type: "array"
+          x-omitempty: true
+          x-nullable: true
+          readOnly: true
+          items:
+            $ref: "#/components/schemas/UserAuth"
+
+    UserAuth:
+      title: "User Auth"
+      description: "Model to represent user auth"
+      type: "object"
+      properties:
+        provider:
+          type: "string"
+        ref:
+          type: "string"
+        created_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+        updated_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+
+    UserTeam:
+      title: "User Team"
+      description: "Model to represent user team"
+      type: "object"
+      required:
+        - "user_id"
+        - "team_id"
+      properties:
+        user_id:
+          type: "string"
+        user:
+          x-omitempty: true
+          x-nullable: true
+          readOnly: true
+          $ref: "#/components/schemas/User"
+        team_id:
+          type: "string"
+        team:
+          x-omitempty: true
+          x-nullable: true
+          readOnly: true
+          $ref: "#/components/schemas/Team"
+        perm:
+          type: "string"
+          default: "user"
+          enum:
+            - "user"
+            - "admin"
+        created_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+        updated_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+
+    UserProject:
+      title: "User Project"
+      description: "Model to represent user project"
+      type: "object"
+      required:
+        - "user_id"
+        - "project_id"
+      properties:
+        user_id:
+          type: "string"
+        user:
+          x-omitempty: true
+          x-nullable: true
+          readOnly: true
+          $ref: "#/components/schemas/User"
+        project_id:
+          type: "string"
+        project:
+          x-omitempty: true
+          x-nullable: true
+          readOnly: true
+          $ref: "#/components/schemas/Project"
+        perm:
+          type: "string"
+          default: "user"
+          enum:
+            - "user"
+            - "admin"
+        created_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+        updated_at:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+
+    Provider:
+      title: "Provider"
+      description: "Model to represent auth provider"
+      type: "object"
+      properties:
+        name:
+          type: "string"
+          readOnly: true
+        driver:
+          type: "string"
+          readOnly: true
+        display:
+          type: "string"
+          readOnly: true
+        icon:
+          type: "string"
+          readOnly: true
+        url:
+          type: "string"
+          readOnly: true
+
+    Backup:
+      title: "Backup"
+      description: "Structure of general project backup"
+      type: "object"
+      properties:
+        meta:
+          type: "object"
+          properties:
+            name:
+              type: "string"
+            version:
+              type: "string"
+        credentials:
+          type: "array"
+          items:
+            type: "object"
+            properties: {}
+        repositories:
+          type: "array"
+          items:
+            type: "object"
+            properties: {}
+        inventories:
+          type: "array"
+          items:
+            type: "object"
+            properties: {}
+        environments:
+          type: "array"
+          items:
+            type: "object"
+            properties: {}
+        templates:
+          type: "array"
+          items:
+            type: "object"
+            properties: {}
+        schedules:
+          type: "array"
+          items:
+            type: "object"
+            properties: {}
+        runners:
+          type: "array"
+          items:
+            type: "object"
+            properties: {}
+
+    Notification:
+      title: "Notification"
+      description: "Generic response for errors and validations"
+      type: "object"
+      properties:
+        status:
+          type: "integer"
+          x-omitempty: true
+        message:
+          type: "string"
+          x-omitempty: true
+        errors:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Validation"
+
+    Validation:
+      title: "Validation"
+      description: "General structure to show validation errors"
+      type: "object"
+      properties:
+        field:
+          type: "string"
+        message:
+          type: "string"
+
+...

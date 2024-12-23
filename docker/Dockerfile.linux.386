@@ -1,0 +1,17 @@
+FROM i386/alpine:3.20
+
+RUN apk add --no-cache ca-certificates mailcap && \
+    addgroup -g 1337 genexec && \
+    adduser -D -u 1337 -h /var/lib/genexec -G genexec genexec
+
+EXPOSE 8000 8080
+VOLUME ["/var/lib/genexec"]
+ENTRYPOINT ["/usr/bin/genexec"]
+CMD ["server"]
+
+ENV GENEXEC_DATABASE_DSN sqlite:///var/lib/genexec/database.sqlite3
+ENV GENEXEC_UPLOAD_DSN file:///var/lib/genexec/uploads
+
+COPY bin/genexec /usr/bin/genexec
+WORKDIR /var/lib/genexec
+USER genexec

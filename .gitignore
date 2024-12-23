@@ -1,0 +1,9 @@
+.direnv/
+.devenv/
+.task/
+
+coverage.out
+
+bin/
+dist/
+storage/
