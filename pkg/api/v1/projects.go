@@ -427,9 +427,64 @@ func (a *API) AttachProjectToTeam(ctx context.Context, request AttachProjectToTe
 		}}, nil
 	}
 
-	return AttachProjectToTeam500JSONResponse{InternalServerErrorJSONResponse{
-		Message: ToPtr("Not implemented"),
-		Status:  ToPtr(http.StatusInternalServerError),
+	if err := a.storage.WithPrincipal(
+		current.GetUser(ctx),
+	).Projects.AttachTeam(
+		ctx,
+		model.TeamProjectParams{
+			ProjectID: record.ID,
+			TeamID:    request.Body.Team,
+			Perm:      request.Body.Perm,
+		},
+	); err != nil {
+		if errors.Is(err, store.ErrTeamNotFound) {
+			return AttachProjectToTeam404JSONResponse{NotFoundErrorJSONResponse{
+				Message: ToPtr("Failed to find team"),
+				Status:  ToPtr(http.StatusNotFound),
+			}}, nil
+		}
+
+		if errors.Is(err, store.ErrAlreadyAssigned) {
+			return AttachProjectToTeam412JSONResponse{AlreadyAttachedErrorJSONResponse{
+				Message: ToPtr("Team is already attached"),
+				Status:  ToPtr(http.StatusPreconditionFailed),
+			}}, nil
+		}
+
+		if v, ok := err.(validate.Errors); ok {
+			errors := make([]Validation, 0)
+
+			for _, verr := range v.Errors {
+				errors = append(
+					errors,
+					Validation{
+						Field:   ToPtr(verr.Field),
+						Message: ToPtr(verr.Error.Error()),
+					},
+				)
+			}
+
+			return AttachProjectToTeam422JSONResponse{ValidationErrorJSONResponse{
+				Status:  ToPtr(http.StatusUnprocessableEntity),
+				Message: ToPtr("Failed to validate project team"),
+				Errors:  ToPtr(errors),
+			}}, nil
+		}
+
+		log.Error().
+			Err(err).
+			Str("action", "AttachProjectToTeam").
+			Msg("Failed to attach project to team")
+
+		return AttachProjectToTeam500JSONResponse{InternalServerErrorJSONResponse{
+			Status:  ToPtr(http.StatusUnprocessableEntity),
+			Message: ToPtr("Failed to attach project to team"),
+		}}, nil
+	}
+
+	return AttachProjectToTeam200JSONResponse{SuccessMessageJSONResponse{
+		Message: ToPtr("Successfully attached project to team"),
+		Status:  ToPtr(http.StatusOK),
 	}}, nil
 }
 
@@ -472,9 +527,64 @@ func (a *API) PermitProjectTeam(ctx context.Context, request PermitProjectTeamRe
 		}}, nil
 	}
 
-	return PermitProjectTeam500JSONResponse{InternalServerErrorJSONResponse{
-		Message: ToPtr("Not implemented"),
-		Status:  ToPtr(http.StatusInternalServerError),
+	if err := a.storage.WithPrincipal(
+		current.GetUser(ctx),
+	).Projects.PermitTeam(
+		ctx,
+		model.TeamProjectParams{
+			ProjectID: record.ID,
+			TeamID:    request.Body.Team,
+			Perm:      request.Body.Perm,
+		},
+	); err != nil {
+		if errors.Is(err, store.ErrTeamNotFound) {
+			return PermitProjectTeam404JSONResponse{NotFoundErrorJSONResponse{
+				Message: ToPtr("Failed to find team"),
+				Status:  ToPtr(http.StatusNotFound),
+			}}, nil
+		}
+
+		if errors.Is(err, store.ErrNotAssigned) {
+			return PermitProjectTeam412JSONResponse{NotAttachedErrorJSONResponse{
+				Message: ToPtr("Team is not attached"),
+				Status:  ToPtr(http.StatusPreconditionFailed),
+			}}, nil
+		}
+
+		if v, ok := err.(validate.Errors); ok {
+			errors := make([]Validation, 0)
+
+			for _, verr := range v.Errors {
+				errors = append(
+					errors,
+					Validation{
+						Field:   ToPtr(verr.Field),
+						Message: ToPtr(verr.Error.Error()),
+					},
+				)
+			}
+
+			return PermitProjectTeam422JSONResponse{ValidationErrorJSONResponse{
+				Status:  ToPtr(http.StatusUnprocessableEntity),
+				Message: ToPtr("Failed to validate project team"),
+				Errors:  ToPtr(errors),
+			}}, nil
+		}
+
+		log.Error().
+			Err(err).
+			Str("action", "PermitProjectTeam").
+			Msg("Failed to update project team perms")
+
+		return PermitProjectTeam500JSONResponse{InternalServerErrorJSONResponse{
+			Status:  ToPtr(http.StatusUnprocessableEntity),
+			Message: ToPtr("Failed to update project team perms"),
+		}}, nil
+	}
+
+	return PermitProjectTeam200JSONResponse{SuccessMessageJSONResponse{
+		Message: ToPtr("Successfully updated project team perms"),
+		Status:  ToPtr(http.StatusOK),
 	}}, nil
 }
 
@@ -517,9 +627,43 @@ func (a *API) DeleteProjectFromTeam(ctx context.Context, request DeleteProjectFr
 		}}, nil
 	}
 
-	return DeleteProjectFromTeam500JSONResponse{InternalServerErrorJSONResponse{
-		Message: ToPtr("Not implemented"),
-		Status:  ToPtr(http.StatusInternalServerError),
+	if err := a.storage.WithPrincipal(
+		current.GetUser(ctx),
+	).Projects.DropTeam(
+		ctx,
+		model.TeamProjectParams{
+			ProjectID: record.ID,
+			TeamID:    request.Body.Team,
+		},
+	); err != nil {
+		if errors.Is(err, store.ErrTeamNotFound) {
+			return DeleteProjectFromTeam404JSONResponse{NotFoundErrorJSONResponse{
+				Message: ToPtr("Failed to find team"),
+				Status:  ToPtr(http.StatusPreconditionFailed),
+			}}, nil
+		}
+
+		if errors.Is(err, store.ErrNotAssigned) {
+			return DeleteProjectFromTeam412JSONResponse{NotAttachedErrorJSONResponse{
+				Message: ToPtr("Team is not attached"),
+				Status:  ToPtr(http.StatusPreconditionFailed),
+			}}, nil
+		}
+
+		log.Error().
+			Err(err).
+			Str("action", "DeleteProjectFromTeam").
+			Msg("Failed to drop project from team")
+
+		return DeleteProjectFromTeam500JSONResponse{InternalServerErrorJSONResponse{
+			Status:  ToPtr(http.StatusUnprocessableEntity),
+			Message: ToPtr("Failed to drop project from team"),
+		}}, nil
+	}
+
+	return DeleteProjectFromTeam200JSONResponse{SuccessMessageJSONResponse{
+		Message: ToPtr("Successfully dropped project from team"),
+		Status:  ToPtr(http.StatusOK),
 	}}, nil
 }
 
@@ -643,9 +787,64 @@ func (a *API) AttachProjectToUser(ctx context.Context, request AttachProjectToUs
 		}}, nil
 	}
 
-	return AttachProjectToUser500JSONResponse{InternalServerErrorJSONResponse{
-		Message: ToPtr("Not implemented"),
-		Status:  ToPtr(http.StatusInternalServerError),
+	if err := a.storage.WithPrincipal(
+		current.GetUser(ctx),
+	).Projects.AttachUser(
+		ctx,
+		model.UserProjectParams{
+			ProjectID: record.ID,
+			UserID:    request.Body.User,
+			Perm:      request.Body.Perm,
+		},
+	); err != nil {
+		if errors.Is(err, store.ErrUserNotFound) {
+			return AttachProjectToUser404JSONResponse{NotFoundErrorJSONResponse{
+				Message: ToPtr("Failed to find user"),
+				Status:  ToPtr(http.StatusNotFound),
+			}}, nil
+		}
+
+		if errors.Is(err, store.ErrAlreadyAssigned) {
+			return AttachProjectToUser412JSONResponse{AlreadyAttachedErrorJSONResponse{
+				Message: ToPtr("User is already attached"),
+				Status:  ToPtr(http.StatusPreconditionFailed),
+			}}, nil
+		}
+
+		if v, ok := err.(validate.Errors); ok {
+			errors := make([]Validation, 0)
+
+			for _, verr := range v.Errors {
+				errors = append(
+					errors,
+					Validation{
+						Field:   ToPtr(verr.Field),
+						Message: ToPtr(verr.Error.Error()),
+					},
+				)
+			}
+
+			return AttachProjectToUser422JSONResponse{ValidationErrorJSONResponse{
+				Status:  ToPtr(http.StatusUnprocessableEntity),
+				Message: ToPtr("Failed to validate project user"),
+				Errors:  ToPtr(errors),
+			}}, nil
+		}
+
+		log.Error().
+			Err(err).
+			Str("action", "AttachProjectToUser").
+			Msg("Failed to attach project to user")
+
+		return AttachProjectToUser500JSONResponse{InternalServerErrorJSONResponse{
+			Status:  ToPtr(http.StatusUnprocessableEntity),
+			Message: ToPtr("Failed to attach project to user"),
+		}}, nil
+	}
+
+	return AttachProjectToUser200JSONResponse{SuccessMessageJSONResponse{
+		Message: ToPtr("Successfully attached project to user"),
+		Status:  ToPtr(http.StatusOK),
 	}}, nil
 }
 
@@ -688,9 +887,64 @@ func (a *API) PermitProjectUser(ctx context.Context, request PermitProjectUserRe
 		}}, nil
 	}
 
-	return PermitProjectUser500JSONResponse{InternalServerErrorJSONResponse{
-		Message: ToPtr("Not implemented"),
-		Status:  ToPtr(http.StatusInternalServerError),
+	if err := a.storage.WithPrincipal(
+		current.GetUser(ctx),
+	).Projects.PermitUser(
+		ctx,
+		model.UserProjectParams{
+			ProjectID: record.ID,
+			UserID:    request.Body.User,
+			Perm:      request.Body.Perm,
+		},
+	); err != nil {
+		if errors.Is(err, store.ErrUserNotFound) {
+			return PermitProjectUser404JSONResponse{NotFoundErrorJSONResponse{
+				Message: ToPtr("Failed to find user"),
+				Status:  ToPtr(http.StatusNotFound),
+			}}, nil
+		}
+
+		if errors.Is(err, store.ErrNotAssigned) {
+			return PermitProjectUser412JSONResponse{NotAttachedErrorJSONResponse{
+				Message: ToPtr("User is not attached"),
+				Status:  ToPtr(http.StatusPreconditionFailed),
+			}}, nil
+		}
+
+		if v, ok := err.(validate.Errors); ok {
+			errors := make([]Validation, 0)
+
+			for _, verr := range v.Errors {
+				errors = append(
+					errors,
+					Validation{
+						Field:   ToPtr(verr.Field),
+						Message: ToPtr(verr.Error.Error()),
+					},
+				)
+			}
+
+			return PermitProjectUser422JSONResponse{ValidationErrorJSONResponse{
+				Status:  ToPtr(http.StatusUnprocessableEntity),
+				Message: ToPtr("Failed to validate project user"),
+				Errors:  ToPtr(errors),
+			}}, nil
+		}
+
+		log.Error().
+			Err(err).
+			Str("action", "PermitProjectUser").
+			Msg("Failed to update project user perms")
+
+		return PermitProjectUser500JSONResponse{InternalServerErrorJSONResponse{
+			Status:  ToPtr(http.StatusUnprocessableEntity),
+			Message: ToPtr("Failed to update project user perms"),
+		}}, nil
+	}
+
+	return PermitProjectUser200JSONResponse{SuccessMessageJSONResponse{
+		Message: ToPtr("Successfully updated project user perms"),
+		Status:  ToPtr(http.StatusOK),
 	}}, nil
 }
 
@@ -733,9 +987,43 @@ func (a *API) DeleteProjectFromUser(ctx context.Context, request DeleteProjectFr
 		}}, nil
 	}
 
-	return DeleteProjectFromUser500JSONResponse{InternalServerErrorJSONResponse{
-		Message: ToPtr("Not implemented"),
-		Status:  ToPtr(http.StatusInternalServerError),
+	if err := a.storage.WithPrincipal(
+		current.GetUser(ctx),
+	).Projects.DropUser(
+		ctx,
+		model.UserProjectParams{
+			ProjectID: record.ID,
+			UserID:    request.Body.User,
+		},
+	); err != nil {
+		if errors.Is(err, store.ErrUserNotFound) {
+			return DeleteProjectFromUser404JSONResponse{NotFoundErrorJSONResponse{
+				Message: ToPtr("Failed to find user"),
+				Status:  ToPtr(http.StatusPreconditionFailed),
+			}}, nil
+		}
+
+		if errors.Is(err, store.ErrNotAssigned) {
+			return DeleteProjectFromUser412JSONResponse{NotAttachedErrorJSONResponse{
+				Message: ToPtr("User is not attached"),
+				Status:  ToPtr(http.StatusPreconditionFailed),
+			}}, nil
+		}
+
+		log.Error().
+			Err(err).
+			Str("action", "DeleteProjectFromUser").
+			Msg("Failed to drop project from user")
+
+		return DeleteProjectFromUser500JSONResponse{InternalServerErrorJSONResponse{
+			Status:  ToPtr(http.StatusUnprocessableEntity),
+			Message: ToPtr("Failed to drop project from user"),
+		}}, nil
+	}
+
+	return DeleteProjectFromUser200JSONResponse{SuccessMessageJSONResponse{
+		Message: ToPtr("Successfully dropped project from user"),
+		Status:  ToPtr(http.StatusOK),
 	}}, nil
 }
 
