@@ -4357,6 +4357,7 @@ components:
           type: "string"
           default: "user"
           enum:
+            - "owner"
             - "user"
             - "admin"
         created_at:
@@ -4465,6 +4466,7 @@ components:
           type: "string"
           default: "user"
           enum:
+            - "owner"
             - "user"
             - "admin"
         created_at:
@@ -4502,6 +4504,7 @@ components:
           type: "string"
           default: "user"
           enum:
+            - "owner"
             - "user"
             - "admin"
         created_at:
