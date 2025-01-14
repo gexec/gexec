@@ -68,6 +68,27 @@ func setupConfig() {
 			Err(err).
 			Msg("Failed to parse config file")
 	}
+
+	{
+		passphrase, err := config.Value(cfg.Encrypt.Passphrase)
+
+		if err != nil {
+			log.Fatal().
+				Err(err).
+				Msg("Failed to parse encrypt passphrase secret")
+
+			os.Exit(1)
+		}
+
+		if len(passphrase) != 32 {
+			log.Fatal().
+				Msg("Encryption passphrase got to be 32 chars")
+
+			os.Exit(1)
+		}
+
+		cfg.Encrypt.Passphrase = passphrase
+	}
 }
 
 func readConfig() error {

@@ -176,7 +176,8 @@ tasks:
       - 'cmd/**/*.go'
       - 'pkg/**/*.go'
     env:
-      GENEXEC_LOG_LEVEL: "debug"
+      GENEXEC_LOG_LEVEL: "{{ .GENEXEC_LOG_LEVEL | default \"debug\" }}"
+      GENEXEC_ENCRYPT_PASSPHRASE: "aZRNei17y80b9iDR9fSqryhLzlk28OHZ"
 
   watch:runner:
     desc: Run reloading development runner
@@ -188,7 +189,8 @@ tasks:
       - 'cmd/**/*.go'
       - 'pkg/**/*.go'
     env:
-      GENEXEC_LOG_LEVEL: "debug"
+      GENEXEC_LOG_LEVEL: "{{ .GENEXEC_LOG_LEVEL | default \"debug\" }}"
+      GENEXEC_ENCRYPT_PASSPHRASE: "aZRNei17y80b9iDR9fSqryhLzlk28OHZ"
 
   watch:frontend:
     desc: Run reloading development frontend

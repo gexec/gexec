@@ -54,6 +54,11 @@ type Database struct {
 	Options  map[string]string `mapstructure:"options"`
 }
 
+// Encrypt defines the encrypt configuration.
+type Encrypt struct {
+	Passphrase string `mapstructure:"passphrase"`
+}
+
 // Upload defines the asset upload configuration.
 type Upload struct {
 	Driver   string `mapstructure:"driver"`
@@ -94,6 +99,7 @@ type Config struct {
 	Logs     Logs     `mapstructure:"log"`
 	Auth     Auth     `mapstructure:"auth"`
 	Database Database `mapstructure:"database"`
+	Encrypt  Encrypt  `mapstructure:"encrypt"`
 	Upload   Upload   `mapstructure:"upload"`
 	Token    Token    `mapstructure:"token"`
 	Scim     Scim     `mapstructure:"scim"`

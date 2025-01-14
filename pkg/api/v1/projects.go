@@ -73,6 +73,7 @@ func (a *API) ShowProject(ctx context.Context, request ShowProjectRequestObject)
 		log.Error().
 			Err(err).
 			Str("action", "ShowProject").
+			Str("project", request.ProjectId).
 			Msg("Failed to load project")
 
 		return ShowProject500JSONResponse{InternalServerErrorJSONResponse{
@@ -177,6 +178,7 @@ func (a *API) UpdateProject(ctx context.Context, request UpdateProjectRequestObj
 		log.Error().
 			Err(err).
 			Str("action", "UpdateProject").
+			Str("project", request.ProjectId).
 			Msg("Failed to load project")
 
 		return UpdateProject500JSONResponse{InternalServerErrorJSONResponse{
@@ -232,6 +234,7 @@ func (a *API) UpdateProject(ctx context.Context, request UpdateProjectRequestObj
 		log.Error().
 			Err(err).
 			Str("action", "UpdateProject").
+			Str("project", record.ID).
 			Msg("Failed to update project")
 
 		return UpdateProject500JSONResponse{InternalServerErrorJSONResponse{
@@ -265,6 +268,7 @@ func (a *API) DeleteProject(ctx context.Context, request DeleteProjectRequestObj
 		log.Error().
 			Err(err).
 			Str("action", "DeleteProject").
+			Str("project", request.ProjectId).
 			Msg("Failed to load project")
 
 		return DeleteProject500JSONResponse{InternalServerErrorJSONResponse{
@@ -293,6 +297,7 @@ func (a *API) DeleteProject(ctx context.Context, request DeleteProjectRequestObj
 		log.Error().
 			Err(err).
 			Str("action", "DeletProject").
+			Str("project", record.ID).
 			Msg("Failed to delete project")
 
 		return DeleteProject400JSONResponse{ActionFailedErrorJSONResponse{
@@ -327,6 +332,7 @@ func (a *API) ListProjectTeams(ctx context.Context, request ListProjectTeamsRequ
 		log.Error().
 			Err(err).
 			Str("action", "ListProjectTeams").
+			Str("project", request.ProjectId).
 			Msg("Failed to load project")
 
 		return ListProjectTeams500JSONResponse{InternalServerErrorJSONResponse{
@@ -366,6 +372,7 @@ func (a *API) ListProjectTeams(ctx context.Context, request ListProjectTeamsRequ
 		log.Error().
 			Err(err).
 			Str("action", "ListProjectTeams").
+			Str("project", record.ID).
 			Msg("Failed to load project teams")
 
 		return ListProjectTeams500JSONResponse{InternalServerErrorJSONResponse{
@@ -408,6 +415,7 @@ func (a *API) AttachProjectToTeam(ctx context.Context, request AttachProjectToTe
 		log.Error().
 			Err(err).
 			Str("action", "AttachProjectToTeam").
+			Str("project", request.ProjectId).
 			Msg("Failed to load project")
 
 		return AttachProjectToTeam500JSONResponse{InternalServerErrorJSONResponse{
@@ -474,6 +482,8 @@ func (a *API) AttachProjectToTeam(ctx context.Context, request AttachProjectToTe
 		log.Error().
 			Err(err).
 			Str("action", "AttachProjectToTeam").
+			Str("project", record.ID).
+			Str("team", request.Body.Team).
 			Msg("Failed to attach project to team")
 
 		return AttachProjectToTeam500JSONResponse{InternalServerErrorJSONResponse{
@@ -508,6 +518,7 @@ func (a *API) PermitProjectTeam(ctx context.Context, request PermitProjectTeamRe
 		log.Error().
 			Err(err).
 			Str("action", "PermitProjectTeam").
+			Str("project", request.ProjectId).
 			Msg("Failed to load project")
 
 		return PermitProjectTeam500JSONResponse{InternalServerErrorJSONResponse{
@@ -574,6 +585,8 @@ func (a *API) PermitProjectTeam(ctx context.Context, request PermitProjectTeamRe
 		log.Error().
 			Err(err).
 			Str("action", "PermitProjectTeam").
+			Str("project", record.ID).
+			Str("team", request.Body.Team).
 			Msg("Failed to update project team perms")
 
 		return PermitProjectTeam500JSONResponse{InternalServerErrorJSONResponse{
@@ -608,6 +621,7 @@ func (a *API) DeleteProjectFromTeam(ctx context.Context, request DeleteProjectFr
 		log.Error().
 			Err(err).
 			Str("action", "DeleteProjectFromTeam").
+			Str("project", request.ProjectId).
 			Msg("Failed to load project")
 
 		return DeleteProjectFromTeam500JSONResponse{InternalServerErrorJSONResponse{
@@ -653,6 +667,8 @@ func (a *API) DeleteProjectFromTeam(ctx context.Context, request DeleteProjectFr
 		log.Error().
 			Err(err).
 			Str("action", "DeleteProjectFromTeam").
+			Str("project", record.ID).
+			Str("team", request.Body.Team).
 			Msg("Failed to drop project from team")
 
 		return DeleteProjectFromTeam500JSONResponse{InternalServerErrorJSONResponse{
@@ -687,6 +703,7 @@ func (a *API) ListProjectUsers(ctx context.Context, request ListProjectUsersRequ
 		log.Error().
 			Err(err).
 			Str("action", "ListProjectUsers").
+			Str("project", request.ProjectId).
 			Msg("Failed to load project")
 
 		return ListProjectUsers500JSONResponse{InternalServerErrorJSONResponse{
@@ -726,6 +743,7 @@ func (a *API) ListProjectUsers(ctx context.Context, request ListProjectUsersRequ
 		log.Error().
 			Err(err).
 			Str("action", "ListProjectUsers").
+			Str("project", record.ID).
 			Msg("Failed to load project users")
 
 		return ListProjectUsers500JSONResponse{InternalServerErrorJSONResponse{
@@ -768,6 +786,7 @@ func (a *API) AttachProjectToUser(ctx context.Context, request AttachProjectToUs
 		log.Error().
 			Err(err).
 			Str("action", "AttachProjectToUser").
+			Str("project", request.ProjectId).
 			Msg("Failed to load project")
 
 		return AttachProjectToUser500JSONResponse{InternalServerErrorJSONResponse{
@@ -834,6 +853,8 @@ func (a *API) AttachProjectToUser(ctx context.Context, request AttachProjectToUs
 		log.Error().
 			Err(err).
 			Str("action", "AttachProjectToUser").
+			Str("project", record.ID).
+			Str("user", request.Body.User).
 			Msg("Failed to attach project to user")
 
 		return AttachProjectToUser500JSONResponse{InternalServerErrorJSONResponse{
@@ -868,6 +889,7 @@ func (a *API) PermitProjectUser(ctx context.Context, request PermitProjectUserRe
 		log.Error().
 			Err(err).
 			Str("action", "PermitProjectUser").
+			Str("project", request.ProjectId).
 			Msg("Failed to load project")
 
 		return PermitProjectUser500JSONResponse{InternalServerErrorJSONResponse{
@@ -934,6 +956,8 @@ func (a *API) PermitProjectUser(ctx context.Context, request PermitProjectUserRe
 		log.Error().
 			Err(err).
 			Str("action", "PermitProjectUser").
+			Str("project", record.ID).
+			Str("user", request.Body.User).
 			Msg("Failed to update project user perms")
 
 		return PermitProjectUser500JSONResponse{InternalServerErrorJSONResponse{
@@ -968,6 +992,7 @@ func (a *API) DeleteProjectFromUser(ctx context.Context, request DeleteProjectFr
 		log.Error().
 			Err(err).
 			Str("action", "DeleteProjectFromUser").
+			Str("project", request.ProjectId).
 			Msg("Failed to load project")
 
 		return DeleteProjectFromUser500JSONResponse{InternalServerErrorJSONResponse{
@@ -1013,6 +1038,8 @@ func (a *API) DeleteProjectFromUser(ctx context.Context, request DeleteProjectFr
 		log.Error().
 			Err(err).
 			Str("action", "DeleteProjectFromUser").
+			Str("project", record.ID).
+			Str("user", request.Body.User).
 			Msg("Failed to drop project from user")
 
 		return DeleteProjectFromUser500JSONResponse{InternalServerErrorJSONResponse{
@@ -1120,7 +1147,11 @@ func (a *API) permitManageProject(_ context.Context, definition projectPermissio
 				break
 			}
 
-			return true
+			if p.Perm == model.AdminPerm {
+				return true
+			}
+
+			break
 		}
 	}
 
@@ -1135,7 +1166,11 @@ func (a *API) permitManageProject(_ context.Context, definition projectPermissio
 					break
 				}
 
-				return true
+				if p.Perm == model.AdminPerm {
+					return true
+				}
+
+				break
 			}
 		}
 	}

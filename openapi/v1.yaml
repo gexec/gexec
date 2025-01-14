@@ -820,7 +820,7 @@ paths:
         $ref: "#/components/requestBodies/CreateProjectEnvironmentBody"
       responses:
         "200":
-          $ref: "#/components/responses/ProjectEnvironmentyResponse"
+          $ref: "#/components/responses/ProjectEnvironmentResponse"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -842,7 +842,7 @@ paths:
         - $ref: "#/components/parameters/EnvironmentParam"
       responses:
         "200":
-          $ref: "#/components/responses/ProjectEnvironmentyResponse"
+          $ref: "#/components/responses/ProjectEnvironmentResponse"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -863,7 +863,7 @@ paths:
         $ref: "#/components/requestBodies/UpdateProjectEnvironmentBody"
       responses:
         "200":
-          $ref: "#/components/responses/ProjectEnvironmentyResponse"
+          $ref: "#/components/responses/ProjectEnvironmentResponse"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -3338,7 +3338,7 @@ components:
                 type: "array"
                 items:
                   $ref: "#/components/schemas/Environment"
-    ProjectEnvironmentyResponse:
+    ProjectEnvironmentResponse:
       description: "The details for a environment of a project"
       content:
         application/json:

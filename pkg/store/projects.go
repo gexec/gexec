@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Machiel/slugify"
+	"github.com/dchest/uniuri"
 	"github.com/genexec/genexec/pkg/model"
 	"github.com/genexec/genexec/pkg/validate"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -39,7 +41,7 @@ func (s *Projects) AllowedIDs() []string {
 	return result
 }
 
-// List implements the listing of all users.
+// List implements the listing of all projects.
 func (s *Projects) List(ctx context.Context, params model.ListParams) ([]*model.Project, int64, error) {
 	records := make([]*model.Project, 0)
 
@@ -88,7 +90,7 @@ func (s *Projects) List(ctx context.Context, params model.ListParams) ([]*model.
 	return records, int64(counter), nil
 }
 
-// Show implements the details for a specific user.
+// Show implements the details for a specific project.
 func (s *Projects) Show(ctx context.Context, name string) (*model.Project, error) {
 	record := &model.Project{}
 
@@ -109,14 +111,11 @@ func (s *Projects) Show(ctx context.Context, name string) (*model.Project, error
 // Create implements the create of a new project.
 func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 	if record.Slug == "" {
-		record.Slug = Slugify(
+		record.Slug = s.slugify(
 			ctx,
-			s.client.handle.NewSelect().
-				Model((*model.Project)(nil)),
 			"slug",
 			record.Name,
 			"",
-			false,
 		)
 	}
 
@@ -146,14 +145,11 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 // Update implements the update of an existing project.
 func (s *Projects) Update(ctx context.Context, record *model.Project) error {
 	if record.Slug == "" {
-		record.Slug = Slugify(
+		record.Slug = s.slugify(
 			ctx,
-			s.client.handle.NewSelect().
-				Model((*model.Project)(nil)),
 			"slug",
 			record.Name,
 			record.ID,
-			false,
 		)
 	}
 
@@ -606,7 +602,7 @@ func (s *Projects) uniqueValueIsPresent(ctx context.Context, key, id string) fun
 
 		q := s.client.handle.NewSelect().
 			Model((*model.Project)(nil)).
-			Where(fmt.Sprintf("%s = ?", key), val)
+			Where("? = ?", bun.Ident(key), val)
 
 		if id != "" {
 			q = q.Where(
@@ -627,6 +623,41 @@ func (s *Projects) uniqueValueIsPresent(ctx context.Context, key, id string) fun
 
 		return nil
 	}
+}
+
+func (s *Projects) slugify(ctx context.Context, column, value, id string) string {
+	var (
+		slug string
+	)
+
+	for i := 0; true; i++ {
+		if i == 0 {
+			slug = slugify.Slugify(value)
+		} else {
+			slug = slugify.Slugify(
+				fmt.Sprintf("%s-%s", value, uniuri.NewLen(6)),
+			)
+		}
+
+		query := s.client.handle.NewSelect().
+			Model((*model.Project)(nil)).
+			Where("? = ?", bun.Ident(column), slug)
+
+		if id != "" {
+			query = query.Where(
+				"id != ?",
+				id,
+			)
+		}
+
+		if count, err := query.Count(
+			ctx,
+		); err == nil && count == 0 {
+			break
+		}
+	}
+
+	return slug
 }
 
 func (s *Projects) validSort(val string) (string, bool) {

@@ -10,6 +10,7 @@ import (
 	"github.com/genexec/genexec/pkg/model"
 	"github.com/genexec/genexec/pkg/validate"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/uptrace/bun"
 )
 
 // Users provides all database operations related to users.
@@ -534,7 +535,7 @@ func (s *Users) uniqueValueIsPresent(ctx context.Context, key, id string) func(v
 
 		q := s.client.handle.NewSelect().
 			Model((*model.User)(nil)).
-			Where(fmt.Sprintf("%s = ?", key), val)
+			Where("? = ?", bun.Ident(key), val)
 
 		if id != "" {
 			q = q.Where(

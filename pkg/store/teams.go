@@ -7,9 +7,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Machiel/slugify"
+	"github.com/dchest/uniuri"
 	"github.com/genexec/genexec/pkg/model"
 	"github.com/genexec/genexec/pkg/validate"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/uptrace/bun"
 )
 
 // Teams provides all database operations related to teams.
@@ -82,14 +85,11 @@ func (s *Teams) Show(ctx context.Context, name string) (*model.Team, error) {
 // Create implements the create of a new team.
 func (s *Teams) Create(ctx context.Context, record *model.Team) error {
 	if record.Slug == "" {
-		record.Slug = Slugify(
+		record.Slug = s.slugify(
 			ctx,
-			s.client.handle.NewSelect().
-				Model((*model.Team)(nil)),
 			"slug",
 			record.Name,
 			"",
-			false,
 		)
 	}
 
@@ -119,14 +119,11 @@ func (s *Teams) Create(ctx context.Context, record *model.Team) error {
 // Update implements the update of an existing team.
 func (s *Teams) Update(ctx context.Context, record *model.Team) error {
 	if record.Slug == "" {
-		record.Slug = Slugify(
+		record.Slug = s.slugify(
 			ctx,
-			s.client.handle.NewSelect().
-				Model((*model.Team)(nil)),
 			"slug",
 			record.Name,
 			record.ID,
-			false,
 		)
 	}
 
@@ -580,7 +577,7 @@ func (s *Teams) uniqueValueIsPresent(ctx context.Context, key, id string) func(v
 
 		q := s.client.handle.NewSelect().
 			Model((*model.Team)(nil)).
-			Where(fmt.Sprintf("%s = ?", key), val)
+			Where("? = ?", bun.Ident(key), val)
 
 		if id != "" {
 			q = q.Where(
@@ -601,6 +598,41 @@ func (s *Teams) uniqueValueIsPresent(ctx context.Context, key, id string) func(v
 
 		return nil
 	}
+}
+
+func (s *Teams) slugify(ctx context.Context, column, value, id string) string {
+	var (
+		slug string
+	)
+
+	for i := 0; true; i++ {
+		if i == 0 {
+			slug = slugify.Slugify(value)
+		} else {
+			slug = slugify.Slugify(
+				fmt.Sprintf("%s-%s", value, uniuri.NewLen(6)),
+			)
+		}
+
+		query := s.client.handle.NewSelect().
+			Model((*model.Team)(nil)).
+			Where("? = ?", bun.Ident(column), slug)
+
+		if id != "" {
+			query = query.Where(
+				"id != ?",
+				id,
+			)
+		}
+
+		if count, err := query.Count(
+			ctx,
+		); err == nil && count == 0 {
+			break
+		}
+	}
+
+	return slug
 }
 
 func (s *Teams) validSort(val string) (string, bool) {

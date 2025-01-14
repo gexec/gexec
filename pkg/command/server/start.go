@@ -28,38 +28,39 @@ var (
 		Args:  cobra.NoArgs,
 	}
 
-	defaultMetricsAddr      = "0.0.0.0:8000"
-	defaultMetricsToken     = ""
-	defaultMetricsPprof     = false
-	defaultServerAddr       = "0.0.0.0:8080"
-	defaultServerHost       = "http://localhost:8080"
-	defaultServerRoot       = "/api"
-	defaultServerCert       = ""
-	defaultServerKey        = ""
-	defaultDatabaseDriver   = "sqlite3"
-	defaultDatabaseAddress  = ""
-	defaultDatabasePort     = ""
-	defaultDatabaseUsername = ""
-	defaultDatabasePassword = ""
-	defaultDatabaseName     = "storage/genexec.sqlite3"
-	defaultDatabaseOptions  = make(map[string]string, 0)
-	defaultUploadDriver     = "file"
-	defaultUploadEndpoint   = ""
-	defaultUploadPath       = "storage/uploads/"
-	defaultUploadAccess     = ""
-	defaultUploadSecret     = ""
-	defaultUploadBucket     = ""
-	defaultUploadRegion     = "us-east-1"
-	defaultUploadPerms      = "0755"
-	defaultTokenSecret      = secret.Generate(32)
-	defaultTokenExpire      = time.Hour * 1
-	defaultScimEnabled      = false
-	defaultScimToken        = ""
-	defaultAdminCreate      = true
-	defaultAdminUsername    = "admin"
-	defaultAdminPassword    = "admin"
-	defaultAdminEmail       = "admin@localhost"
-	defaultAuthConfig       = ""
+	defaultMetricsAddr       = "0.0.0.0:8000"
+	defaultMetricsToken      = ""
+	defaultMetricsPprof      = false
+	defaultServerAddr        = "0.0.0.0:8080"
+	defaultServerHost        = "http://localhost:8080"
+	defaultServerRoot        = "/api"
+	defaultServerCert        = ""
+	defaultServerKey         = ""
+	defaultEncryptPassphrase = secret.Generate(32)
+	defaultDatabaseDriver    = "sqlite3"
+	defaultDatabaseAddress   = ""
+	defaultDatabasePort      = ""
+	defaultDatabaseUsername  = ""
+	defaultDatabasePassword  = ""
+	defaultDatabaseName      = "storage/genexec.sqlite3"
+	defaultDatabaseOptions   = make(map[string]string, 0)
+	defaultUploadDriver      = "file"
+	defaultUploadEndpoint    = ""
+	defaultUploadPath        = "storage/uploads/"
+	defaultUploadAccess      = ""
+	defaultUploadSecret      = ""
+	defaultUploadBucket      = ""
+	defaultUploadRegion      = "us-east-1"
+	defaultUploadPerms       = "0755"
+	defaultTokenSecret       = secret.Generate(32)
+	defaultTokenExpire       = time.Hour * 1
+	defaultScimEnabled       = false
+	defaultScimToken         = ""
+	defaultAdminCreate       = true
+	defaultAdminUsername     = "admin"
+	defaultAdminPassword     = "admin"
+	defaultAdminEmail        = "admin@localhost"
+	defaultAuthConfig        = ""
 )
 
 func init() {
@@ -96,6 +97,10 @@ func init() {
 	serverCmd.PersistentFlags().String("server-key", defaultServerKey, "Path to SSL key")
 	viper.SetDefault("server.key", defaultServerKey)
 	_ = viper.BindPFlag("server.key", serverCmd.PersistentFlags().Lookup("server-key"))
+
+	serverCmd.PersistentFlags().String("encrypt-passphrase", defaultEncryptPassphrase, "Passphrase for secret encryption")
+	viper.SetDefault("encrypt.passphrase", defaultEncryptPassphrase)
+	_ = viper.BindPFlag("encrypt.driver", serverCmd.PersistentFlags().Lookup("encrypt-passphrase"))
 
 	serverCmd.PersistentFlags().String("database-driver", defaultDatabaseDriver, "Driver for the database")
 	viper.SetDefault("database.driver", defaultDatabaseDriver)

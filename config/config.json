@@ -24,6 +24,9 @@
   "auth": {
     "config": ""
   },
+  "encrypt": {
+    "passphrase": ""
+  },
   "database": {
     "driver": "sqlite3",
     "address": "",

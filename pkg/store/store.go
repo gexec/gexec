@@ -47,10 +47,17 @@ type Store struct {
 	handle          *bun.DB
 	principal       *model.User
 
-	Auth     *Auth
-	Teams    *Teams
-	Users    *Users
-	Projects *Projects
+	Auth         *Auth
+	Teams        *Teams
+	Users        *Users
+	Projects     *Projects
+	Credentials  *Credentials
+	Repositories *Repositories
+	Inventories  *Inventories
+	Environments *Environments
+	Templates    *Templates
+	Schedules    *Schedules
+	Tasks        *Tasks
 }
 
 // Handle returns a database handle.
@@ -195,7 +202,7 @@ func (s *Store) Open() (bool, error) {
 
 	s.handle.AddQueryHook(
 		bunzerolog.NewQueryHook(
-			bunzerolog.WithQueryLogLevel(zerolog.DebugLevel),
+			bunzerolog.WithQueryLogLevel(zerolog.TraceLevel),
 			bunzerolog.WithSlowQueryLogLevel(zerolog.WarnLevel),
 			bunzerolog.WithErrorQueryLogLevel(zerolog.ErrorLevel),
 			bunzerolog.WithSlowQueryThreshold(3*time.Second),
@@ -414,11 +421,9 @@ func NewStore(cfg config.Database) (*Store, error) {
 	client := &Store{
 		driver:   cfg.Driver,
 		database: cfg.Name,
-
 		username: username,
 		password: password,
-
-		meta: url.Values{},
+		meta:     url.Values{},
 	}
 
 	if val, ok := cfg.Options["maxOpenConns"]; ok {
@@ -528,6 +533,34 @@ func NewStore(cfg config.Database) (*Store, error) {
 	}
 
 	client.Projects = &Projects{
+		client: client,
+	}
+
+	client.Credentials = &Credentials{
+		client: client,
+	}
+
+	client.Repositories = &Repositories{
+		client: client,
+	}
+
+	client.Inventories = &Inventories{
+		client: client,
+	}
+
+	client.Environments = &Environments{
+		client: client,
+	}
+
+	client.Templates = &Templates{
+		client: client,
+	}
+
+	client.Schedules = &Schedules{
+		client: client,
+	}
+
+	client.Tasks = &Tasks{
 		client: client,
 	}
 
