@@ -162,20 +162,6 @@ func (a *API) ShowProjectCredential(ctx context.Context, request ShowProjectCred
 		}}, nil
 	}
 
-	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("action", "ShowProjectCredential").
-			Str("project", parent.ID).
-			Str("credential", record.ID).
-			Msg("Failed to decrypt secrets")
-
-		return ShowProjectCredential500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to decrypt credentials"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
-
 	return ShowProjectCredential200JSONResponse{ProjectCredentialResponseJSONResponse(
 		a.convertCredential(record),
 	)}, nil
