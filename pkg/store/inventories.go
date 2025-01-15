@@ -4,10 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"strings"
 
+	"github.com/Machiel/slugify"
+	"github.com/dchest/uniuri"
 	"github.com/genexec/genexec/pkg/model"
 	"github.com/genexec/genexec/pkg/validate"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/uptrace/bun"
 )
 
 // Inventories provides all database operations related to inventories.
@@ -21,7 +26,10 @@ func (s *Inventories) List(ctx context.Context, projectID string, params model.L
 
 	q := s.client.handle.NewSelect().
 		Model(&records).
-		Where("project_id = ?", projectID)
+		Relation("Repository").
+		Relation("Credential").
+		Relation("Become").
+		Where("inventory.project_id = ?", projectID)
 
 	if val, ok := s.validSort(params.Sort); ok {
 		q = q.Order(strings.Join(
@@ -64,8 +72,11 @@ func (s *Inventories) Show(ctx context.Context, projectID, name string) (*model.
 
 	if err := s.client.handle.NewSelect().
 		Model(record).
-		Where("project_id = ?", projectID).
-		Where("id = ? OR slug = ?", name, name).
+		Relation("Repository").
+		Relation("Credential").
+		Relation("Become").
+		Where("inventory.project_id = ?", projectID).
+		Where("inventory.id = ? OR inventory.slug = ?", name, name).
 		Scan(ctx); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return record, ErrInventoryNotFound
@@ -79,17 +90,15 @@ func (s *Inventories) Show(ctx context.Context, projectID, name string) (*model.
 
 // Create implements the create of a new inventory.
 func (s *Inventories) Create(ctx context.Context, projectID string, record *model.Inventory) error {
-	// if record.Slug == "" {
-	// 	record.Slug = Slugify(
-	// 		ctx,
-	// 		s.client.handle.NewSelect().
-	// 			Model((*model.Inventory)(nil)),
-	// 		"slug",
-	// 		record.Name,
-	// 		"",
-	// 		false,
-	// 	)
-	// }
+	if record.Slug == "" {
+		record.Slug = s.slugify(
+			ctx,
+			"slug",
+			record.Name,
+			"",
+			projectID,
+		)
+	}
 
 	if err := s.validate(ctx, record, false); err != nil {
 		return err
@@ -106,17 +115,15 @@ func (s *Inventories) Create(ctx context.Context, projectID string, record *mode
 
 // Update implements the update of an existing inventory.
 func (s *Inventories) Update(ctx context.Context, projectID string, record *model.Inventory) error {
-	// if record.Slug == "" {
-	// 	record.Slug = Slugify(
-	// 		ctx,
-	// 		s.client.handle.NewSelect().
-	// 			Model((*model.Inventory)(nil)),
-	// 		"slug",
-	// 		record.Name,
-	// 		record.ID,
-	// 		false,
-	// 	)
-	// }
+	if record.Slug == "" {
+		record.Slug = s.slugify(
+			ctx,
+			"slug",
+			record.Name,
+			"",
+			projectID,
+		)
+	}
 
 	if err := s.validate(ctx, record, true); err != nil {
 		return err
@@ -148,17 +155,71 @@ func (s *Inventories) Delete(ctx context.Context, projectID, name string) error 
 func (s *Inventories) validate(ctx context.Context, record *model.Inventory, _ bool) error {
 	errs := validate.Errors{}
 
-	// if err := validation.Validate(
-	// 	record.Slug,
-	// 	validation.Required,
-	// 	validation.Length(3, 255),
-	// 	validation.By(s.uniqueValueIsPresent(ctx, "slug", record.ID)),
-	// ); err != nil {
-	// 	errs.Errors = append(errs.Errors, validate.Error{
-	// 		Field: "slug",
-	// 		Error: err,
-	// 	})
-	// }
+	if err := validation.Validate(
+		record.Slug,
+		validation.Required,
+		validation.Length(3, 255),
+		validation.By(s.uniqueValueIsPresent(ctx, "slug", record.ID, record.ProjectID)),
+	); err != nil {
+		errs.Errors = append(errs.Errors, validate.Error{
+			Field: "slug",
+			Error: err,
+		})
+	}
+
+	if err := validation.Validate(
+		record.Name,
+		validation.Required,
+		validation.Length(3, 255),
+		validation.By(s.uniqueValueIsPresent(ctx, "name", record.ID, record.ProjectID)),
+	); err != nil {
+		errs.Errors = append(errs.Errors, validate.Error{
+			Field: "name",
+			Error: err,
+		})
+	}
+
+	if err := validation.Validate(
+		record.Kind,
+		validation.Required,
+		validation.In("static", "file", "workspace"),
+	); err != nil {
+		errs.Errors = append(errs.Errors, validate.Error{
+			Field: "kind",
+			Error: err,
+		})
+	}
+
+	if err := validation.Validate(
+		record.RepositoryID,
+		validation.Required,
+		validation.By(s.client.Repositories.ValidateExists(ctx, record.ProjectID)),
+	); err != nil {
+		errs.Errors = append(errs.Errors, validate.Error{
+			Field: "repository_id",
+			Error: err,
+		})
+	}
+
+	if err := validation.Validate(
+		record.CredentialID,
+		validation.By(s.client.Credentials.ValidateExists(ctx, record.ProjectID)),
+	); err != nil {
+		errs.Errors = append(errs.Errors, validate.Error{
+			Field: "credential_id",
+			Error: err,
+		})
+	}
+
+	if err := validation.Validate(
+		record.BecomeID,
+		validation.By(s.client.Credentials.ValidateExists(ctx, record.ProjectID)),
+	); err != nil {
+		errs.Errors = append(errs.Errors, validate.Error{
+			Field: "become_id",
+			Error: err,
+		})
+	}
 
 	if len(errs.Errors) > 0 {
 		return errs
@@ -167,20 +228,89 @@ func (s *Inventories) validate(ctx context.Context, record *model.Inventory, _ b
 	return nil
 }
 
+func (s *Inventories) uniqueValueIsPresent(ctx context.Context, key, id, projectID string) func(value interface{}) error {
+	return func(value interface{}) error {
+		val, _ := value.(string)
+
+		q := s.client.handle.NewSelect().
+			Model((*model.Inventory)(nil)).
+			Where("project_id = ? AND ? = ?", projectID, bun.Ident(key), val)
+
+		if id != "" {
+			q = q.Where(
+				"id != ?",
+				id,
+			)
+		}
+
+		exists, err := q.Exists(ctx)
+
+		if err != nil {
+			return err
+		}
+
+		if exists {
+			return errors.New("is already taken")
+		}
+
+		return nil
+	}
+}
+
+func (s *Inventories) slugify(ctx context.Context, column, value, id, projectID string) string {
+	var (
+		slug string
+	)
+
+	for i := 0; true; i++ {
+		if i == 0 {
+			slug = slugify.Slugify(value)
+		} else {
+			slug = slugify.Slugify(
+				fmt.Sprintf("%s-%s", value, uniuri.NewLen(6)),
+			)
+		}
+
+		query := s.client.handle.NewSelect().
+			Model((*model.Inventory)(nil)).
+			Where("project_id = ? AND ? = ?", projectID, bun.Ident(column), slug)
+
+		if id != "" {
+			query = query.Where(
+				"id != ?",
+				id,
+			)
+		}
+
+		if count, err := query.Count(
+			ctx,
+		); err == nil && count == 0 {
+			break
+		}
+	}
+
+	return slug
+}
+
 func (s *Inventories) validSort(val string) (string, bool) {
 	if val == "" {
-		return "foobar", true
+		return "inventory.name", true
 	}
 
 	val = strings.ToLower(val)
 
-	for _, name := range []string{
-		"foobar",
+	for key, name := range map[string]string{
+		"name":       "inventory.name",
+		"slug":       "inventory.slug",
+		"kind":       "inventory.kind",
+		"repository": "repository.name",
+		"credential": "credential.name",
+		"become":     "become.name",
 	} {
-		if val == name {
-			return val, true
+		if val == key {
+			return name, true
 		}
 	}
 
-	return "foobar", true
+	return "inventory.name", true
 }

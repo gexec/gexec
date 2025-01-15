@@ -147,6 +147,34 @@ func (s *Repositories) Delete(ctx context.Context, projectID, name string) error
 
 	return nil
 }
+
+func (s *Repositories) ValidateExists(ctx context.Context, projectID string) func(value interface{}) error {
+	return func(value interface{}) error {
+		val, _ := value.(string)
+
+		if val == "" {
+			return nil
+		}
+
+		q := s.client.handle.NewSelect().
+			Model((*model.Repository)(nil)).
+			Where("project_id = ?", projectID).
+			Where("id = ?", val)
+
+		exists, err := q.Exists(ctx)
+
+		if err != nil {
+			return err
+		}
+
+		if !exists {
+			return errors.New("does not exist")
+		}
+
+		return nil
+	}
+}
+
 func (s *Repositories) validate(ctx context.Context, record *model.Repository, _ bool) error {
 	errs := validate.Errors{}
 

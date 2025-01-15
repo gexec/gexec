@@ -207,13 +207,27 @@ func (a *API) CreateProjectInventory(ctx context.Context, request CreateProjectI
 	}
 
 	record := &model.Inventory{
-		ProjectID: parent.ID,
+		ProjectID:    parent.ID,
+		RepositoryID: request.Body.RepositoryId,
+		Name:         request.Body.Name,
+		Kind:         request.Body.Kind,
 	}
 
-	// TODO
-	// if request.Body.Dummy != nil {
-	// 	record.Dummy = FromPtr(request.Body.Dummy)
-	// }
+	if request.Body.CredentialId != nil {
+		record.CredentialID = FromPtr(request.Body.CredentialId)
+	}
+
+	if request.Body.BecomeId != nil {
+		record.BecomeID = FromPtr(request.Body.BecomeId)
+	}
+
+	if request.Body.Slug != nil {
+		record.Slug = FromPtr(request.Body.Slug)
+	}
+
+	if request.Body.Content != nil {
+		record.Content = FromPtr(request.Body.Content)
+	}
 
 	if err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
@@ -328,10 +342,33 @@ func (a *API) UpdateProjectInventory(ctx context.Context, request UpdateProjectI
 		}}, nil
 	}
 
-	// TODO
-	// if request.Body.Dummy != nil {
-	// 	record.Dummy = FromPtr(request.Body.Dummy)
-	// }
+	if request.Body.RepositoryId != nil {
+		record.RepositoryID = FromPtr(request.Body.RepositoryId)
+	}
+
+	if request.Body.CredentialId != nil {
+		record.CredentialID = FromPtr(request.Body.CredentialId)
+	}
+
+	if request.Body.BecomeId != nil {
+		record.BecomeID = FromPtr(request.Body.BecomeId)
+	}
+
+	if request.Body.Slug != nil {
+		record.Slug = FromPtr(request.Body.Slug)
+	}
+
+	if request.Body.Name != nil {
+		record.Name = FromPtr(request.Body.Name)
+	}
+
+	if request.Body.Kind != nil {
+		record.Kind = FromPtr(request.Body.Kind)
+	}
+
+	if request.Body.Content != nil {
+		record.Content = FromPtr(request.Body.Content)
+	}
 
 	if err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
@@ -475,9 +512,42 @@ func (a *API) DeleteProjectInventory(ctx context.Context, request DeleteProjectI
 
 func (a *API) convertInventory(record *model.Inventory) Inventory {
 	result := Inventory{
-		Id:        ToPtr(record.ID),
-		CreatedAt: ToPtr(record.CreatedAt),
-		UpdatedAt: ToPtr(record.UpdatedAt),
+		Id:           ToPtr(record.ID),
+		RepositoryId: ToPtr(record.RepositoryID),
+		Slug:         ToPtr(record.Slug),
+		Name:         ToPtr(record.Name),
+		Kind:         ToPtr(InventoryKind(record.Kind)),
+		Content:      ToPtr(record.Content),
+		CreatedAt:    ToPtr(record.CreatedAt),
+		UpdatedAt:    ToPtr(record.UpdatedAt),
+	}
+
+	if record.Repository != nil {
+		result.Repository = ToPtr(
+			a.convertRepository(
+				record.Repository,
+			),
+		)
+	}
+
+	if record.Credential != nil {
+		result.CredentialId = ToPtr(record.CredentialID)
+
+		result.Credential = ToPtr(
+			a.convertCredential(
+				record.Credential,
+			),
+		)
+	}
+
+	if record.Become != nil {
+		result.BecomeId = ToPtr(record.BecomeID)
+
+		result.Become = ToPtr(
+			a.convertCredential(
+				record.Become,
+			),
+		)
 	}
 
 	return result

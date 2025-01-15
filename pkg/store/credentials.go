@@ -150,10 +150,14 @@ func (s *Credentials) ValidateExists(ctx context.Context, projectID string) func
 	return func(value interface{}) error {
 		val, _ := value.(string)
 
+		if val == "" {
+			return nil
+		}
+
 		q := s.client.handle.NewSelect().
 			Model((*model.Credential)(nil)).
 			Where("project_id = ?", projectID).
-			Where("id = ? OR slug = ?", val, val)
+			Where("id = ?", val)
 
 		exists, err := q.Exists(ctx)
 

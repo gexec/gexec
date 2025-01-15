@@ -45,7 +45,7 @@ func init() {
 
 		if _, err := db.NewCreateIndex().
 			Model((*Credential)(nil)).
-			Index("project_id_and_slug_idx").
+			Index("credentials_project_id_and_slug_idx").
 			Column("project_id").
 			Column("slug").
 			Exec(ctx); err != nil {
@@ -58,11 +58,21 @@ func init() {
 			bun.BaseModel `bun:"table:credentials"`
 		}
 
-		_, err := db.NewDropTable().
+		if _, err := db.NewDropTable().
 			Model((*Credential)(nil)).
 			IfExists().
-			Exec(ctx)
+			Exec(ctx); err != nil {
+			return err
+		}
 
-		return err
+		if _, err := db.NewDropIndex().
+			Model((*Credential)(nil)).
+			IfExists().
+			Index("credentials_project_id_and_slug_idx").
+			Exec(ctx); err != nil {
+			return err
+		}
+
+		return nil
 	})
 }
