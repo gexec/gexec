@@ -188,7 +188,8 @@ func (s *Repositories) validate(ctx context.Context, record *model.Repository, _
 	if err := validation.Validate(
 		record.URL,
 		validation.Required,
-		validation.Length(3, 255),
+		validation.Length(0, 255),
+		validate.GitURL,
 	); err != nil {
 		errs.Errors = append(errs.Errors, validate.Error{
 			Field: "url",
