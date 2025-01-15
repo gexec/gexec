@@ -17,11 +17,17 @@ var (
 type Repository struct {
 	bun.BaseModel `bun:"table:repositories"`
 
-	ID        string    `bun:",pk,type:varchar(20)"`
-	ProjectID string    `bun:"type:varchar(20)"`
-	Project   *Project  `bun:"rel:belongs-to,join:project_id=id"`
-	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
-	UpdatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
+	ID           string      `bun:",pk,type:varchar(20)"`
+	ProjectID    string      `bun:"type:varchar(20)"`
+	Project      *Project    `bun:"rel:belongs-to,join:project_id=id"`
+	CredentialID string      `bun:"type:varchar(20)"`
+	Credential   *Credential `bun:"rel:belongs-to,join:credential_id=id"`
+	Slug         string      `bun:"type:varchar(255)"`
+	Name         string      `bun:"type:varchar(255)"`
+	URL          string      `bun:"type:text"`
+	Branch       string      `bun:"type:varchar(255)"`
+	CreatedAt    time.Time   `bun:",nullzero,notnull,default:current_timestamp"`
+	UpdatedAt    time.Time   `bun:",nullzero,notnull,default:current_timestamp"`
 }
 
 // BeforeAppendModel implements the bun hook interface.

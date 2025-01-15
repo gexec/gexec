@@ -146,6 +146,29 @@ func (s *Credentials) Delete(ctx context.Context, projectID, name string) error 
 	return nil
 }
 
+func (s *Credentials) ValidateExists(ctx context.Context, projectID string) func(value interface{}) error {
+	return func(value interface{}) error {
+		val, _ := value.(string)
+
+		q := s.client.handle.NewSelect().
+			Model((*model.Credential)(nil)).
+			Where("project_id = ?", projectID).
+			Where("id = ? OR slug = ?", val, val)
+
+		exists, err := q.Exists(ctx)
+
+		if err != nil {
+			return err
+		}
+
+		if !exists {
+			return errors.New("does not exist")
+		}
+
+		return nil
+	}
+}
+
 func (s *Credentials) validate(ctx context.Context, record *model.Credential, _ bool) error {
 	errs := validate.Errors{}
 
@@ -257,20 +280,20 @@ func (s *Credentials) slugify(ctx context.Context, column, value, id, projectID 
 
 func (s *Credentials) validSort(val string) (string, bool) {
 	if val == "" {
-		return "name", true
+		return "credential.name", true
 	}
 
 	val = strings.ToLower(val)
 
-	for _, name := range []string{
-		"name",
-		"slug",
-		"kind",
+	for key, name := range map[string]string{
+		"name": "credential.name",
+		"slug": "credential.slug",
+		"kind": "credential.url",
 	} {
-		if val == name {
-			return val, true
+		if val == key {
+			return name, true
 		}
 	}
 
-	return "name", true
+	return "credential.name", true
 }

@@ -50,7 +50,7 @@ func (s *Projects) List(ctx context.Context, params model.ListParams) ([]*model.
 
 	if !s.client.principal.Admin {
 		q = q.Where(
-			"id IN (?)",
+			"project.id IN (?)",
 			bun.In(s.AllowedIDs()),
 		)
 	}
@@ -96,7 +96,7 @@ func (s *Projects) Show(ctx context.Context, name string) (*model.Project, error
 
 	if err := s.client.handle.NewSelect().
 		Model(record).
-		Where("id = ? OR slug = ?", name, name).
+		Where("project.id = ? OR project.slug = ?", name, name).
 		Scan(ctx); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return record, ErrProjectNotFound
@@ -662,21 +662,21 @@ func (s *Projects) slugify(ctx context.Context, column, value, id string) string
 
 func (s *Projects) validSort(val string) (string, bool) {
 	if val == "" {
-		return "name", true
+		return "project.name", true
 	}
 
 	val = strings.ToLower(val)
 
-	for _, name := range []string{
-		"slug",
-		"name",
+	for key, name := range map[string]string{
+		"slug": "project.slug",
+		"name": "project.name",
 	} {
-		if val == name {
-			return val, true
+		if val == key {
+			return name, true
 		}
 	}
 
-	return "name", true
+	return "project.name", true
 }
 
 func (s *Projects) validTeamSort(val string) (string, bool) {

@@ -207,13 +207,16 @@ func (a *API) CreateProjectRepository(ctx context.Context, request CreateProject
 	}
 
 	record := &model.Repository{
-		ProjectID: parent.ID,
+		ProjectID:    parent.ID,
+		CredentialID: request.Body.CredentialId,
+		Name:         request.Body.Name,
+		URL:          request.Body.Url,
+		Branch:       request.Body.Branch,
 	}
 
-	// TODO
-	// if request.Body.Dummy != nil {
-	// 	record.Dummy = FromPtr(request.Body.Dummy)
-	// }
+	if request.Body.Slug != nil {
+		record.Slug = FromPtr(request.Body.Slug)
+	}
 
 	if err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
@@ -328,10 +331,25 @@ func (a *API) UpdateProjectRepository(ctx context.Context, request UpdateProject
 		}}, nil
 	}
 
-	// TODO
-	// if request.Body.Dummy != nil {
-	// 	record.Dummy = FromPtr(request.Body.Dummy)
-	// }
+	if request.Body.CredentialId != nil {
+		record.CredentialID = FromPtr(request.Body.CredentialId)
+	}
+
+	if request.Body.Slug != nil {
+		record.Slug = FromPtr(request.Body.Slug)
+	}
+
+	if request.Body.Name != nil {
+		record.Name = FromPtr(request.Body.Name)
+	}
+
+	if request.Body.Url != nil {
+		record.URL = FromPtr(request.Body.Url)
+	}
+
+	if request.Body.Branch != nil {
+		record.Branch = FromPtr(request.Body.Branch)
+	}
 
 	if err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
@@ -475,9 +493,22 @@ func (a *API) DeleteProjectRepository(ctx context.Context, request DeleteProject
 
 func (a *API) convertRepository(record *model.Repository) Repository {
 	result := Repository{
-		Id:        ToPtr(record.ID),
-		CreatedAt: ToPtr(record.CreatedAt),
-		UpdatedAt: ToPtr(record.UpdatedAt),
+		Id:           ToPtr(record.ID),
+		CredentialId: ToPtr(record.CredentialID),
+		Slug:         ToPtr(record.Slug),
+		Name:         ToPtr(record.Name),
+		Url:          ToPtr(record.URL),
+		Branch:       ToPtr(record.Branch),
+		CreatedAt:    ToPtr(record.CreatedAt),
+		UpdatedAt:    ToPtr(record.UpdatedAt),
+	}
+
+	if record.Credential != nil {
+		result.Credential = ToPtr(
+			a.convertCredential(
+				record.Credential,
+			),
+		)
 	}
 
 	return result
