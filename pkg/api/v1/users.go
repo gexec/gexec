@@ -109,11 +109,22 @@ func (a *API) CreateUser(ctx context.Context, request CreateUserRequestObject) (
 		}}, nil
 	}
 
-	record := &model.User{
-		Username: request.Body.Username,
-		Password: request.Body.Password,
-		Email:    request.Body.Email,
-		Fullname: request.Body.Fullname,
+	record := &model.User{}
+
+	if request.Body.Username != nil {
+		record.Username = FromPtr(request.Body.Username)
+	}
+
+	if request.Body.Password != nil {
+		record.Password = FromPtr(request.Body.Password)
+	}
+
+	if request.Body.Email != nil {
+		record.Email = FromPtr(request.Body.Email)
+	}
+
+	if request.Body.Fullname != nil {
+		record.Fullname = FromPtr(request.Body.Fullname)
 	}
 
 	if request.Body.Admin != nil {

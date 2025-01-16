@@ -21,27 +21,23 @@ func init() {
 			UpdatedAt     time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 		}
 
-		if _, err := db.NewCreateTable().
+		_, err := db.NewCreateTable().
 			Model((*EnvironmentValue)(nil)).
 			WithForeignKeys().
 			ForeignKey(`(environment_id) REFERENCES environments (id) ON DELETE CASCADE`).
-			Exec(ctx); err != nil {
-			return err
-		}
+			Exec(ctx)
 
-		return nil
+		return err
 	}, func(ctx context.Context, db *bun.DB) error {
 		type EnvironmentValue struct {
-			bun.BaseModel `bun:"table:environment_secrets"`
+			bun.BaseModel `bun:"table:environment_values"`
 		}
 
-		if _, err := db.NewDropTable().
+		_, err := db.NewDropTable().
 			Model((*EnvironmentValue)(nil)).
 			IfExists().
-			Exec(ctx); err != nil {
-			return err
-		}
+			Exec(ctx)
 
-		return nil
+		return err
 	})
 }

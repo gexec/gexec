@@ -34,6 +34,7 @@ var (
 
 // Store provides the general database abstraction layer.
 type Store struct {
+	passphrase      string
 	driver          string
 	username        string
 	password        string
@@ -57,7 +58,7 @@ type Store struct {
 	Environments *Environments
 	Templates    *Templates
 	Schedules    *Schedules
-	Tasks        *Tasks
+	Executions   *Executions
 }
 
 // Handle returns a database handle.
@@ -405,7 +406,7 @@ func (s *Store) open() error {
 }
 
 // NewStore initializes a new Bun
-func NewStore(cfg config.Database) (*Store, error) {
+func NewStore(cfg config.Database, passphrase string) (*Store, error) {
 	username, err := config.Value(cfg.Username)
 
 	if err != nil {
@@ -419,11 +420,12 @@ func NewStore(cfg config.Database) (*Store, error) {
 	}
 
 	client := &Store{
-		driver:   cfg.Driver,
-		database: cfg.Name,
-		username: username,
-		password: password,
-		meta:     url.Values{},
+		passphrase: passphrase,
+		driver:     cfg.Driver,
+		database:   cfg.Name,
+		username:   username,
+		password:   password,
+		meta:       url.Values{},
 	}
 
 	if val, ok := cfg.Options["maxOpenConns"]; ok {
@@ -560,7 +562,7 @@ func NewStore(cfg config.Database) (*Store, error) {
 		client: client,
 	}
 
-	client.Tasks = &Tasks{
+	client.Executions = &Executions{
 		client: client,
 	}
 
@@ -568,8 +570,8 @@ func NewStore(cfg config.Database) (*Store, error) {
 }
 
 // MustStore simply calls NewStore and panics on an error.
-func MustStore(cfg config.Database) *Store {
-	s, err := NewStore(cfg)
+func MustStore(cfg config.Database, passphrase string) *Store {
+	s, err := NewStore(cfg, passphrase)
 
 	if err != nil {
 		panic(err)

@@ -152,6 +152,33 @@ func (s *Inventories) Delete(ctx context.Context, projectID, name string) error 
 	return nil
 }
 
+func (s *Inventories) ValidateExists(ctx context.Context, projectID string) func(value interface{}) error {
+	return func(value interface{}) error {
+		val, _ := value.(string)
+
+		if val == "" {
+			return nil
+		}
+
+		q := s.client.handle.NewSelect().
+			Model((*model.Inventory)(nil)).
+			Where("project_id = ?", projectID).
+			Where("id = ?", val)
+
+		exists, err := q.Exists(ctx)
+
+		if err != nil {
+			return err
+		}
+
+		if !exists {
+			return errors.New("does not exist")
+		}
+
+		return nil
+	}
+}
+
 func (s *Inventories) validate(ctx context.Context, record *model.Inventory, _ bool) error {
 	errs := validate.Errors{}
 
@@ -300,12 +327,14 @@ func (s *Inventories) validSort(val string) (string, bool) {
 	val = strings.ToLower(val)
 
 	for key, name := range map[string]string{
-		"name":       "inventory.name",
-		"slug":       "inventory.slug",
-		"kind":       "inventory.kind",
 		"repository": "repository.name",
 		"credential": "credential.name",
 		"become":     "become.name",
+		"name":       "inventory.name",
+		"slug":       "inventory.slug",
+		"kind":       "inventory.kind",
+		"created":    "inventory.created_at",
+		"updated":    "inventory.updated_at",
 	} {
 		if val == key {
 			return name, true

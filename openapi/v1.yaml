@@ -894,6 +894,148 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
+  /projects/{project_id}/environments/{environment_id}/secrets:
+    post:
+      summary: "Create a new secret on an environment"
+      operationId: "CreateProjectEnvironmentSecret"
+      tags:
+        - "project"
+        - "environment"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/EnvironmentParam"
+      requestBody:
+        $ref: "#/components/requestBodies/CreateProjectEnvironmentSecretBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectEnvironmentSecretResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects/{project_id}/environments/{environment_id}/secrets/{secret_id}:
+    put:
+      summary: "Update a secret on an environment for a project"
+      operationId: "UpdateProjectEnvironmentSecret"
+      tags:
+        - "project"
+        - "environment"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/EnvironmentParam"
+        - $ref: "#/components/parameters/SecretParam"
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateProjectEnvironmentSecretBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectEnvironmentSecretResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      summary: "Delete a secret on an environment for a project"
+      operationId: "DeleteProjectEnvironmentSecret"
+      tags:
+        - "project"
+        - "environment"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/EnvironmentParam"
+        - $ref: "#/components/parameters/SecretParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "400":
+          $ref: "#/components/responses/ActionFailedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects/{project_id}/environments/{environment_id}/values:
+    post:
+      summary: "Create a new value on an environment"
+      operationId: "CreateProjectEnvironmentValue"
+      tags:
+        - "project"
+        - "environment"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/EnvironmentParam"
+      requestBody:
+        $ref: "#/components/requestBodies/CreateProjectEnvironmentValueBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectEnvironmentValueResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects/{project_id}/environments/{environment_id}/values/{value_id}:
+    put:
+      summary: "Update a value on an environment for a project"
+      operationId: "UpdateProjectEnvironmentValue"
+      tags:
+        - "project"
+        - "environment"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/EnvironmentParam"
+        - $ref: "#/components/parameters/ValueParam"
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateProjectEnvironmentValueBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectEnvironmentValueResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      summary: "Delete a value on an environment for a project"
+      operationId: "DeleteProjectEnvironmentValue"
+      tags:
+        - "project"
+        - "environment"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/EnvironmentParam"
+        - $ref: "#/components/parameters/ValueParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "400":
+          $ref: "#/components/responses/ActionFailedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
   /projects/{project_id}/templates:
     get:
       summary: "Fetch all templates for a project"
@@ -992,6 +1134,148 @@ paths:
       parameters:
         - $ref: "#/components/parameters/ProjectParam"
         - $ref: "#/components/parameters/TemplateParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "400":
+          $ref: "#/components/responses/ActionFailedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects/{project_id}/templates/{template_id}/surveys:
+    post:
+      summary: "Create a new survey on a template"
+      operationId: "CreateProjectTemplateSurvey"
+      tags:
+        - "project"
+        - "template"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/TemplateParam"
+      requestBody:
+        $ref: "#/components/requestBodies/CreateProjectTemplateSurveyBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectTemplateSurveyResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects/{project_id}/templates/{template_id}/surveys/{survey_id}:
+    put:
+      summary: "Update a survey on a template for a project"
+      operationId: "UpdateProjectTemplateSurvey"
+      tags:
+        - "project"
+        - "template"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/TemplateParam"
+        - $ref: "#/components/parameters/SurveyParam"
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateProjectTemplateSurveyBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectTemplateSurveyResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      summary: "Delete a survey on a template for a project"
+      operationId: "DeleteProjectTemplateSurvey"
+      tags:
+        - "project"
+        - "template"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/TemplateParam"
+        - $ref: "#/components/parameters/SurveyParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "400":
+          $ref: "#/components/responses/ActionFailedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects/{project_id}/templates/{template_id}/vaults:
+    post:
+      summary: "Create a new vault on a template"
+      operationId: "CreateProjectTemplateVault"
+      tags:
+        - "project"
+        - "template"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/TemplateParam"
+      requestBody:
+        $ref: "#/components/requestBodies/CreateProjectTemplateVaultBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectTemplateVaultResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects/{project_id}/templates/{template_id}/vaults/{vault_id}:
+    put:
+      summary: "Update a vault on a template for a project"
+      operationId: "UpdateProjectTemplateVault"
+      tags:
+        - "project"
+        - "template"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/TemplateParam"
+        - $ref: "#/components/parameters/VaultParam"
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateProjectTemplateVaultBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectTemplateVaultResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      summary: "Delete a vault on a template for a project"
+      operationId: "DeleteProjectTemplateVault"
+      tags:
+        - "project"
+        - "template"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/TemplateParam"
+        - $ref: "#/components/parameters/VaultParam"
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
@@ -1114,13 +1398,13 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /projects/{project_id}/tasks:
+  /projects/{project_id}/executions:
     get:
-      summary: "Fetch all tasks for a project"
-      operationId: "ListProjectTasks"
+      summary: "Fetch all executions for a project"
+      operationId: "ListProjectExecutions"
       tags:
         - "project"
-        - "task"
+        - "execution"
       parameters:
         - $ref: "#/components/parameters/ProjectParam"
         - $ref: "#/components/parameters/SearchQueryParam"
@@ -1130,7 +1414,7 @@ paths:
         - $ref: "#/components/parameters/PagingOffsetParam"
       responses:
         "200":
-          $ref: "#/components/responses/ProjectTasksResponse"
+          $ref: "#/components/responses/ProjectExecutionsResponse"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -1139,18 +1423,18 @@ paths:
           $ref: "#/components/responses/InternalServerError"
 
     post:
-      summary: "Create a new task"
-      operationId: "CreateProjectTask"
+      summary: "Create a new execution"
+      operationId: "CreateProjectExecution"
       tags:
         - "project"
-        - "task"
+        - "execution"
       parameters:
         - $ref: "#/components/parameters/ProjectParam"
       requestBody:
-        $ref: "#/components/requestBodies/CreateProjectTaskBody"
+        $ref: "#/components/requestBodies/CreateProjectExecutionBody"
       responses:
         "200":
-          $ref: "#/components/responses/ProjectTaskResponse"
+          $ref: "#/components/responses/ProjectExecutionResponse"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -1160,19 +1444,19 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /projects/{project_id}/tasks/{task_id}:
+  /projects/{project_id}/executions/{execution_id}:
     get:
-      summary: "Fetch a specific task for a project"
-      operationId: "ShowProjectTask"
+      summary: "Fetch a specific execution for a project"
+      operationId: "ShowProjectExecution"
       tags:
         - "project"
-        - "task"
+        - "execution"
       parameters:
         - $ref: "#/components/parameters/ProjectParam"
-        - $ref: "#/components/parameters/TaskParam"
+        - $ref: "#/components/parameters/ExecutionParam"
       responses:
         "200":
-          $ref: "#/components/responses/ProjectTaskResponse"
+          $ref: "#/components/responses/ProjectExecutionResponse"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -1181,14 +1465,14 @@ paths:
           $ref: "#/components/responses/InternalServerError"
 
     delete:
-      summary: "Delete a specific task for a project"
-      operationId: "DeleteProjectTask"
+      summary: "Delete a specific execution for a project"
+      operationId: "DeleteProjectExecution"
       tags:
         - "project"
-        - "task"
+        - "execution"
       parameters:
         - $ref: "#/components/parameters/ProjectParam"
-        - $ref: "#/components/parameters/TaskParam"
+        - $ref: "#/components/parameters/ExecutionParam"
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
@@ -1201,16 +1485,16 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /projects/{project_id}/tasks/{task_id}/stop:
+  /projects/{project_id}/executions/{execution_id}/purge:
     get:
-      summary: "Stop a specific task for a project"
-      operationId: "StopProjectTask"
+      summary: "Purge a specific execution for a project"
+      operationId: "PurgeProjectExecution"
       tags:
         - "project"
-        - "task"
+        - "execution"
       parameters:
         - $ref: "#/components/parameters/ProjectParam"
-        - $ref: "#/components/parameters/TaskParam"
+        - $ref: "#/components/parameters/ExecutionParam"
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
@@ -1223,16 +1507,38 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /projects/{project_id}/tasks/{task_id}/output:
+  /projects/{project_id}/executions/{execution_id}/stop:
     get:
-      summary: "Output a specific task for a project"
-      operationId: "OutputProjectTask"
+      summary: "Stop a specific execution for a project"
+      operationId: "StopProjectExecution"
       tags:
         - "project"
-        - "task"
+        - "execution"
       parameters:
         - $ref: "#/components/parameters/ProjectParam"
-        - $ref: "#/components/parameters/TaskParam"
+        - $ref: "#/components/parameters/ExecutionParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "400":
+          $ref: "#/components/responses/ActionFailedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects/{project_id}/executions/{execution_id}/output:
+    get:
+      summary: "Output a specific execution for a project"
+      operationId: "OutputProjectExecution"
+      tags:
+        - "project"
+        - "execution"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/ExecutionParam"
       responses:
         "200":
           $ref: "#/components/responses/ProjectLoggingResponse"
@@ -2014,6 +2320,22 @@ components:
         type: "string"
       required: true
       x-example: "environment-1"
+    SecretParam:
+      in: "path"
+      name: "secret_id"
+      description: "A secret identifier or slug"
+      schema:
+        type: "string"
+      required: true
+      x-example: "secret-1"
+    ValueParam:
+      in: "path"
+      name: "value_id"
+      description: "A value identifier or slug"
+      schema:
+        type: "string"
+      required: true
+      x-example: "value-1"
     TemplateParam:
       in: "path"
       name: "template_id"
@@ -2022,6 +2344,22 @@ components:
         type: "string"
       required: true
       x-example: "template-1"
+    SurveyParam:
+      in: "path"
+      name: "survey_id"
+      description: "A survey identifier or slug"
+      schema:
+        type: "string"
+      required: true
+      x-example: "survey-1"
+    VaultParam:
+      in: "path"
+      name: "vault_id"
+      description: "A vault identifier or slug"
+      schema:
+        type: "string"
+      required: true
+      x-example: "vault-1"
     ScheduleParam:
       in: "path"
       name: "schedule_id"
@@ -2038,14 +2376,14 @@ components:
         type: "string"
       required: true
       x-example: "runner-1"
-    TaskParam:
+    ExecutionParam:
       in: "path"
-      name: "task_id"
-      description: "A task identifier or slug"
+      name: "execution_id"
+      description: "A execution identifier or slug"
       schema:
         type: "string"
       required: true
-      x-example: "task-1"
+      x-example: "execution-1"
     TeamParam:
       in: "path"
       name: "team_id"
@@ -2071,9 +2409,6 @@ components:
         application/json:
           schema:
             type: "object"
-            required:
-              - "username"
-              - "password"
             properties:
               username:
                 type: "string"
@@ -2114,8 +2449,6 @@ components:
         application/json:
           schema:
             type: "object"
-            required:
-              - "name"
             properties:
               slug:
                 type: "string"
@@ -2123,6 +2456,10 @@ components:
                 x-nullable: true
               name:
                 type: "string"
+                x-omitempty: true
+                x-nullable: true
+              demo:
+                type: "boolean"
                 x-omitempty: true
                 x-nullable: true
     UpdateProjectBody:
@@ -2203,9 +2540,6 @@ components:
         application/json:
           schema:
             type: "object"
-            required:
-              - "name"
-              - "kind"
             properties:
               slug:
                 type: "string"
@@ -2271,11 +2605,6 @@ components:
         application/json:
           schema:
             type: "object"
-            required:
-              - "credential_id"
-              - "name"
-              - "url"
-              - "branch"
             properties:
               credential_id:
                 type: "string"
@@ -2331,10 +2660,6 @@ components:
         application/json:
           schema:
             type: "object"
-            required:
-              - "repository_id"
-              - "name"
-              - "kind"
             properties:
               repository_id:
                 type: "string"
@@ -2408,8 +2733,6 @@ components:
         application/json:
           schema:
             type: "object"
-            required:
-              - "name"
             properties:
               slug:
                 type: "string"
@@ -2459,6 +2782,86 @@ components:
                 x-nullable: true
                 items:
                   $ref: "#/components/schemas/EnvironmentValue"
+    CreateProjectEnvironmentSecretBody:
+      description: "The environment secret data to create"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            properties:
+              kind:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              name:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              content:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+    UpdateProjectEnvironmentSecretBody:
+      description: "The environment secret data to create"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            properties:
+              kind:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              name:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              content:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+    CreateProjectEnvironmentValueBody:
+      description: "The environment value data to create"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            properties:
+              kind:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              name:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              content:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+    UpdateProjectEnvironmentValueBody:
+      description: "The environment value data to create"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            properties:
+              kind:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              name:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              content:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
 
     CreateProjectTemplateBody:
       description: "The template data to create"
@@ -2467,12 +2870,6 @@ components:
         application/json:
           schema:
             type: "object"
-            required:
-              - "repository_id"
-              - "inventory_id"
-              - "environment_id"
-              - "name"
-              - "executor"
             properties:
               repository_id:
                 type: "string"
@@ -2520,7 +2917,7 @@ components:
                 type: "boolean"
                 x-omitempty: true
                 x-nullable: true
-              survey:
+              surveys:
                 type: "array"
                 x-omitempty: true
                 x-nullable: true
@@ -2576,10 +2973,6 @@ components:
                 type: "string"
                 x-omitempty: true
                 x-nullable: true
-              executor:
-                type: "string"
-                x-omitempty: true
-                x-nullable: true
               branch:
                 type: "string"
                 x-omitempty: true
@@ -2588,7 +2981,7 @@ components:
                 type: "boolean"
                 x-omitempty: true
                 x-nullable: true
-              survey:
+              surveys:
                 type: "array"
                 x-omitempty: true
                 x-nullable: true
@@ -2600,6 +2993,122 @@ components:
                 x-nullable: true
                 items:
                   $ref: "#/components/schemas/TemplateVault"
+    CreateProjectTemplateSurveyBody:
+      description: "The template data to create"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            properties:
+              name:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              title:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              description:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              kind:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              required:
+                type: "boolean"
+                x-omitempty: true
+                x-nullable: true
+              values:
+                type: "array"
+                x-omitempty: true
+                x-nullable: true
+                items:
+                  $ref: "#/components/schemas/TemplateValue"
+    UpdateProjectTemplateSurveyBody:
+      description: "The template data to update"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            properties:
+              name:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              title:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              description:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              kind:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              required:
+                type: "boolean"
+                x-omitempty: true
+                x-nullable: true
+              values:
+                type: "array"
+                x-omitempty: true
+                x-nullable: true
+                items:
+                  $ref: "#/components/schemas/TemplateValue"
+    CreateProjectTemplateVaultBody:
+      description: "The template data to create"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            properties:
+              credential_id:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              name:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              kind:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              script:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+    UpdateProjectTemplateVaultBody:
+      description: "The template data to update"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            properties:
+              credential_id:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              name:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              kind:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              script:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
 
     CreateProjectScheduleBody:
       description: "The schedule data to create"
@@ -2608,10 +3117,6 @@ components:
         application/json:
           schema:
             type: "object"
-            required:
-              - "template_id"
-              - "name"
-              - "cron"
             properties:
               template_id:
                 type: "string"
@@ -2662,15 +3167,13 @@ components:
                 x-omitempty: true
                 x-nullable: true
 
-    CreateProjectTaskBody:
-      description: "The task data to create"
+    CreateProjectExecutionBody:
+      description: "The execution data to create"
       required: true
       content:
         application/json:
           schema:
             type: "object"
-            required:
-              - "template_id"
             properties:
               template_id:
                 type: "string"
@@ -2712,8 +3215,6 @@ components:
         application/json:
           schema:
             type: "object"
-            required:
-              - "name"
             properties:
               slug:
                 type: "string"
@@ -2755,8 +3256,6 @@ components:
         application/json:
           schema:
             type: "object"
-            required:
-              - "name"
             properties:
               slug:
                 type: "string"
@@ -2844,11 +3343,6 @@ components:
         application/json:
           schema:
             type: "object"
-            required:
-              - "username"
-              - "password"
-              - "email"
-              - "fullname"
             properties:
               username:
                 type: "string"
@@ -3344,6 +3838,18 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Environment"
+    ProjectEnvironmentSecretResponse:
+      description: "The details for an environment secret of a project"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/EnvironmentSecret"
+    ProjectEnvironmentValueResponse:
+      description: "The details for an environment value of a project"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/EnvironmentValue"
 
     ProjectTemplatesResponse:
       description: "A collection of templates for a project"
@@ -3379,6 +3885,18 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Template"
+    ProjectTemplateSurveyResponse:
+      description: "The details for a template survey of a project"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/TemplateSurvey"
+    ProjectTemplateVaultResponse:
+      description: "The details for a template vault of a project"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/TemplateVault"
 
     ProjectSchedulesResponse:
       description: "A collection of schedules for a project"
@@ -3415,7 +3933,7 @@ components:
           schema:
             $ref: "#/components/schemas/Schedule"
 
-    ProjectTasksResponse:
+    ProjectExecutionsResponse:
       description: "A collection of schedules for a project"
       content:
         application/json:
@@ -3425,7 +3943,7 @@ components:
               - "total"
               - "limit"
               - "offset"
-              - "tasks"
+              - "executions"
             properties:
               total:
                 type: integer
@@ -3439,19 +3957,19 @@ components:
               project:
                 readOnly: true
                 $ref: "#/components/schemas/Project"
-              tasks:
+              executions:
                 type: "array"
                 items:
-                  $ref: "#/components/schemas/Task"
-    ProjectTaskResponse:
+                  $ref: "#/components/schemas/Execution"
+    ProjectExecutionResponse:
       description: "The details for a schedule of a project"
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Task"
+            $ref: "#/components/schemas/Execution"
 
     ProjectLoggingResponse:
-      description: "The logging for a task of a project"
+      description: "The logging for a execution of a project"
       content:
         application/json:
           schema:
@@ -3802,14 +4320,14 @@ components:
       description: "Model to represent logging"
       type: "object"
       properties:
-        task_id:
+        execution_id:
           type: "string"
           readOnly: true
-        task:
+        execution:
           x-omitempty: true
           x-nullable: true
           readOnly: true
-          $ref: "#/components/schemas/Task"
+          $ref: "#/components/schemas/Execution"
         time:
           type: "string"
           format: "date-time"
@@ -3857,7 +4375,7 @@ components:
           type: "string"
           enum:
             - "empty"
-            - "ssh"
+            - "shell"
             - "login"
         override:
           type: "boolean"
@@ -3974,7 +4492,6 @@ components:
           enum:
             - "static"
             - "file"
-            - "workspace"
         content:
           type: "string"
         created_at:
@@ -4024,7 +4541,6 @@ components:
       properties:
         id:
           type: "string"
-          readOnly: true
         name:
           type: "string"
         kind:
@@ -4042,7 +4558,6 @@ components:
       properties:
         id:
           type: "string"
-          readOnly: true
         name:
           type: "string"
         kind:
@@ -4102,7 +4617,7 @@ components:
           type: "string"
         allow_override:
           type: "boolean"
-        survey:
+        surveys:
           type: "array"
           x-omitempty: true
           x-nullable: true
@@ -4130,16 +4645,6 @@ components:
       properties:
         id:
           type: "string"
-          readOnly: true
-        credential_id:
-          type: "string"
-          x-omitempty: true
-          x-nullable: true
-        credential:
-          x-omitempty: true
-          x-nullable: true
-          readOnly: true
-          $ref: "#/components/schemas/Credential"
         name:
           type: "string"
         title:
@@ -4167,7 +4672,6 @@ components:
       properties:
         id:
           type: "string"
-          readOnly: true
         name:
           type: "string"
         value:
@@ -4180,7 +4684,6 @@ components:
       properties:
         id:
           type: "string"
-          readOnly: true
         credential_id:
           type: "string"
           x-omitempty: true
@@ -4259,9 +4762,9 @@ components:
           format: "date-time"
           readOnly: true
 
-    Task:
-      title: "Task"
-      description: "Model to represent task"
+    Execution:
+      title: "Execution"
+      description: "Model to represent execution"
       type: "object"
       properties:
         id:

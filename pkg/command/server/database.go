@@ -290,6 +290,7 @@ func dbCreateAction(ccmd *cobra.Command, args []string) {
 func prepareStorage(ctx context.Context) *store.Store {
 	storage, err := store.NewStore(
 		cfg.Database,
+		cfg.Encrypt.Passphrase,
 	)
 
 	if err != nil {

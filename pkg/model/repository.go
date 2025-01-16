@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	_ bun.BeforeAppendModelHook = (*Project)(nil)
+	_ bun.BeforeAppendModelHook = (*Repository)(nil)
 )
 
 // Repository defines the model for repositories table.
@@ -46,6 +46,26 @@ func (m *Repository) BeforeAppendModel(_ context.Context, query bun.Query) error
 		}
 
 		m.UpdatedAt = time.Now()
+	}
+
+	return nil
+}
+
+func (m *Repository) SerializeSecret(passphrase string) error {
+	if m.Credential != nil {
+		if err := m.Credential.SerializeSecret(passphrase); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *Repository) DeserializeSecret(passphrase string) error {
+	if m.Credential != nil {
+		if err := m.Credential.DeserializeSecret(passphrase); err != nil {
+			return err
+		}
 	}
 
 	return nil

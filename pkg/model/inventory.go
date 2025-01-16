@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	_ bun.BeforeAppendModelHook = (*Project)(nil)
+	_ bun.BeforeAppendModelHook = (*Inventory)(nil)
 )
 
 // Inventory defines the model for inventories table.
@@ -20,7 +20,7 @@ type Inventory struct {
 	ID           string      `bun:",pk,type:varchar(20)"`
 	ProjectID    string      `bun:"type:varchar(20)"`
 	Project      *Project    `bun:"rel:belongs-to,join:project_id=id"`
-	RepositoryID string      `bun:"type:varchar(20)"`
+	RepositoryID string      `bun:",nullzero,type:varchar(20)"`
 	Repository   *Repository `bun:"rel:belongs-to,join:repository_id=id"`
 	CredentialID string      `bun:",nullzero,type:varchar(20)"`
 	Credential   *Credential `bun:"rel:belongs-to,join:credential_id=id"`
@@ -50,6 +50,50 @@ func (m *Inventory) BeforeAppendModel(_ context.Context, query bun.Query) error 
 		}
 
 		m.UpdatedAt = time.Now()
+	}
+
+	return nil
+}
+
+func (m *Inventory) SerializeSecret(passphrase string) error {
+	if m.Repository != nil {
+		if err := m.Repository.SerializeSecret(passphrase); err != nil {
+			return err
+		}
+	}
+
+	if m.Credential != nil {
+		if err := m.Credential.SerializeSecret(passphrase); err != nil {
+			return err
+		}
+	}
+
+	if m.Become != nil {
+		if err := m.Become.SerializeSecret(passphrase); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *Inventory) DeserializeSecret(passphrase string) error {
+	if m.Repository != nil {
+		if err := m.Repository.DeserializeSecret(passphrase); err != nil {
+			return err
+		}
+	}
+
+	if m.Credential != nil {
+		if err := m.Credential.DeserializeSecret(passphrase); err != nil {
+			return err
+		}
+	}
+
+	if m.Become != nil {
+		if err := m.Become.DeserializeSecret(passphrase); err != nil {
+			return err
+		}
 	}
 
 	return nil

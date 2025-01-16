@@ -97,23 +97,25 @@ func (s *Teams) Create(ctx context.Context, record *model.Team) error {
 		return err
 	}
 
-	if _, err := s.client.handle.NewInsert().
-		Model(record).
-		Exec(ctx); err != nil {
-		return err
-	}
+	return s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		if _, err := tx.NewInsert().
+			Model(record).
+			Exec(ctx); err != nil {
+			return err
+		}
 
-	if _, err := s.client.handle.NewInsert().
-		Model(&model.UserTeam{
-			TeamID: record.ID,
-			UserID: s.client.principal.ID,
-			Perm:   model.UserTeamAdminPerm,
-		}).
-		Exec(ctx); err != nil {
-		return err
-	}
+		if _, err := tx.NewInsert().
+			Model(&model.UserTeam{
+				TeamID: record.ID,
+				UserID: s.client.principal.ID,
+				Perm:   model.UserTeamAdminPerm,
+			}).
+			Exec(ctx); err != nil {
+			return err
+		}
 
-	return nil
+		return nil
+	})
 }
 
 // Update implements the update of an existing team.

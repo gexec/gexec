@@ -26,7 +26,9 @@ func (s *Environments) List(ctx context.Context, projectID string, params model.
 
 	q := s.client.handle.NewSelect().
 		Model(&records).
-		Where("project_id = ?", projectID)
+		Relation("Secrets").
+		Relation("Values").
+		Where("environment.project_id = ?", projectID)
 
 	if val, ok := s.validSort(params.Sort); ok {
 		q = q.Order(strings.Join(
@@ -69,8 +71,10 @@ func (s *Environments) Show(ctx context.Context, projectID, name string) (*model
 
 	if err := s.client.handle.NewSelect().
 		Model(record).
-		Where("project_id = ?", projectID).
-		Where("id = ? OR slug = ?", name, name).
+		Relation("Secrets").
+		Relation("Values").
+		Where("environment.project_id = ?", projectID).
+		Where("environment.id = ? OR environment.slug = ?", name, name).
 		Scan(ctx); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return record, ErrEnvironmentNotFound
@@ -98,13 +102,35 @@ func (s *Environments) Create(ctx context.Context, projectID string, record *mod
 		return err
 	}
 
-	if _, err := s.client.handle.NewInsert().
-		Model(record).
-		Exec(ctx); err != nil {
-		return err
-	}
+	return s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		if _, err := tx.NewInsert().
+			Model(record).
+			Exec(ctx); err != nil {
+			return err
+		}
 
-	return nil
+		for _, secret := range record.Secrets {
+			secret.EnvironmentID = record.ID
+
+			if _, err := tx.NewInsert().
+				Model(secret).
+				Exec(ctx); err != nil {
+				return err
+			}
+		}
+
+		for _, value := range record.Values {
+			value.EnvironmentID = record.ID
+
+			if _, err := tx.NewInsert().
+				Model(value).
+				Exec(ctx); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }
 
 // Update implements the update of an existing environment.
@@ -123,14 +149,104 @@ func (s *Environments) Update(ctx context.Context, projectID string, record *mod
 		return err
 	}
 
-	if _, err := s.client.handle.NewUpdate().
-		Model(record).
-		Where("id = ? and project_id = ?", record.ID, projectID).
-		Exec(ctx); err != nil {
-		return err
-	}
+	return s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		if _, err := tx.NewUpdate().
+			Model(record).
+			Where("id = ? and project_id = ?", record.ID, projectID).
+			Exec(ctx); err != nil {
+			return err
+		}
 
-	return nil
+		for _, secret := range record.Secrets { // TODO: broken for dropped rows
+			secret.EnvironmentID = record.ID
+
+			if secret.ID == "" {
+				if _, err := tx.NewInsert().
+					Model(secret).
+					Exec(ctx); err != nil {
+					return err
+				}
+			} else {
+				current := &model.EnvironmentSecret{}
+
+				if err := tx.NewSelect().
+					Model(current).
+					Where("id = ? AND environment_id = ?", secret.ID, secret.EnvironmentID).
+					Scan(ctx); err != nil {
+					if errors.Is(err, sql.ErrNoRows) {
+						return ErrEnvironmentSecretNotFound
+					}
+
+					return err
+				}
+
+				if secret.Kind != "" {
+					current.Kind = secret.Kind
+				}
+
+				if secret.Name != "" {
+					current.Name = secret.Name
+				}
+
+				if secret.Content != "" {
+					current.Content = secret.Content
+				}
+
+				if _, err := tx.NewUpdate().
+					Model(current).
+					Where("id = ? and environment_id = ?", secret.ID, secret.EnvironmentID).
+					Exec(ctx); err != nil {
+					return err
+				}
+			}
+		}
+
+		for _, value := range record.Values { // TODO: broken for dropped rows
+			value.EnvironmentID = record.ID
+
+			if value.ID == "" {
+				if _, err := tx.NewInsert().
+					Model(value).
+					Exec(ctx); err != nil {
+					return err
+				}
+			} else {
+				current := &model.EnvironmentValue{}
+
+				if err := tx.NewSelect().
+					Model(current).
+					Where("id = ? AND environment_id = ?", value.ID, value.EnvironmentID).
+					Scan(ctx); err != nil {
+					if errors.Is(err, sql.ErrNoRows) {
+						return ErrEnvironmentValueNotFound
+					}
+
+					return err
+				}
+
+				if value.Kind != "" {
+					current.Kind = value.Kind
+				}
+
+				if value.Name != "" {
+					current.Name = value.Name
+				}
+
+				if value.Content != "" {
+					current.Content = value.Content
+				}
+
+				if _, err := tx.NewUpdate().
+					Model(current).
+					Where("id = ? and environment_id = ?", value.ID, value.EnvironmentID).
+					Exec(ctx); err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	})
 }
 
 // Delete implements the deletion of a environment.
@@ -144,6 +260,33 @@ func (s *Environments) Delete(ctx context.Context, projectID, name string) error
 	}
 
 	return nil
+}
+
+func (s *Environments) ValidateExists(ctx context.Context, projectID string) func(value interface{}) error {
+	return func(value interface{}) error {
+		val, _ := value.(string)
+
+		if val == "" {
+			return nil
+		}
+
+		q := s.client.handle.NewSelect().
+			Model((*model.Environment)(nil)).
+			Where("project_id = ?", projectID).
+			Where("id = ?", val)
+
+		exists, err := q.Exists(ctx)
+
+		if err != nil {
+			return err
+		}
+
+		if !exists {
+			return errors.New("does not exist")
+		}
+
+		return nil
+	}
 }
 
 func (s *Environments) validate(ctx context.Context, record *model.Environment, _ bool) error {
@@ -171,6 +314,54 @@ func (s *Environments) validate(ctx context.Context, record *model.Environment, 
 			Field: "name",
 			Error: err,
 		})
+	}
+
+	for i, secret := range record.Secrets {
+		if err := validation.Validate(
+			secret.Kind,
+			validation.Required,
+			validation.In("var", "env"),
+		); err != nil {
+			errs.Errors = append(errs.Errors, validate.Error{
+				Field: fmt.Sprintf("secrets.%d.name", i),
+				Error: err,
+			})
+		}
+
+		if err := validation.Validate(
+			secret.Name,
+			validation.Required,
+			validation.Length(3, 255),
+		); err != nil {
+			errs.Errors = append(errs.Errors, validate.Error{
+				Field: fmt.Sprintf("secrets.%d.name", i),
+				Error: err,
+			})
+		}
+	}
+
+	for i, value := range record.Values {
+		if err := validation.Validate(
+			value.Kind,
+			validation.Required,
+			validation.In("var", "env"),
+		); err != nil {
+			errs.Errors = append(errs.Errors, validate.Error{
+				Field: fmt.Sprintf("values.%d.name", i),
+				Error: err,
+			})
+		}
+
+		if err := validation.Validate(
+			value.Name,
+			validation.Required,
+			validation.Length(3, 255),
+		); err != nil {
+			errs.Errors = append(errs.Errors, validate.Error{
+				Field: fmt.Sprintf("values.%d.name", i),
+				Error: err,
+			})
+		}
 	}
 
 	if len(errs.Errors) > 0 {
@@ -252,8 +443,10 @@ func (s *Environments) validSort(val string) (string, bool) {
 	val = strings.ToLower(val)
 
 	for key, name := range map[string]string{
-		"name": "environment.name",
-		"slug": "environment.slug",
+		"name":    "environment.name",
+		"slug":    "environment.slug",
+		"created": "environment.created_at",
+		"updated": "environment.updated_at",
 	} {
 		if val == key {
 			return name, true

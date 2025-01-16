@@ -81,6 +81,19 @@ func (a *API) ListProjectEnvironments(ctx context.Context, request ListProjectEn
 
 	payload := make([]Environment, len(records))
 	for id, record := range records {
+		if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil { // TODO: remove it, security risk
+			log.Error().
+				Err(err).
+				Str("action", "ListProjectEnvironments").
+				Str("project", parent.ID).
+				Msg("Failed to decrypt secrets")
+
+			return ListProjectEnvironments500JSONResponse{InternalServerErrorJSONResponse{
+				Message: ToPtr("Failed to decrypt secrets"),
+				Status:  ToPtr(http.StatusInternalServerError),
+			}}, nil
+		}
+
 		payload[id] = a.convertEnvironment(record)
 	}
 
@@ -162,6 +175,20 @@ func (a *API) ShowProjectEnvironment(ctx context.Context, request ShowProjectEnv
 		}}, nil
 	}
 
+	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil { // TODO: remove it, security risk
+		log.Error().
+			Err(err).
+			Str("action", "ShowProjectEnvironment").
+			Str("project", parent.ID).
+			Str("environment", record.ID).
+			Msg("Failed to decrypt secrets")
+
+		return ShowProjectEnvironment500JSONResponse{InternalServerErrorJSONResponse{
+			Message: ToPtr("Failed to decrypt secrets"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		}}, nil
+	}
+
 	return ShowProjectEnvironment200JSONResponse{ProjectEnvironmentResponseJSONResponse(
 		a.convertEnvironment(record),
 	)}, nil
@@ -208,15 +235,72 @@ func (a *API) CreateProjectEnvironment(ctx context.Context, request CreateProjec
 
 	record := &model.Environment{
 		ProjectID: parent.ID,
-		Name:      request.Body.Name,
 	}
 
 	if request.Body.Slug != nil {
 		record.Slug = FromPtr(request.Body.Slug)
 	}
 
-	// TODO: secrets
-	// TODO: values
+	if request.Body.Name != nil {
+		record.Name = FromPtr(request.Body.Name)
+	}
+
+	if request.Body.Secrets != nil {
+		record.Secrets = make([]*model.EnvironmentSecret, 0)
+
+		for _, row := range FromPtr(request.Body.Secrets) {
+			secret := &model.EnvironmentSecret{}
+
+			if row.Kind != nil {
+				secret.Kind = string(FromPtr(row.Kind))
+			}
+
+			if row.Name != nil {
+				secret.Name = FromPtr(row.Name)
+			}
+
+			if row.Content != nil {
+				secret.Content = FromPtr(row.Content)
+			}
+
+			record.Secrets = append(record.Secrets, secret)
+		}
+	}
+
+	if request.Body.Values != nil {
+		record.Values = make([]*model.EnvironmentValue, 0)
+
+		for _, row := range FromPtr(request.Body.Values) {
+			value := &model.EnvironmentValue{}
+
+			if row.Kind != nil {
+				value.Kind = string(FromPtr(row.Kind))
+			}
+
+			if row.Name != nil {
+				value.Name = FromPtr(row.Name)
+			}
+
+			if row.Content != nil {
+				value.Content = FromPtr(row.Content)
+			}
+
+			record.Values = append(record.Values, value)
+		}
+	}
+
+	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+		log.Error().
+			Err(err).
+			Str("action", "CreateProjectEnvironment").
+			Str("project", parent.ID).
+			Msg("Failed to encrypt secrets")
+
+		return CreateProjectEnvironment500JSONResponse{InternalServerErrorJSONResponse{
+			Message: ToPtr("Failed to encrypt credentials"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		}}, nil
+	}
 
 	if err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
@@ -331,6 +415,20 @@ func (a *API) UpdateProjectEnvironment(ctx context.Context, request UpdateProjec
 		}}, nil
 	}
 
+	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
+		log.Error().
+			Err(err).
+			Str("action", "UpdateProjectEnvironment").
+			Str("project", parent.ID).
+			Str("environment", record.ID).
+			Msg("Failed to decrypt secrets")
+
+		return UpdateProjectEnvironment500JSONResponse{InternalServerErrorJSONResponse{
+			Message: ToPtr("Failed to decrypt credentials"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		}}, nil
+	}
+
 	if request.Body.Slug != nil {
 		record.Slug = FromPtr(request.Body.Slug)
 	}
@@ -339,8 +437,71 @@ func (a *API) UpdateProjectEnvironment(ctx context.Context, request UpdateProjec
 		record.Name = FromPtr(request.Body.Name)
 	}
 
-	// TODO: secrets
-	// TODO: values
+	if request.Body.Secrets != nil {
+		record.Secrets = make([]*model.EnvironmentSecret, 0)
+
+		for _, row := range FromPtr(request.Body.Secrets) {
+			secret := &model.EnvironmentSecret{}
+
+			if row.Id != nil {
+				secret.ID = FromPtr(row.Id)
+			}
+
+			if row.Kind != nil {
+				secret.Kind = string(FromPtr(row.Kind))
+			}
+
+			if row.Name != nil {
+				secret.Name = FromPtr(row.Name)
+			}
+
+			if row.Content != nil {
+				secret.Content = FromPtr(row.Content)
+			}
+
+			record.Secrets = append(record.Secrets, secret)
+		}
+	}
+
+	if request.Body.Values != nil {
+		record.Values = make([]*model.EnvironmentValue, 0)
+
+		for _, row := range FromPtr(request.Body.Values) {
+			value := &model.EnvironmentValue{}
+
+			if row.Id != nil {
+				value.ID = FromPtr(row.Id)
+			}
+
+			if row.Kind != nil {
+				value.Kind = string(FromPtr(row.Kind))
+			}
+
+			if row.Name != nil {
+				value.Name = FromPtr(row.Name)
+			}
+
+			if row.Content != nil {
+				value.Content = FromPtr(row.Content)
+			}
+
+			record.Values = append(record.Values, value)
+		}
+	}
+
+	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+		log.Error().
+			Err(err).
+			Str("action", "UpdateProjectEnvironment").
+			Str("project", parent.ID).
+			Str("environment", record.ID).
+			Msg("Failed to encrypt secrets")
+
+		return UpdateProjectEnvironment500JSONResponse{InternalServerErrorJSONResponse{
+			Message: ToPtr("Failed to encrypt credentials"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		}}, nil
+	}
 
 	if err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
@@ -482,6 +643,54 @@ func (a *API) DeleteProjectEnvironment(ctx context.Context, request DeleteProjec
 	}}, nil
 }
 
+// CreateProjectEnvironmentSecret implements the v1.ServerInterface.
+func (a *API) CreateProjectEnvironmentSecret(ctx context.Context, request CreateProjectEnvironmentSecretRequestObject) (CreateProjectEnvironmentSecretResponseObject, error) {
+	return CreateProjectEnvironmentSecret500JSONResponse{InternalServerErrorJSONResponse{
+		Message: ToPtr("Not implemented"),
+		Status:  ToPtr(http.StatusInternalServerError),
+	}}, nil
+}
+
+// UpdateProjectEnvironmentSecret implements the v1.ServerInterface.
+func (a *API) UpdateProjectEnvironmentSecret(ctx context.Context, request UpdateProjectEnvironmentSecretRequestObject) (UpdateProjectEnvironmentSecretResponseObject, error) {
+	return UpdateProjectEnvironmentSecret500JSONResponse{InternalServerErrorJSONResponse{
+		Message: ToPtr("Not implemented"),
+		Status:  ToPtr(http.StatusInternalServerError),
+	}}, nil
+}
+
+// DeleteProjectEnvironmentSecret implements the v1.ServerInterface.
+func (a *API) DeleteProjectEnvironmentSecret(ctx context.Context, request DeleteProjectEnvironmentSecretRequestObject) (DeleteProjectEnvironmentSecretResponseObject, error) {
+	return DeleteProjectEnvironmentSecret500JSONResponse{InternalServerErrorJSONResponse{
+		Message: ToPtr("Not implemented"),
+		Status:  ToPtr(http.StatusInternalServerError),
+	}}, nil
+}
+
+// CreateProjectEnvironmentValue implements the v1.ServerInterface.
+func (a *API) CreateProjectEnvironmentValue(ctx context.Context, request CreateProjectEnvironmentValueRequestObject) (CreateProjectEnvironmentValueResponseObject, error) {
+	return CreateProjectEnvironmentValue500JSONResponse{InternalServerErrorJSONResponse{
+		Message: ToPtr("Not implemented"),
+		Status:  ToPtr(http.StatusInternalServerError),
+	}}, nil
+}
+
+// UpdateProjectEnvironmentValue implements the v1.ServerInterface.
+func (a *API) UpdateProjectEnvironmentValue(ctx context.Context, request UpdateProjectEnvironmentValueRequestObject) (UpdateProjectEnvironmentValueResponseObject, error) {
+	return UpdateProjectEnvironmentValue500JSONResponse{InternalServerErrorJSONResponse{
+		Message: ToPtr("Not implemented"),
+		Status:  ToPtr(http.StatusInternalServerError),
+	}}, nil
+}
+
+// DeleteProjectEnvironmentValue implements the v1.ServerInterface.
+func (a *API) DeleteProjectEnvironmentValue(ctx context.Context, request DeleteProjectEnvironmentValueRequestObject) (DeleteProjectEnvironmentValueResponseObject, error) {
+	return DeleteProjectEnvironmentValue500JSONResponse{InternalServerErrorJSONResponse{
+		Message: ToPtr("Not implemented"),
+		Status:  ToPtr(http.StatusInternalServerError),
+	}}, nil
+}
+
 func (a *API) convertEnvironment(record *model.Environment) Environment {
 	result := Environment{
 		Id:        ToPtr(record.ID),
@@ -491,27 +700,31 @@ func (a *API) convertEnvironment(record *model.Environment) Environment {
 		UpdatedAt: ToPtr(record.UpdatedAt),
 	}
 
-	secrets := make([]EnvironmentSecret, 0)
+	if len(record.Secrets) > 0 {
+		secrets := make([]EnvironmentSecret, 0)
 
-	for _, secret := range record.Secrets {
-		secrets = append(
-			secrets,
-			a.convertEnvironmentSecret(secret),
-		)
+		for _, secret := range record.Secrets {
+			secrets = append(
+				secrets,
+				a.convertEnvironmentSecret(secret),
+			)
+		}
+
+		result.Secrets = ToPtr(secrets)
 	}
 
-	result.Secrets = ToPtr(secrets)
+	if len(record.Values) > 0 {
+		values := make([]EnvironmentValue, 0)
 
-	values := make([]EnvironmentValue, 0)
+		for _, value := range record.Values {
+			values = append(
+				values,
+				a.convertEnvironmentValue(value),
+			)
+		}
 
-	for _, value := range record.Values {
-		values = append(
-			values,
-			a.convertEnvironmentValue(value),
-		)
+		result.Values = ToPtr(values)
 	}
-
-	result.Values = ToPtr(values)
 
 	return result
 }
@@ -521,7 +734,7 @@ func (a *API) convertEnvironmentSecret(record *model.EnvironmentSecret) Environm
 		Id:      ToPtr(record.ID),
 		Kind:    ToPtr(EnvironmentSecretKind(record.Kind)),
 		Name:    ToPtr(record.Name),
-		Content: ToPtr(record.Content),
+		Content: ToPtr(record.Content), // TODO: remove this, security risk
 	}
 
 	return result
@@ -532,7 +745,7 @@ func (a *API) convertEnvironmentValue(record *model.EnvironmentValue) Environmen
 		Id:      ToPtr(record.ID),
 		Kind:    ToPtr(EnvironmentValueKind(record.Kind)),
 		Name:    ToPtr(record.Name),
-		Content: ToPtr(record.Content),
+		Content: ToPtr(record.Content), // TODO: remove this, security risk
 	}
 
 	return result

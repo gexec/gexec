@@ -1,6 +1,7 @@
 package validate
 
 import (
+	"github.com/adhocore/gronx"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	giturls "github.com/whilp/git-urls"
 )
@@ -16,6 +17,12 @@ var (
 
 	// GitURL validates if a string is a valid Git clone URL
 	GitURL = validation.NewStringRuleWithError(IsGitURL, ErrGitURL)
+
+	// ErrCronSyntax is the error that returns in case of an invalid cron syntax.
+	ErrCronSyntax = validation.NewError("validation_is_git_url", "must be a valid Git clone URL")
+
+	// CronSyntax validates if a string is a valid cron syntax
+	CronSyntax = validation.NewStringRuleWithError(gronx.IsValid, ErrGitURL)
 )
 
 func IsGitURL(str string) bool {

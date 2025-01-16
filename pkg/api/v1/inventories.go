@@ -81,6 +81,19 @@ func (a *API) ListProjectInventories(ctx context.Context, request ListProjectInv
 
 	payload := make([]Inventory, len(records))
 	for id, record := range records {
+		if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil { // TODO: remove it, security risk
+			log.Error().
+				Err(err).
+				Str("action", "ListProjectInventories").
+				Str("project", parent.ID).
+				Msg("Failed to decrypt secrets")
+
+			return ListProjectInventories500JSONResponse{InternalServerErrorJSONResponse{
+				Message: ToPtr("Failed to decrypt secrets"),
+				Status:  ToPtr(http.StatusInternalServerError),
+			}}, nil
+		}
+
 		payload[id] = a.convertInventory(record)
 	}
 
@@ -162,6 +175,20 @@ func (a *API) ShowProjectInventory(ctx context.Context, request ShowProjectInven
 		}}, nil
 	}
 
+	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil { // TODO: remove it, security risk
+		log.Error().
+			Err(err).
+			Str("action", "ShowProjectInventory").
+			Str("project", parent.ID).
+			Str("inventory", record.ID).
+			Msg("Failed to decrypt secrets")
+
+		return ShowProjectInventory500JSONResponse{InternalServerErrorJSONResponse{
+			Message: ToPtr("Failed to decrypt secrets"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		}}, nil
+	}
+
 	return ShowProjectInventory200JSONResponse{ProjectInventoryResponseJSONResponse(
 		a.convertInventory(record),
 	)}, nil
@@ -207,10 +234,11 @@ func (a *API) CreateProjectInventory(ctx context.Context, request CreateProjectI
 	}
 
 	record := &model.Inventory{
-		ProjectID:    parent.ID,
-		RepositoryID: request.Body.RepositoryId,
-		Name:         request.Body.Name,
-		Kind:         request.Body.Kind,
+		ProjectID: parent.ID,
+	}
+
+	if request.Body.RepositoryId != nil {
+		record.RepositoryID = FromPtr(request.Body.RepositoryId)
 	}
 
 	if request.Body.CredentialId != nil {
@@ -225,8 +253,29 @@ func (a *API) CreateProjectInventory(ctx context.Context, request CreateProjectI
 		record.Slug = FromPtr(request.Body.Slug)
 	}
 
+	if request.Body.Name != nil {
+		record.Name = FromPtr(request.Body.Name)
+	}
+
+	if request.Body.Kind != nil {
+		record.Kind = FromPtr(request.Body.Kind)
+	}
+
 	if request.Body.Content != nil {
 		record.Content = FromPtr(request.Body.Content)
+	}
+
+	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+		log.Error().
+			Err(err).
+			Str("action", "CreateProjectIntenvoryl").
+			Str("project", parent.ID).
+			Msg("Failed to encrypt secrets")
+
+		return CreateProjectInventory500JSONResponse{InternalServerErrorJSONResponse{
+			Message: ToPtr("Failed to encrypt credentials"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		}}, nil
 	}
 
 	if err := a.storage.WithPrincipal(
@@ -342,6 +391,20 @@ func (a *API) UpdateProjectInventory(ctx context.Context, request UpdateProjectI
 		}}, nil
 	}
 
+	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
+		log.Error().
+			Err(err).
+			Str("action", "UpdateProjectIntenvoryl").
+			Str("project", parent.ID).
+			Str("inventory", record.ID).
+			Msg("Failed to decrypt secrets")
+
+		return UpdateProjectInventory500JSONResponse{InternalServerErrorJSONResponse{
+			Message: ToPtr("Failed to decrypt credentials"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		}}, nil
+	}
+
 	if request.Body.RepositoryId != nil {
 		record.RepositoryID = FromPtr(request.Body.RepositoryId)
 	}
@@ -368,6 +431,20 @@ func (a *API) UpdateProjectInventory(ctx context.Context, request UpdateProjectI
 
 	if request.Body.Content != nil {
 		record.Content = FromPtr(request.Body.Content)
+	}
+
+	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+		log.Error().
+			Err(err).
+			Str("action", "UpdateProjectIntenvoryl").
+			Str("project", parent.ID).
+			Str("inventory", record.ID).
+			Msg("Failed to encrypt secrets")
+
+		return UpdateProjectInventory500JSONResponse{InternalServerErrorJSONResponse{
+			Message: ToPtr("Failed to encrypt credentials"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		}}, nil
 	}
 
 	if err := a.storage.WithPrincipal(
@@ -512,17 +589,18 @@ func (a *API) DeleteProjectInventory(ctx context.Context, request DeleteProjectI
 
 func (a *API) convertInventory(record *model.Inventory) Inventory {
 	result := Inventory{
-		Id:           ToPtr(record.ID),
-		RepositoryId: ToPtr(record.RepositoryID),
-		Slug:         ToPtr(record.Slug),
-		Name:         ToPtr(record.Name),
-		Kind:         ToPtr(InventoryKind(record.Kind)),
-		Content:      ToPtr(record.Content),
-		CreatedAt:    ToPtr(record.CreatedAt),
-		UpdatedAt:    ToPtr(record.UpdatedAt),
+		Id:        ToPtr(record.ID),
+		Slug:      ToPtr(record.Slug),
+		Name:      ToPtr(record.Name),
+		Kind:      ToPtr(InventoryKind(record.Kind)),
+		Content:   ToPtr(record.Content),
+		CreatedAt: ToPtr(record.CreatedAt),
+		UpdatedAt: ToPtr(record.UpdatedAt),
 	}
 
 	if record.Repository != nil {
+		result.RepositoryId = ToPtr(record.RepositoryID)
+
 		result.Repository = ToPtr(
 			a.convertRepository(
 				record.Repository,

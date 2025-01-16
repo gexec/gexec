@@ -9,31 +9,31 @@ import (
 
 func init() {
 	Migrations.MustRegister(func(ctx context.Context, db *bun.DB) error {
-		type Environment struct {
-			bun.BaseModel `bun:"table:environments"`
+		type TemplateValue struct {
+			bun.BaseModel `bun:"table:template_values"`
 
 			ID        string    `bun:",pk,type:varchar(20)"`
-			ProjectID string    `bun:"type:varchar(20)"`
-			Slug      string    `bun:"type:varchar(255)"`
+			SurveyID  string    `bun:"type:varchar(20)"`
 			Name      string    `bun:"type:varchar(255)"`
+			Value     string    `bun:"type:text"`
 			CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 			UpdatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 		}
 
 		_, err := db.NewCreateTable().
-			Model((*Environment)(nil)).
+			Model((*TemplateValue)(nil)).
 			WithForeignKeys().
-			ForeignKey(`(project_id) REFERENCES projects (id) ON DELETE CASCADE`).
+			ForeignKey(`(survey_id) REFERENCES template_surveys (id) ON DELETE CASCADE`).
 			Exec(ctx)
 
 		return err
 	}, func(ctx context.Context, db *bun.DB) error {
-		type Environment struct {
-			bun.BaseModel `bun:"table:environments"`
+		type TemplateValue struct {
+			bun.BaseModel `bun:"table:template_values"`
 		}
 
 		_, err := db.NewDropTable().
-			Model((*Environment)(nil)).
+			Model((*TemplateValue)(nil)).
 			IfExists().
 			Exec(ctx)
 

@@ -109,12 +109,14 @@ func (a *API) CreateTeam(ctx context.Context, request CreateTeamRequestObject) (
 		}}, nil
 	}
 
-	record := &model.Team{
-		Name: request.Body.Name,
-	}
+	record := &model.Team{}
 
 	if request.Body.Slug != nil {
 		record.Slug = FromPtr(request.Body.Slug)
+	}
+
+	if request.Body.Name != nil {
+		record.Name = FromPtr(request.Body.Name)
 	}
 
 	if err := a.storage.WithPrincipal(

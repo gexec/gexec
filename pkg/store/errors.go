@@ -35,12 +35,27 @@ var (
 	// ErrEnvironmentNotFound is returned when a environment was not found.
 	ErrEnvironmentNotFound = errors.New("environment not found")
 
+	// ErrEnvironmentValueNotFound is returned when a environment value was not found.
+	ErrEnvironmentValueNotFound = errors.New("environment value not found")
+
+	// ErrEnvironmentSecretNotFound is returned when a environment secret was not found.
+	ErrEnvironmentSecretNotFound = errors.New("environment secret not found")
+
 	// ErrTemplateNotFound is returned when a template was not found.
 	ErrTemplateNotFound = errors.New("template not found")
+
+	// ErrTemplateSurveyNotFound is returned when a template survey was not found.
+	ErrTemplateSurveyNotFound = errors.New("template survey not found")
+
+	// ErrTemplateValueNotFound is returned when a template value was not found.
+	ErrTemplateValueNotFound = errors.New("template value not found")
+
+	// ErrTemplateVaultNotFound is returned when a template vault was not found.
+	ErrTemplateVaultNotFound = errors.New("template vault not found")
 
 	// ErrScheduleNotFound is returned when a schedule was not found.
 	ErrScheduleNotFound = errors.New("schedule not found")
 
-	// ErrTaskNotFound is returned when a task was not found.
-	ErrTaskNotFound = errors.New("task not found")
+	// ErrExecutionNotFound is returned when a execution was not found.
+	ErrExecutionNotFound = errors.New("execution not found")
 )

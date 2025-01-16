@@ -81,6 +81,19 @@ func (a *API) ListProjectSchedules(ctx context.Context, request ListProjectSched
 
 	payload := make([]Schedule, len(records))
 	for id, record := range records {
+		if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil { // TODO: remove it, security risk
+			log.Error().
+				Err(err).
+				Str("action", "ListProjectSchedules").
+				Str("project", parent.ID).
+				Msg("Failed to decrypt secrets")
+
+			return ListProjectSchedules500JSONResponse{InternalServerErrorJSONResponse{
+				Message: ToPtr("Failed to decrypt secrets"),
+				Status:  ToPtr(http.StatusInternalServerError),
+			}}, nil
+		}
+
 		payload[id] = a.convertSchedule(record)
 	}
 
@@ -162,6 +175,20 @@ func (a *API) ShowProjectSchedule(ctx context.Context, request ShowProjectSchedu
 		}}, nil
 	}
 
+	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil { // TODO: remove it, security risk
+		log.Error().
+			Err(err).
+			Str("action", "ShowProjectSchedule").
+			Str("project", parent.ID).
+			Str("schedule", record.ID).
+			Msg("Failed to decrypt secrets")
+
+		return ShowProjectSchedule500JSONResponse{InternalServerErrorJSONResponse{
+			Message: ToPtr("Failed to decrypt secrets"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		}}, nil
+	}
+
 	return ShowProjectSchedule200JSONResponse{ProjectScheduleResponseJSONResponse(
 		a.convertSchedule(record),
 	)}, nil
@@ -210,10 +237,38 @@ func (a *API) CreateProjectSchedule(ctx context.Context, request CreateProjectSc
 		ProjectID: parent.ID,
 	}
 
-	// TODO
-	// if request.Body.Dummy != nil {
-	// 	record.Dummy = FromPtr(request.Body.Dummy)
-	// }
+	if request.Body.TemplateId != nil {
+		record.TemplateID = FromPtr(request.Body.TemplateId)
+	}
+
+	if request.Body.Slug != nil {
+		record.Slug = FromPtr(request.Body.Slug)
+	}
+
+	if request.Body.Name != nil {
+		record.Name = FromPtr(request.Body.Name)
+	}
+
+	if request.Body.Cron != nil {
+		record.Cron = FromPtr(request.Body.Cron)
+	}
+
+	if request.Body.Active != nil {
+		record.Active = FromPtr(request.Body.Active)
+	}
+
+	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+		log.Error().
+			Err(err).
+			Str("action", "CreateProjectSchedule").
+			Str("project", parent.ID).
+			Msg("Failed to encrypt secrets")
+
+		return CreateProjectSchedule500JSONResponse{InternalServerErrorJSONResponse{
+			Message: ToPtr("Failed to encrypt credentials"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		}}, nil
+	}
 
 	if err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
@@ -328,10 +383,53 @@ func (a *API) UpdateProjectSchedule(ctx context.Context, request UpdateProjectSc
 		}}, nil
 	}
 
-	// TODO
-	// if request.Body.Dummy != nil {
-	// 	record.Dummy = FromPtr(request.Body.Dummy)
-	// }
+	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
+		log.Error().
+			Err(err).
+			Str("action", "UpdateProjectSchedule").
+			Str("project", parent.ID).
+			Str("schedule", record.ID).
+			Msg("Failed to decrypt secrets")
+
+		return UpdateProjectSchedule500JSONResponse{InternalServerErrorJSONResponse{
+			Message: ToPtr("Failed to decrypt credentials"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		}}, nil
+	}
+
+	if request.Body.TemplateId != nil {
+		record.TemplateID = FromPtr(request.Body.TemplateId)
+	}
+
+	if request.Body.Slug != nil {
+		record.Slug = FromPtr(request.Body.Slug)
+	}
+
+	if request.Body.Name != nil {
+		record.Name = FromPtr(request.Body.Name)
+	}
+
+	if request.Body.Cron != nil {
+		record.Cron = FromPtr(request.Body.Cron)
+	}
+
+	if request.Body.Active != nil {
+		record.Active = FromPtr(request.Body.Active)
+	}
+
+	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+		log.Error().
+			Err(err).
+			Str("action", "UpdateProjectSchedule").
+			Str("project", parent.ID).
+			Str("schedule", record.ID).
+			Msg("Failed to encrypt secrets")
+
+		return UpdateProjectSchedule500JSONResponse{InternalServerErrorJSONResponse{
+			Message: ToPtr("Failed to encrypt credentials"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		}}, nil
+	}
 
 	if err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
@@ -476,8 +574,22 @@ func (a *API) DeleteProjectSchedule(ctx context.Context, request DeleteProjectSc
 func (a *API) convertSchedule(record *model.Schedule) Schedule {
 	result := Schedule{
 		Id:        ToPtr(record.ID),
+		Slug:      ToPtr(record.Slug),
+		Name:      ToPtr(record.Name),
+		Cron:      ToPtr(record.Cron),
+		Active:    ToPtr(record.Active),
 		CreatedAt: ToPtr(record.CreatedAt),
 		UpdatedAt: ToPtr(record.UpdatedAt),
+	}
+
+	if record.Template != nil {
+		result.TemplateId = ToPtr(record.TemplateID)
+
+		result.Template = ToPtr(
+			a.convertTemplate(
+				record.Template,
+			),
+		)
 	}
 
 	return result

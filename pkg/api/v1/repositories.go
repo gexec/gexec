@@ -81,6 +81,19 @@ func (a *API) ListProjectRepositories(ctx context.Context, request ListProjectRe
 
 	payload := make([]Repository, len(records))
 	for id, record := range records {
+		if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil { // TODO: remove it, security risk
+			log.Error().
+				Err(err).
+				Str("action", "ListProjectCredentials").
+				Str("project", parent.ID).
+				Msg("Failed to decrypt secrets")
+
+			return ListProjectRepositories500JSONResponse{InternalServerErrorJSONResponse{
+				Message: ToPtr("Failed to decrypt secrets"),
+				Status:  ToPtr(http.StatusInternalServerError),
+			}}, nil
+		}
+
 		payload[id] = a.convertRepository(record)
 	}
 
@@ -162,6 +175,20 @@ func (a *API) ShowProjectRepository(ctx context.Context, request ShowProjectRepo
 		}}, nil
 	}
 
+	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil { // TODO: remove it, security risk
+		log.Error().
+			Err(err).
+			Str("action", "ShowProjectRepository").
+			Str("project", parent.ID).
+			Str("credential", record.ID).
+			Msg("Failed to decrypt secrets")
+
+		return ShowProjectRepository500JSONResponse{InternalServerErrorJSONResponse{
+			Message: ToPtr("Failed to decrypt secrets"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		}}, nil
+	}
+
 	return ShowProjectRepository200JSONResponse{ProjectRepositoryResponseJSONResponse(
 		a.convertRepository(record),
 	)}, nil
@@ -207,15 +234,40 @@ func (a *API) CreateProjectRepository(ctx context.Context, request CreateProject
 	}
 
 	record := &model.Repository{
-		ProjectID:    parent.ID,
-		CredentialID: request.Body.CredentialId,
-		Name:         request.Body.Name,
-		URL:          request.Body.Url,
-		Branch:       request.Body.Branch,
+		ProjectID: parent.ID,
+	}
+
+	if request.Body.CredentialId != nil {
+		record.CredentialID = FromPtr(request.Body.CredentialId)
 	}
 
 	if request.Body.Slug != nil {
 		record.Slug = FromPtr(request.Body.Slug)
+	}
+
+	if request.Body.Name != nil {
+		record.Name = FromPtr(request.Body.Name)
+	}
+
+	if request.Body.Url != nil {
+		record.URL = FromPtr(request.Body.Url)
+	}
+
+	if request.Body.Branch != nil {
+		record.Branch = FromPtr(request.Body.Branch)
+	}
+
+	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+		log.Error().
+			Err(err).
+			Str("action", "CreateProjectRepository").
+			Str("project", parent.ID).
+			Msg("Failed to encrypt secrets")
+
+		return CreateProjectRepository500JSONResponse{InternalServerErrorJSONResponse{
+			Message: ToPtr("Failed to encrypt credentials"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		}}, nil
 	}
 
 	if err := a.storage.WithPrincipal(
@@ -331,6 +383,20 @@ func (a *API) UpdateProjectRepository(ctx context.Context, request UpdateProject
 		}}, nil
 	}
 
+	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
+		log.Error().
+			Err(err).
+			Str("action", "UpdateProjectRepository").
+			Str("project", parent.ID).
+			Str("repository", record.ID).
+			Msg("Failed to decrypt secrets")
+
+		return UpdateProjectRepository500JSONResponse{InternalServerErrorJSONResponse{
+			Message: ToPtr("Failed to decrypt credentials"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		}}, nil
+	}
+
 	if request.Body.CredentialId != nil {
 		record.CredentialID = FromPtr(request.Body.CredentialId)
 	}
@@ -349,6 +415,20 @@ func (a *API) UpdateProjectRepository(ctx context.Context, request UpdateProject
 
 	if request.Body.Branch != nil {
 		record.Branch = FromPtr(request.Body.Branch)
+	}
+
+	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+		log.Error().
+			Err(err).
+			Str("action", "UpdateProjectRepository").
+			Str("project", parent.ID).
+			Str("repository", record.ID).
+			Msg("Failed to encrypt secrets")
+
+		return UpdateProjectRepository500JSONResponse{InternalServerErrorJSONResponse{
+			Message: ToPtr("Failed to encrypt credentials"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		}}, nil
 	}
 
 	if err := a.storage.WithPrincipal(
@@ -493,17 +573,18 @@ func (a *API) DeleteProjectRepository(ctx context.Context, request DeleteProject
 
 func (a *API) convertRepository(record *model.Repository) Repository {
 	result := Repository{
-		Id:           ToPtr(record.ID),
-		CredentialId: ToPtr(record.CredentialID),
-		Slug:         ToPtr(record.Slug),
-		Name:         ToPtr(record.Name),
-		Url:          ToPtr(record.URL),
-		Branch:       ToPtr(record.Branch),
-		CreatedAt:    ToPtr(record.CreatedAt),
-		UpdatedAt:    ToPtr(record.UpdatedAt),
+		Id:        ToPtr(record.ID),
+		Slug:      ToPtr(record.Slug),
+		Name:      ToPtr(record.Name),
+		Url:       ToPtr(record.URL),
+		Branch:    ToPtr(record.Branch),
+		CreatedAt: ToPtr(record.CreatedAt),
+		UpdatedAt: ToPtr(record.UpdatedAt),
 	}
 
 	if record.Credential != nil {
+		result.CredentialId = ToPtr(record.CredentialID)
+
 		result.Credential = ToPtr(
 			a.convertCredential(
 				record.Credential,

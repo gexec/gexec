@@ -290,9 +290,11 @@ func (s *Credentials) validSort(val string) (string, bool) {
 	val = strings.ToLower(val)
 
 	for key, name := range map[string]string{
-		"name": "credential.name",
-		"slug": "credential.slug",
-		"kind": "credential.url",
+		"name":    "credential.name",
+		"slug":    "credential.slug",
+		"kind":    "credential.url",
+		"created": "credential.created_at",
+		"updated": "credential.updated_at",
 	} {
 		if val == key {
 			return name, true

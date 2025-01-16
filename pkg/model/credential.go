@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	_ bun.BeforeAppendModelHook = (*Project)(nil)
+	_ bun.BeforeAppendModelHook = (*Credential)(nil)
 )
 
 // CredentialShell represents credentials for shells.

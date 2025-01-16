@@ -108,12 +108,18 @@ func (a *API) CreateProject(ctx context.Context, request CreateProjectRequestObj
 		}}, nil
 	}
 
-	record := &model.Project{
-		Name: request.Body.Name,
-	}
+	record := &model.Project{}
 
 	if request.Body.Slug != nil {
 		record.Slug = FromPtr(request.Body.Slug)
+	}
+
+	if request.Body.Name != nil {
+		record.Name = FromPtr(request.Body.Name)
+	}
+
+	if request.Body.Demo != nil {
+		record.Demo = FromPtr(request.Body.Demo)
 	}
 
 	if err := a.storage.WithPrincipal(

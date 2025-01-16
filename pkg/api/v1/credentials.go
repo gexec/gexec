@@ -81,6 +81,19 @@ func (a *API) ListProjectCredentials(ctx context.Context, request ListProjectCre
 
 	payload := make([]Credential, len(records))
 	for id, record := range records {
+		if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil { // TODO: remove it, security risk
+			log.Error().
+				Err(err).
+				Str("action", "ListProjectCredentials").
+				Str("project", parent.ID).
+				Msg("Failed to decrypt secrets")
+
+			return ListProjectCredentials500JSONResponse{InternalServerErrorJSONResponse{
+				Message: ToPtr("Failed to decrypt secrets"),
+				Status:  ToPtr(http.StatusInternalServerError),
+			}}, nil
+		}
+
 		payload[id] = a.convertCredential(record)
 	}
 
@@ -162,6 +175,20 @@ func (a *API) ShowProjectCredential(ctx context.Context, request ShowProjectCred
 		}}, nil
 	}
 
+	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil { // TODO: remove it, security risk
+		log.Error().
+			Err(err).
+			Str("action", "ShowProjectCredential").
+			Str("project", parent.ID).
+			Str("credential", record.ID).
+			Msg("Failed to decrypt secrets")
+
+		return ShowProjectCredential500JSONResponse{InternalServerErrorJSONResponse{
+			Message: ToPtr("Failed to decrypt secrets"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		}}, nil
+	}
+
 	return ShowProjectCredential200JSONResponse{ProjectCredentialResponseJSONResponse(
 		a.convertCredential(record),
 	)}, nil
@@ -208,19 +235,25 @@ func (a *API) CreateProjectCredential(ctx context.Context, request CreateProject
 
 	record := &model.Credential{
 		ProjectID: parent.ID,
-		Name:      request.Body.Name,
-		Kind:      request.Body.Kind,
 	}
 
 	if request.Body.Slug != nil {
 		record.Slug = FromPtr(request.Body.Slug)
 	}
 
+	if request.Body.Name != nil {
+		record.Name = FromPtr(request.Body.Name)
+	}
+
+	if request.Body.Kind != nil {
+		record.Kind = FromPtr(request.Body.Kind)
+	}
+
 	if request.Body.Override != nil {
 		record.Override = FromPtr(request.Body.Override)
 	}
 
-	switch request.Body.Kind {
+	switch record.Kind {
 	case "shell":
 		if request.Body.Shell != nil {
 			if request.Body.Shell.Username != nil {
@@ -373,6 +406,20 @@ func (a *API) UpdateProjectCredential(ctx context.Context, request UpdateProject
 		}}, nil
 	}
 
+	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
+		log.Error().
+			Err(err).
+			Str("action", "UpdateProjectCredential").
+			Str("project", parent.ID).
+			Str("credential", record.ID).
+			Msg("Failed to decrypt secrets")
+
+		return UpdateProjectCredential500JSONResponse{InternalServerErrorJSONResponse{
+			Message: ToPtr("Failed to decrypt credentials"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		}}, nil
+	}
+
 	if request.Body.Slug != nil {
 		record.Slug = FromPtr(request.Body.Slug)
 	}
@@ -387,6 +434,20 @@ func (a *API) UpdateProjectCredential(ctx context.Context, request UpdateProject
 
 	if request.Body.Override != nil {
 		record.Override = FromPtr(request.Body.Override)
+	}
+
+	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+		log.Error().
+			Err(err).
+			Str("action", "UpdateProjectCredential").
+			Str("project", parent.ID).
+			Str("credential", record.ID).
+			Msg("Failed to encrypt secrets")
+
+		return UpdateProjectCredential500JSONResponse{InternalServerErrorJSONResponse{
+			Message: ToPtr("Failed to encrypt credentials"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		}}, nil
 	}
 
 	switch record.Kind {
@@ -406,9 +467,6 @@ func (a *API) UpdateProjectCredential(ctx context.Context, request UpdateProject
 				record.Shell.PrivateKey = FromPtr(request.Body.Shell.PrivateKey)
 			}
 		}
-
-		// TODO: drop this
-		record.Shell.Password = "p455w0rd"
 	case "login":
 		record.Shell = model.CredentialShell{}
 
@@ -421,9 +479,6 @@ func (a *API) UpdateProjectCredential(ctx context.Context, request UpdateProject
 				record.Login.Password = FromPtr(request.Body.Login.Password)
 			}
 		}
-
-		// TODO: drop this
-		record.Login.Password = "p455w0rd"
 	default:
 		record.Shell = model.CredentialShell{}
 		record.Login = model.CredentialLogin{}
@@ -596,16 +651,35 @@ func (a *API) convertCredential(record *model.Credential) Credential {
 
 	switch record.Kind {
 	case "shell":
-		result.Shell = ToPtr(CredentialShell{
-			Username: ToPtr(record.Shell.Username),
-		})
+		result.Shell = ToPtr(
+			a.converCredentialShell(
+				record.Shell,
+			),
+		)
 	case "login":
-		result.Login = ToPtr(CredentialLogin{
-			Username: ToPtr(record.Shell.Username),
-		})
+		result.Login = ToPtr(
+			a.convertCredentialLogin(
+				record.Login,
+			),
+		)
 	}
 
 	return result
+}
+
+func (a *API) converCredentialShell(record model.CredentialShell) CredentialShell {
+	return CredentialShell{
+		Username:   ToPtr(record.Username),
+		Password:   ToPtr(record.Password),   // TODO: remove this, security risk
+		PrivateKey: ToPtr(record.PrivateKey), // TODO: remove this, security risk
+	}
+}
+
+func (a *API) convertCredentialLogin(record model.CredentialLogin) CredentialLogin {
+	return CredentialLogin{
+		Username: ToPtr(record.Username),
+		Password: ToPtr(record.Password), // TODO: remove this, security risk
+	}
 }
 
 type credentialPermissions struct {

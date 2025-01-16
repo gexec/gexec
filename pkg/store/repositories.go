@@ -315,10 +315,13 @@ func (s *Repositories) validSort(val string) (string, bool) {
 	val = strings.ToLower(val)
 
 	for key, name := range map[string]string{
-		"name":   "repository.name",
-		"slug":   "repository.slug",
-		"url":    "repository.url",
-		"branch": "repository.branch",
+		"credential": "credential.name",
+		"name":       "repository.name",
+		"slug":       "repository.slug",
+		"url":        "repository.url",
+		"branch":     "repository.branch",
+		"created":    "repository.created_at",
+		"updated":    "repository.updated_at",
 	} {
 		if val == key {
 			return name, true

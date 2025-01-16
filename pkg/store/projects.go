@@ -123,23 +123,454 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 		return err
 	}
 
-	if _, err := s.client.handle.NewInsert().
-		Model(record).
-		Exec(ctx); err != nil {
-		return err
-	}
+	return s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		if _, err := tx.NewInsert().
+			Model(record).
+			Exec(ctx); err != nil {
+			return err
+		}
 
-	if _, err := s.client.handle.NewInsert().
-		Model(&model.UserProject{
-			ProjectID: record.ID,
-			UserID:    s.client.principal.ID,
-			Perm:      model.UserProjectAdminPerm,
-		}).
-		Exec(ctx); err != nil {
-		return err
-	}
+		if _, err := tx.NewInsert().
+			Model(&model.UserProject{
+				ProjectID: record.ID,
+				UserID:    s.client.principal.ID,
+				Perm:      model.UserProjectAdminPerm,
+			}).
+			Exec(ctx); err != nil {
+			return err
+		}
 
-	return nil
+		if record.Demo {
+			credential1 := &model.Credential{
+				ProjectID: record.ID,
+				Slug:      "none",
+				Name:      "None",
+				Kind:      "empty",
+				Override:  false,
+			}
+
+			if err := credential1.SerializeSecret(s.client.passphrase); err != nil {
+				return err
+			}
+
+			if _, err := tx.NewInsert().
+				Model(credential1).
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			credential2 := &model.Credential{
+				ProjectID: record.ID,
+				Slug:      "vault",
+				Name:      "Vault",
+				Kind:      "login",
+				Override:  false,
+				Login: model.CredentialLogin{
+					Password: "p455w0rd",
+				},
+			}
+
+			if err := credential2.SerializeSecret(s.client.passphrase); err != nil {
+				return err
+			}
+
+			if _, err := tx.NewInsert().
+				Model(credential2).
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			repository1 := &model.Repository{
+				ProjectID:    record.ID,
+				CredentialID: credential1.ID,
+				Slug:         "demo",
+				Name:         "Demo",
+				URL:          "https://github.com/genexec/genexec-demo.git",
+				Branch:       "master",
+			}
+
+			if err := repository1.SerializeSecret(s.client.passphrase); err != nil {
+				return err
+			}
+
+			if _, err := tx.NewInsert().
+				Model(repository1).
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			inventory1 := &model.Inventory{
+				ProjectID:    record.ID,
+				CredentialID: credential1.ID,
+				Slug:         "customized",
+				Name:         "Customized",
+				Kind:         "static",
+				Content:      `[customized]\nlocalhost ansible_connection=local`,
+			}
+
+			if err := inventory1.SerializeSecret(s.client.passphrase); err != nil {
+				return err
+			}
+
+			if _, err := tx.NewInsert().
+				Model(inventory1).
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			inventory2 := &model.Inventory{
+				ProjectID:    record.ID,
+				RepositoryID: repository1.ID,
+				CredentialID: credential1.ID,
+				Slug:         "development",
+				Name:         "Developmment",
+				Kind:         "file",
+				Content:      "ansible/development/inventory.yml",
+			}
+
+			if err := inventory2.SerializeSecret(s.client.passphrase); err != nil {
+				return err
+			}
+
+			if _, err := tx.NewInsert().
+				Model(inventory2).
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			inventory3 := &model.Inventory{
+				ProjectID:    record.ID,
+				RepositoryID: repository1.ID,
+				CredentialID: credential1.ID,
+				Slug:         "staging",
+				Name:         "Staging",
+				Kind:         "file",
+				Content:      "ansible/staging/inventory.yml",
+			}
+
+			if err := inventory3.SerializeSecret(s.client.passphrase); err != nil {
+				return err
+			}
+
+			if _, err := tx.NewInsert().
+				Model(inventory3).
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			inventory4 := &model.Inventory{
+				ProjectID:    record.ID,
+				RepositoryID: repository1.ID,
+				CredentialID: credential1.ID,
+				Slug:         "production",
+				Name:         "Production",
+				Kind:         "file",
+				Content:      "ansible/production/inventory.yml",
+			}
+
+			if err := inventory4.SerializeSecret(s.client.passphrase); err != nil {
+				return err
+			}
+
+			if _, err := tx.NewInsert().
+				Model(inventory4).
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			environment1 := &model.Environment{
+				ProjectID: record.ID,
+				Slug:      "empty",
+				Name:      "Empty",
+			}
+
+			if err := environment1.SerializeSecret(s.client.passphrase); err != nil {
+				return err
+			}
+
+			if _, err := tx.NewInsert().
+				Model(environment1).
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			environment2 := &model.Environment{
+				ProjectID: record.ID,
+				Slug:      "development",
+				Name:      "Development",
+			}
+
+			if err := environment2.SerializeSecret(s.client.passphrase); err != nil {
+				return err
+			}
+
+			if _, err := tx.NewInsert().
+				Model(environment2).
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			environment2Secret1 := &model.EnvironmentSecret{
+				EnvironmentID: environment2.ID,
+				Kind:          "var",
+				Name:          "example_variable1",
+				Content:       "s3cr37",
+			}
+
+			if err := environment2Secret1.SerializeSecret(s.client.passphrase); err != nil {
+				return err
+			}
+
+			if _, err := tx.NewInsert().
+				Model(environment2Secret1).
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			environment2Secret2 := &model.EnvironmentSecret{
+				EnvironmentID: environment2.ID,
+				Kind:          "env",
+				Name:          "EXAMPLE_NAME",
+				Content:       "Env variable with secret value for DEV",
+			}
+
+			if err := environment2Secret2.SerializeSecret(s.client.passphrase); err != nil {
+				return err
+			}
+
+			if _, err := tx.NewInsert().
+				Model(environment2Secret2).
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			environment2Value1 := &model.EnvironmentValue{
+				EnvironmentID: environment2.ID,
+				Kind:          "var",
+				Name:          "plain_variable",
+				Content:       "Example",
+			}
+
+			if err := environment2Value1.SerializeSecret(s.client.passphrase); err != nil {
+				return err
+			}
+
+			if _, err := tx.NewInsert().
+				Model(environment2Value1).
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			environment2Value2 := &model.EnvironmentValue{
+				EnvironmentID: environment2.ID,
+				Kind:          "env",
+				Name:          "SIMPLE_VARIABLE",
+				Content:       "This is not a secret on DEV",
+			}
+
+			if err := environment2Value2.SerializeSecret(s.client.passphrase); err != nil {
+				return err
+			}
+
+			if _, err := tx.NewInsert().
+				Model(environment2Value2).
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			environment3 := &model.Environment{
+				ProjectID: record.ID,
+				Slug:      "staging",
+				Name:      "Stating",
+			}
+
+			if err := environment3.SerializeSecret(s.client.passphrase); err != nil {
+				return err
+			}
+
+			if _, err := tx.NewInsert().
+				Model(environment3).
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			environment3Secret1 := &model.EnvironmentSecret{
+				EnvironmentID: environment3.ID,
+				Kind:          "var",
+				Name:          "example_variable1",
+				Content:       "s3cr37",
+			}
+
+			if err := environment3Secret1.SerializeSecret(s.client.passphrase); err != nil {
+				return err
+			}
+
+			if _, err := tx.NewInsert().
+				Model(environment3Secret1).
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			environment3Secret2 := &model.EnvironmentSecret{
+				EnvironmentID: environment3.ID,
+				Kind:          "env",
+				Name:          "EXAMPLE_NAME",
+				Content:       "Env variable with secret value for STAGE",
+			}
+
+			if err := environment3Secret2.SerializeSecret(s.client.passphrase); err != nil {
+				return err
+			}
+
+			if _, err := tx.NewInsert().
+				Model(environment3Secret2).
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			environment3Value1 := &model.EnvironmentValue{
+				EnvironmentID: environment3.ID,
+				Kind:          "var",
+				Name:          "plain_variable",
+				Content:       "Example",
+			}
+
+			if err := environment3Value1.SerializeSecret(s.client.passphrase); err != nil {
+				return err
+			}
+
+			if _, err := tx.NewInsert().
+				Model(environment3Value1).
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			environment3Value2 := &model.EnvironmentValue{
+				EnvironmentID: environment3.ID,
+				Kind:          "env",
+				Name:          "SIMPLE_VARIABLE",
+				Content:       "This is not a secret on STAGE",
+			}
+
+			if err := environment3Value2.SerializeSecret(s.client.passphrase); err != nil {
+				return err
+			}
+
+			if _, err := tx.NewInsert().
+				Model(environment3Value2).
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			environment4 := &model.Environment{
+				ProjectID: record.ID,
+				Slug:      "production",
+				Name:      "Production",
+			}
+
+			if err := environment4.SerializeSecret(s.client.passphrase); err != nil {
+				return err
+			}
+
+			if _, err := tx.NewInsert().
+				Model(environment4).
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			environment4Secret1 := &model.EnvironmentSecret{
+				EnvironmentID: environment4.ID,
+				Kind:          "var",
+				Name:          "example_variable1",
+				Content:       "s3cr37",
+			}
+
+			if err := environment4Secret1.SerializeSecret(s.client.passphrase); err != nil {
+				return err
+			}
+
+			if _, err := tx.NewInsert().
+				Model(environment4Secret1).
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			environment4Secret2 := &model.EnvironmentSecret{
+				EnvironmentID: environment4.ID,
+				Kind:          "env",
+				Name:          "EXAMPLE_NAME",
+				Content:       "Env variable with secret value for PROD",
+			}
+
+			if err := environment4Secret2.SerializeSecret(s.client.passphrase); err != nil {
+				return err
+			}
+
+			if _, err := tx.NewInsert().
+				Model(environment4Secret2).
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			environment4Value1 := &model.EnvironmentValue{
+				EnvironmentID: environment4.ID,
+				Kind:          "var",
+				Name:          "plain_variable",
+				Content:       "Example",
+			}
+
+			if err := environment4Value1.SerializeSecret(s.client.passphrase); err != nil {
+				return err
+			}
+
+			if _, err := tx.NewInsert().
+				Model(environment4Value1).
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			environment4Value2 := &model.EnvironmentValue{
+				EnvironmentID: environment4.ID,
+				Kind:          "env",
+				Name:          "SIMPLE_VARIABLE",
+				Content:       "This is not a secret on PROD",
+			}
+
+			if err := environment4Value2.SerializeSecret(s.client.passphrase); err != nil {
+				return err
+			}
+
+			if _, err := tx.NewInsert().
+				Model(environment4Value2).
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			template1 := &model.Template{
+				ProjectID:     record.ID,
+				RepositoryID:  repository1.ID,
+				InventoryID:   inventory1.ID,
+				EnvironmentID: environment1.ID,
+				Slug:          "ping-site",
+				Name:          "Ping Site",
+				Description:   "This template pings the website to provide real word example of using Genexec.",
+				Executor:      "ansible",
+				Playbook:      "ping.yml",
+			}
+
+			if err := template1.SerializeSecret(s.client.passphrase); err != nil {
+				return err
+			}
+
+			if _, err := tx.NewInsert().
+				Model(template1).
+				Exec(ctx); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }
 
 // Update implements the update of an existing project.
@@ -668,8 +1099,10 @@ func (s *Projects) validSort(val string) (string, bool) {
 	val = strings.ToLower(val)
 
 	for key, name := range map[string]string{
-		"slug": "project.slug",
-		"name": "project.name",
+		"slug":    "project.slug",
+		"name":    "project.name",
+		"created": "project.created_at",
+		"updated": "project.updated_at",
 	} {
 		if val == key {
 			return name, true

@@ -214,6 +214,7 @@ func serverAction(ccmd *cobra.Command, _ []string) {
 
 	storage, err := store.NewStore(
 		cfg.Database,
+		cfg.Encrypt.Passphrase,
 	)
 
 	if err != nil {
