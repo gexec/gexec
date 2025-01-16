@@ -208,12 +208,15 @@ func (a *API) CreateProjectEnvironment(ctx context.Context, request CreateProjec
 
 	record := &model.Environment{
 		ProjectID: parent.ID,
+		Name:      request.Body.Name,
 	}
 
-	// TODO
-	// if request.Body.Dummy != nil {
-	// 	record.Dummy = FromPtr(request.Body.Dummy)
-	// }
+	if request.Body.Slug != nil {
+		record.Slug = FromPtr(request.Body.Slug)
+	}
+
+	// TODO: secrets
+	// TODO: values
 
 	if err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
@@ -328,10 +331,16 @@ func (a *API) UpdateProjectEnvironment(ctx context.Context, request UpdateProjec
 		}}, nil
 	}
 
-	// TODO
-	// if request.Body.Dummy != nil {
-	// 	record.Dummy = FromPtr(request.Body.Dummy)
-	// }
+	if request.Body.Slug != nil {
+		record.Slug = FromPtr(request.Body.Slug)
+	}
+
+	if request.Body.Name != nil {
+		record.Name = FromPtr(request.Body.Name)
+	}
+
+	// TODO: secrets
+	// TODO: values
 
 	if err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
@@ -476,8 +485,54 @@ func (a *API) DeleteProjectEnvironment(ctx context.Context, request DeleteProjec
 func (a *API) convertEnvironment(record *model.Environment) Environment {
 	result := Environment{
 		Id:        ToPtr(record.ID),
+		Slug:      ToPtr(record.Slug),
+		Name:      ToPtr(record.Name),
 		CreatedAt: ToPtr(record.CreatedAt),
 		UpdatedAt: ToPtr(record.UpdatedAt),
+	}
+
+	secrets := make([]EnvironmentSecret, 0)
+
+	for _, secret := range record.Secrets {
+		secrets = append(
+			secrets,
+			a.convertEnvironmentSecret(secret),
+		)
+	}
+
+	result.Secrets = ToPtr(secrets)
+
+	values := make([]EnvironmentValue, 0)
+
+	for _, value := range record.Values {
+		values = append(
+			values,
+			a.convertEnvironmentValue(value),
+		)
+	}
+
+	result.Values = ToPtr(values)
+
+	return result
+}
+
+func (a *API) convertEnvironmentSecret(record *model.EnvironmentSecret) EnvironmentSecret {
+	result := EnvironmentSecret{
+		Id:      ToPtr(record.ID),
+		Kind:    ToPtr(EnvironmentSecretKind(record.Kind)),
+		Name:    ToPtr(record.Name),
+		Content: ToPtr(record.Content),
+	}
+
+	return result
+}
+
+func (a *API) convertEnvironmentValue(record *model.EnvironmentValue) EnvironmentValue {
+	result := EnvironmentValue{
+		Id:      ToPtr(record.ID),
+		Kind:    ToPtr(EnvironmentValueKind(record.Kind)),
+		Name:    ToPtr(record.Name),
+		Content: ToPtr(record.Content),
 	}
 
 	return result

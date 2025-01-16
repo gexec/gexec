@@ -25,8 +25,6 @@ func init() {
 			UpdatedAt    time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 		}
 
-		//
-
 		if _, err := db.NewCreateTable().
 			Model((*Inventory)(nil)).
 			WithForeignKeys().
@@ -46,6 +44,9 @@ func init() {
 			Exec(ctx); err != nil {
 			return err
 		}
+
+		// TODO: unique index for project_id and slug
+		// TODO: unique index for project_id and name
 
 		return nil
 	}, func(ctx context.Context, db *bun.DB) error {

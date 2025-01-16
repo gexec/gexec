@@ -4,10 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"strings"
 
+	"github.com/Machiel/slugify"
+	"github.com/dchest/uniuri"
 	"github.com/genexec/genexec/pkg/model"
 	"github.com/genexec/genexec/pkg/validate"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/uptrace/bun"
 )
 
 // Environments provides all database operations related to environments.
@@ -79,17 +84,15 @@ func (s *Environments) Show(ctx context.Context, projectID, name string) (*model
 
 // Create implements the create of a new environment.
 func (s *Environments) Create(ctx context.Context, projectID string, record *model.Environment) error {
-	// if record.Slug == "" {
-	// 	record.Slug = Slugify(
-	// 		ctx,
-	// 		s.client.handle.NewSelect().
-	// 			Model((*model.Environment)(nil)),
-	// 		"slug",
-	// 		record.Name,
-	// 		"",
-	// 		false,
-	// 	)
-	// }
+	if record.Slug == "" {
+		record.Slug = s.slugify(
+			ctx,
+			"slug",
+			record.Name,
+			"",
+			projectID,
+		)
+	}
 
 	if err := s.validate(ctx, record, false); err != nil {
 		return err
@@ -106,17 +109,15 @@ func (s *Environments) Create(ctx context.Context, projectID string, record *mod
 
 // Update implements the update of an existing environment.
 func (s *Environments) Update(ctx context.Context, projectID string, record *model.Environment) error {
-	// if record.Slug == "" {
-	// 	record.Slug = Slugify(
-	// 		ctx,
-	// 		s.client.handle.NewSelect().
-	// 			Model((*model.Environment)(nil)),
-	// 		"slug",
-	// 		record.Name,
-	// 		record.ID,
-	// 		false,
-	// 	)
-	// }
+	if record.Slug == "" {
+		record.Slug = s.slugify(
+			ctx,
+			"slug",
+			record.Name,
+			"",
+			projectID,
+		)
+	}
 
 	if err := s.validate(ctx, record, true); err != nil {
 		return err
@@ -148,17 +149,29 @@ func (s *Environments) Delete(ctx context.Context, projectID, name string) error
 func (s *Environments) validate(ctx context.Context, record *model.Environment, _ bool) error {
 	errs := validate.Errors{}
 
-	// if err := validation.Validate(
-	// 	record.Slug,
-	// 	validation.Required,
-	// 	validation.Length(3, 255),
-	// 	validation.By(s.uniqueValueIsPresent(ctx, "slug", record.ID)),
-	// ); err != nil {
-	// 	errs.Errors = append(errs.Errors, validate.Error{
-	// 		Field: "slug",
-	// 		Error: err,
-	// 	})
-	// }
+	if err := validation.Validate(
+		record.Slug,
+		validation.Required,
+		validation.Length(3, 255),
+		validation.By(s.uniqueValueIsPresent(ctx, "slug", record.ID, record.ProjectID)),
+	); err != nil {
+		errs.Errors = append(errs.Errors, validate.Error{
+			Field: "slug",
+			Error: err,
+		})
+	}
+
+	if err := validation.Validate(
+		record.Name,
+		validation.Required,
+		validation.Length(3, 255),
+		validation.By(s.uniqueValueIsPresent(ctx, "name", record.ID, record.ProjectID)),
+	); err != nil {
+		errs.Errors = append(errs.Errors, validate.Error{
+			Field: "name",
+			Error: err,
+		})
+	}
 
 	if len(errs.Errors) > 0 {
 		return errs
@@ -167,20 +180,85 @@ func (s *Environments) validate(ctx context.Context, record *model.Environment, 
 	return nil
 }
 
+func (s *Environments) uniqueValueIsPresent(ctx context.Context, key, id, projectID string) func(value interface{}) error {
+	return func(value interface{}) error {
+		val, _ := value.(string)
+
+		q := s.client.handle.NewSelect().
+			Model((*model.Environment)(nil)).
+			Where("project_id = ? AND ? = ?", projectID, bun.Ident(key), val)
+
+		if id != "" {
+			q = q.Where(
+				"id != ?",
+				id,
+			)
+		}
+
+		exists, err := q.Exists(ctx)
+
+		if err != nil {
+			return err
+		}
+
+		if exists {
+			return errors.New("is already taken")
+		}
+
+		return nil
+	}
+}
+
+func (s *Environments) slugify(ctx context.Context, column, value, id, projectID string) string {
+	var (
+		slug string
+	)
+
+	for i := 0; true; i++ {
+		if i == 0 {
+			slug = slugify.Slugify(value)
+		} else {
+			slug = slugify.Slugify(
+				fmt.Sprintf("%s-%s", value, uniuri.NewLen(6)),
+			)
+		}
+
+		query := s.client.handle.NewSelect().
+			Model((*model.Environment)(nil)).
+			Where("project_id = ? AND ? = ?", projectID, bun.Ident(column), slug)
+
+		if id != "" {
+			query = query.Where(
+				"id != ?",
+				id,
+			)
+		}
+
+		if count, err := query.Count(
+			ctx,
+		); err == nil && count == 0 {
+			break
+		}
+	}
+
+	return slug
+}
+
 func (s *Environments) validSort(val string) (string, bool) {
 	if val == "" {
-		return "foobar", true
+		return "environment.name", true
 	}
 
 	val = strings.ToLower(val)
 
-	for _, name := range []string{
-		"foobar",
+	for key, name := range map[string]string{
+		"name": "environment.name",
+		"slug": "environment.slug",
 	} {
-		if val == name {
-			return val, true
+		if val == key {
+			return name, true
 		}
 	}
 
-	return "foobar", true
+	return "environment.name", true
 }

@@ -41,6 +41,9 @@ func init() {
 			return err
 		}
 
+		// TODO: unique index for project_id and slug
+		// TODO: unique index for project_id and name
+
 		return nil
 	}, func(ctx context.Context, db *bun.DB) error {
 		type Repository struct {

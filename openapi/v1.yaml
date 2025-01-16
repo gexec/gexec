@@ -2419,18 +2419,18 @@ components:
                 type: "string"
                 x-omitempty: true
                 x-nullable: true
-              content:
-                type: "array"
-                x-omitempty: true
-                x-nullable: true
-                items:
-                  $ref: "#/components/schemas/EnvironmentSecret"
               secrets:
                 type: "array"
                 x-omitempty: true
                 x-nullable: true
                 items:
                   $ref: "#/components/schemas/EnvironmentSecret"
+              values:
+                type: "array"
+                x-omitempty: true
+                x-nullable: true
+                items:
+                  $ref: "#/components/schemas/EnvironmentValue"
     UpdateProjectEnvironmentBody:
       description: "The environment data to update"
       required: true
@@ -2447,18 +2447,18 @@ components:
                 type: "string"
                 x-omitempty: true
                 x-nullable: true
-              content:
-                type: "array"
-                x-omitempty: true
-                x-nullable: true
-                items:
-                  $ref: "#/components/schemas/EnvironmentSecret"
               secrets:
                 type: "array"
                 x-omitempty: true
                 x-nullable: true
                 items:
                   $ref: "#/components/schemas/EnvironmentSecret"
+              values:
+                type: "array"
+                x-omitempty: true
+                x-nullable: true
+                items:
+                  $ref: "#/components/schemas/EnvironmentValue"
 
     CreateProjectTemplateBody:
       description: "The template data to create"
@@ -4000,14 +4000,14 @@ components:
           type: "string"
         name:
           type: "string"
-        content:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/EnvironmentSecret"
         secrets:
           type: "array"
           items:
             $ref: "#/components/schemas/EnvironmentSecret"
+        values:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/EnvironmentValue"
         created_at:
           type: "string"
           format: "date-time"
@@ -4020,6 +4020,24 @@ components:
     EnvironmentSecret:
       title: "Environment Secret"
       description: "Model to represent environment secret"
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          readOnly: true
+        name:
+          type: "string"
+        kind:
+          type: "string"
+          enum:
+            - "var"
+            - "env"
+        content:
+          type: "string"
+
+    EnvironmentValue:
+      title: "Environment Value"
+      description: "Model to represent environment value"
       type: "object"
       properties:
         id:
