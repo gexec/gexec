@@ -55,6 +55,7 @@ func (m *Inventory) BeforeAppendModel(_ context.Context, query bun.Query) error 
 	return nil
 }
 
+// SerializeSecret ensures to encrypt all related secrets stored on the database.
 func (m *Inventory) SerializeSecret(passphrase string) error {
 	if m.Repository != nil {
 		if err := m.Repository.SerializeSecret(passphrase); err != nil {
@@ -77,6 +78,7 @@ func (m *Inventory) SerializeSecret(passphrase string) error {
 	return nil
 }
 
+// DeserializeSecret ensures to decrypt all related secrets stored on the database.
 func (m *Inventory) DeserializeSecret(passphrase string) error {
 	if m.Repository != nil {
 		if err := m.Repository.DeserializeSecret(passphrase); err != nil {

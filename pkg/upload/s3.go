@@ -14,7 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/genexec/genexec/pkg/config"
+	"github.com/gexec/gexec/pkg/config"
 )
 
 // S3Upload implements the Upload interface.

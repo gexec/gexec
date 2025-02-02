@@ -1,62 +1,27 @@
 package v1
 
 import (
-	"context"
-	"errors"
+	"encoding/json"
 	"net/http"
 
-	"github.com/genexec/genexec/pkg/middleware/current"
-	"github.com/genexec/genexec/pkg/model"
-	"github.com/genexec/genexec/pkg/store"
-	"github.com/genexec/genexec/pkg/validate"
+	"github.com/gexec/gexec/pkg/middleware/current"
+	"github.com/gexec/gexec/pkg/model"
+	"github.com/gexec/gexec/pkg/validate"
+	"github.com/go-chi/render"
 	"github.com/rs/zerolog/log"
 )
 
 // ListProjectInventories implements the v1.ServerInterface.
-func (a *API) ListProjectInventories(ctx context.Context, request ListProjectInventoriesRequestObject) (ListProjectInventoriesResponseObject, error) {
-	parent, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Projects.Show(
-		ctx,
-		request.ProjectId,
-	)
+func (a *API) ListProjectInventories(w http.ResponseWriter, r *http.Request, _ ProjectID, params ListProjectInventoriesParams) {
+	ctx := r.Context()
+	project := a.ProjectFromContext(ctx)
+	sort, order, limit, offset, search := listInventoriesSorting(params)
 
-	if err != nil {
-		if errors.Is(err, store.ErrProjectNotFound) {
-			return ListProjectInventories404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
-		log.Error().
-			Err(err).
-			Str("action", "ListProjectInventories").
-			Str("project", request.ProjectId).
-			Msg("Failed to load project")
-
-		return ListProjectInventories500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load project"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
-
-	if !a.permitShowProject(ctx, projectPermissions{
-		User:   current.GetUser(ctx),
-		Record: parent,
-	}) {
-		return ListProjectInventories404JSONResponse{NotFoundErrorJSONResponse{
-			Message: ToPtr("Failed to find project"),
-			Status:  ToPtr(http.StatusNotFound),
-		}}, nil
-	}
-
-	sort, order, limit, offset, search := listInventoriesSorting(request)
 	records, count, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Inventories.List(
 		ctx,
-		parent.ID,
+		project.ID,
 		model.ListParams{
 			Sort:   sort,
 			Order:  order,
@@ -69,220 +34,147 @@ func (a *API) ListProjectInventories(ctx context.Context, request ListProjectInv
 	if err != nil {
 		log.Error().
 			Err(err).
+			Str("project", project.ID).
 			Str("action", "ListProjectInventories").
-			Str("project", parent.ID).
 			Msg("Failed to load inventories")
 
-		return ListProjectInventories500JSONResponse{InternalServerErrorJSONResponse{
+		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to load inventories"),
 			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+		})
+
+		return
 	}
 
 	payload := make([]Inventory, len(records))
 	for id, record := range records {
-		if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil { // TODO: remove it, security risk
+		if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
 			log.Error().
 				Err(err).
+				Str("project", project.ID).
 				Str("action", "ListProjectInventories").
-				Str("project", parent.ID).
 				Msg("Failed to decrypt secrets")
 
-			return ListProjectInventories500JSONResponse{InternalServerErrorJSONResponse{
+			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to decrypt secrets"),
 				Status:  ToPtr(http.StatusInternalServerError),
-			}}, nil
+			})
+
+			return
 		}
 
 		payload[id] = a.convertInventory(record)
 	}
 
-	return ListProjectInventories200JSONResponse{ProjectInventoriesResponseJSONResponse{
+	render.JSON(w, r, ProjectInventoriesResponse{
 		Total:       count,
 		Limit:       limit,
 		Offset:      offset,
-		Project:     ToPtr(a.convertProject(parent)),
+		Project:     ToPtr(a.convertProject(project)),
 		Inventories: payload,
-	}}, nil
+	})
 }
 
 // ShowProjectInventory implements the v1.ServerInterface.
-func (a *API) ShowProjectInventory(ctx context.Context, request ShowProjectInventoryRequestObject) (ShowProjectInventoryResponseObject, error) {
-	parent, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Projects.Show(
-		ctx,
-		request.ProjectId,
-	)
+func (a *API) ShowProjectInventory(w http.ResponseWriter, r *http.Request, _ ProjectID, _ InventoryID) {
+	ctx := r.Context()
+	project := a.ProjectFromContext(ctx)
+	record := a.ProjectInventoryFromContext(ctx)
 
-	if err != nil {
-		if errors.Is(err, store.ErrProjectNotFound) {
-			return ShowProjectInventory404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project or inventory"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
+	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		log.Error().
 			Err(err).
-			Str("action", "ShowProjectInventory").
-			Str("project", request.ProjectId).
-			Msg("Failed to load project")
-
-		return ShowProjectInventory500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load project"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
-
-	record, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Inventories.Show(
-		ctx,
-		parent.ID,
-		request.InventoryId,
-	)
-
-	if err != nil {
-		if errors.Is(err, store.ErrInventoryNotFound) {
-			return ShowProjectInventory404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project or inventory"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
-		log.Error().
-			Err(err).
-			Str("action", "ShowProjectInventory").
-			Str("project", record.ID).
-			Str("inventory", request.InventoryId).
-			Msg("Failed to load inventory")
-
-		return ShowProjectInventory500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load inventory"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
-
-	if !a.permitShowInventory(ctx, inventoryPermissions{
-		User:    current.GetUser(ctx),
-		Project: parent,
-		Record:  record,
-	}) {
-		return ShowProjectInventory404JSONResponse{NotFoundErrorJSONResponse{
-			Message: ToPtr("Failed to find project or inventory"),
-			Status:  ToPtr(http.StatusNotFound),
-		}}, nil
-	}
-
-	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil { // TODO: remove it, security risk
-		log.Error().
-			Err(err).
-			Str("action", "ShowProjectInventory").
-			Str("project", parent.ID).
+			Str("project", project.ID).
 			Str("inventory", record.ID).
+			Str("action", "ShowProjectInventory").
 			Msg("Failed to decrypt secrets")
 
-		return ShowProjectInventory500JSONResponse{InternalServerErrorJSONResponse{
+		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decrypt secrets"),
 			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+		})
+
+		return
 	}
 
-	return ShowProjectInventory200JSONResponse{ProjectInventoryResponseJSONResponse(
+	render.JSON(w, r, ProjectInventoryResponse(
 		a.convertInventory(record),
-	)}, nil
+	))
 }
 
 // CreateProjectInventory implements the v1.ServerInterface.
-func (a *API) CreateProjectInventory(ctx context.Context, request CreateProjectInventoryRequestObject) (CreateProjectInventoryResponseObject, error) {
-	parent, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Projects.Show(
-		ctx,
-		request.ProjectId,
-	)
+func (a *API) CreateProjectInventory(w http.ResponseWriter, r *http.Request, _ ProjectID) {
+	ctx := r.Context()
+	project := a.ProjectFromContext(ctx)
+	body := &CreateProjectInventoryBody{}
 
-	if err != nil {
-		if errors.Is(err, store.ErrProjectNotFound) {
-			return CreateProjectInventory404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
+	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
 		log.Error().
 			Err(err).
+			Str("project", project.ID).
 			Str("action", "CreateProjectInventory").
-			Str("project", request.ProjectId).
-			Msg("Failed to load project")
+			Msg("Failed to decode request body")
 
-		return CreateProjectInventory500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load project"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to decode request"),
+			Status:  ToPtr(http.StatusBadRequest),
+		})
 
-	if !a.permitCreateInventory(ctx, inventoryPermissions{
-		User:    current.GetUser(ctx),
-		Project: parent,
-	}) {
-		return CreateProjectInventory404JSONResponse{NotFoundErrorJSONResponse{
-			Message: ToPtr("Failed to find project"),
-			Status:  ToPtr(http.StatusNotFound),
-		}}, nil
+		return
 	}
 
 	record := &model.Inventory{
-		ProjectID: parent.ID,
+		ProjectID: project.ID,
 	}
 
-	if request.Body.RepositoryId != nil {
-		record.RepositoryID = FromPtr(request.Body.RepositoryId)
+	if body.RepositoryID != nil {
+		record.RepositoryID = FromPtr(body.RepositoryID)
 	}
 
-	if request.Body.CredentialId != nil {
-		record.CredentialID = FromPtr(request.Body.CredentialId)
+	if body.CredentialID != nil {
+		record.CredentialID = FromPtr(body.CredentialID)
 	}
 
-	if request.Body.BecomeId != nil {
-		record.BecomeID = FromPtr(request.Body.BecomeId)
+	if body.BecomeID != nil {
+		record.BecomeID = FromPtr(body.BecomeID)
 	}
 
-	if request.Body.Slug != nil {
-		record.Slug = FromPtr(request.Body.Slug)
+	if body.Slug != nil {
+		record.Slug = FromPtr(body.Slug)
 	}
 
-	if request.Body.Name != nil {
-		record.Name = FromPtr(request.Body.Name)
+	if body.Name != nil {
+		record.Name = FromPtr(body.Name)
 	}
 
-	if request.Body.Kind != nil {
-		record.Kind = FromPtr(request.Body.Kind)
+	if body.Kind != nil {
+		record.Kind = FromPtr(body.Kind)
 	}
 
-	if request.Body.Content != nil {
-		record.Content = FromPtr(request.Body.Content)
+	if body.Content != nil {
+		record.Content = FromPtr(body.Content)
 	}
 
 	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		log.Error().
 			Err(err).
-			Str("action", "CreateProjectIntenvoryl").
-			Str("project", parent.ID).
+			Str("project", project.ID).
+			Str("action", "CreateProjectIntenvory").
 			Msg("Failed to encrypt secrets")
 
-		return CreateProjectInventory500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to encrypt credentials"),
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to encrypt secrets"),
 			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+		})
+
+		return
 	}
 
 	if err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Inventories.Create(
 		ctx,
-		parent.ID,
+		project,
 		record,
 	); err != nil {
 		if v, ok := err.(validate.Errors); ok {
@@ -298,160 +190,122 @@ func (a *API) CreateProjectInventory(ctx context.Context, request CreateProjectI
 				)
 			}
 
-			return CreateProjectInventory422JSONResponse{ValidationErrorJSONResponse{
-				Status:  ToPtr(http.StatusUnprocessableEntity),
+			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to validate inventory"),
+				Status:  ToPtr(http.StatusUnprocessableEntity),
 				Errors:  ToPtr(errors),
-			}}, nil
+			})
+
+			return
 		}
 
 		log.Error().
 			Err(err).
+			Str("project", project.ID).
 			Str("action", "CreateProjectInventory").
-			Str("project", parent.ID).
 			Msg("Failed to create inventory")
 
-		return CreateProjectInventory500JSONResponse{InternalServerErrorJSONResponse{
+		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to create inventory"),
 			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+		})
+
+		return
 	}
 
-	return CreateProjectInventory200JSONResponse{ProjectInventoryResponseJSONResponse(
+	render.JSON(w, r, ProjectInventoryResponse(
 		a.convertInventory(record),
-	)}, nil
+	))
 }
 
 // UpdateProjectInventory implements the v1.ServerInterface.
-func (a *API) UpdateProjectInventory(ctx context.Context, request UpdateProjectInventoryRequestObject) (UpdateProjectInventoryResponseObject, error) {
-	parent, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Projects.Show(
-		ctx,
-		request.ProjectId,
-	)
+func (a *API) UpdateProjectInventory(w http.ResponseWriter, r *http.Request, _ ProjectID, _ InventoryID) {
+	ctx := r.Context()
+	project := a.ProjectFromContext(ctx)
+	record := a.ProjectInventoryFromContext(ctx)
+	body := &UpdateProjectInventoryBody{}
 
-	if err != nil {
-		if errors.Is(err, store.ErrProjectNotFound) {
-			return UpdateProjectInventory404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project or inventory"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
+	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
 		log.Error().
 			Err(err).
+			Str("project", project.ID).
+			Str("inventory", record.ID).
 			Str("action", "UpdateProjectInventory").
-			Str("project", request.ProjectId).
-			Msg("Failed to load project")
+			Msg("Failed to decode request body")
 
-		return UpdateProjectInventory500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load project"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to decode request"),
+			Status:  ToPtr(http.StatusBadRequest),
+		})
 
-	record, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Inventories.Show(
-		ctx,
-		parent.ID,
-		request.InventoryId,
-	)
-
-	if err != nil {
-		if errors.Is(err, store.ErrInventoryNotFound) {
-			return UpdateProjectInventory404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project or inventory"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
-		log.Error().
-			Err(err).
-			Str("action", "UpdateProjectInventory").
-			Str("project", parent.ID).
-			Str("inventory", request.InventoryId).
-			Msg("Failed to load inventory")
-
-		return UpdateProjectInventory500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load inventory"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
-
-	if !a.permitManageInventory(ctx, inventoryPermissions{
-		User:    current.GetUser(ctx),
-		Project: parent,
-		Record:  record,
-	}) {
-		return UpdateProjectInventory404JSONResponse{NotFoundErrorJSONResponse{
-			Message: ToPtr("Failed to find project or inventory"),
-			Status:  ToPtr(http.StatusNotFound),
-		}}, nil
+		return
 	}
 
 	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		log.Error().
 			Err(err).
-			Str("action", "UpdateProjectIntenvoryl").
-			Str("project", parent.ID).
+			Str("project", project.ID).
 			Str("inventory", record.ID).
+			Str("action", "UpdateProjectIntenvory").
 			Msg("Failed to decrypt secrets")
 
-		return UpdateProjectInventory500JSONResponse{InternalServerErrorJSONResponse{
+		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decrypt credentials"),
 			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+		})
+
+		return
 	}
 
-	if request.Body.RepositoryId != nil {
-		record.RepositoryID = FromPtr(request.Body.RepositoryId)
+	if body.RepositoryID != nil {
+		record.RepositoryID = FromPtr(body.RepositoryID)
 	}
 
-	if request.Body.CredentialId != nil {
-		record.CredentialID = FromPtr(request.Body.CredentialId)
+	if body.CredentialID != nil {
+		record.CredentialID = FromPtr(body.CredentialID)
 	}
 
-	if request.Body.BecomeId != nil {
-		record.BecomeID = FromPtr(request.Body.BecomeId)
+	if body.BecomeID != nil {
+		record.BecomeID = FromPtr(body.BecomeID)
 	}
 
-	if request.Body.Slug != nil {
-		record.Slug = FromPtr(request.Body.Slug)
+	if body.Slug != nil {
+		record.Slug = FromPtr(body.Slug)
 	}
 
-	if request.Body.Name != nil {
-		record.Name = FromPtr(request.Body.Name)
+	if body.Name != nil {
+		record.Name = FromPtr(body.Name)
 	}
 
-	if request.Body.Kind != nil {
-		record.Kind = FromPtr(request.Body.Kind)
+	if body.Kind != nil {
+		record.Kind = FromPtr(body.Kind)
 	}
 
-	if request.Body.Content != nil {
-		record.Content = FromPtr(request.Body.Content)
+	if body.Content != nil {
+		record.Content = FromPtr(body.Content)
 	}
 
 	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		log.Error().
 			Err(err).
-			Str("action", "UpdateProjectIntenvoryl").
-			Str("project", parent.ID).
+			Str("project", project.ID).
 			Str("inventory", record.ID).
+			Str("action", "UpdateProjectIntenvoryl").
 			Msg("Failed to encrypt secrets")
 
-		return UpdateProjectInventory500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to encrypt credentials"),
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to encrypt secrets"),
 			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+		})
+
+		return
 	}
 
 	if err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Inventories.Update(
 		ctx,
-		parent.ID,
+		project,
 		record,
 	); err != nil {
 		if v, ok := err.(validate.Errors); ok {
@@ -467,129 +321,72 @@ func (a *API) UpdateProjectInventory(ctx context.Context, request UpdateProjectI
 				)
 			}
 
-			return UpdateProjectInventory422JSONResponse{ValidationErrorJSONResponse{
-				Status:  ToPtr(http.StatusUnprocessableEntity),
+			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to validate inventory"),
+				Status:  ToPtr(http.StatusUnprocessableEntity),
 				Errors:  ToPtr(errors),
-			}}, nil
+			})
+
+			return
 		}
 
 		log.Error().
 			Err(err).
-			Str("action", "UpdateProjectInventory").
-			Str("project", parent.ID).
+			Str("project", project.ID).
 			Str("inventory", record.ID).
+			Str("action", "UpdateProjectInventory").
 			Msg("Failed to update inventory")
 
-		return UpdateProjectInventory500JSONResponse{InternalServerErrorJSONResponse{
+		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to update inventory"),
 			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+		})
+
+		return
 	}
 
-	return UpdateProjectInventory200JSONResponse{ProjectInventoryResponseJSONResponse(
+	render.JSON(w, r, ProjectInventoryResponse(
 		a.convertInventory(record),
-	)}, nil
+	))
 }
 
 // DeleteProjectInventory implements the v1.ServerInterface.
-func (a *API) DeleteProjectInventory(ctx context.Context, request DeleteProjectInventoryRequestObject) (DeleteProjectInventoryResponseObject, error) {
-	parent, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Projects.Show(
-		ctx,
-		request.ProjectId,
-	)
-
-	if err != nil {
-		if errors.Is(err, store.ErrProjectNotFound) {
-			return DeleteProjectInventory404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project or inventory"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
-		log.Error().
-			Err(err).
-			Str("action", "DeleteProjectInventory").
-			Str("project", request.ProjectId).
-			Msg("Failed to load project")
-
-		return DeleteProjectInventory500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load project"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
-
-	record, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Inventories.Show(
-		ctx,
-		parent.ID,
-		request.InventoryId,
-	)
-
-	if err != nil {
-		if errors.Is(err, store.ErrInventoryNotFound) {
-			return DeleteProjectInventory404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project or inventory"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
-		log.Error().
-			Err(err).
-			Str("action", "DeleteProjectInventory").
-			Str("project", parent.ID).
-			Str("inventory", request.InventoryId).
-			Msg("Failed to load inventory")
-
-		return DeleteProjectInventory500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load inventory"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
-
-	if !a.permitManageInventory(ctx, inventoryPermissions{
-		User:    current.GetUser(ctx),
-		Project: parent,
-		Record:  record,
-	}) {
-		return DeleteProjectInventory404JSONResponse{NotFoundErrorJSONResponse{
-			Message: ToPtr("Failed to find project or inventory"),
-			Status:  ToPtr(http.StatusNotFound),
-		}}, nil
-	}
+func (a *API) DeleteProjectInventory(w http.ResponseWriter, r *http.Request, _ ProjectID, _ InventoryID) {
+	ctx := r.Context()
+	project := a.ProjectFromContext(ctx)
+	record := a.ProjectInventoryFromContext(ctx)
 
 	if err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Inventories.Delete(
 		ctx,
-		parent.ID,
+		project,
 		record.ID,
 	); err != nil {
 		log.Error().
 			Err(err).
-			Str("action", "DeletProjectInventory").
-			Str("project", parent.ID).
+			Str("project", project.ID).
 			Str("inventory", record.ID).
+			Str("action", "DeletProjectInventory").
 			Msg("Failed to delete inventory")
 
-		return DeleteProjectInventory400JSONResponse{ActionFailedErrorJSONResponse{
+		a.RenderNotify(w, r, Notification{
 			Status:  ToPtr(http.StatusBadRequest),
 			Message: ToPtr("Failed to delete inventory"),
-		}}, nil
+		})
+
+		return
 	}
 
-	return DeleteProjectInventory200JSONResponse{SuccessMessageJSONResponse{
-		Status:  ToPtr(http.StatusOK),
+	a.RenderNotify(w, r, Notification{
 		Message: ToPtr("Successfully deleted inventory"),
-	}}, nil
+		Status:  ToPtr(http.StatusOK),
+	})
 }
 
 func (a *API) convertInventory(record *model.Inventory) Inventory {
 	result := Inventory{
-		Id:        ToPtr(record.ID),
+		ID:        ToPtr(record.ID),
 		Slug:      ToPtr(record.Slug),
 		Name:      ToPtr(record.Name),
 		Kind:      ToPtr(InventoryKind(record.Kind)),
@@ -599,7 +396,7 @@ func (a *API) convertInventory(record *model.Inventory) Inventory {
 	}
 
 	if record.Repository != nil {
-		result.RepositoryId = ToPtr(record.RepositoryID)
+		result.RepositoryID = ToPtr(record.RepositoryID)
 
 		result.Repository = ToPtr(
 			a.convertRepository(
@@ -609,7 +406,7 @@ func (a *API) convertInventory(record *model.Inventory) Inventory {
 	}
 
 	if record.Credential != nil {
-		result.CredentialId = ToPtr(record.CredentialID)
+		result.CredentialID = ToPtr(record.CredentialID)
 
 		result.Credential = ToPtr(
 			a.convertCredential(
@@ -619,7 +416,7 @@ func (a *API) convertInventory(record *model.Inventory) Inventory {
 	}
 
 	if record.Become != nil {
-		result.BecomeId = ToPtr(record.BecomeID)
+		result.BecomeID = ToPtr(record.BecomeID)
 
 		result.Become = ToPtr(
 			a.convertCredential(
@@ -631,46 +428,28 @@ func (a *API) convertInventory(record *model.Inventory) Inventory {
 	return result
 }
 
-type inventoryPermissions struct {
-	User      *model.User
-	Project   *model.Project
-	Record    *model.Inventory
-	OwnerOnly bool
+// AllowShowProjectInventory defines a middleware to check permissions.
+func (a *API) AllowShowProjectInventory(next http.Handler) http.Handler {
+	return a.AllowShowProject(next)
 }
 
-func (a *API) permitCreateInventory(ctx context.Context, definition inventoryPermissions) bool {
-	return a.permitManageProject(ctx, projectPermissions{
-		User:   definition.User,
-		Record: definition.Project,
-	})
+// AllowManageProjectInventory defines a middleware to check permissions.
+func (a *API) AllowManageProjectInventory(next http.Handler) http.Handler {
+	return a.AllowManageProject(next)
 }
 
-func (a *API) permitShowInventory(ctx context.Context, definition inventoryPermissions) bool {
-	return a.permitShowProject(ctx, projectPermissions{
-		User:   definition.User,
-		Record: definition.Project,
-	})
-}
-
-func (a *API) permitManageInventory(ctx context.Context, definition inventoryPermissions) bool {
-	return a.permitManageProject(ctx, projectPermissions{
-		User:   definition.User,
-		Record: definition.Project,
-	})
-}
-
-func listInventoriesSorting(request ListProjectInventoriesRequestObject) (string, string, int64, int64, string) {
+func listInventoriesSorting(request ListProjectInventoriesParams) (string, string, int64, int64, string) {
 	sort, limit, offset, search := toPageParams(
-		request.Params.Sort,
-		request.Params.Limit,
-		request.Params.Offset,
-		request.Params.Search,
+		request.Sort,
+		request.Limit,
+		request.Offset,
+		request.Search,
 	)
 
 	order := ""
 
-	if request.Params.Order != nil {
-		sort = string(FromPtr(request.Params.Order))
+	if request.Order != nil {
+		sort = string(FromPtr(request.Order))
 	}
 
 	return sort, order, limit, offset, search

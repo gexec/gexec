@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/genexec/genexec/pkg/model"
-	"github.com/genexec/genexec/pkg/validate"
+	"github.com/gexec/gexec/pkg/model"
+	"github.com/gexec/gexec/pkg/validate"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
@@ -92,6 +92,20 @@ func (s *Users) Create(ctx context.Context, record *model.User) error {
 		return err
 	}
 
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ObjectID:      record.ID,
+				ObjectDisplay: record.Username,
+				ObjectType:    model.EventTypeUser,
+				Action:        model.EventActionCreate,
+			},
+		)).
+		Exec(ctx); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -108,14 +122,16 @@ func (s *Users) Update(ctx context.Context, record *model.User) error {
 		return err
 	}
 
-	return nil
-}
-
-// Delete implements the deletion of an user.
-func (s *Users) Delete(ctx context.Context, name string) error {
-	if _, err := s.client.handle.NewDelete().
-		Model((*model.User)(nil)).
-		Where("id = ? OR username = ?", name, name).
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ObjectID:      record.ID,
+				ObjectDisplay: record.Username,
+				ObjectType:    model.EventTypeUser,
+				Action:        model.EventActionUpdate,
+			},
+		)).
 		Exec(ctx); err != nil {
 		return err
 	}
@@ -123,17 +139,49 @@ func (s *Users) Delete(ctx context.Context, name string) error {
 	return nil
 }
 
-// ListTeams implements the listing of all teams for an user.
-func (s *Users) ListTeams(ctx context.Context, params model.UserTeamParams) ([]*model.UserTeam, int64, error) {
-	records := make([]*model.UserTeam, 0)
+// Delete implements the deletion of an user.
+func (s *Users) Delete(ctx context.Context, name string) error {
+	record, err := s.Show(ctx, name)
+
+	if err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewDelete().
+		Model((*model.User)(nil)).
+		Where("id = ?", record.ID).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ObjectID:      record.ID,
+				ObjectDisplay: record.Username,
+				ObjectType:    model.EventTypeUser,
+				Action:        model.EventActionDelete,
+			},
+		)).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ListGroups implements the listing of all groups for an user.
+func (s *Users) ListGroups(ctx context.Context, params model.UserGroupParams) ([]*model.UserGroup, int64, error) {
+	records := make([]*model.UserGroup, 0)
 
 	q := s.client.handle.NewSelect().
 		Model(&records).
 		Relation("User").
-		Relation("Team").
+		Relation("Group").
 		Where("user_id = ?", params.UserID)
 
-	if val, ok := s.validTeamSort(params.Sort); ok {
+	if val, ok := s.validGroupSort(params.Sort); ok {
 		q = q.Order(strings.Join(
 			[]string{
 				val,
@@ -168,21 +216,21 @@ func (s *Users) ListTeams(ctx context.Context, params model.UserTeamParams) ([]*
 	return records, int64(counter), nil
 }
 
-// AttachTeam implements the attachment of an user to a team.
-func (s *Users) AttachTeam(ctx context.Context, params model.UserTeamParams) error {
+// AttachGroup implements the attachment of an user to a group.
+func (s *Users) AttachGroup(ctx context.Context, params model.UserGroupParams) error {
 	user, err := s.Show(ctx, params.UserID)
 
 	if err != nil {
 		return err
 	}
 
-	team, err := s.client.Teams.Show(ctx, params.TeamID)
+	group, err := s.client.Groups.Show(ctx, params.GroupID)
 
 	if err != nil {
 		return err
 	}
 
-	assigned, err := s.isTeamAssigned(ctx, user.ID, team.ID)
+	assigned, err := s.isGroupAssigned(ctx, user.ID, group.ID)
 
 	if err != nil {
 		return err
@@ -192,10 +240,10 @@ func (s *Users) AttachTeam(ctx context.Context, params model.UserTeamParams) err
 		return ErrAlreadyAssigned
 	}
 
-	record := &model.UserTeam{
-		UserID: user.ID,
-		TeamID: team.ID,
-		Perm:   params.Perm,
+	record := &model.UserGroup{
+		UserID:  user.ID,
+		GroupID: group.ID,
+		Perm:    params.Perm,
 	}
 
 	if err := s.validatePerm(record.Perm); err != nil {
@@ -208,24 +256,43 @@ func (s *Users) AttachTeam(ctx context.Context, params model.UserTeamParams) err
 		return err
 	}
 
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ObjectID:      user.ID,
+				ObjectDisplay: user.Username,
+				ObjectType:    model.EventTypeUserGroup,
+				Action:        model.EventActionCreate,
+				Attrs: map[string]interface{}{
+					"group_id":      group.ID,
+					"group_display": group.Name,
+					"perm":          params.Perm,
+				},
+			},
+		)).
+		Exec(ctx); err != nil {
+		return err
+	}
+
 	return nil
 }
 
-// PermitTeam implements the permission update for a team on an user.
-func (s *Users) PermitTeam(ctx context.Context, params model.UserTeamParams) error {
+// PermitGroup implements the permission update for a group on an user.
+func (s *Users) PermitGroup(ctx context.Context, params model.UserGroupParams) error {
 	user, err := s.Show(ctx, params.UserID)
 
 	if err != nil {
 		return err
 	}
 
-	team, err := s.client.Teams.Show(ctx, params.TeamID)
+	group, err := s.client.Groups.Show(ctx, params.GroupID)
 
 	if err != nil {
 		return err
 	}
 
-	unassigned, err := s.isTeamUnassigned(ctx, user.ID, team.ID)
+	unassigned, err := s.isGroupUnassigned(ctx, user.ID, group.ID)
 
 	if err != nil {
 		return err
@@ -236,9 +303,28 @@ func (s *Users) PermitTeam(ctx context.Context, params model.UserTeamParams) err
 	}
 
 	if _, err := s.client.handle.NewUpdate().
-		Model((*model.UserTeam)(nil)).
+		Model((*model.UserGroup)(nil)).
 		Set("perm = ?", params.Perm).
-		Where("user_id = ? AND team_id = ?", user.ID, team.ID).
+		Where("user_id = ? AND group_id = ?", user.ID, group.ID).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ObjectID:      user.ID,
+				ObjectDisplay: user.Username,
+				ObjectType:    model.EventTypeUserGroup,
+				Action:        model.EventActionUpdate,
+				Attrs: map[string]interface{}{
+					"group_id":      group.ID,
+					"group_display": group.Name,
+					"perm":          params.Perm,
+				},
+			},
+		)).
 		Exec(ctx); err != nil {
 		return err
 	}
@@ -246,21 +332,21 @@ func (s *Users) PermitTeam(ctx context.Context, params model.UserTeamParams) err
 	return nil
 }
 
-// DropTeam implements the removal of an user from a team.
-func (s *Users) DropTeam(ctx context.Context, params model.UserTeamParams) error {
+// DropGroup implements the removal of an user from a group.
+func (s *Users) DropGroup(ctx context.Context, params model.UserGroupParams) error {
 	user, err := s.Show(ctx, params.UserID)
 
 	if err != nil {
 		return err
 	}
 
-	team, err := s.client.Teams.Show(ctx, params.TeamID)
+	group, err := s.client.Groups.Show(ctx, params.GroupID)
 
 	if err != nil {
 		return err
 	}
 
-	unassigned, err := s.isTeamUnassigned(ctx, user.ID, team.ID)
+	unassigned, err := s.isGroupUnassigned(ctx, user.ID, group.ID)
 
 	if err != nil {
 		return err
@@ -271,8 +357,26 @@ func (s *Users) DropTeam(ctx context.Context, params model.UserTeamParams) error
 	}
 
 	if _, err := s.client.handle.NewDelete().
-		Model((*model.UserTeam)(nil)).
-		Where("user_id = ? AND team_id = ?", user.ID, team.ID).
+		Model((*model.UserGroup)(nil)).
+		Where("user_id = ? AND group_id = ?", user.ID, group.ID).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ObjectID:      user.ID,
+				ObjectDisplay: user.Username,
+				ObjectType:    model.EventTypeUserGroup,
+				Action:        model.EventActionDelete,
+				Attrs: map[string]interface{}{
+					"group_id":      group.ID,
+					"group_display": group.Name,
+				},
+			},
+		)).
 		Exec(ctx); err != nil {
 		return err
 	}
@@ -280,10 +384,10 @@ func (s *Users) DropTeam(ctx context.Context, params model.UserTeamParams) error
 	return nil
 }
 
-func (s *Users) isTeamAssigned(ctx context.Context, userID, teamID string) (bool, error) {
+func (s *Users) isGroupAssigned(ctx context.Context, userID, groupID string) (bool, error) {
 	count, err := s.client.handle.NewSelect().
-		Model((*model.UserTeam)(nil)).
-		Where("user_id = ? AND team_id = ?", userID, teamID).
+		Model((*model.UserGroup)(nil)).
+		Where("user_id = ? AND group_id = ?", userID, groupID).
 		Count(ctx)
 
 	if err != nil {
@@ -293,10 +397,10 @@ func (s *Users) isTeamAssigned(ctx context.Context, userID, teamID string) (bool
 	return count > 0, nil
 }
 
-func (s *Users) isTeamUnassigned(ctx context.Context, userID, teamID string) (bool, error) {
+func (s *Users) isGroupUnassigned(ctx context.Context, userID, groupID string) (bool, error) {
 	count, err := s.client.handle.NewSelect().
-		Model((*model.UserTeam)(nil)).
-		Where("user_id = ? AND team_id = ?", userID, teamID).
+		Model((*model.UserGroup)(nil)).
+		Where("user_id = ? AND group_id = ?", userID, groupID).
 		Count(ctx)
 
 	if err != nil {
@@ -391,6 +495,27 @@ func (s *Users) AttachProject(ctx context.Context, params model.UserProjectParam
 		return err
 	}
 
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      project.ID,
+				ProjectDisplay: project.Name,
+				ObjectID:       user.ID,
+				ObjectDisplay:  user.Username,
+				ObjectType:     model.EventTypeUserProject,
+				Action:         model.EventActionCreate,
+				Attrs: map[string]interface{}{
+					"project_id":      project.ID,
+					"project_display": project.Name,
+					"perm":            params.Perm,
+				},
+			},
+		)).
+		Exec(ctx); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -426,6 +551,27 @@ func (s *Users) PermitProject(ctx context.Context, params model.UserProjectParam
 		return err
 	}
 
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      project.ID,
+				ProjectDisplay: project.Name,
+				ObjectID:       user.ID,
+				ObjectDisplay:  user.Username,
+				ObjectType:     model.EventTypeUserProject,
+				Action:         model.EventActionUpdate,
+				Attrs: map[string]interface{}{
+					"project_id":      project.ID,
+					"project_display": project.Name,
+					"perm":            params.Perm,
+				},
+			},
+		)).
+		Exec(ctx); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -456,6 +602,26 @@ func (s *Users) DropProject(ctx context.Context, params model.UserProjectParams)
 	if _, err := s.client.handle.NewDelete().
 		Model((*model.UserProject)(nil)).
 		Where("user_id = ? AND project_id = ?", user.ID, project.ID).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      project.ID,
+				ProjectDisplay: project.Name,
+				ObjectID:       user.ID,
+				ObjectDisplay:  user.Username,
+				ObjectType:     model.EventTypeUserProject,
+				Action:         model.EventActionDelete,
+				Attrs: map[string]interface{}{
+					"project_id":      project.ID,
+					"project_display": project.Name,
+				},
+			},
+		)).
 		Exec(ctx); err != nil {
 		return err
 	}
@@ -580,23 +746,23 @@ func (s *Users) validSort(val string) (string, bool) {
 	return "username", true
 }
 
-func (s *Users) validTeamSort(val string) (string, bool) {
+func (s *Users) validGroupSort(val string) (string, bool) {
 	if val == "" {
-		return "team.name", true
+		return "group.name", true
 	}
 
 	val = strings.ToLower(val)
 
 	for key, name := range map[string]string{
-		"slug": "team.slug",
-		"name": "team.name",
+		"slug": "group.slug",
+		"name": "group.name",
 	} {
 		if val == key {
 			return name, true
 		}
 	}
 
-	return "team.name", true
+	return "group.name", true
 }
 
 func (s *Users) validProjectSort(val string) (string, bool) {

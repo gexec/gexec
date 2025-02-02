@@ -15,6 +15,7 @@ var (
 	_ bun.BeforeAppendModelHook = (*Environment)(nil)
 )
 
+// EnvironmentSecret defines the model for environment_secrets table.
 type EnvironmentSecret struct {
 	bun.BaseModel `bun:"table:environment_secrets"`
 
@@ -48,6 +49,7 @@ func (m *EnvironmentSecret) BeforeAppendModel(_ context.Context, query bun.Query
 	return nil
 }
 
+// SerializeSecret ensures to encrypt all related secrets stored on the database.
 func (m *EnvironmentSecret) SerializeSecret(passphrase string) error {
 	gcm, err := prepareEncrypt(passphrase)
 
@@ -68,6 +70,7 @@ func (m *EnvironmentSecret) SerializeSecret(passphrase string) error {
 	return nil
 }
 
+// DeserializeSecret ensures to decrypt all related secrets stored on the database.
 func (m *EnvironmentSecret) DeserializeSecret(passphrase string) error {
 	gcm, err := prepareEncrypt(passphrase)
 
@@ -88,6 +91,7 @@ func (m *EnvironmentSecret) DeserializeSecret(passphrase string) error {
 	return nil
 }
 
+// EnvironmentValue defines the model for environment_values table.
 type EnvironmentValue struct {
 	bun.BaseModel `bun:"table:environment_values"`
 
@@ -121,6 +125,7 @@ func (m *EnvironmentValue) BeforeAppendModel(_ context.Context, query bun.Query)
 	return nil
 }
 
+// SerializeSecret ensures to encrypt all related secrets stored on the database.
 func (m *EnvironmentValue) SerializeSecret(passphrase string) error {
 	gcm, err := prepareEncrypt(passphrase)
 
@@ -141,6 +146,7 @@ func (m *EnvironmentValue) SerializeSecret(passphrase string) error {
 	return nil
 }
 
+// DeserializeSecret ensures to decrypt all related secrets stored on the database.
 func (m *EnvironmentValue) DeserializeSecret(passphrase string) error {
 	gcm, err := prepareEncrypt(passphrase)
 
@@ -197,6 +203,7 @@ func (m *Environment) BeforeAppendModel(_ context.Context, query bun.Query) erro
 	return nil
 }
 
+// SerializeSecret ensures to encrypt all related secrets stored on the database.
 func (m *Environment) SerializeSecret(passphrase string) error {
 	for _, row := range m.Secrets {
 		if err := row.SerializeSecret(passphrase); err != nil {
@@ -213,6 +220,7 @@ func (m *Environment) SerializeSecret(passphrase string) error {
 	return nil
 }
 
+// DeserializeSecret ensures to decrypt all related secrets stored on the database.
 func (m *Environment) DeserializeSecret(passphrase string) error {
 	for _, row := range m.Secrets {
 		if err := row.DeserializeSecret(passphrase); err != nil {

@@ -9,8 +9,8 @@ import (
 
 	"github.com/Machiel/slugify"
 	"github.com/dchest/uniuri"
-	"github.com/genexec/genexec/pkg/model"
-	"github.com/genexec/genexec/pkg/validate"
+	"github.com/gexec/gexec/pkg/model"
+	"github.com/gexec/gexec/pkg/validate"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
@@ -66,16 +66,18 @@ func (s *Environments) List(ctx context.Context, projectID string, params model.
 }
 
 // Show implements the details for a specific environment.
-func (s *Environments) Show(ctx context.Context, projectID, name string) (*model.Environment, error) {
+func (s *Environments) Show(ctx context.Context, project *model.Project, name string) (*model.Environment, error) {
 	record := &model.Environment{}
 
-	if err := s.client.handle.NewSelect().
+	q := s.client.handle.NewSelect().
 		Model(record).
+		Relation("Project").
 		Relation("Secrets").
 		Relation("Values").
-		Where("environment.project_id = ?", projectID).
-		Where("environment.id = ? OR environment.slug = ?", name, name).
-		Scan(ctx); err != nil {
+		Where("environment.project_id = ?", project.ID).
+		Where("environment.id = ? OR environment.slug = ?", name, name)
+
+	if err := q.Scan(ctx); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return record, ErrEnvironmentNotFound
 		}
@@ -87,14 +89,14 @@ func (s *Environments) Show(ctx context.Context, projectID, name string) (*model
 }
 
 // Create implements the create of a new environment.
-func (s *Environments) Create(ctx context.Context, projectID string, record *model.Environment) error {
+func (s *Environments) Create(ctx context.Context, project *model.Project, record *model.Environment) error {
 	if record.Slug == "" {
 		record.Slug = s.slugify(
 			ctx,
 			"slug",
 			record.Name,
 			"",
-			projectID,
+			project.ID,
 		)
 	}
 
@@ -102,7 +104,7 @@ func (s *Environments) Create(ctx context.Context, projectID string, record *mod
 		return err
 	}
 
-	return s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+	if err := s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
 		if _, err := tx.NewInsert().
 			Model(record).
 			Exec(ctx); err != nil {
@@ -130,18 +132,38 @@ func (s *Environments) Create(ctx context.Context, projectID string, record *mod
 		}
 
 		return nil
-	})
+	}); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      project.ID,
+				ProjectDisplay: project.Name,
+				ObjectID:       record.ID,
+				ObjectDisplay:  record.Name,
+				ObjectType:     model.EventTypeEnvironment,
+				Action:         model.EventActionCreate,
+			},
+		)).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Update implements the update of an existing environment.
-func (s *Environments) Update(ctx context.Context, projectID string, record *model.Environment) error {
+func (s *Environments) Update(ctx context.Context, project *model.Project, record *model.Environment) error {
 	if record.Slug == "" {
 		record.Slug = s.slugify(
 			ctx,
 			"slug",
 			record.Name,
 			"",
-			projectID,
+			project.ID,
 		)
 	}
 
@@ -149,11 +171,13 @@ func (s *Environments) Update(ctx context.Context, projectID string, record *mod
 		return err
 	}
 
-	return s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-		if _, err := tx.NewUpdate().
+	if err := s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		q := tx.NewUpdate().
 			Model(record).
-			Where("id = ? and project_id = ?", record.ID, projectID).
-			Exec(ctx); err != nil {
+			Where("project_id = ?", project.ID).
+			Where("id = ?", record.ID)
+
+		if _, err := q.Exec(ctx); err != nil {
 			return err
 		}
 
@@ -169,10 +193,12 @@ func (s *Environments) Update(ctx context.Context, projectID string, record *mod
 			} else {
 				current := &model.EnvironmentSecret{}
 
-				if err := tx.NewSelect().
+				q := tx.NewSelect().
 					Model(current).
-					Where("id = ? AND environment_id = ?", secret.ID, secret.EnvironmentID).
-					Scan(ctx); err != nil {
+					Where("environment_id = ?", secret.EnvironmentID).
+					Where("id = ?", secret.ID)
+
+				if err := q.Scan(ctx); err != nil {
 					if errors.Is(err, sql.ErrNoRows) {
 						return ErrEnvironmentSecretNotFound
 					}
@@ -192,10 +218,12 @@ func (s *Environments) Update(ctx context.Context, projectID string, record *mod
 					current.Content = secret.Content
 				}
 
-				if _, err := tx.NewUpdate().
+				up := tx.NewUpdate().
 					Model(current).
-					Where("id = ? and environment_id = ?", secret.ID, secret.EnvironmentID).
-					Exec(ctx); err != nil {
+					Where("environment_id = ?", secret.EnvironmentID).
+					Where("id = ?", secret.ID)
+
+				if _, err := up.Exec(ctx); err != nil {
 					return err
 				}
 			}
@@ -213,10 +241,12 @@ func (s *Environments) Update(ctx context.Context, projectID string, record *mod
 			} else {
 				current := &model.EnvironmentValue{}
 
-				if err := tx.NewSelect().
+				q := tx.NewSelect().
 					Model(current).
-					Where("id = ? AND environment_id = ?", value.ID, value.EnvironmentID).
-					Scan(ctx); err != nil {
+					Where("environment_id = ?", value.EnvironmentID).
+					Where("id = ?", value.ID)
+
+				if err := q.Scan(ctx); err != nil {
 					if errors.Is(err, sql.ErrNoRows) {
 						return ErrEnvironmentValueNotFound
 					}
@@ -236,25 +266,34 @@ func (s *Environments) Update(ctx context.Context, projectID string, record *mod
 					current.Content = value.Content
 				}
 
-				if _, err := tx.NewUpdate().
+				up := tx.NewUpdate().
 					Model(current).
-					Where("id = ? and environment_id = ?", value.ID, value.EnvironmentID).
-					Exec(ctx); err != nil {
+					Where("environment_id = ?", value.EnvironmentID).
+					Where("id = ?", value.ID)
+
+				if _, err := up.Exec(ctx); err != nil {
 					return err
 				}
 			}
 		}
 
 		return nil
-	})
-}
+	}); err != nil {
+		return err
+	}
 
-// Delete implements the deletion of a environment.
-func (s *Environments) Delete(ctx context.Context, projectID, name string) error {
-	if _, err := s.client.handle.NewDelete().
-		Model((*model.Environment)(nil)).
-		Where("project_id = ?", projectID).
-		Where("id = ? OR slug = ?", name, name).
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      project.ID,
+				ProjectDisplay: project.Name,
+				ObjectID:       record.ID,
+				ObjectDisplay:  record.Name,
+				ObjectType:     model.EventTypeEnvironment,
+				Action:         model.EventActionUpdate,
+			},
+		)).
 		Exec(ctx); err != nil {
 		return err
 	}
@@ -262,6 +301,333 @@ func (s *Environments) Delete(ctx context.Context, projectID, name string) error
 	return nil
 }
 
+// Delete implements the deletion of a environment.
+func (s *Environments) Delete(ctx context.Context, project *model.Project, name string) error {
+	record, err := s.Show(ctx, project, name)
+
+	if err != nil {
+		return err
+	}
+
+	q := s.client.handle.NewDelete().
+		Model((*model.Environment)(nil)).
+		Where("project_id = ?", project.ID).
+		Where("id = ? OR slug = ?", name)
+
+	if _, err := q.Exec(ctx); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      project.ID,
+				ProjectDisplay: project.Name,
+				ObjectID:       record.ID,
+				ObjectDisplay:  record.Name,
+				ObjectType:     model.EventTypeEnvironment,
+				Action:         model.EventActionCreate,
+			},
+		)).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ShowSecret implements the details for a specific environment secret.
+func (s *Environments) ShowSecret(ctx context.Context, environment *model.Environment, name string) (*model.EnvironmentSecret, error) {
+	record := &model.EnvironmentSecret{}
+
+	q := s.client.handle.NewSelect().
+		Model(record).
+		Where("environment_id = ?", environment.ID).
+		Where("id = ?", name)
+
+	if err := q.Scan(ctx); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return record, ErrEnvironmentSecretNotFound
+		}
+
+		return record, err
+	}
+
+	return record, nil
+}
+
+// CreateSecret implements the create of a new environment secret.
+func (s *Environments) CreateSecret(ctx context.Context, environment *model.Environment, record *model.EnvironmentSecret) error {
+	if err := s.validateSecret(ctx, environment, record, false); err != nil {
+		return err
+	}
+
+	if err := s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		if _, err := tx.NewInsert().
+			Model(record).
+			Exec(ctx); err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      environment.Project.ID,
+				ProjectDisplay: environment.Project.Name,
+				ObjectID:       record.ID,
+				ObjectDisplay:  record.Name,
+				ObjectType:     model.EventTypeEnvironmentSecret,
+				Action:         model.EventActionCreate,
+				Attrs: map[string]interface{}{
+					"environment_id":      environment.ID,
+					"environment_display": environment.Name,
+				},
+			},
+		)).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateSecret implements the update of an existing environment secret.
+func (s *Environments) UpdateSecret(ctx context.Context, environment *model.Environment, record *model.EnvironmentSecret) error {
+	if err := s.validateSecret(ctx, environment, record, true); err != nil {
+		return err
+	}
+
+	if err := s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		q := tx.NewUpdate().
+			Model(record).
+			Where("environment_id = ?", environment.ID).
+			Where("id = ?", record.ID)
+
+		if _, err := q.Exec(ctx); err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      environment.Project.ID,
+				ProjectDisplay: environment.Project.Name,
+				ObjectID:       record.ID,
+				ObjectDisplay:  record.Name,
+				ObjectType:     model.EventTypeEnvironmentSecret,
+				Action:         model.EventActionUpdate,
+				Attrs: map[string]interface{}{
+					"environment_id":      environment.ID,
+					"environment_display": environment.Name,
+				},
+			},
+		)).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DeleteSecret implements the deletion of a environment secret.
+func (s *Environments) DeleteSecret(ctx context.Context, environment *model.Environment, name string) error {
+	record, err := s.ShowSecret(ctx, environment, name)
+
+	if err != nil {
+		return err
+	}
+
+	q := s.client.handle.NewDelete().
+		Model((*model.EnvironmentSecret)(nil)).
+		Where("environment_id = ?", environment.ID).
+		Where("id = ?", record.ID)
+
+	if _, err := q.Exec(ctx); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      environment.Project.ID,
+				ProjectDisplay: environment.Project.Name,
+				ObjectID:       record.ID,
+				ObjectDisplay:  record.Name,
+				ObjectType:     model.EventTypeEnvironmentSecret,
+				Action:         model.EventActionDelete,
+				Attrs: map[string]interface{}{
+					"environment_id":      environment.ID,
+					"environment_display": environment.Name,
+				},
+			},
+		)).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ShowValue implements the details for a specific environment value.
+func (s *Environments) ShowValue(ctx context.Context, environment *model.Environment, name string) (*model.EnvironmentValue, error) {
+	record := &model.EnvironmentValue{}
+
+	q := s.client.handle.NewSelect().
+		Model(record).
+		Where("environment_id = ?", environment.ID).
+		Where("id = ?", name)
+
+	if err := q.Scan(ctx); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return record, ErrEnvironmentValueNotFound
+		}
+
+		return record, err
+	}
+
+	return record, nil
+}
+
+// CreateValue implements the create of a new environment value.
+func (s *Environments) CreateValue(ctx context.Context, environment *model.Environment, record *model.EnvironmentValue) error {
+	if err := s.validateValue(ctx, environment, record, false); err != nil {
+		return err
+	}
+
+	if err := s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		if _, err := tx.NewInsert().
+			Model(record).
+			Exec(ctx); err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      environment.Project.ID,
+				ProjectDisplay: environment.Project.Name,
+				ObjectID:       record.ID,
+				ObjectDisplay:  record.Name,
+				ObjectType:     model.EventTypeEnvironmentValue,
+				Action:         model.EventActionCreate,
+				Attrs: map[string]interface{}{
+					"environment_id":      environment.ID,
+					"environment_display": environment.Name,
+				},
+			},
+		)).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateValue implements the update of an existing environment value.
+func (s *Environments) UpdateValue(ctx context.Context, environment *model.Environment, record *model.EnvironmentValue) error {
+	if err := s.validateValue(ctx, environment, record, true); err != nil {
+		return err
+	}
+
+	if err := s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		q := tx.NewUpdate().
+			Model(record).
+			Where("environment_id = ?", environment.ID).
+			Where("id = ?", record.ID)
+
+		if _, err := q.Exec(ctx); err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      environment.Project.ID,
+				ProjectDisplay: environment.Project.Name,
+				ObjectID:       record.ID,
+				ObjectDisplay:  record.Name,
+				ObjectType:     model.EventTypeEnvironmentValue,
+				Action:         model.EventActionUpdate,
+				Attrs: map[string]interface{}{
+					"environment_id":      environment.ID,
+					"environment_display": environment.Name,
+				},
+			},
+		)).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DeleteValue implements the deletion of a environment value.
+func (s *Environments) DeleteValue(ctx context.Context, environment *model.Environment, name string) error {
+	record, err := s.ShowValue(ctx, environment, name)
+
+	if err != nil {
+		return err
+	}
+
+	q := s.client.handle.NewDelete().
+		Model((*model.EnvironmentValue)(nil)).
+		Where("environment_id = ?", environment.ID).
+		Where("id = ?", record.ID)
+
+	if _, err := q.Exec(ctx); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      environment.Project.ID,
+				ProjectDisplay: environment.Project.Name,
+				ObjectID:       record.ID,
+				ObjectDisplay:  record.Name,
+				ObjectType:     model.EventTypeEnvironmentValue,
+				Action:         model.EventActionDelete,
+				Attrs: map[string]interface{}{
+					"environment_id":      environment.ID,
+					"environment_display": environment.Name,
+				},
+			},
+		)).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ValidateExists simply provides a validator for this record type.
 func (s *Environments) ValidateExists(ctx context.Context, projectID string) func(value interface{}) error {
 	return func(value interface{}) error {
 		val, _ := value.(string)
@@ -371,13 +737,78 @@ func (s *Environments) validate(ctx context.Context, record *model.Environment, 
 	return nil
 }
 
+func (s *Environments) validateSecret(_ context.Context, _ *model.Environment, record *model.EnvironmentSecret, _ bool) error {
+	errs := validate.Errors{}
+
+	if err := validation.Validate(
+		record.Name,
+		validation.Required,
+	); err != nil {
+		errs.Errors = append(errs.Errors, validate.Error{
+			Field: "name",
+			Error: err,
+		})
+	}
+
+	if err := validation.Validate(
+		record.Kind,
+		validation.Required,
+		validation.Length(3, 255),
+		validation.In("var", "env"),
+	); err != nil {
+		errs.Errors = append(errs.Errors, validate.Error{
+			Field: "kind",
+			Error: err,
+		})
+	}
+
+	if len(errs.Errors) > 0 {
+		return errs
+	}
+
+	return nil
+}
+
+func (s *Environments) validateValue(_ context.Context, _ *model.Environment, record *model.EnvironmentValue, _ bool) error {
+	errs := validate.Errors{}
+
+	if err := validation.Validate(
+		record.Name,
+		validation.Required,
+	); err != nil {
+		errs.Errors = append(errs.Errors, validate.Error{
+			Field: "name",
+			Error: err,
+		})
+	}
+
+	if err := validation.Validate(
+		record.Kind,
+		validation.Required,
+		validation.Length(3, 255),
+		validation.In("var", "env"),
+	); err != nil {
+		errs.Errors = append(errs.Errors, validate.Error{
+			Field: "kind",
+			Error: err,
+		})
+	}
+
+	if len(errs.Errors) > 0 {
+		return errs
+	}
+
+	return nil
+}
+
 func (s *Environments) uniqueValueIsPresent(ctx context.Context, key, id, projectID string) func(value interface{}) error {
 	return func(value interface{}) error {
 		val, _ := value.(string)
 
 		q := s.client.handle.NewSelect().
 			Model((*model.Environment)(nil)).
-			Where("project_id = ? AND ? = ?", projectID, bun.Ident(key), val)
+			Where("project_id = ?", projectID).
+			Where("? = ?", bun.Ident(key), val)
 
 		if id != "" {
 			q = q.Where(
@@ -416,7 +847,8 @@ func (s *Environments) slugify(ctx context.Context, column, value, id, projectID
 
 		query := s.client.handle.NewSelect().
 			Model((*model.Environment)(nil)).
-			Where("project_id = ? AND ? = ?", projectID, bun.Ident(column), slug)
+			Where("project_id = ?", projectID).
+			Where("? = ?", bun.Ident(column), slug)
 
 		if id != "" {
 			query = query.Where(

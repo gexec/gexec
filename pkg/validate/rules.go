@@ -6,11 +6,6 @@ import (
 	giturls "github.com/whilp/git-urls"
 )
 
-const (
-	maxURLRuneCount = 2083
-	minURLRuneCount = 3
-)
-
 var (
 	// ErrGitURL is the error that returns in case of an invalid Git clone URL.
 	ErrGitURL = validation.NewError("validation_is_git_url", "must be a valid Git clone URL")
@@ -25,6 +20,7 @@ var (
 	CronSyntax = validation.NewStringRuleWithError(gronx.IsValid, ErrGitURL)
 )
 
+// IsGitURL provides a vaöidator for Git clone URLs.
 func IsGitURL(str string) bool {
 	u, err := giturls.Parse(str)
 

@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 
 var (
 	_ bun.BeforeAppendModelHook = (*Execution)(nil)
+	_ bun.AfterScanRowHook      = (*Event)(nil)
 )
 
 // Execution defines the model for executions table.
@@ -22,6 +24,7 @@ type Execution struct {
 	Project     *Project  `bun:"rel:belongs-to,join:project_id=id"`
 	TemplateID  string    `bun:"type:varchar(20)"`
 	Template    *Template `bun:"rel:belongs-to,join:template_id=id"`
+	Name        string    `bun:"-"`
 	Status      string    `bun:"type:varchar(255)"`
 	Playbook    string    `bun:"type:varchar(255)"`
 	Environment string    `bun:"type:varchar(255)"`
@@ -51,9 +54,25 @@ func (m *Execution) BeforeAppendModel(_ context.Context, query bun.Query) error 
 		m.UpdatedAt = time.Now()
 	}
 
+	m.Name = fmt.Sprintf(
+		"#%s",
+		m.ID,
+	)
+
 	return nil
 }
 
+// AfterScanRow implements the bun hook interface.
+func (m *Execution) AfterScanRow(_ context.Context) error {
+	m.Name = fmt.Sprintf(
+		"#%s",
+		m.ID,
+	)
+
+	return nil
+}
+
+// SerializeSecret ensures to encrypt all related secrets stored on the database.
 func (m *Execution) SerializeSecret(passphrase string) error {
 	if m.Template != nil {
 		if err := m.Template.SerializeSecret(passphrase); err != nil {
@@ -64,6 +83,7 @@ func (m *Execution) SerializeSecret(passphrase string) error {
 	return nil
 }
 
+// DeserializeSecret ensures to decrypt all related secrets stored on the database.
 func (m *Execution) DeserializeSecret(passphrase string) error {
 	if m.Template != nil {
 		if err := m.Template.DeserializeSecret(passphrase); err != nil {

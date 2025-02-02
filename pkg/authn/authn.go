@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/coreos/go-oidc/v3/oidc"
-	"github.com/genexec/genexec/pkg/config"
-	"github.com/genexec/genexec/pkg/secret"
+	"github.com/gexec/gexec/pkg/config"
+	"github.com/gexec/gexec/pkg/secret"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"

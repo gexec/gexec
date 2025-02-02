@@ -1,62 +1,27 @@
 package v1
 
 import (
-	"context"
-	"errors"
+	"encoding/json"
 	"net/http"
 
-	"github.com/genexec/genexec/pkg/middleware/current"
-	"github.com/genexec/genexec/pkg/model"
-	"github.com/genexec/genexec/pkg/store"
-	"github.com/genexec/genexec/pkg/validate"
+	"github.com/gexec/gexec/pkg/middleware/current"
+	"github.com/gexec/gexec/pkg/model"
+	"github.com/gexec/gexec/pkg/validate"
+	"github.com/go-chi/render"
 	"github.com/rs/zerolog/log"
 )
 
 // ListProjectExecutions implements the v1.ServerInterface.
-func (a *API) ListProjectExecutions(ctx context.Context, request ListProjectExecutionsRequestObject) (ListProjectExecutionsResponseObject, error) {
-	parent, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Projects.Show(
-		ctx,
-		request.ProjectId,
-	)
+func (a *API) ListProjectExecutions(w http.ResponseWriter, r *http.Request, _ ProjectID, params ListProjectExecutionsParams) {
+	ctx := r.Context()
+	project := a.ProjectFromContext(ctx)
+	sort, order, limit, offset, search := listExecutionsSorting(params)
 
-	if err != nil {
-		if errors.Is(err, store.ErrProjectNotFound) {
-			return ListProjectExecutions404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
-		log.Error().
-			Err(err).
-			Str("action", "ListProjectExecutions").
-			Str("project", request.ProjectId).
-			Msg("Failed to load project")
-
-		return ListProjectExecutions500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load project"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
-
-	if !a.permitShowProject(ctx, projectPermissions{
-		User:   current.GetUser(ctx),
-		Record: parent,
-	}) {
-		return ListProjectExecutions404JSONResponse{NotFoundErrorJSONResponse{
-			Message: ToPtr("Failed to find project"),
-			Status:  ToPtr(http.StatusNotFound),
-		}}, nil
-	}
-
-	sort, order, limit, offset, search := listExecutionsSorting(request)
 	records, count, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Executions.List(
 		ctx,
-		parent.ID,
+		project.ID,
 		model.ListParams{
 			Sort:   sort,
 			Order:  order,
@@ -69,196 +34,123 @@ func (a *API) ListProjectExecutions(ctx context.Context, request ListProjectExec
 	if err != nil {
 		log.Error().
 			Err(err).
+			Str("project", project.ID).
 			Str("action", "ListProjectExecutions").
-			Str("project", parent.ID).
 			Msg("Failed to load executions")
 
-		return ListProjectExecutions500JSONResponse{InternalServerErrorJSONResponse{
+		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to load executions"),
 			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+		})
+
+		return
 	}
 
 	payload := make([]Execution, len(records))
 	for id, record := range records {
-		if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil { // TODO: remove it, security risk
+		if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
 			log.Error().
 				Err(err).
+				Str("project", project.ID).
 				Str("action", "ListProjectExecutions").
-				Str("project", parent.ID).
 				Msg("Failed to decrypt secrets")
 
-			return ListProjectExecutions500JSONResponse{InternalServerErrorJSONResponse{
+			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to decrypt secrets"),
 				Status:  ToPtr(http.StatusInternalServerError),
-			}}, nil
+			})
+
+			return
 		}
 
 		payload[id] = a.convertExecution(record)
 	}
 
-	return ListProjectExecutions200JSONResponse{ProjectExecutionsResponseJSONResponse{
+	render.JSON(w, r, ProjectExecutionsResponse{
 		Total:      count,
 		Limit:      limit,
 		Offset:     offset,
-		Project:    ToPtr(a.convertProject(parent)),
+		Project:    ToPtr(a.convertProject(project)),
 		Executions: payload,
-	}}, nil
+	})
 }
 
 // ShowProjectExecution implements the v1.ServerInterface.
-func (a *API) ShowProjectExecution(ctx context.Context, request ShowProjectExecutionRequestObject) (ShowProjectExecutionResponseObject, error) {
-	parent, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Projects.Show(
-		ctx,
-		request.ProjectId,
-	)
+func (a *API) ShowProjectExecution(w http.ResponseWriter, r *http.Request, _ ProjectID, _ ExecutionID) {
+	ctx := r.Context()
+	project := a.ProjectFromContext(ctx)
+	record := a.ProjectExecutionFromContext(ctx)
 
-	if err != nil {
-		if errors.Is(err, store.ErrProjectNotFound) {
-			return ShowProjectExecution404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project or execution"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
+	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		log.Error().
 			Err(err).
-			Str("action", "ShowProjectExecution").
-			Str("project", request.ProjectId).
-			Msg("Failed to load project")
-
-		return ShowProjectExecution500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load project"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
-
-	record, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Executions.Show(
-		ctx,
-		parent.ID,
-		request.ExecutionId,
-	)
-
-	if err != nil {
-		if errors.Is(err, store.ErrExecutionNotFound) {
-			return ShowProjectExecution404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project or execution"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
-		log.Error().
-			Err(err).
-			Str("action", "ShowProjectExecution").
-			Str("project", record.ID).
-			Str("execution", request.ExecutionId).
-			Msg("Failed to load execution")
-
-		return ShowProjectExecution500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load execution"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
-
-	if !a.permitShowExecution(ctx, executionPermissions{
-		User:    current.GetUser(ctx),
-		Project: parent,
-		Record:  record,
-	}) {
-		return ShowProjectExecution404JSONResponse{NotFoundErrorJSONResponse{
-			Message: ToPtr("Failed to find project or execution"),
-			Status:  ToPtr(http.StatusNotFound),
-		}}, nil
-	}
-
-	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil { // TODO: remove it, security risk
-		log.Error().
-			Err(err).
-			Str("action", "ShowProjectExecution").
-			Str("project", parent.ID).
+			Str("project", project.ID).
 			Str("execution", record.ID).
+			Str("action", "ShowProjectExecution").
 			Msg("Failed to decrypt secrets")
 
-		return ShowProjectExecution500JSONResponse{InternalServerErrorJSONResponse{
+		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decrypt secrets"),
 			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+		})
+
+		return
 	}
 
-	return ShowProjectExecution200JSONResponse{ProjectExecutionResponseJSONResponse(
+	render.JSON(w, r, ProjectExecutionResponse(
 		a.convertExecution(record),
-	)}, nil
+	))
 }
 
 // CreateProjectExecution implements the v1.ServerInterface.
-func (a *API) CreateProjectExecution(ctx context.Context, request CreateProjectExecutionRequestObject) (CreateProjectExecutionResponseObject, error) {
-	parent, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Projects.Show(
-		ctx,
-		request.ProjectId,
-	)
+func (a *API) CreateProjectExecution(w http.ResponseWriter, r *http.Request, _ ProjectID) {
+	ctx := r.Context()
+	project := a.ProjectFromContext(ctx)
+	body := &CreateProjectExecutionBody{}
 
-	if err != nil {
-		if errors.Is(err, store.ErrProjectNotFound) {
-			return CreateProjectExecution404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
+	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
 		log.Error().
 			Err(err).
+			Str("project", project.ID).
 			Str("action", "CreateProjectExecution").
-			Str("project", request.ProjectId).
-			Msg("Failed to load project")
+			Msg("Failed to decode request body")
 
-		return CreateProjectExecution500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load project"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to decode request"),
+			Status:  ToPtr(http.StatusBadRequest),
+		})
 
-	if !a.permitCreateExecution(ctx, executionPermissions{
-		User:    current.GetUser(ctx),
-		Project: parent,
-	}) {
-		return CreateProjectExecution404JSONResponse{NotFoundErrorJSONResponse{
-			Message: ToPtr("Failed to find project"),
-			Status:  ToPtr(http.StatusNotFound),
-		}}, nil
+		return
 	}
 
 	record := &model.Execution{
-		ProjectID: parent.ID,
+		ProjectID: project.ID,
 	}
 
-	if request.Body.TemplateId != nil {
-		record.TemplateID = FromPtr(request.Body.TemplateId)
+	if body.TemplateID != nil {
+		record.TemplateID = FromPtr(body.TemplateID)
 	}
 
 	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		log.Error().
 			Err(err).
+			Str("project", project.ID).
 			Str("action", "CreateProjectExecution").
-			Str("project", parent.ID).
 			Msg("Failed to encrypt secrets")
 
-		return CreateProjectExecution500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to encrypt credentials"),
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to encrypt secrets"),
 			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+		})
+
+		return
 	}
 
 	if err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Executions.Create(
 		ctx,
-		parent.ID,
+		project,
 		record,
 	); err != nil {
 		if v, ok := err.(validate.Errors); ok {
@@ -274,159 +166,153 @@ func (a *API) CreateProjectExecution(ctx context.Context, request CreateProjectE
 				)
 			}
 
-			return CreateProjectExecution422JSONResponse{ValidationErrorJSONResponse{
-				Status:  ToPtr(http.StatusUnprocessableEntity),
+			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to validate execution"),
+				Status:  ToPtr(http.StatusUnprocessableEntity),
 				Errors:  ToPtr(errors),
-			}}, nil
+			})
+
+			return
 		}
 
 		log.Error().
 			Err(err).
+			Str("project", project.ID).
 			Str("action", "CreateProjectExecution").
-			Str("project", parent.ID).
 			Msg("Failed to create execution")
 
-		return CreateProjectExecution500JSONResponse{InternalServerErrorJSONResponse{
+		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to create execution"),
 			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+		})
+
+		return
 	}
 
-	return CreateProjectExecution200JSONResponse{ProjectExecutionResponseJSONResponse(
+	render.JSON(w, r, ProjectExecutionResponse(
 		a.convertExecution(record),
-	)}, nil
+	))
 }
 
 // DeleteProjectExecution implements the v1.ServerInterface.
-func (a *API) DeleteProjectExecution(ctx context.Context, request DeleteProjectExecutionRequestObject) (DeleteProjectExecutionResponseObject, error) {
-	parent, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Projects.Show(
-		ctx,
-		request.ProjectId,
-	)
-
-	if err != nil {
-		if errors.Is(err, store.ErrProjectNotFound) {
-			return DeleteProjectExecution404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project or execution"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
-		log.Error().
-			Err(err).
-			Str("action", "DeleteProjectExecution").
-			Str("project", request.ProjectId).
-			Msg("Failed to load project")
-
-		return DeleteProjectExecution500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load project"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
-
-	record, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Executions.Show(
-		ctx,
-		parent.ID,
-		request.ExecutionId,
-	)
-
-	if err != nil {
-		if errors.Is(err, store.ErrExecutionNotFound) {
-			return DeleteProjectExecution404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project or execution"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
-		log.Error().
-			Err(err).
-			Str("action", "DeleteProjectExecution").
-			Str("project", parent.ID).
-			Str("execution", request.ExecutionId).
-			Msg("Failed to load execution")
-
-		return DeleteProjectExecution500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load execution"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
-
-	if !a.permitManageExecution(ctx, executionPermissions{
-		User:    current.GetUser(ctx),
-		Project: parent,
-		Record:  record,
-	}) {
-		return DeleteProjectExecution404JSONResponse{NotFoundErrorJSONResponse{
-			Message: ToPtr("Failed to find project or execution"),
-			Status:  ToPtr(http.StatusNotFound),
-		}}, nil
-	}
+func (a *API) DeleteProjectExecution(w http.ResponseWriter, r *http.Request, _ ProjectID, _ ExecutionID) {
+	ctx := r.Context()
+	project := a.ProjectFromContext(ctx)
+	record := a.ProjectExecutionFromContext(ctx)
 
 	if err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Executions.Delete(
 		ctx,
-		parent.ID,
+		project,
 		record.ID,
 	); err != nil {
 		log.Error().
 			Err(err).
-			Str("action", "DeletProjectExecution").
-			Str("project", parent.ID).
+			Str("project", project.ID).
 			Str("execution", record.ID).
+			Str("action", "DeleteProjectExecution").
 			Msg("Failed to delete execution")
 
-		return DeleteProjectExecution400JSONResponse{ActionFailedErrorJSONResponse{
-			Status:  ToPtr(http.StatusBadRequest),
+		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to delete execution"),
-		}}, nil
+			Status:  ToPtr(http.StatusBadRequest),
+		})
+
+		return
 	}
 
-	return DeleteProjectExecution200JSONResponse{SuccessMessageJSONResponse{
-		Status:  ToPtr(http.StatusOK),
+	a.RenderNotify(w, r, Notification{
 		Message: ToPtr("Successfully deleted execution"),
-	}}, nil
+		Status:  ToPtr(http.StatusOK),
+	})
 }
 
 // PurgeProjectExecution implements the v1.ServerInterface.
-func (a *API) PurgeProjectExecution(_ context.Context, _ PurgeProjectExecutionRequestObject) (PurgeProjectExecutionResponseObject, error) {
-	return PurgeProjectExecution500JSONResponse{InternalServerErrorJSONResponse{
-		Message: ToPtr("Not implemented"),
-		Status:  ToPtr(http.StatusInternalServerError),
-	}}, nil
-}
+func (a *API) PurgeProjectExecution(w http.ResponseWriter, r *http.Request, _ ProjectID, _ ExecutionID) {
+	ctx := r.Context()
+	project := a.ProjectFromContext(ctx)
+	record := a.ProjectExecutionFromContext(ctx)
 
-// StopProjectExecution implements the v1.ServerInterface.
-func (a *API) StopProjectExecution(_ context.Context, _ StopProjectExecutionRequestObject) (StopProjectExecutionResponseObject, error) {
-	return StopProjectExecution500JSONResponse{InternalServerErrorJSONResponse{
-		Message: ToPtr("Not implemented"),
-		Status:  ToPtr(http.StatusInternalServerError),
-	}}, nil
+	if err := a.storage.WithPrincipal(
+		current.GetUser(ctx),
+	).Executions.Purge(
+		ctx,
+		project,
+		record.ID,
+	); err != nil {
+		log.Error().
+			Err(err).
+			Str("project", project.ID).
+			Str("execution", record.ID).
+			Str("action", "PurgeProjectExecution").
+			Msg("Failed to purge execution")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to purge execution"),
+			Status:  ToPtr(http.StatusBadRequest),
+		})
+
+		return
+	}
+
+	a.RenderNotify(w, r, Notification{
+		Message: ToPtr("Successfully purged execution"),
+		Status:  ToPtr(http.StatusOK),
+	})
 }
 
 // OutputProjectExecution implements the v1.ServerInterface.
-func (a *API) OutputProjectExecution(_ context.Context, _ OutputProjectExecutionRequestObject) (OutputProjectExecutionResponseObject, error) {
-	return OutputProjectExecution500JSONResponse{InternalServerErrorJSONResponse{
-		Message: ToPtr("Not implemented"),
-		Status:  ToPtr(http.StatusInternalServerError),
-	}}, nil
+func (a *API) OutputProjectExecution(w http.ResponseWriter, r *http.Request, _ ProjectID, _ ExecutionID) {
+	ctx := r.Context()
+	project := a.ProjectFromContext(ctx)
+	record := a.ProjectExecutionFromContext(ctx)
+
+	outputs, err := a.storage.WithPrincipal(
+		current.GetUser(ctx),
+	).Executions.Outputs(
+		ctx,
+		project,
+		record,
+	)
+
+	if err != nil {
+		log.Error().
+			Err(err).
+			Str("project", record.ID).
+			Str("execution", record.ID).
+			Str("action", "OutputProjectExecution").
+			Msg("Failed to load output")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to load output"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		})
+
+		return
+	}
+
+	payload := make([]Output, len(outputs))
+	for id, output := range outputs {
+		payload[id] = a.convertOutput(output)
+	}
+
+	render.JSON(w, r, ProjectOutputResponse(
+		payload,
+	))
 }
 
 func (a *API) convertExecution(record *model.Execution) Execution {
 	result := Execution{
-		Id:        ToPtr(record.ID),
+		ID:        ToPtr(record.ID),
+		Name:      ToPtr(record.Name),
 		Status:    ToPtr(record.Status),
 		CreatedAt: ToPtr(record.CreatedAt),
 		UpdatedAt: ToPtr(record.UpdatedAt),
 	}
 
 	if record.Template != nil {
-		result.TemplateId = ToPtr(record.TemplateID)
+		result.TemplateID = ToPtr(record.TemplateID)
 
 		result.Template = ToPtr(
 			a.convertTemplate(
@@ -438,46 +324,47 @@ func (a *API) convertExecution(record *model.Execution) Execution {
 	return result
 }
 
-type executionPermissions struct {
-	User      *model.User
-	Project   *model.Project
-	Record    *model.Execution
-	OwnerOnly bool
+func (a *API) convertOutput(record *model.Output) Output {
+	result := Output{
+		Content:   ToPtr(record.Content),
+		CreatedAt: ToPtr(record.CreatedAt),
+	}
+
+	if record.Execution != nil {
+		result.ExecutionID = ToPtr(record.ExecutionID)
+
+		result.Execution = ToPtr(
+			a.convertExecution(
+				record.Execution,
+			),
+		)
+	}
+
+	return result
 }
 
-func (a *API) permitCreateExecution(ctx context.Context, definition executionPermissions) bool {
-	return a.permitManageProject(ctx, projectPermissions{
-		User:   definition.User,
-		Record: definition.Project,
-	})
+// AllowShowProjectExecution defines a middleware to check permissions.
+func (a *API) AllowShowProjectExecution(next http.Handler) http.Handler {
+	return a.AllowShowProject(next)
 }
 
-func (a *API) permitShowExecution(ctx context.Context, definition executionPermissions) bool {
-	return a.permitShowProject(ctx, projectPermissions{
-		User:   definition.User,
-		Record: definition.Project,
-	})
+// AllowManageProjectExecution defines a middleware to check permissions.
+func (a *API) AllowManageProjectExecution(next http.Handler) http.Handler {
+	return a.AllowManageProject(next)
 }
 
-func (a *API) permitManageExecution(ctx context.Context, definition executionPermissions) bool {
-	return a.permitManageProject(ctx, projectPermissions{
-		User:   definition.User,
-		Record: definition.Project,
-	})
-}
-
-func listExecutionsSorting(request ListProjectExecutionsRequestObject) (string, string, int64, int64, string) {
+func listExecutionsSorting(request ListProjectExecutionsParams) (string, string, int64, int64, string) {
 	sort, limit, offset, search := toPageParams(
-		request.Params.Sort,
-		request.Params.Limit,
-		request.Params.Offset,
-		request.Params.Search,
+		request.Sort,
+		request.Limit,
+		request.Offset,
+		request.Search,
 	)
 
 	order := ""
 
-	if request.Params.Order != nil {
-		sort = string(FromPtr(request.Params.Order))
+	if request.Order != nil {
+		sort = string(FromPtr(request.Order))
 	}
 
 	return sort, order, limit, offset, search

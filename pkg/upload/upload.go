@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-//go:generate go run github.com/golang/mock/mockgen -source upload.go -destination mock.go -package upload
+//go:generate go tool github.com/golang/mock/mockgen -source upload.go -destination mock.go -package upload
 
 var (
 	// ErrUnknownDriver defines a named error for unknown upload drivers.

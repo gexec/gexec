@@ -13,6 +13,7 @@ func init() {
 			bun.BaseModel `bun:"table:users"`
 
 			ID        string    `bun:",pk,type:varchar(20)"`
+			Scim      string    `bun:"type:varchar(255)"`
 			Username  string    `bun:",unique,type:varchar(255)"`
 			Hashword  string    `bun:"type:varchar(255)"`
 			Email     string    `bun:"type:varchar(255)"`

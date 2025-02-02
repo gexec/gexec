@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v5"
-	"github.com/genexec/genexec/pkg/authn"
-	"github.com/genexec/genexec/pkg/config"
-	"github.com/genexec/genexec/pkg/metrics"
-	"github.com/genexec/genexec/pkg/router"
-	"github.com/genexec/genexec/pkg/secret"
-	"github.com/genexec/genexec/pkg/store"
+	"github.com/gexec/gexec/pkg/authn"
+	"github.com/gexec/gexec/pkg/config"
+	"github.com/gexec/gexec/pkg/metrics"
+	"github.com/gexec/gexec/pkg/router"
+	"github.com/gexec/gexec/pkg/secret"
+	"github.com/gexec/gexec/pkg/store"
 	"github.com/oklog/run"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -33,16 +33,18 @@ var (
 	defaultMetricsPprof      = false
 	defaultServerAddr        = "0.0.0.0:8080"
 	defaultServerHost        = "http://localhost:8080"
-	defaultServerRoot        = "/api"
+	defaultServerRoot        = "/"
 	defaultServerCert        = ""
 	defaultServerKey         = ""
+	defaultServerAssets      = ""
+	defaultServerDocs        = true
 	defaultEncryptPassphrase = secret.Generate(32)
 	defaultDatabaseDriver    = "sqlite3"
 	defaultDatabaseAddress   = ""
 	defaultDatabasePort      = ""
 	defaultDatabaseUsername  = ""
 	defaultDatabasePassword  = ""
-	defaultDatabaseName      = "storage/genexec.sqlite3"
+	defaultDatabaseName      = "storage/gexec.sqlite3"
 	defaultDatabaseOptions   = make(map[string]string, 0)
 	defaultUploadDriver      = "file"
 	defaultUploadEndpoint    = ""
@@ -97,6 +99,14 @@ func init() {
 	serverCmd.PersistentFlags().String("server-key", defaultServerKey, "Path to SSL key")
 	viper.SetDefault("server.key", defaultServerKey)
 	_ = viper.BindPFlag("server.key", serverCmd.PersistentFlags().Lookup("server-key"))
+
+	serverCmd.PersistentFlags().String("server-assets", defaultServerAssets, "Path to custom tepmplates")
+	viper.SetDefault("server.assets", defaultServerKey)
+	_ = viper.BindPFlag("server.assets", serverCmd.PersistentFlags().Lookup("server-assets"))
+
+	serverCmd.PersistentFlags().Bool("server-docs", defaultServerDocs, "Enable OpenAPI docs")
+	viper.SetDefault("server.docs", defaultServerKey)
+	_ = viper.BindPFlag("server.docs", serverCmd.PersistentFlags().Lookup("server-docs"))
 
 	serverCmd.PersistentFlags().String("encrypt-passphrase", defaultEncryptPassphrase, "Passphrase for secret encryption")
 	viper.SetDefault("encrypt.passphrase", defaultEncryptPassphrase)
@@ -214,7 +224,8 @@ func serverAction(ccmd *cobra.Command, _ []string) {
 
 	storage, err := store.NewStore(
 		cfg.Database,
-		cfg.Encrypt.Passphrase,
+		cfg.Encrypt,
+		cfg.Scim,
 	)
 
 	if err != nil {
@@ -349,7 +360,7 @@ func serverAction(ccmd *cobra.Command, _ []string) {
 	}
 
 	registry := metrics.New(
-		metrics.WithNamespace("genexec_api"),
+		metrics.WithNamespace("gexec_api"),
 		metrics.WithToken(token),
 	)
 

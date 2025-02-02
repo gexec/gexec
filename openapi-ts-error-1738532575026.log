@@ -1,0 +1,12 @@
+🚫 client needs to be set to generate SDKs - which HTTP client do you want to use?
+Error: 🚫 client needs to be set to generate SDKs - which HTTP client do you want to use?
+    at Object.pluginByTag (/Users/thomas/Developer/genexec/genexec/node_modules/@hey-api/openapi-ts/dist/index.cjs:1311:6913)
+    at Object._infer (/Users/thomas/Developer/genexec/genexec/node_modules/@hey-api/openapi-ts/dist/index.cjs:15:6771)
+    at i (/Users/thomas/Developer/genexec/genexec/node_modules/@hey-api/openapi-ts/dist/index.cjs:1311:6992)
+    at Wf (/Users/thomas/Developer/genexec/genexec/node_modules/@hey-api/openapi-ts/dist/index.cjs:1311:7085)
+    at Qf (/Users/thomas/Developer/genexec/genexec/node_modules/@hey-api/openapi-ts/dist/index.cjs:1311:7557)
+    at /Users/thomas/Developer/genexec/genexec/node_modules/@hey-api/openapi-ts/dist/index.cjs:1311:9919
+    at Array.map (<anonymous>)
+    at Gf (/Users/thomas/Developer/genexec/genexec/node_modules/@hey-api/openapi-ts/dist/index.cjs:1311:9207)
+    at async Av (/Users/thomas/Developer/genexec/genexec/node_modules/@hey-api/openapi-ts/dist/index.cjs:1311:10234)
+    at async start (/Users/thomas/Developer/genexec/genexec/node_modules/@hey-api/openapi-ts/bin/index.cjs:120:21)

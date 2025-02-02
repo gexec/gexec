@@ -1,0 +1,36 @@
+{
+  "private": true,
+  "name": "gexec",
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Generic execution platform for Ansible/Terraform/OpenTofu",
+  "homepage": "https://github.com/gexec/gexec#readme",
+  "license": "Apache-2.0",
+  "author": "Thomas Boerger <thomas@webhippie.de>",
+  "repository": "https://github.com/gexec/gexec.git",
+  "bugs": {
+    "url": "https://github.com/gexec/gexec/issues",
+    "email": "gexec@webhippie.de"
+  },
+  "scripts": {
+    "clean": "rimraf static/ dist/static.zip dist/static.tar.gz",
+    "serve": "vite",
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "format": "eslint . --fix && prettier . --write",
+    "openapi": "openapi-ts --client @hey-api/client-fetch --input openapi/v1.yaml --output ./frontend/client",
+    "test": "echo no tests defined so far",
+    "deps:upgrade": "ncu --upgrade"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@hey-api/openapi-ts": "^0.64.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead",
+    "not ie 11"
+  ]
+}

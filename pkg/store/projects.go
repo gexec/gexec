@@ -9,8 +9,8 @@ import (
 
 	"github.com/Machiel/slugify"
 	"github.com/dchest/uniuri"
-	"github.com/genexec/genexec/pkg/model"
-	"github.com/genexec/genexec/pkg/validate"
+	"github.com/gexec/gexec/pkg/model"
+	"github.com/gexec/gexec/pkg/validate"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
@@ -32,8 +32,8 @@ func (s *Projects) AllowedIDs() []string {
 		result = append(result, p.ProjectID)
 	}
 
-	for _, t := range s.client.principal.Teams {
-		for _, p := range t.Team.Projects {
+	for _, t := range s.client.principal.Groups {
+		for _, p := range t.Group.Projects {
 			result = append(result, p.ProjectID)
 		}
 	}
@@ -94,10 +94,11 @@ func (s *Projects) List(ctx context.Context, params model.ListParams) ([]*model.
 func (s *Projects) Show(ctx context.Context, name string) (*model.Project, error) {
 	record := &model.Project{}
 
-	if err := s.client.handle.NewSelect().
+	q := s.client.handle.NewSelect().
 		Model(record).
-		Where("project.id = ? OR project.slug = ?", name, name).
-		Scan(ctx); err != nil {
+		Where("project.id = ? OR project.slug = ?", name, name)
+
+	if err := q.Scan(ctx); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return record, ErrProjectNotFound
 		}
@@ -123,7 +124,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 		return err
 	}
 
-	return s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+	if err := s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
 		if _, err := tx.NewInsert().
 			Model(record).
 			Exec(ctx); err != nil {
@@ -149,7 +150,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 				Override:  false,
 			}
 
-			if err := credential1.SerializeSecret(s.client.passphrase); err != nil {
+			if err := credential1.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
 				return err
 			}
 
@@ -170,7 +171,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 				},
 			}
 
-			if err := credential2.SerializeSecret(s.client.passphrase); err != nil {
+			if err := credential2.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
 				return err
 			}
 
@@ -185,11 +186,11 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 				CredentialID: credential1.ID,
 				Slug:         "demo",
 				Name:         "Demo",
-				URL:          "https://github.com/genexec/genexec-demo.git",
+				URL:          "https://github.com/gexec/gexec-demo.git",
 				Branch:       "master",
 			}
 
-			if err := repository1.SerializeSecret(s.client.passphrase); err != nil {
+			if err := repository1.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
 				return err
 			}
 
@@ -208,7 +209,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 				Content:      `[customized]\nlocalhost ansible_connection=local`,
 			}
 
-			if err := inventory1.SerializeSecret(s.client.passphrase); err != nil {
+			if err := inventory1.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
 				return err
 			}
 
@@ -228,7 +229,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 				Content:      "ansible/development/inventory.yml",
 			}
 
-			if err := inventory2.SerializeSecret(s.client.passphrase); err != nil {
+			if err := inventory2.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
 				return err
 			}
 
@@ -248,7 +249,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 				Content:      "ansible/staging/inventory.yml",
 			}
 
-			if err := inventory3.SerializeSecret(s.client.passphrase); err != nil {
+			if err := inventory3.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
 				return err
 			}
 
@@ -268,7 +269,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 				Content:      "ansible/production/inventory.yml",
 			}
 
-			if err := inventory4.SerializeSecret(s.client.passphrase); err != nil {
+			if err := inventory4.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
 				return err
 			}
 
@@ -284,7 +285,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 				Name:      "Empty",
 			}
 
-			if err := environment1.SerializeSecret(s.client.passphrase); err != nil {
+			if err := environment1.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
 				return err
 			}
 
@@ -300,7 +301,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 				Name:      "Development",
 			}
 
-			if err := environment2.SerializeSecret(s.client.passphrase); err != nil {
+			if err := environment2.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
 				return err
 			}
 
@@ -317,7 +318,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 				Content:       "s3cr37",
 			}
 
-			if err := environment2Secret1.SerializeSecret(s.client.passphrase); err != nil {
+			if err := environment2Secret1.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
 				return err
 			}
 
@@ -334,7 +335,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 				Content:       "Env variable with secret value for DEV",
 			}
 
-			if err := environment2Secret2.SerializeSecret(s.client.passphrase); err != nil {
+			if err := environment2Secret2.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
 				return err
 			}
 
@@ -351,7 +352,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 				Content:       "Example",
 			}
 
-			if err := environment2Value1.SerializeSecret(s.client.passphrase); err != nil {
+			if err := environment2Value1.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
 				return err
 			}
 
@@ -368,7 +369,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 				Content:       "This is not a secret on DEV",
 			}
 
-			if err := environment2Value2.SerializeSecret(s.client.passphrase); err != nil {
+			if err := environment2Value2.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
 				return err
 			}
 
@@ -384,7 +385,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 				Name:      "Stating",
 			}
 
-			if err := environment3.SerializeSecret(s.client.passphrase); err != nil {
+			if err := environment3.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
 				return err
 			}
 
@@ -401,7 +402,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 				Content:       "s3cr37",
 			}
 
-			if err := environment3Secret1.SerializeSecret(s.client.passphrase); err != nil {
+			if err := environment3Secret1.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
 				return err
 			}
 
@@ -418,7 +419,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 				Content:       "Env variable with secret value for STAGE",
 			}
 
-			if err := environment3Secret2.SerializeSecret(s.client.passphrase); err != nil {
+			if err := environment3Secret2.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
 				return err
 			}
 
@@ -435,7 +436,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 				Content:       "Example",
 			}
 
-			if err := environment3Value1.SerializeSecret(s.client.passphrase); err != nil {
+			if err := environment3Value1.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
 				return err
 			}
 
@@ -452,7 +453,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 				Content:       "This is not a secret on STAGE",
 			}
 
-			if err := environment3Value2.SerializeSecret(s.client.passphrase); err != nil {
+			if err := environment3Value2.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
 				return err
 			}
 
@@ -468,7 +469,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 				Name:      "Production",
 			}
 
-			if err := environment4.SerializeSecret(s.client.passphrase); err != nil {
+			if err := environment4.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
 				return err
 			}
 
@@ -485,7 +486,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 				Content:       "s3cr37",
 			}
 
-			if err := environment4Secret1.SerializeSecret(s.client.passphrase); err != nil {
+			if err := environment4Secret1.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
 				return err
 			}
 
@@ -502,7 +503,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 				Content:       "Env variable with secret value for PROD",
 			}
 
-			if err := environment4Secret2.SerializeSecret(s.client.passphrase); err != nil {
+			if err := environment4Secret2.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
 				return err
 			}
 
@@ -519,7 +520,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 				Content:       "Example",
 			}
 
-			if err := environment4Value1.SerializeSecret(s.client.passphrase); err != nil {
+			if err := environment4Value1.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
 				return err
 			}
 
@@ -536,7 +537,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 				Content:       "This is not a secret on PROD",
 			}
 
-			if err := environment4Value2.SerializeSecret(s.client.passphrase); err != nil {
+			if err := environment4Value2.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
 				return err
 			}
 
@@ -558,7 +559,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 				Playbook:      "ping.yml",
 			}
 
-			if err := template1.SerializeSecret(s.client.passphrase); err != nil {
+			if err := template1.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
 				return err
 			}
 
@@ -570,7 +571,27 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 		}
 
 		return nil
-	})
+	}); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      record.ID,
+				ProjectDisplay: record.Name,
+				ObjectID:       record.ID,
+				ObjectDisplay:  record.Name,
+				ObjectType:     model.EventTypeProject,
+				Action:         model.EventActionCreate,
+			},
+		)).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Update implements the update of an existing project.
@@ -588,9 +609,26 @@ func (s *Projects) Update(ctx context.Context, record *model.Project) error {
 		return err
 	}
 
-	if _, err := s.client.handle.NewUpdate().
+	q := s.client.handle.NewUpdate().
 		Model(record).
-		Where("id = ?", record.ID).
+		Where("id = ?", record.ID)
+
+	if _, err := q.Exec(ctx); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      record.ID,
+				ProjectDisplay: record.Name,
+				ObjectID:       record.ID,
+				ObjectDisplay:  record.Name,
+				ObjectType:     model.EventTypeProject,
+				Action:         model.EventActionUpdate,
+			},
+		)).
 		Exec(ctx); err != nil {
 		return err
 	}
@@ -600,9 +638,32 @@ func (s *Projects) Update(ctx context.Context, record *model.Project) error {
 
 // Delete implements the deletion of a project.
 func (s *Projects) Delete(ctx context.Context, name string) error {
-	if _, err := s.client.handle.NewDelete().
+	record, err := s.Show(ctx, name)
+
+	if err != nil {
+		return err
+	}
+
+	q := s.client.handle.NewDelete().
 		Model((*model.Project)(nil)).
-		Where("id = ? OR slug = ?", name, name).
+		Where("id = ? OR slug = ?", name, name)
+
+	if _, err := q.Exec(ctx); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      record.ID,
+				ProjectDisplay: record.Name,
+				ObjectID:       record.ID,
+				ObjectDisplay:  record.Name,
+				ObjectType:     model.EventTypeProject,
+				Action:         model.EventActionDelete,
+			},
+		)).
 		Exec(ctx); err != nil {
 		return err
 	}
@@ -610,17 +671,17 @@ func (s *Projects) Delete(ctx context.Context, name string) error {
 	return nil
 }
 
-// ListTeams implements the listing of all teams for a project.
-func (s *Projects) ListTeams(ctx context.Context, params model.TeamProjectParams) ([]*model.TeamProject, int64, error) {
-	records := make([]*model.TeamProject, 0)
+// ListGroups implements the listing of all groups for a project.
+func (s *Projects) ListGroups(ctx context.Context, params model.GroupProjectParams) ([]*model.GroupProject, int64, error) {
+	records := make([]*model.GroupProject, 0)
 
 	q := s.client.handle.NewSelect().
 		Model(&records).
 		Relation("Project").
-		Relation("Team").
+		Relation("Group").
 		Where("project_id = ?", params.ProjectID)
 
-	if val, ok := s.validTeamSort(params.Sort); ok {
+	if val, ok := s.validGroupSort(params.Sort); ok {
 		q = q.Order(strings.Join(
 			[]string{
 				val,
@@ -655,21 +716,21 @@ func (s *Projects) ListTeams(ctx context.Context, params model.TeamProjectParams
 	return records, int64(counter), nil
 }
 
-// AttachTeam implements the attachment of a project to a team.
-func (s *Projects) AttachTeam(ctx context.Context, params model.TeamProjectParams) error {
+// AttachGroup implements the attachment of a project to a group.
+func (s *Projects) AttachGroup(ctx context.Context, params model.GroupProjectParams) error {
 	project, err := s.Show(ctx, params.ProjectID)
 
 	if err != nil {
 		return err
 	}
 
-	team, err := s.client.Teams.Show(ctx, params.TeamID)
+	group, err := s.client.Groups.Show(ctx, params.GroupID)
 
 	if err != nil {
 		return err
 	}
 
-	assigned, err := s.isTeamAssigned(ctx, project.ID, team.ID)
+	assigned, err := s.isGroupAssigned(ctx, project.ID, group.ID)
 
 	if err != nil {
 		return err
@@ -679,9 +740,9 @@ func (s *Projects) AttachTeam(ctx context.Context, params model.TeamProjectParam
 		return ErrAlreadyAssigned
 	}
 
-	record := &model.TeamProject{
+	record := &model.GroupProject{
 		ProjectID: project.ID,
-		TeamID:    team.ID,
+		GroupID:   group.ID,
 		Perm:      params.Perm,
 	}
 
@@ -695,24 +756,45 @@ func (s *Projects) AttachTeam(ctx context.Context, params model.TeamProjectParam
 		return err
 	}
 
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      project.ID,
+				ProjectDisplay: project.Name,
+				ObjectID:       project.ID,
+				ObjectDisplay:  project.Name,
+				ObjectType:     model.EventTypeProjectGroup,
+				Action:         model.EventActionCreate,
+				Attrs: map[string]interface{}{
+					"group_id":      group.ID,
+					"group_display": group.Name,
+					"perm":          params.Perm,
+				},
+			},
+		)).
+		Exec(ctx); err != nil {
+		return err
+	}
+
 	return nil
 }
 
-// PermitTeam implements the permission update for a team on a project.
-func (s *Projects) PermitTeam(ctx context.Context, params model.TeamProjectParams) error {
+// PermitGroup implements the permission update for a group on a project.
+func (s *Projects) PermitGroup(ctx context.Context, params model.GroupProjectParams) error {
 	project, err := s.Show(ctx, params.ProjectID)
 
 	if err != nil {
 		return err
 	}
 
-	team, err := s.client.Teams.Show(ctx, params.TeamID)
+	group, err := s.client.Groups.Show(ctx, params.GroupID)
 
 	if err != nil {
 		return err
 	}
 
-	unassigned, err := s.isTeamUnassigned(ctx, project.ID, team.ID)
+	unassigned, err := s.isGroupUnassigned(ctx, project.ID, group.ID)
 
 	if err != nil {
 		return err
@@ -722,10 +804,33 @@ func (s *Projects) PermitTeam(ctx context.Context, params model.TeamProjectParam
 		return ErrNotAssigned
 	}
 
-	if _, err := s.client.handle.NewUpdate().
-		Model((*model.TeamProject)(nil)).
+	q := s.client.handle.NewUpdate().
+		Model((*model.GroupProject)(nil)).
 		Set("perm = ?", params.Perm).
-		Where("project_id = ? AND team_id = ?", project.ID, team.ID).
+		Where("project_id = ?", project.ID).
+		Where("group_id = ?", group.ID)
+
+	if _, err := q.Exec(ctx); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      project.ID,
+				ProjectDisplay: project.Name,
+				ObjectID:       project.ID,
+				ObjectDisplay:  project.Name,
+				ObjectType:     model.EventTypeProjectGroup,
+				Action:         model.EventActionUpdate,
+				Attrs: map[string]interface{}{
+					"group_id":      group.ID,
+					"group_display": group.Name,
+					"perm":          params.Perm,
+				},
+			},
+		)).
 		Exec(ctx); err != nil {
 		return err
 	}
@@ -733,21 +838,21 @@ func (s *Projects) PermitTeam(ctx context.Context, params model.TeamProjectParam
 	return nil
 }
 
-// DropTeam implements the removal of a project from a team.
-func (s *Projects) DropTeam(ctx context.Context, params model.TeamProjectParams) error {
+// DropGroup implements the removal of a project from a group.
+func (s *Projects) DropGroup(ctx context.Context, params model.GroupProjectParams) error {
 	project, err := s.Show(ctx, params.ProjectID)
 
 	if err != nil {
 		return err
 	}
 
-	team, err := s.client.Teams.Show(ctx, params.TeamID)
+	group, err := s.client.Groups.Show(ctx, params.GroupID)
 
 	if err != nil {
 		return err
 	}
 
-	unassigned, err := s.isTeamUnassigned(ctx, project.ID, team.ID)
+	unassigned, err := s.isGroupUnassigned(ctx, project.ID, group.ID)
 
 	if err != nil {
 		return err
@@ -757,9 +862,32 @@ func (s *Projects) DropTeam(ctx context.Context, params model.TeamProjectParams)
 		return ErrNotAssigned
 	}
 
-	if _, err := s.client.handle.NewDelete().
-		Model((*model.TeamProject)(nil)).
-		Where("project_id = ? AND team_id = ?", project.ID, team.ID).
+	q := s.client.handle.NewDelete().
+		Model((*model.GroupProject)(nil)).
+		Where("project_id = ?", project.ID).
+		Where("group_id = ?", group.ID)
+
+	if _, err := q.Exec(ctx); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      project.ID,
+				ProjectDisplay: project.Name,
+				ObjectID:       project.ID,
+				ObjectDisplay:  project.Name,
+				ObjectType:     model.EventTypeProjectGroup,
+				Action:         model.EventActionDelete,
+				Attrs: map[string]interface{}{
+					"group_id":      group.ID,
+					"group_display": group.Name,
+					"perm":          params.Perm,
+				},
+			},
+		)).
 		Exec(ctx); err != nil {
 		return err
 	}
@@ -767,10 +895,10 @@ func (s *Projects) DropTeam(ctx context.Context, params model.TeamProjectParams)
 	return nil
 }
 
-func (s *Projects) isTeamAssigned(ctx context.Context, projectID, teamID string) (bool, error) {
+func (s *Projects) isGroupAssigned(ctx context.Context, projectID, groupID string) (bool, error) {
 	count, err := s.client.handle.NewSelect().
-		Model((*model.TeamProject)(nil)).
-		Where("project_id = ? AND team_id = ?", projectID, teamID).
+		Model((*model.GroupProject)(nil)).
+		Where("project_id = ? AND group_id = ?", projectID, groupID).
 		Count(ctx)
 
 	if err != nil {
@@ -780,10 +908,10 @@ func (s *Projects) isTeamAssigned(ctx context.Context, projectID, teamID string)
 	return count > 0, nil
 }
 
-func (s *Projects) isTeamUnassigned(ctx context.Context, projectID, teamID string) (bool, error) {
+func (s *Projects) isGroupUnassigned(ctx context.Context, projectID, groupID string) (bool, error) {
 	count, err := s.client.handle.NewSelect().
-		Model((*model.TeamProject)(nil)).
-		Where("project_id = ? AND team_id = ?", projectID, teamID).
+		Model((*model.GroupProject)(nil)).
+		Where("project_id = ? AND group_id = ?", projectID, groupID).
 		Count(ctx)
 
 	if err != nil {
@@ -878,6 +1006,27 @@ func (s *Projects) AttachUser(ctx context.Context, params model.UserProjectParam
 		return err
 	}
 
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      project.ID,
+				ProjectDisplay: project.Name,
+				ObjectID:       project.ID,
+				ObjectDisplay:  project.Name,
+				ObjectType:     model.EventTypeProjectUser,
+				Action:         model.EventActionCreate,
+				Attrs: map[string]interface{}{
+					"user_id":      user.ID,
+					"user_display": user.Username,
+					"perm":         params.Perm,
+				},
+			},
+		)).
+		Exec(ctx); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -905,10 +1054,33 @@ func (s *Projects) PermitUser(ctx context.Context, params model.UserProjectParam
 		return ErrNotAssigned
 	}
 
-	if _, err := s.client.handle.NewUpdate().
+	q := s.client.handle.NewUpdate().
 		Model((*model.UserProject)(nil)).
 		Set("perm = ?", params.Perm).
-		Where("project_id = ? AND user_id = ?", project.ID, user.ID).
+		Where("project_id = ?", project.ID).
+		Where("user_id = ?", user.ID)
+
+	if _, err := q.Exec(ctx); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      project.ID,
+				ProjectDisplay: project.Name,
+				ObjectID:       project.ID,
+				ObjectDisplay:  project.Name,
+				ObjectType:     model.EventTypeProjectUser,
+				Action:         model.EventActionUpdate,
+				Attrs: map[string]interface{}{
+					"user_id":      user.ID,
+					"user_display": user.Username,
+					"perm":         params.Perm,
+				},
+			},
+		)).
 		Exec(ctx); err != nil {
 		return err
 	}
@@ -940,9 +1112,32 @@ func (s *Projects) DropUser(ctx context.Context, params model.UserProjectParams)
 		return ErrNotAssigned
 	}
 
-	if _, err := s.client.handle.NewDelete().
+	q := s.client.handle.NewDelete().
 		Model((*model.UserProject)(nil)).
-		Where("project_id = ? AND user_id = ?", project.ID, user.ID).
+		Where("project_id = ?", project.ID, user.ID).
+		Where("user_id = ?", project.ID, user.ID)
+
+	if _, err := q.Exec(ctx); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      project.ID,
+				ProjectDisplay: project.Name,
+				ObjectID:       project.ID,
+				ObjectDisplay:  project.Name,
+				ObjectType:     model.EventTypeProjectUser,
+				Action:         model.EventActionDelete,
+				Attrs: map[string]interface{}{
+					"user_id":      user.ID,
+					"user_display": user.Username,
+					"perm":         params.Perm,
+				},
+			},
+		)).
 		Exec(ctx); err != nil {
 		return err
 	}
@@ -1112,23 +1307,23 @@ func (s *Projects) validSort(val string) (string, bool) {
 	return "project.name", true
 }
 
-func (s *Projects) validTeamSort(val string) (string, bool) {
+func (s *Projects) validGroupSort(val string) (string, bool) {
 	if val == "" {
-		return "team.name", true
+		return "group.name", true
 	}
 
 	val = strings.ToLower(val)
 
 	for key, name := range map[string]string{
-		"slug": "team.slug",
-		"name": "team.name",
+		"slug": "group.slug",
+		"name": "group.name",
 	} {
 		if val == key {
 			return name, true
 		}
 	}
 
-	return "team.name", true
+	return "group.name", true
 }
 
 func (s *Projects) validUserSort(val string) (string, bool) {

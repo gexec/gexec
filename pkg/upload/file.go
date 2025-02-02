@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/genexec/genexec/pkg/config"
+	"github.com/gexec/gexec/pkg/config"
 	"github.com/rs/zerolog/log"
 )
 

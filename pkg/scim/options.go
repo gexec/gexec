@@ -1,7 +1,7 @@
 package scim
 
 import (
-	"github.com/genexec/genexec/pkg/config"
+	"github.com/gexec/gexec/pkg/config"
 	"github.com/uptrace/bun"
 )
 

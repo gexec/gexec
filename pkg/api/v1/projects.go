@@ -1,20 +1,23 @@
 package v1
 
 import (
-	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 
-	"github.com/genexec/genexec/pkg/middleware/current"
-	"github.com/genexec/genexec/pkg/model"
-	"github.com/genexec/genexec/pkg/store"
-	"github.com/genexec/genexec/pkg/validate"
+	"github.com/gexec/gexec/pkg/middleware/current"
+	"github.com/gexec/gexec/pkg/model"
+	"github.com/gexec/gexec/pkg/store"
+	"github.com/gexec/gexec/pkg/validate"
+	"github.com/go-chi/render"
 	"github.com/rs/zerolog/log"
 )
 
 // ListProjects implements the v1.ServerInterface.
-func (a *API) ListProjects(ctx context.Context, request ListProjectsRequestObject) (ListProjectsResponseObject, error) {
-	sort, order, limit, offset, search := listProjectsSorting(request)
+func (a *API) ListProjects(w http.ResponseWriter, r *http.Request, params ListProjectsParams) {
+	ctx := r.Context()
+	sort, order, limit, offset, search := listProjectsSorting(params)
+
 	records, count, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Projects.List(
@@ -34,10 +37,12 @@ func (a *API) ListProjects(ctx context.Context, request ListProjectsRequestObjec
 			Str("action", "ListProjects").
 			Msg("Failed to load projects")
 
-		return ListProjects500JSONResponse{InternalServerErrorJSONResponse{
+		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to load projects"),
 			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+		})
+
+		return
 	}
 
 	payload := make([]Project, len(records))
@@ -45,81 +50,55 @@ func (a *API) ListProjects(ctx context.Context, request ListProjectsRequestObjec
 		payload[id] = a.convertProject(record)
 	}
 
-	return ListProjects200JSONResponse{ProjectsResponseJSONResponse{
+	render.JSON(w, r, ProjectsResponse{
 		Total:    count,
 		Limit:    limit,
 		Offset:   offset,
 		Projects: payload,
-	}}, nil
+	})
 }
 
 // ShowProject implements the v1.ServerInterface.
-func (a *API) ShowProject(ctx context.Context, request ShowProjectRequestObject) (ShowProjectResponseObject, error) {
-	record, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Projects.Show(
-		ctx,
-		request.ProjectId,
-	)
+func (a *API) ShowProject(w http.ResponseWriter, r *http.Request, _ ProjectID) {
+	ctx := r.Context()
+	record := a.ProjectFromContext(ctx)
 
-	if err != nil {
-		if errors.Is(err, store.ErrProjectNotFound) {
-			return ShowProject404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
-		log.Error().
-			Err(err).
-			Str("action", "ShowProject").
-			Str("project", request.ProjectId).
-			Msg("Failed to load project")
-
-		return ShowProject500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load project"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
-
-	if !a.permitShowProject(ctx, projectPermissions{
-		User:   current.GetUser(ctx),
-		Record: record,
-	}) {
-		return ShowProject404JSONResponse{NotFoundErrorJSONResponse{
-			Message: ToPtr("Failed to find project"),
-			Status:  ToPtr(http.StatusNotFound),
-		}}, nil
-	}
-
-	return ShowProject200JSONResponse{ProjectResponseJSONResponse(
+	render.JSON(w, r, ProjectResponse(
 		a.convertProject(record),
-	)}, nil
+	))
 }
 
 // CreateProject implements the v1.ServerInterface.
-func (a *API) CreateProject(ctx context.Context, request CreateProjectRequestObject) (CreateProjectResponseObject, error) {
-	if !a.permitCreateProject(ctx, projectPermissions{
-		User: current.GetUser(ctx),
-	}) {
-		return CreateProject403JSONResponse{NotAuthorizedErrorJSONResponse{
-			Message: ToPtr("You are not authorized to create projects"),
-			Status:  ToPtr(http.StatusForbidden),
-		}}, nil
+func (a *API) CreateProject(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	body := &CreateProjectBody{}
+
+	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
+		log.Error().
+			Err(err).
+			Str("action", "CreateProject").
+			Msg("Failed to decode request body")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to decode request"),
+			Status:  ToPtr(http.StatusBadRequest),
+		})
+
+		return
 	}
 
 	record := &model.Project{}
 
-	if request.Body.Slug != nil {
-		record.Slug = FromPtr(request.Body.Slug)
+	if body.Slug != nil {
+		record.Slug = FromPtr(body.Slug)
 	}
 
-	if request.Body.Name != nil {
-		record.Name = FromPtr(request.Body.Name)
+	if body.Name != nil {
+		record.Name = FromPtr(body.Name)
 	}
 
-	if request.Body.Demo != nil {
-		record.Demo = FromPtr(request.Body.Demo)
+	if body.Demo != nil {
+		record.Demo = FromPtr(body.Demo)
 	}
 
 	if err := a.storage.WithPrincipal(
@@ -141,11 +120,13 @@ func (a *API) CreateProject(ctx context.Context, request CreateProjectRequestObj
 				)
 			}
 
-			return CreateProject422JSONResponse{ValidationErrorJSONResponse{
+			a.RenderNotify(w, r, Notification{
 				Status:  ToPtr(http.StatusUnprocessableEntity),
 				Message: ToPtr("Failed to validate project"),
 				Errors:  ToPtr(errors),
-			}}, nil
+			})
+
+			return
 		}
 
 		log.Error().
@@ -153,62 +134,46 @@ func (a *API) CreateProject(ctx context.Context, request CreateProjectRequestObj
 			Str("action", "CreateProject").
 			Msg("Failed to create project")
 
-		return CreateProject500JSONResponse{InternalServerErrorJSONResponse{
+		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to create project"),
 			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+		})
+
+		return
 	}
 
-	return CreateProject200JSONResponse{ProjectResponseJSONResponse(
+	render.JSON(w, r, ProjectResponse(
 		a.convertProject(record),
-	)}, nil
+	))
 }
 
 // UpdateProject implements the v1.ServerInterface.
-func (a *API) UpdateProject(ctx context.Context, request UpdateProjectRequestObject) (UpdateProjectResponseObject, error) {
-	record, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Projects.Show(
-		ctx,
-		request.ProjectId,
-	)
+func (a *API) UpdateProject(w http.ResponseWriter, r *http.Request, _ ProjectID) {
+	ctx := r.Context()
+	record := a.ProjectFromContext(ctx)
+	body := &UpdateProjectBody{}
 
-	if err != nil {
-		if errors.Is(err, store.ErrProjectNotFound) {
-			return UpdateProject404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
+	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
 		log.Error().
 			Err(err).
+			Str("project", record.ID).
 			Str("action", "UpdateProject").
-			Str("project", request.ProjectId).
-			Msg("Failed to load project")
+			Msg("Failed to decode request body")
 
-		return UpdateProject500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load project"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to decode request"),
+			Status:  ToPtr(http.StatusBadRequest),
+		})
+
+		return
 	}
 
-	if !a.permitManageProject(ctx, projectPermissions{
-		User:   current.GetUser(ctx),
-		Record: record,
-	}) {
-		return UpdateProject404JSONResponse{NotFoundErrorJSONResponse{
-			Message: ToPtr("Failed to find project"),
-			Status:  ToPtr(http.StatusNotFound),
-		}}, nil
+	if body.Slug != nil {
+		record.Slug = FromPtr(body.Slug)
 	}
 
-	if request.Body.Slug != nil {
-		record.Slug = FromPtr(request.Body.Slug)
-	}
-
-	if request.Body.Name != nil {
-		record.Name = FromPtr(request.Body.Name)
+	if body.Name != nil {
+		record.Name = FromPtr(body.Name)
 	}
 
 	if err := a.storage.WithPrincipal(
@@ -230,69 +195,38 @@ func (a *API) UpdateProject(ctx context.Context, request UpdateProjectRequestObj
 				)
 			}
 
-			return UpdateProject422JSONResponse{ValidationErrorJSONResponse{
+			a.RenderNotify(w, r, Notification{
 				Status:  ToPtr(http.StatusUnprocessableEntity),
 				Message: ToPtr("Failed to validate project"),
 				Errors:  ToPtr(errors),
-			}}, nil
+			})
+
+			return
 		}
 
 		log.Error().
 			Err(err).
-			Str("action", "UpdateProject").
 			Str("project", record.ID).
+			Str("action", "UpdateProject").
 			Msg("Failed to update project")
 
-		return UpdateProject500JSONResponse{InternalServerErrorJSONResponse{
+		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to update project"),
 			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+		})
+
+		return
 	}
 
-	return UpdateProject200JSONResponse{ProjectResponseJSONResponse(
+	render.JSON(w, r, ProjectResponse(
 		a.convertProject(record),
-	)}, nil
+	))
 }
 
 // DeleteProject implements the v1.ServerInterface.
-func (a *API) DeleteProject(ctx context.Context, request DeleteProjectRequestObject) (DeleteProjectResponseObject, error) {
-	record, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Projects.Show(
-		ctx,
-		request.ProjectId,
-	)
-
-	if err != nil {
-		if errors.Is(err, store.ErrProjectNotFound) {
-			return DeleteProject404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
-		log.Error().
-			Err(err).
-			Str("action", "DeleteProject").
-			Str("project", request.ProjectId).
-			Msg("Failed to load project")
-
-		return DeleteProject500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load project"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
-
-	if !a.permitManageProject(ctx, projectPermissions{
-		User:      current.GetUser(ctx),
-		Record:    record,
-		OwnerOnly: true,
-	}) {
-		return DeleteProject404JSONResponse{NotFoundErrorJSONResponse{
-			Message: ToPtr("Failed to find project"),
-			Status:  ToPtr(http.StatusNotFound),
-		}}, nil
-	}
+func (a *API) DeleteProject(w http.ResponseWriter, r *http.Request, _ ProjectID) {
+	ctx := r.Context()
+	record := a.ProjectFromContext(ctx)
 
 	if err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
@@ -302,67 +236,35 @@ func (a *API) DeleteProject(ctx context.Context, request DeleteProjectRequestObj
 	); err != nil {
 		log.Error().
 			Err(err).
-			Str("action", "DeletProject").
 			Str("project", record.ID).
+			Str("action", "DeletProject").
 			Msg("Failed to delete project")
 
-		return DeleteProject400JSONResponse{ActionFailedErrorJSONResponse{
-			Status:  ToPtr(http.StatusBadRequest),
+		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to delete project"),
-		}}, nil
+			Status:  ToPtr(http.StatusBadRequest),
+		})
+
+		return
 	}
 
-	return DeleteProject200JSONResponse{SuccessMessageJSONResponse{
-		Status:  ToPtr(http.StatusOK),
+	a.RenderNotify(w, r, Notification{
 		Message: ToPtr("Successfully deleted project"),
-	}}, nil
+		Status:  ToPtr(http.StatusOK),
+	})
 }
 
-// ListProjectTeams implements the v1.ServerInterface.
-func (a *API) ListProjectTeams(ctx context.Context, request ListProjectTeamsRequestObject) (ListProjectTeamsResponseObject, error) {
-	record, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Projects.Show(
-		ctx,
-		request.ProjectId,
-	)
+// ListProjectGroups implements the v1.ServerInterface.
+func (a *API) ListProjectGroups(w http.ResponseWriter, r *http.Request, _ ProjectID, params ListProjectGroupsParams) {
+	ctx := r.Context()
+	record := a.ProjectFromContext(ctx)
+	sort, order, limit, offset, search := listProjectGroupsSorting(params)
 
-	if err != nil {
-		if errors.Is(err, store.ErrProjectNotFound) {
-			return ListProjectTeams404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
-		log.Error().
-			Err(err).
-			Str("action", "ListProjectTeams").
-			Str("project", request.ProjectId).
-			Msg("Failed to load project")
-
-		return ListProjectTeams500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load project"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
-
-	if !a.permitShowProject(ctx, projectPermissions{
-		User:   current.GetUser(ctx),
-		Record: record,
-	}) {
-		return ListProjectTeams404JSONResponse{NotFoundErrorJSONResponse{
-			Message: ToPtr("Failed to find project"),
-			Status:  ToPtr(http.StatusNotFound),
-		}}, nil
-	}
-
-	sort, order, limit, offset, search := listProjectTeamsSorting(request)
 	records, count, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
-	).Projects.ListTeams(
+	).Projects.ListGroups(
 		ctx,
-		model.TeamProjectParams{
+		model.GroupProjectParams{
 			ListParams: model.ListParams{
 				Sort:   sort,
 				Order:  order,
@@ -377,92 +279,88 @@ func (a *API) ListProjectTeams(ctx context.Context, request ListProjectTeamsRequ
 	if err != nil {
 		log.Error().
 			Err(err).
-			Str("action", "ListProjectTeams").
 			Str("project", record.ID).
-			Msg("Failed to load project teams")
+			Str("action", "ListProjectGroups").
+			Msg("Failed to load project groups")
 
-		return ListProjectTeams500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load project teams"),
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to load project groups"),
 			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+		})
+
+		return
 	}
 
-	payload := make([]TeamProject, len(records))
+	payload := make([]GroupProject, len(records))
 	for id, record := range records {
-		payload[id] = a.convertProjectTeam(record)
+		payload[id] = a.convertProjectGroup(record)
 	}
 
-	return ListProjectTeams200JSONResponse{ProjectTeamsResponseJSONResponse{
+	render.JSON(w, r, ProjectGroupsResponse{
 		Total:   count,
 		Limit:   limit,
 		Offset:  offset,
 		Project: ToPtr(a.convertProject(record)),
-		Teams:   payload,
-	}}, nil
+		Groups:  payload,
+	})
 }
 
-// AttachProjectToTeam implements the v1.ServerInterface.
-func (a *API) AttachProjectToTeam(ctx context.Context, request AttachProjectToTeamRequestObject) (AttachProjectToTeamResponseObject, error) {
-	record, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Projects.Show(
-		ctx,
-		request.ProjectId,
-	)
+// AttachProjectToGroup implements the v1.ServerInterface.
+func (a *API) AttachProjectToGroup(w http.ResponseWriter, r *http.Request, _ ProjectID) {
+	ctx := r.Context()
+	record := a.ProjectFromContext(ctx)
+	body := &ProjectGroupPermBody{}
 
-	if err != nil {
-		if errors.Is(err, store.ErrProjectNotFound) {
-			return AttachProjectToTeam404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
+	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
 		log.Error().
 			Err(err).
-			Str("action", "AttachProjectToTeam").
-			Str("project", request.ProjectId).
-			Msg("Failed to load project")
+			Str("user", record.ID).
+			Str("action", "AttachProjectToGroup").
+			Msg("Failed to decode request body")
 
-		return AttachProjectToTeam500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load project"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to decode request"),
+			Status:  ToPtr(http.StatusBadRequest),
+		})
 
-	if !a.permitManageProject(ctx, projectPermissions{
-		User:      current.GetUser(ctx),
-		Record:    record,
-		OwnerOnly: true,
-	}) {
-		return AttachProjectToTeam404JSONResponse{NotFoundErrorJSONResponse{
-			Message: ToPtr("Failed to find project"),
-			Status:  ToPtr(http.StatusNotFound),
-		}}, nil
+		return
 	}
 
 	if err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
-	).Projects.AttachTeam(
+	).Projects.AttachGroup(
 		ctx,
-		model.TeamProjectParams{
+		model.GroupProjectParams{
 			ProjectID: record.ID,
-			TeamID:    request.Body.Team,
-			Perm:      request.Body.Perm,
+			GroupID:   body.Group,
+			Perm:      body.Perm,
 		},
 	); err != nil {
-		if errors.Is(err, store.ErrTeamNotFound) {
-			return AttachProjectToTeam404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find team"),
+		if errors.Is(err, store.ErrProjectNotFound) {
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to find project"),
 				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
+			})
+
+			return
+		}
+
+		if errors.Is(err, store.ErrGroupNotFound) {
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to find group"),
+				Status:  ToPtr(http.StatusNotFound),
+			})
+
+			return
 		}
 
 		if errors.Is(err, store.ErrAlreadyAssigned) {
-			return AttachProjectToTeam412JSONResponse{AlreadyAttachedErrorJSONResponse{
-				Message: ToPtr("Team is already attached"),
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Group is already attached"),
 				Status:  ToPtr(http.StatusPreconditionFailed),
-			}}, nil
+			})
+
+			return
 		}
 
 		if v, ok := err.(validate.Errors); ok {
@@ -478,94 +376,81 @@ func (a *API) AttachProjectToTeam(ctx context.Context, request AttachProjectToTe
 				)
 			}
 
-			return AttachProjectToTeam422JSONResponse{ValidationErrorJSONResponse{
+			a.RenderNotify(w, r, Notification{
 				Status:  ToPtr(http.StatusUnprocessableEntity),
-				Message: ToPtr("Failed to validate project team"),
+				Message: ToPtr("Failed to validate project group"),
 				Errors:  ToPtr(errors),
-			}}, nil
+			})
 		}
 
 		log.Error().
 			Err(err).
-			Str("action", "AttachProjectToTeam").
 			Str("project", record.ID).
-			Str("team", request.Body.Team).
-			Msg("Failed to attach project to team")
+			Str("group", body.Group).
+			Str("action", "AttachProjectToGroup").
+			Msg("Failed to attach project to group")
 
-		return AttachProjectToTeam500JSONResponse{InternalServerErrorJSONResponse{
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to attach project to group"),
 			Status:  ToPtr(http.StatusUnprocessableEntity),
-			Message: ToPtr("Failed to attach project to team"),
-		}}, nil
+		})
+
+		return
 	}
 
-	return AttachProjectToTeam200JSONResponse{SuccessMessageJSONResponse{
-		Message: ToPtr("Successfully attached project to team"),
+	a.RenderNotify(w, r, Notification{
+		Message: ToPtr("Successfully attached project to group"),
 		Status:  ToPtr(http.StatusOK),
-	}}, nil
+	})
 }
 
-// PermitProjectTeam implements the v1.ServerInterface.
-func (a *API) PermitProjectTeam(ctx context.Context, request PermitProjectTeamRequestObject) (PermitProjectTeamResponseObject, error) {
-	record, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Projects.Show(
-		ctx,
-		request.ProjectId,
-	)
+// PermitProjectGroup implements the v1.ServerInterface.
+func (a *API) PermitProjectGroup(w http.ResponseWriter, r *http.Request, _ ProjectID) {
+	ctx := r.Context()
+	record := a.ProjectFromContext(ctx)
+	body := &ProjectGroupPermBody{}
 
-	if err != nil {
-		if errors.Is(err, store.ErrProjectNotFound) {
-			return PermitProjectTeam404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
+	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
 		log.Error().
 			Err(err).
-			Str("action", "PermitProjectTeam").
-			Str("project", request.ProjectId).
-			Msg("Failed to load project")
+			Str("project", record.ID).
+			Str("action", "PermitProjectGroup").
+			Msg("Failed to decode request body")
 
-		return PermitProjectTeam500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load project"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to decode request"),
+			Status:  ToPtr(http.StatusBadRequest),
+		})
 
-	if !a.permitManageProject(ctx, projectPermissions{
-		User:      current.GetUser(ctx),
-		Record:    record,
-		OwnerOnly: true,
-	}) {
-		return PermitProjectTeam404JSONResponse{NotFoundErrorJSONResponse{
-			Message: ToPtr("Failed to find project"),
-			Status:  ToPtr(http.StatusNotFound),
-		}}, nil
+		return
 	}
 
 	if err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
-	).Projects.PermitTeam(
+	).Projects.PermitGroup(
 		ctx,
-		model.TeamProjectParams{
+		model.GroupProjectParams{
 			ProjectID: record.ID,
-			TeamID:    request.Body.Team,
-			Perm:      request.Body.Perm,
+			GroupID:   body.Group,
+			Perm:      body.Perm,
 		},
 	); err != nil {
-		if errors.Is(err, store.ErrTeamNotFound) {
-			return PermitProjectTeam404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find team"),
+		if errors.Is(err, store.ErrGroupNotFound) {
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to find group"),
 				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
+			})
+
+			return
 		}
 
 		if errors.Is(err, store.ErrNotAssigned) {
-			return PermitProjectTeam412JSONResponse{NotAttachedErrorJSONResponse{
-				Message: ToPtr("Team is not attached"),
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Group is not attached"),
 				Status:  ToPtr(http.StatusPreconditionFailed),
-			}}, nil
+			})
+
+			return
 		}
 
 		if v, ok := err.(validate.Errors); ok {
@@ -581,154 +466,120 @@ func (a *API) PermitProjectTeam(ctx context.Context, request PermitProjectTeamRe
 				)
 			}
 
-			return PermitProjectTeam422JSONResponse{ValidationErrorJSONResponse{
+			a.RenderNotify(w, r, Notification{
 				Status:  ToPtr(http.StatusUnprocessableEntity),
-				Message: ToPtr("Failed to validate project team"),
+				Message: ToPtr("Failed to validate project group"),
 				Errors:  ToPtr(errors),
-			}}, nil
+			})
+
+			return
 		}
 
 		log.Error().
 			Err(err).
-			Str("action", "PermitProjectTeam").
 			Str("project", record.ID).
-			Str("team", request.Body.Team).
-			Msg("Failed to update project team perms")
+			Str("group", body.Group).
+			Str("action", "PermitProjectGroup").
+			Msg("Failed to update project group perms")
 
-		return PermitProjectTeam500JSONResponse{InternalServerErrorJSONResponse{
-			Status:  ToPtr(http.StatusUnprocessableEntity),
-			Message: ToPtr("Failed to update project team perms"),
-		}}, nil
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Successfully updated project group perms"),
+			Status:  ToPtr(http.StatusOK),
+		})
+
+		return
 	}
 
-	return PermitProjectTeam200JSONResponse{SuccessMessageJSONResponse{
-		Message: ToPtr("Successfully updated project team perms"),
+	a.RenderNotify(w, r, Notification{
+		Message: ToPtr("Successfully updated project group perms"),
 		Status:  ToPtr(http.StatusOK),
-	}}, nil
+	})
 }
 
-// DeleteProjectFromTeam implements the v1.ServerInterface.
-func (a *API) DeleteProjectFromTeam(ctx context.Context, request DeleteProjectFromTeamRequestObject) (DeleteProjectFromTeamResponseObject, error) {
-	record, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Projects.Show(
-		ctx,
-		request.ProjectId,
-	)
+// DeleteProjectFromGroup implements the v1.ServerInterface.
+func (a *API) DeleteProjectFromGroup(w http.ResponseWriter, r *http.Request, _ ProjectID) {
+	ctx := r.Context()
+	record := a.ProjectFromContext(ctx)
+	body := &ProjectGroupPermBody{}
 
-	if err != nil {
-		if errors.Is(err, store.ErrProjectNotFound) {
-			return DeleteProjectFromTeam404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
+	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
 		log.Error().
 			Err(err).
-			Str("action", "DeleteProjectFromTeam").
-			Str("project", request.ProjectId).
-			Msg("Failed to load project")
+			Str("project", record.ID).
+			Str("action", "DeleteProjectFromGroup").
+			Msg("Failed to decode request body")
 
-		return DeleteProjectFromTeam500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load project"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to decode request"),
+			Status:  ToPtr(http.StatusBadRequest),
+		})
 
-	if !a.permitManageProject(ctx, projectPermissions{
-		User:      current.GetUser(ctx),
-		Record:    record,
-		OwnerOnly: true,
-	}) {
-		return DeleteProjectFromTeam404JSONResponse{NotFoundErrorJSONResponse{
-			Message: ToPtr("Failed to find project"),
-			Status:  ToPtr(http.StatusNotFound),
-		}}, nil
+		return
 	}
 
 	if err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
-	).Projects.DropTeam(
+	).Projects.DropGroup(
 		ctx,
-		model.TeamProjectParams{
+		model.GroupProjectParams{
 			ProjectID: record.ID,
-			TeamID:    request.Body.Team,
+			GroupID:   body.Group,
 		},
 	); err != nil {
-		if errors.Is(err, store.ErrTeamNotFound) {
-			return DeleteProjectFromTeam404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find team"),
+		if errors.Is(err, store.ErrProjectNotFound) {
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to find project"),
 				Status:  ToPtr(http.StatusPreconditionFailed),
-			}}, nil
+			})
+
+			return
+		}
+
+		if errors.Is(err, store.ErrGroupNotFound) {
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to find group"),
+				Status:  ToPtr(http.StatusPreconditionFailed),
+			})
+
+			return
 		}
 
 		if errors.Is(err, store.ErrNotAssigned) {
-			return DeleteProjectFromTeam412JSONResponse{NotAttachedErrorJSONResponse{
-				Message: ToPtr("Team is not attached"),
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Group is not attached"),
 				Status:  ToPtr(http.StatusPreconditionFailed),
-			}}, nil
+			})
+
+			return
 		}
 
 		log.Error().
 			Err(err).
-			Str("action", "DeleteProjectFromTeam").
 			Str("project", record.ID).
-			Str("team", request.Body.Team).
-			Msg("Failed to drop project from team")
+			Str("group", body.Group).
+			Str("action", "DeleteProjectFromGroup").
+			Msg("Failed to drop project from group")
 
-		return DeleteProjectFromTeam500JSONResponse{InternalServerErrorJSONResponse{
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to drop project from group"),
 			Status:  ToPtr(http.StatusUnprocessableEntity),
-			Message: ToPtr("Failed to drop project from team"),
-		}}, nil
+		})
+
+		return
 	}
 
-	return DeleteProjectFromTeam200JSONResponse{SuccessMessageJSONResponse{
-		Message: ToPtr("Successfully dropped project from team"),
+	a.RenderNotify(w, r, Notification{
+		Message: ToPtr("Successfully dropped project from group"),
 		Status:  ToPtr(http.StatusOK),
-	}}, nil
+	})
 }
 
 // ListProjectUsers implements the v1.ServerInterface.
-func (a *API) ListProjectUsers(ctx context.Context, request ListProjectUsersRequestObject) (ListProjectUsersResponseObject, error) {
-	record, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Projects.Show(
-		ctx,
-		request.ProjectId,
-	)
+func (a *API) ListProjectUsers(w http.ResponseWriter, r *http.Request, _ ProjectID, params ListProjectUsersParams) {
+	ctx := r.Context()
+	record := a.ProjectFromContext(ctx)
+	sort, order, limit, offset, search := listProjectUsersSorting(params)
 
-	if err != nil {
-		if errors.Is(err, store.ErrProjectNotFound) {
-			return ListProjectUsers404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
-		log.Error().
-			Err(err).
-			Str("action", "ListProjectUsers").
-			Str("project", request.ProjectId).
-			Msg("Failed to load project")
-
-		return ListProjectUsers500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load project"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
-
-	if !a.permitShowProject(ctx, projectPermissions{
-		User:   current.GetUser(ctx),
-		Record: record,
-	}) {
-		return ListProjectUsers404JSONResponse{NotFoundErrorJSONResponse{
-			Message: ToPtr("Failed to find project"),
-			Status:  ToPtr(http.StatusNotFound),
-		}}, nil
-	}
-
-	sort, order, limit, offset, search := listProjectUsersSorting(request)
 	records, count, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Projects.ListUsers(
@@ -748,14 +599,16 @@ func (a *API) ListProjectUsers(ctx context.Context, request ListProjectUsersRequ
 	if err != nil {
 		log.Error().
 			Err(err).
-			Str("action", "ListProjectUsers").
 			Str("project", record.ID).
+			Str("action", "ListProjectUsers").
 			Msg("Failed to load project users")
 
-		return ListProjectUsers500JSONResponse{InternalServerErrorJSONResponse{
+		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to load project users"),
 			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+		})
+
+		return
 	}
 
 	payload := make([]UserProject, len(records))
@@ -763,53 +616,34 @@ func (a *API) ListProjectUsers(ctx context.Context, request ListProjectUsersRequ
 		payload[id] = a.convertProjectUser(record)
 	}
 
-	return ListProjectUsers200JSONResponse{ProjectUsersResponseJSONResponse{
+	render.JSON(w, r, ProjectUsersResponse{
 		Total:   count,
 		Limit:   limit,
 		Offset:  offset,
 		Project: ToPtr(a.convertProject(record)),
 		Users:   payload,
-	}}, nil
+	})
 }
 
 // AttachProjectToUser implements the v1.ServerInterface.
-func (a *API) AttachProjectToUser(ctx context.Context, request AttachProjectToUserRequestObject) (AttachProjectToUserResponseObject, error) {
-	record, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Projects.Show(
-		ctx,
-		request.ProjectId,
-	)
+func (a *API) AttachProjectToUser(w http.ResponseWriter, r *http.Request, _ ProjectID) {
+	ctx := r.Context()
+	record := a.ProjectFromContext(ctx)
+	body := &ProjectUserPermBody{}
 
-	if err != nil {
-		if errors.Is(err, store.ErrProjectNotFound) {
-			return AttachProjectToUser404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
+	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
 		log.Error().
 			Err(err).
+			Str("project", record.ID).
 			Str("action", "AttachProjectToUser").
-			Str("project", request.ProjectId).
-			Msg("Failed to load project")
+			Msg("Failed to decode request body")
 
-		return AttachProjectToUser500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load project"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to decode request"),
+			Status:  ToPtr(http.StatusBadRequest),
+		})
 
-	if !a.permitManageProject(ctx, projectPermissions{
-		User:      current.GetUser(ctx),
-		Record:    record,
-		OwnerOnly: true,
-	}) {
-		return AttachProjectToUser404JSONResponse{NotFoundErrorJSONResponse{
-			Message: ToPtr("Failed to find project"),
-			Status:  ToPtr(http.StatusNotFound),
-		}}, nil
+		return
 	}
 
 	if err := a.storage.WithPrincipal(
@@ -818,22 +652,35 @@ func (a *API) AttachProjectToUser(ctx context.Context, request AttachProjectToUs
 		ctx,
 		model.UserProjectParams{
 			ProjectID: record.ID,
-			UserID:    request.Body.User,
-			Perm:      request.Body.Perm,
+			UserID:    body.User,
+			Perm:      body.Perm,
 		},
 	); err != nil {
+		if errors.Is(err, store.ErrProjectNotFound) {
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to find project"),
+				Status:  ToPtr(http.StatusNotFound),
+			})
+
+			return
+		}
+
 		if errors.Is(err, store.ErrUserNotFound) {
-			return AttachProjectToUser404JSONResponse{NotFoundErrorJSONResponse{
+			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to find user"),
 				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
+			})
+
+			return
 		}
 
 		if errors.Is(err, store.ErrAlreadyAssigned) {
-			return AttachProjectToUser412JSONResponse{AlreadyAttachedErrorJSONResponse{
+			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("User is already attached"),
 				Status:  ToPtr(http.StatusPreconditionFailed),
-			}}, nil
+			})
+
+			return
 		}
 
 		if v, ok := err.(validate.Errors); ok {
@@ -849,70 +696,55 @@ func (a *API) AttachProjectToUser(ctx context.Context, request AttachProjectToUs
 				)
 			}
 
-			return AttachProjectToUser422JSONResponse{ValidationErrorJSONResponse{
-				Status:  ToPtr(http.StatusUnprocessableEntity),
+			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to validate project user"),
+				Status:  ToPtr(http.StatusUnprocessableEntity),
 				Errors:  ToPtr(errors),
-			}}, nil
+			})
+
+			return
 		}
 
 		log.Error().
 			Err(err).
 			Str("action", "AttachProjectToUser").
 			Str("project", record.ID).
-			Str("user", request.Body.User).
+			Str("user", body.User).
 			Msg("Failed to attach project to user")
 
-		return AttachProjectToUser500JSONResponse{InternalServerErrorJSONResponse{
-			Status:  ToPtr(http.StatusUnprocessableEntity),
+		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to attach project to user"),
-		}}, nil
+			Status:  ToPtr(http.StatusUnprocessableEntity),
+		})
+
+		return
 	}
 
-	return AttachProjectToUser200JSONResponse{SuccessMessageJSONResponse{
+	a.RenderNotify(w, r, Notification{
 		Message: ToPtr("Successfully attached project to user"),
 		Status:  ToPtr(http.StatusOK),
-	}}, nil
+	})
 }
 
 // PermitProjectUser implements the v1.ServerInterface.
-func (a *API) PermitProjectUser(ctx context.Context, request PermitProjectUserRequestObject) (PermitProjectUserResponseObject, error) {
-	record, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Projects.Show(
-		ctx,
-		request.ProjectId,
-	)
+func (a *API) PermitProjectUser(w http.ResponseWriter, r *http.Request, _ ProjectID) {
+	ctx := r.Context()
+	record := a.ProjectFromContext(ctx)
+	body := &ProjectUserPermBody{}
 
-	if err != nil {
-		if errors.Is(err, store.ErrProjectNotFound) {
-			return PermitProjectUser404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
+	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
 		log.Error().
 			Err(err).
+			Str("project", record.ID).
 			Str("action", "PermitProjectUser").
-			Str("project", request.ProjectId).
-			Msg("Failed to load project")
+			Msg("Failed to decode request body")
 
-		return PermitProjectUser500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load project"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to decode request"),
+			Status:  ToPtr(http.StatusBadRequest),
+		})
 
-	if !a.permitManageProject(ctx, projectPermissions{
-		User:      current.GetUser(ctx),
-		Record:    record,
-		OwnerOnly: true,
-	}) {
-		return PermitProjectUser404JSONResponse{NotFoundErrorJSONResponse{
-			Message: ToPtr("Failed to find project"),
-			Status:  ToPtr(http.StatusNotFound),
-		}}, nil
+		return
 	}
 
 	if err := a.storage.WithPrincipal(
@@ -921,22 +753,26 @@ func (a *API) PermitProjectUser(ctx context.Context, request PermitProjectUserRe
 		ctx,
 		model.UserProjectParams{
 			ProjectID: record.ID,
-			UserID:    request.Body.User,
-			Perm:      request.Body.Perm,
+			UserID:    body.User,
+			Perm:      body.Perm,
 		},
 	); err != nil {
 		if errors.Is(err, store.ErrUserNotFound) {
-			return PermitProjectUser404JSONResponse{NotFoundErrorJSONResponse{
+			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to find user"),
 				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
+			})
+
+			return
 		}
 
 		if errors.Is(err, store.ErrNotAssigned) {
-			return PermitProjectUser412JSONResponse{NotAttachedErrorJSONResponse{
+			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("User is not attached"),
 				Status:  ToPtr(http.StatusPreconditionFailed),
-			}}, nil
+			})
+
+			return
 		}
 
 		if v, ok := err.(validate.Errors); ok {
@@ -952,70 +788,55 @@ func (a *API) PermitProjectUser(ctx context.Context, request PermitProjectUserRe
 				)
 			}
 
-			return PermitProjectUser422JSONResponse{ValidationErrorJSONResponse{
-				Status:  ToPtr(http.StatusUnprocessableEntity),
+			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to validate project user"),
+				Status:  ToPtr(http.StatusUnprocessableEntity),
 				Errors:  ToPtr(errors),
-			}}, nil
+			})
+
+			return
 		}
 
 		log.Error().
 			Err(err).
 			Str("action", "PermitProjectUser").
 			Str("project", record.ID).
-			Str("user", request.Body.User).
+			Str("user", body.User).
 			Msg("Failed to update project user perms")
 
-		return PermitProjectUser500JSONResponse{InternalServerErrorJSONResponse{
-			Status:  ToPtr(http.StatusUnprocessableEntity),
+		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to update project user perms"),
-		}}, nil
+			Status:  ToPtr(http.StatusUnprocessableEntity),
+		})
+
+		return
 	}
 
-	return PermitProjectUser200JSONResponse{SuccessMessageJSONResponse{
+	a.RenderNotify(w, r, Notification{
 		Message: ToPtr("Successfully updated project user perms"),
 		Status:  ToPtr(http.StatusOK),
-	}}, nil
+	})
 }
 
 // DeleteProjectFromUser implements the v1.ServerInterface.
-func (a *API) DeleteProjectFromUser(ctx context.Context, request DeleteProjectFromUserRequestObject) (DeleteProjectFromUserResponseObject, error) {
-	record, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Projects.Show(
-		ctx,
-		request.ProjectId,
-	)
+func (a *API) DeleteProjectFromUser(w http.ResponseWriter, r *http.Request, _ ProjectID) {
+	ctx := r.Context()
+	record := a.ProjectFromContext(ctx)
+	body := &ProjectUserPermBody{}
 
-	if err != nil {
-		if errors.Is(err, store.ErrProjectNotFound) {
-			return DeleteProjectFromUser404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
+	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
 		log.Error().
 			Err(err).
+			Str("project", record.ID).
 			Str("action", "DeleteProjectFromUser").
-			Str("project", request.ProjectId).
-			Msg("Failed to load project")
+			Msg("Failed to decode request body")
 
-		return DeleteProjectFromUser500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load project"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to decode request"),
+			Status:  ToPtr(http.StatusBadRequest),
+		})
 
-	if !a.permitManageProject(ctx, projectPermissions{
-		User:      current.GetUser(ctx),
-		Record:    record,
-		OwnerOnly: true,
-	}) {
-		return DeleteProjectFromUser404JSONResponse{NotFoundErrorJSONResponse{
-			Message: ToPtr("Failed to find project"),
-			Status:  ToPtr(http.StatusNotFound),
-		}}, nil
+		return
 	}
 
 	if err := a.storage.WithPrincipal(
@@ -1024,45 +845,60 @@ func (a *API) DeleteProjectFromUser(ctx context.Context, request DeleteProjectFr
 		ctx,
 		model.UserProjectParams{
 			ProjectID: record.ID,
-			UserID:    request.Body.User,
+			UserID:    body.User,
 		},
 	); err != nil {
+		if errors.Is(err, store.ErrProjectNotFound) {
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to find project"),
+				Status:  ToPtr(http.StatusPreconditionFailed),
+			})
+
+			return
+		}
+
 		if errors.Is(err, store.ErrUserNotFound) {
-			return DeleteProjectFromUser404JSONResponse{NotFoundErrorJSONResponse{
+			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to find user"),
 				Status:  ToPtr(http.StatusPreconditionFailed),
-			}}, nil
+			})
+
+			return
 		}
 
 		if errors.Is(err, store.ErrNotAssigned) {
-			return DeleteProjectFromUser412JSONResponse{NotAttachedErrorJSONResponse{
+			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("User is not attached"),
 				Status:  ToPtr(http.StatusPreconditionFailed),
-			}}, nil
+			})
+
+			return
 		}
 
 		log.Error().
 			Err(err).
 			Str("action", "DeleteProjectFromUser").
 			Str("project", record.ID).
-			Str("user", request.Body.User).
+			Str("user", body.User).
 			Msg("Failed to drop project from user")
 
-		return DeleteProjectFromUser500JSONResponse{InternalServerErrorJSONResponse{
+		a.RenderNotify(w, r, Notification{
 			Status:  ToPtr(http.StatusUnprocessableEntity),
 			Message: ToPtr("Failed to drop project from user"),
-		}}, nil
+		})
+
+		return
 	}
 
-	return DeleteProjectFromUser200JSONResponse{SuccessMessageJSONResponse{
+	a.RenderNotify(w, r, Notification{
 		Message: ToPtr("Successfully dropped project from user"),
 		Status:  ToPtr(http.StatusOK),
-	}}, nil
+	})
 }
 
 func (a *API) convertProject(record *model.Project) Project {
 	result := Project{
-		Id:        ToPtr(record.ID),
+		ID:        ToPtr(record.ID),
 		Slug:      ToPtr(record.Slug),
 		Name:      ToPtr(record.Name),
 		CreatedAt: ToPtr(record.CreatedAt),
@@ -1072,12 +908,12 @@ func (a *API) convertProject(record *model.Project) Project {
 	return result
 }
 
-func (a *API) convertProjectTeam(record *model.TeamProject) TeamProject {
-	result := TeamProject{
-		ProjectId: record.ProjectID,
-		TeamId:    record.TeamID,
-		Team:      ToPtr(a.convertTeam(record.Team)),
-		Perm:      ToPtr(TeamProjectPerm(record.Perm)),
+func (a *API) convertProjectGroup(record *model.GroupProject) GroupProject {
+	result := GroupProject{
+		ProjectID: record.ProjectID,
+		GroupID:   record.GroupID,
+		Group:     ToPtr(a.convertGroup(record.Group)),
+		Perm:      ToPtr(GroupProjectPerm(record.Perm)),
 		CreatedAt: ToPtr(record.CreatedAt),
 		UpdatedAt: ToPtr(record.UpdatedAt),
 	}
@@ -1087,8 +923,8 @@ func (a *API) convertProjectTeam(record *model.TeamProject) TeamProject {
 
 func (a *API) convertProjectUser(record *model.UserProject) UserProject {
 	result := UserProject{
-		ProjectId: record.ProjectID,
-		UserId:    record.UserID,
+		ProjectID: record.ProjectID,
+		UserID:    record.UserID,
 		User:      ToPtr(a.convertUser(record.User)),
 		Perm:      ToPtr(UserProjectPerm(record.Perm)),
 		CreatedAt: ToPtr(record.CreatedAt),
@@ -1098,138 +934,220 @@ func (a *API) convertProjectUser(record *model.UserProject) UserProject {
 	return result
 }
 
-type projectPermissions struct {
-	User      *model.User
-	Record    *model.Project
-	OwnerOnly bool
-}
+// AllowShowProject defines a middleware to check permissions.
+func (a *API) AllowShowProject(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		principal := current.GetUser(ctx)
 
-func (a *API) permitCreateProject(_ context.Context, definition projectPermissions) bool {
-	return definition.User != nil
-}
+		if principal == nil {
+			render.JSON(w, r, Notification{
+				Message: ToPtr("You are not allowd to access the resource"),
+				Status:  ToPtr(http.StatusForbidden),
+			})
 
-func (a *API) permitShowProject(_ context.Context, definition projectPermissions) bool {
-	if definition.User == nil {
-		return false
-	}
-
-	if definition.User.Admin {
-		return true
-	}
-
-	for _, p := range definition.User.Projects {
-		if p.ProjectID == definition.Record.ID {
-			return true
+			return
 		}
-	}
 
-	for _, t := range definition.User.Teams {
-		for _, p := range t.Team.Projects {
-			if p.ProjectID == definition.Record.ID {
-				return true
+		if principal.Admin {
+			next.ServeHTTP(w, r.WithContext(ctx))
+			return
+		}
+
+		project := a.ProjectFromContext(ctx)
+
+		if project == nil {
+			render.JSON(w, r, Notification{
+				Message: ToPtr("You are not allowd to access the resource"),
+				Status:  ToPtr(http.StatusForbidden),
+			})
+
+			return
+		}
+
+		for _, p := range principal.Projects {
+			if p.ProjectID == project.ID {
+				next.ServeHTTP(w, r.WithContext(ctx))
+				return
 			}
 		}
-	}
 
-	return false
-}
-
-func (a *API) permitManageProject(_ context.Context, definition projectPermissions) bool {
-	if definition.User == nil {
-		return false
-	}
-
-	if definition.User.Admin {
-		return true
-	}
-
-	for _, p := range definition.User.Projects {
-		if p.ProjectID == definition.Record.ID {
-			if definition.OwnerOnly {
-				if p.Perm == model.OwnerPerm {
-					return true
+		for _, t := range principal.Groups {
+			for _, p := range t.Group.Projects {
+				if p.ProjectID == project.ID {
+					next.ServeHTTP(w, r.WithContext(ctx))
+					return
 				}
-
-				break
-			}
-
-			if p.Perm == model.AdminPerm {
-				return true
-			}
-
-			break
-		}
-	}
-
-	for _, t := range definition.User.Teams {
-		for _, p := range t.Team.Projects {
-			if p.ProjectID == definition.Record.ID {
-				if definition.OwnerOnly {
-					if p.Perm == model.OwnerPerm {
-						return true
-					}
-
-					break
-				}
-
-				if p.Perm == model.AdminPerm {
-					return true
-				}
-
-				break
 			}
 		}
-	}
 
-	return false
+		render.JSON(w, r, Notification{
+			Message: ToPtr("You are not allowd to access the resource"),
+			Status:  ToPtr(http.StatusForbidden),
+		})
+	})
 }
 
-func listProjectsSorting(request ListProjectsRequestObject) (string, string, int64, int64, string) {
+// AllowOwnerProject defines a middleware to check permissions.
+func (a *API) AllowOwnerProject(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		principal := current.GetUser(ctx)
+
+		if principal == nil {
+			render.JSON(w, r, Notification{
+				Message: ToPtr("You are not allowd to access the resource"),
+				Status:  ToPtr(http.StatusForbidden),
+			})
+
+			return
+		}
+
+		if principal.Admin {
+			next.ServeHTTP(w, r.WithContext(ctx))
+			return
+		}
+
+		project := a.ProjectFromContext(ctx)
+
+		if project == nil {
+			render.JSON(w, r, Notification{
+				Message: ToPtr("You are not allowd to access the resource"),
+				Status:  ToPtr(http.StatusForbidden),
+			})
+
+			return
+		}
+
+		for _, p := range principal.Projects {
+			if p.ProjectID == project.ID &&
+				p.Perm == model.UserProjectOwnerPerm {
+				next.ServeHTTP(w, r.WithContext(ctx))
+				return
+			}
+		}
+
+		for _, t := range principal.Groups {
+			for _, p := range t.Group.Projects {
+				if p.ProjectID == project.ID &&
+					p.Perm == model.GroupProjectOwnerPerm {
+					next.ServeHTTP(w, r.WithContext(ctx))
+					return
+				}
+			}
+		}
+
+		render.JSON(w, r, Notification{
+			Message: ToPtr("You are not allowd to access the resource"),
+			Status:  ToPtr(http.StatusForbidden),
+		})
+	})
+}
+
+// AllowManageProject defines a middleware to check permissions.
+func (a *API) AllowManageProject(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		principal := current.GetUser(ctx)
+
+		if principal == nil {
+			render.JSON(w, r, Notification{
+				Message: ToPtr("You are not allowd to access the resource"),
+				Status:  ToPtr(http.StatusForbidden),
+			})
+
+			return
+		}
+
+		if principal.Admin {
+			next.ServeHTTP(w, r.WithContext(ctx))
+			return
+		}
+
+		project := a.ProjectFromContext(ctx)
+
+		if project == nil {
+			render.JSON(w, r, Notification{
+				Message: ToPtr("You are not allowd to access the resource"),
+				Status:  ToPtr(http.StatusForbidden),
+			})
+
+			return
+		}
+
+		for _, p := range principal.Projects {
+			if p.ProjectID == project.ID &&
+				(p.Perm == model.UserProjectAdminPerm ||
+					p.Perm == model.UserProjectOwnerPerm) {
+				next.ServeHTTP(w, r.WithContext(ctx))
+				return
+			}
+		}
+
+		for _, t := range principal.Groups {
+			for _, p := range t.Group.Projects {
+				if p.ProjectID == project.ID &&
+					(p.Perm == model.GroupProjectAdminPerm ||
+						p.Perm == model.GroupProjectOwnerPerm) {
+					next.ServeHTTP(w, r.WithContext(ctx))
+					return
+				}
+			}
+		}
+
+		render.JSON(w, r, Notification{
+			Message: ToPtr("You are not allowd to access the resource"),
+			Status:  ToPtr(http.StatusForbidden),
+		})
+	})
+}
+
+func listProjectsSorting(request ListProjectsParams) (string, string, int64, int64, string) {
 	sort, limit, offset, search := toPageParams(
-		request.Params.Sort,
-		request.Params.Limit,
-		request.Params.Offset,
-		request.Params.Search,
+		request.Sort,
+		request.Limit,
+		request.Offset,
+		request.Search,
 	)
 
 	order := ""
 
-	if request.Params.Order != nil {
-		sort = string(FromPtr(request.Params.Order))
+	if request.Order != nil {
+		sort = string(FromPtr(request.Order))
 	}
 
 	return sort, order, limit, offset, search
 }
 
-func listProjectTeamsSorting(request ListProjectTeamsRequestObject) (string, string, int64, int64, string) {
+func listProjectGroupsSorting(request ListProjectGroupsParams) (string, string, int64, int64, string) {
 	sort, limit, offset, search := toPageParams(
-		request.Params.Sort,
-		request.Params.Limit,
-		request.Params.Offset,
-		request.Params.Search,
+		request.Sort,
+		request.Limit,
+		request.Offset,
+		request.Search,
 	)
 
 	order := ""
 
-	if request.Params.Order != nil {
-		sort = string(FromPtr(request.Params.Order))
+	if request.Order != nil {
+		sort = string(FromPtr(request.Order))
 	}
 
 	return sort, order, limit, offset, search
 }
 
-func listProjectUsersSorting(request ListProjectUsersRequestObject) (string, string, int64, int64, string) {
+func listProjectUsersSorting(request ListProjectUsersParams) (string, string, int64, int64, string) {
 	sort, limit, offset, search := toPageParams(
-		request.Params.Sort,
-		request.Params.Limit,
-		request.Params.Offset,
-		request.Params.Search,
+		request.Sort,
+		request.Limit,
+		request.Offset,
+		request.Search,
 	)
 
 	order := ""
 
-	if request.Params.Order != nil {
-		sort = string(FromPtr(request.Params.Order))
+	if request.Order != nil {
+		sort = string(FromPtr(request.Order))
 	}
 
 	return sort, order, limit, offset, search

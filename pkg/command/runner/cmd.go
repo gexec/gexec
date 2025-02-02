@@ -1,15 +1,15 @@
 package command
 
 import (
-	"github.com/genexec/genexec/pkg/config"
-	"github.com/genexec/genexec/pkg/version"
+	"github.com/gexec/gexec/pkg/config"
+	"github.com/gexec/gexec/pkg/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var (
 	rootCmd = &cobra.Command{
-		Use:           "genexec-runner",
+		Use:           "gexec-runner",
 		Short:         "Generic execution platform for Ansible and Terraform/OpenTofu",
 		Version:       version.String,
 		SilenceErrors: false,

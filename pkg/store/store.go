@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/genexec/genexec/pkg/config"
-	"github.com/genexec/genexec/pkg/migrations"
-	"github.com/genexec/genexec/pkg/model"
+	"github.com/gexec/gexec/pkg/config"
+	"github.com/gexec/gexec/pkg/migrations"
+	"github.com/gexec/gexec/pkg/model"
 	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/mysqldialect"
@@ -34,7 +34,9 @@ var (
 
 // Store provides the general database abstraction layer.
 type Store struct {
-	passphrase      string
+	encrypt config.Encrypt
+	scim    config.Scim
+
 	driver          string
 	username        string
 	password        string
@@ -49,7 +51,7 @@ type Store struct {
 	principal       *model.User
 
 	Auth         *Auth
-	Teams        *Teams
+	Groups       *Groups
 	Users        *Users
 	Projects     *Projects
 	Credentials  *Credentials
@@ -59,6 +61,8 @@ type Store struct {
 	Templates    *Templates
 	Schedules    *Schedules
 	Executions   *Executions
+	Runners      *Runners
+	Events       *Events
 }
 
 // Handle returns a database handle.
@@ -406,7 +410,7 @@ func (s *Store) open() error {
 }
 
 // NewStore initializes a new Bun
-func NewStore(cfg config.Database, passphrase string) (*Store, error) {
+func NewStore(cfg config.Database, encrypt config.Encrypt, scim config.Scim) (*Store, error) {
 	username, err := config.Value(cfg.Username)
 
 	if err != nil {
@@ -420,12 +424,13 @@ func NewStore(cfg config.Database, passphrase string) (*Store, error) {
 	}
 
 	client := &Store{
-		passphrase: passphrase,
-		driver:     cfg.Driver,
-		database:   cfg.Name,
-		username:   username,
-		password:   password,
-		meta:       url.Values{},
+		encrypt:  encrypt,
+		scim:     scim,
+		driver:   cfg.Driver,
+		database: cfg.Name,
+		username: username,
+		password: password,
+		meta:     url.Values{},
 	}
 
 	if val, ok := cfg.Options["maxOpenConns"]; ok {
@@ -526,7 +531,7 @@ func NewStore(cfg config.Database, passphrase string) (*Store, error) {
 		client: client,
 	}
 
-	client.Teams = &Teams{
+	client.Groups = &Groups{
 		client: client,
 	}
 
@@ -566,12 +571,20 @@ func NewStore(cfg config.Database, passphrase string) (*Store, error) {
 		client: client,
 	}
 
+	client.Runners = &Runners{
+		client: client,
+	}
+
+	client.Events = &Events{
+		client: client,
+	}
+
 	return client, nil
 }
 
 // MustStore simply calls NewStore and panics on an error.
-func MustStore(cfg config.Database, passphrase string) *Store {
-	s, err := NewStore(cfg, passphrase)
+func MustStore(cfg config.Database, encrypt config.Encrypt, scim config.Scim) *Store {
+	s, err := NewStore(cfg, encrypt, scim)
 
 	if err != nil {
 		panic(err)

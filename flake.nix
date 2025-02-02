@@ -41,12 +41,12 @@
         devenv = {
           shells = {
             default = {
-              name = "genexec";
+              name = "gexec";
 
               languages = {
                 go = {
                   enable = true;
-                  package = pkgs.go_1_23;
+                  package = pkgs.go_1_24;
                 };
                 javascript = {
                   enable = true;
@@ -60,33 +60,33 @@
                   accessKey = "WMHJQCKGKWUW1CRGPQ8Y";
                   secretKey = "CKchNYh6D1mn1Vs6XMfnDmuK76PZ3XE3vF56LDS0";
                   buckets = [
-                    "genexec"
+                    "gexec"
                   ];
                 };
                 mysql = {
                   enable = true;
                   ensureUsers = [
                     {
-                      name = "genexec";
+                      name = "gexec";
                       password = "p455w0rd";
                       ensurePermissions = {
-                        "genexec.*" = "ALL PRIVILEGES";
+                        "gexec.*" = "ALL PRIVILEGES";
                       };
                     }
                   ];
                   initialDatabases = [{
-                    name = "genexec";
+                    name = "gexec";
                   }];
                 };
                 postgres = {
                   enable = true;
                   listen_addresses = "127.0.0.1";
                   initialScript = ''
-                    CREATE USER genexec WITH ENCRYPTED PASSWORD 'p455w0rd';
-                    GRANT ALL PRIVILEGES ON DATABASE genexec TO genexec;
+                    CREATE USER gexec WITH ENCRYPTED PASSWORD 'p455w0rd';
+                    GRANT ALL PRIVILEGES ON DATABASE gexec TO gexec;
                   '';
                   initialDatabases = [{
-                    name = "genexec";
+                    name = "gexec";
                   }];
                 };
               };
@@ -110,12 +110,14 @@
               ];
 
               env = {
+                GENEXEC_TOKEN_SECRET = "NTaCR5JztYujaOZNgesaUzaVPmoxkGo0";
+
                 GENEXEC_ADMIN_USERNAME = "admin";
                 GENEXEC_ADMIN_PASSWORD = "p455w0rd";
-                GENEXEC_ADMIN_EMAIL = "genexec@webhippie.de";
+                GENEXEC_ADMIN_EMAIL = "gexec@webhippie.de";
 
                 GENEXEC_DATABASE_DRIVER = "sqlite3";
-                GENEXEC_DATABASE_NAME = "storage/genexec.sqlite3";
+                GENEXEC_DATABASE_NAME = "storage/gexec.sqlite3";
 
                 GENEXEC_UPLOAD_DRIVER = "file";
                 GENEXEC_UPLOAD_PATH = "storage/uploads/";

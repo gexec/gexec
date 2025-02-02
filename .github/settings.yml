@@ -1,9 +1,9 @@
 ---
 repository:
-  name: genexec
-  description: "Generic execution platform for Ansible and Terraform/OpenTofu"
-  homepage: https://genexec.eu
-  topics: genexec, ansible, terraform, opentofu, golang, go
+  name: gexec
+  description: "Generic execution platform for Ansible/Terraform/OpenTofu"
+  homepage: https://gexec.eu
+  topics: gexec, ansible, terraform, opentofu, golang, go
 
   private: false
   has_issues: true
@@ -34,7 +34,7 @@ branches:
       restrictions:
         apps:
           - renovate
-          - genexec
+          - gexec
         users: []
         teams:
           - admins

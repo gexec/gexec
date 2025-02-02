@@ -16,6 +16,7 @@ var (
 	_ bun.BeforeAppendModelHook = (*Template)(nil)
 )
 
+// TemplateValue defines the model for template:values table.
 type TemplateValue struct {
 	bun.BaseModel `bun:"table:template_values"`
 
@@ -48,6 +49,17 @@ func (m *TemplateValue) BeforeAppendModel(_ context.Context, query bun.Query) er
 	return nil
 }
 
+// SerializeSecret ensures to encrypt all related secrets stored on the database.
+func (m *TemplateValue) SerializeSecret(_ string) error {
+	return nil
+}
+
+// DeserializeSecret ensures to decrypt all related secrets stored on the database.
+func (m *TemplateValue) DeserializeSecret(_ string) error {
+	return nil
+}
+
+// TemplateSurvey defines the model for template_surveys table.
 type TemplateSurvey struct {
 	bun.BaseModel `bun:"table:template_surveys"`
 
@@ -84,6 +96,29 @@ func (m *TemplateSurvey) BeforeAppendModel(_ context.Context, query bun.Query) e
 	return nil
 }
 
+// SerializeSecret ensures to encrypt all related secrets stored on the database.
+func (m *TemplateSurvey) SerializeSecret(passphrase string) error {
+	for _, row := range m.Values {
+		if err := row.SerializeSecret(passphrase); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// DeserializeSecret ensures to decrypt all related secrets stored on the database.
+func (m *TemplateSurvey) DeserializeSecret(passphrase string) error {
+	for _, row := range m.Values {
+		if err := row.DeserializeSecret(passphrase); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// TemplateVault defines the model for template_vaults table.
 type TemplateVault struct {
 	bun.BaseModel `bun:"table:template_vaults"`
 
@@ -116,6 +151,16 @@ func (m *TemplateVault) BeforeAppendModel(_ context.Context, query bun.Query) er
 		m.UpdatedAt = time.Now()
 	}
 
+	return nil
+}
+
+// SerializeSecret ensures to encrypt all related secrets stored on the database.
+func (m *TemplateVault) SerializeSecret(_ string) error {
+	return nil
+}
+
+// DeserializeSecret ensures to decrypt all related secrets stored on the database.
+func (m *TemplateVault) DeserializeSecret(_ string) error {
 	return nil
 }
 
@@ -168,6 +213,7 @@ func (m *Template) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+// SerializeSecret ensures to encrypt all related secrets stored on the database.
 func (m *Template) SerializeSecret(passphrase string) error {
 	if m.Repository != nil {
 		if err := m.Repository.SerializeSecret(passphrase); err != nil {
@@ -187,9 +233,22 @@ func (m *Template) SerializeSecret(passphrase string) error {
 		}
 	}
 
+	for _, row := range m.Surveys {
+		if err := row.SerializeSecret(passphrase); err != nil {
+			return err
+		}
+	}
+
+	for _, row := range m.Vaults {
+		if err := row.SerializeSecret(passphrase); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
+// DeserializeSecret ensures to decrypt all related secrets stored on the database.
 func (m *Template) DeserializeSecret(passphrase string) error {
 	if m.Repository != nil {
 		if err := m.Repository.DeserializeSecret(passphrase); err != nil {
@@ -205,6 +264,18 @@ func (m *Template) DeserializeSecret(passphrase string) error {
 
 	if m.Environment != nil {
 		if err := m.Environment.DeserializeSecret(passphrase); err != nil {
+			return err
+		}
+	}
+
+	for _, row := range m.Surveys {
+		if err := row.DeserializeSecret(passphrase); err != nil {
+			return err
+		}
+	}
+
+	for _, row := range m.Vaults {
+		if err := row.DeserializeSecret(passphrase); err != nil {
 			return err
 		}
 	}

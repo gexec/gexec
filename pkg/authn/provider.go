@@ -8,7 +8,7 @@ import (
 
 	"github.com/Machiel/slugify"
 	"github.com/coreos/go-oidc/v3/oidc"
-	"github.com/genexec/genexec/pkg/config"
+	"github.com/gexec/gexec/pkg/config"
 	"github.com/rs/zerolog"
 	"golang.org/x/oauth2"
 )

@@ -3,7 +3,7 @@ package providers
 import (
 	"fmt"
 
-	"github.com/genexec/genexec/pkg/config"
+	"github.com/gexec/gexec/pkg/config"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/azureadv2"
 	"github.com/markbates/goth/providers/gitea"

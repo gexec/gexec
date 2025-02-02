@@ -6,8 +6,8 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/genexec/genexec/pkg/model"
-	"github.com/genexec/genexec/pkg/validate"
+	"github.com/gexec/gexec/pkg/model"
+	"github.com/gexec/gexec/pkg/validate"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
@@ -61,15 +61,16 @@ func (s *Executions) List(ctx context.Context, projectID string, params model.Li
 }
 
 // Show implements the details for a specific execution.
-func (s *Executions) Show(ctx context.Context, projectID, name string) (*model.Execution, error) {
+func (s *Executions) Show(ctx context.Context, project *model.Project, name string) (*model.Execution, error) {
 	record := &model.Execution{}
 
-	if err := s.client.handle.NewSelect().
+	q := s.client.handle.NewSelect().
 		Model(record).
 		Relation("Template").
-		Where("execution.project_id = ?", projectID).
-		Where("execution.id = ?", name).
-		Scan(ctx); err != nil {
+		Where("execution.project_id = ?", project.ID).
+		Where("execution.id = ?", name)
+
+	if err := q.Scan(ctx); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return record, ErrExecutionNotFound
 		}
@@ -81,7 +82,7 @@ func (s *Executions) Show(ctx context.Context, projectID, name string) (*model.E
 }
 
 // Create implements the create of a new execution.
-func (s *Executions) Create(ctx context.Context, projectID string, record *model.Execution) error {
+func (s *Executions) Create(ctx context.Context, project *model.Project, record *model.Execution) error {
 	if err := s.validate(ctx, record, false); err != nil {
 		return err
 	}
@@ -92,18 +93,52 @@ func (s *Executions) Create(ctx context.Context, projectID string, record *model
 		return err
 	}
 
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      project.ID,
+				ProjectDisplay: project.Name,
+				ObjectID:       record.ID,
+				ObjectDisplay:  record.Name,
+				ObjectType:     model.EventTypeExecution,
+				Action:         model.EventActionCreate,
+			},
+		)).
+		Exec(ctx); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 // Update implements the update of an existing execution.
-func (s *Executions) Update(ctx context.Context, projectID string, record *model.Execution) error {
+func (s *Executions) Update(ctx context.Context, project *model.Project, record *model.Execution) error {
 	if err := s.validate(ctx, record, true); err != nil {
 		return err
 	}
 
-	if _, err := s.client.handle.NewUpdate().
+	q := s.client.handle.NewUpdate().
 		Model(record).
-		Where("id = ? and project_id = ?", record.ID, projectID).
+		Where("project_id = ?", project.ID).
+		Where("id = ?", record.ID)
+
+	if _, err := q.Exec(ctx); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      project.ID,
+				ProjectDisplay: project.Name,
+				ObjectID:       record.ID,
+				ObjectDisplay:  record.Name,
+				ObjectType:     model.EventTypeExecution,
+				Action:         model.EventActionUpdate,
+			},
+		)).
 		Exec(ctx); err != nil {
 		return err
 	}
@@ -112,11 +147,34 @@ func (s *Executions) Update(ctx context.Context, projectID string, record *model
 }
 
 // Delete implements the deletion of a execution.
-func (s *Executions) Delete(ctx context.Context, projectID, name string) error {
-	if _, err := s.client.handle.NewDelete().
+func (s *Executions) Delete(ctx context.Context, project *model.Project, name string) error {
+	record, err := s.Show(ctx, project, name)
+
+	if err != nil {
+		return err
+	}
+
+	q := s.client.handle.NewDelete().
 		Model((*model.Execution)(nil)).
-		Where("project_id = ?", projectID).
-		Where("id = ?", name).
+		Where("project_id = ?", project.ID).
+		Where("id = ?", name)
+
+	if _, err := q.Exec(ctx); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      project.ID,
+				ProjectDisplay: project.Name,
+				ObjectID:       record.ID,
+				ObjectDisplay:  record.Name,
+				ObjectType:     model.EventTypeExecution,
+				Action:         model.EventActionDelete,
+			},
+		)).
 		Exec(ctx); err != nil {
 		return err
 	}
@@ -124,6 +182,58 @@ func (s *Executions) Delete(ctx context.Context, projectID, name string) error {
 	return nil
 }
 
+// Purge implements the purge of the logs for an execution.
+func (s *Executions) Purge(ctx context.Context, project *model.Project, name string) error {
+	record, err := s.Show(ctx, project, name)
+
+	if err != nil {
+		return err
+	}
+
+	q := s.client.handle.NewDelete().
+		Model((*model.Output)(nil)).
+		Where("execution_id = ?", record.ID)
+
+	if _, err := q.Exec(ctx); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      project.ID,
+				ProjectDisplay: project.Name,
+				ObjectID:       record.ID,
+				ObjectDisplay:  record.Name,
+				ObjectType:     model.EventTypeOutput,
+				Action:         model.EventActionDelete,
+			},
+		)).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Outputs implements the output of the logg for an execution.
+func (s *Executions) Outputs(ctx context.Context, _ *model.Project, execution *model.Execution) ([]*model.Output, error) {
+	records := make([]*model.Output, 0)
+
+	q := s.client.handle.NewSelect().
+		Model(&records).
+		Order("outputs.created_at DESC").
+		Where("outputs.execution_id = ?", execution.ID)
+
+	if err := q.Scan(ctx); err != nil {
+		return nil, err
+	}
+
+	return records, nil
+}
+
+// ValidateExists simply provides a validator for this record type.
 func (s *Executions) ValidateExists(ctx context.Context, projectID string) func(value interface{}) error {
 	return func(value interface{}) error {
 		val, _ := value.(string)

@@ -1,46 +1,470 @@
 package v1
 
 import (
-	"context"
+	"encoding/base64"
+	"encoding/json"
+	"errors"
 	"net/http"
+
+	"github.com/gexec/gexec/pkg/authn"
+	"github.com/gexec/gexec/pkg/middleware/current"
+	"github.com/gexec/gexec/pkg/model"
+	"github.com/gexec/gexec/pkg/secret"
+	"github.com/gexec/gexec/pkg/store"
+	"github.com/gexec/gexec/pkg/templates"
+	"github.com/gexec/gexec/pkg/token"
+	"github.com/go-chi/render"
+	"github.com/gobwas/glob"
+	"github.com/rs/zerolog/log"
+	"golang.org/x/oauth2"
 )
 
-// CallbackProvider implements the v1.ServerInterface.
-func (a *API) CallbackProvider(_ context.Context, _ CallbackProviderRequestObject) (CallbackProviderResponseObject, error) {
-	return CallbackProvider500JSONResponse{InternalServerErrorJSONResponse{
-		Message: ToPtr("Not implemented"),
-		Status:  ToPtr(http.StatusInternalServerError),
-	}}, nil
+// RequestProvider implements the v1.ServerInterface.
+func (a *API) RequestProvider(w http.ResponseWriter, r *http.Request, providerParam AuthProviderParam) {
+	provider, ok := a.identity.Providers[providerParam]
+
+	if !ok {
+		log.Error().
+			Str("provider", providerParam).
+			Msg("Failed to detect provider")
+
+		render.Status(r, http.StatusPreconditionFailed)
+		render.HTML(w, r, templates.String(
+			a.config,
+			"error.tmpl",
+			struct {
+				Error  string
+				Status int
+			}{
+				Error:  "Failed to detect provider",
+				Status: http.StatusPreconditionFailed,
+			},
+		))
+	}
+
+	w.Header().Set(
+		"Location",
+		provider.OAuth2.AuthCodeURL(
+			base64.URLEncoding.EncodeToString(
+				secret.Bytes(64),
+			),
+			oauth2.AccessTypeOffline,
+			oauth2.S256ChallengeOption(
+				base64.RawURLEncoding.EncodeToString(
+					[]byte(provider.Config.Verifier),
+				),
+			),
+		),
+	)
+
+	w.Header().Set(
+		"Content-Type",
+		"text/html",
+	)
+
+	w.WriteHeader(
+		http.StatusPermanentRedirect,
+	)
 }
 
-// ListProvider implements the v1.ServerInterface.
-func (a *API) ListProvider(_ context.Context, _ ListProviderRequestObject) (ListProviderResponseObject, error) {
-	return ListProvider500JSONResponse{InternalServerErrorJSONResponse{
-		Message: ToPtr("Not implemented"),
-		Status:  ToPtr(http.StatusInternalServerError),
-	}}, nil
+// CallbackProvider implements the v1.ServerInterface.
+func (a *API) CallbackProvider(w http.ResponseWriter, r *http.Request, providerParam AuthProviderParam, params CallbackProviderParams) {
+	provider, ok := a.identity.Providers[providerParam]
+
+	if !ok {
+		log.Error().
+			Str("provider", providerParam).
+			Msg("Failed to detect provider")
+
+		render.Status(r, http.StatusPreconditionFailed)
+		render.HTML(w, r, templates.String(
+			a.config,
+			"error.tmpl",
+			struct {
+				Error  string
+				Status int
+			}{
+				Error:  "Failed to detect provider",
+				Status: http.StatusPreconditionFailed,
+			},
+		))
+	}
+
+	exchange, err := provider.OAuth2.Exchange(
+		r.Context(),
+		FromPtr(params.Code),
+		oauth2.SetAuthURLParam(
+			"code_verifier",
+			base64.RawURLEncoding.EncodeToString(
+				[]byte(provider.Config.Verifier),
+			),
+		),
+	)
+
+	if err != nil {
+		log.Error().
+			Err(err).
+			Str("provider", providerParam).
+			Msg("Failed to exchange token")
+
+		render.Status(r, http.StatusPreconditionFailed)
+		render.HTML(w, r, templates.String(
+			a.config,
+			"error.tmpl",
+			struct {
+				Error  string
+				Status int
+			}{
+				Error:  "Failed to exchange token",
+				Status: http.StatusPreconditionFailed,
+			},
+		))
+	}
+
+	external, err := provider.Claims(
+		r.Context(),
+		exchange,
+	)
+
+	if err != nil {
+		log.Error().
+			Err(err).
+			Str("provider", providerParam).
+			Msg("Failed to parse claims")
+
+		render.Status(r, http.StatusPreconditionFailed)
+		render.HTML(w, r, templates.String(
+			a.config,
+			"error.tmpl",
+			struct {
+				Error  string
+				Status int
+			}{
+				Error:  "Failed to parse claims",
+				Status: http.StatusPreconditionFailed,
+			},
+		))
+	}
+
+	user, err := a.storage.Auth.External(
+		r.Context(),
+		provider.Config.Name,
+		external.Ident,
+		external.Login,
+		external.Email,
+		external.Name,
+		detectAdminFor(provider, external),
+	)
+
+	if err != nil {
+		log.Error().
+			Err(err).
+			Str("provider", providerParam).
+			Str("username", external.Login).
+			Msg("Failed to create user")
+
+		render.Status(r, http.StatusPreconditionFailed)
+		render.HTML(w, r, templates.String(
+			a.config,
+			"error.tmpl",
+			struct {
+				Error  string
+				Status int
+			}{
+				Error:  "Failed to create user",
+				Status: http.StatusPreconditionFailed,
+			},
+		))
+	}
+
+	log.Debug().
+		Str("provider", providerParam).
+		Str("username", user.Username).
+		Str("uid", user.ID).
+		Str("email", user.Email).
+		Str("external", external.Ident).
+		Msg("Authenticated")
+
+	result, err := token.Authed(
+		a.config.Token.Secret,
+		a.config.Token.Expire,
+		user.ID,
+		user.Username,
+		user.Email,
+		user.Fullname,
+		user.Admin,
+	)
+
+	if err != nil {
+		log.Error().
+			Err(err).
+			Str("username", user.Username).
+			Str("uid", user.ID).
+			Msg("Failed to generate a token")
+
+		render.Status(r, http.StatusPreconditionFailed)
+		render.HTML(w, r, templates.String(
+			a.config,
+			"error.tmpl",
+			struct {
+				Error  string
+				Status int
+			}{
+				Error:  "Failed to generate token",
+				Status: http.StatusPreconditionFailed,
+			},
+		))
+	}
+
+	log.Info().
+		Str("username", user.Username).
+		Str("uid", user.ID).
+		Str("token", result).
+		Msg("Successfully generated token")
+
+	// TODO: create temporary token and redirect to frontend to gather the jwt
+
+	w.Header().Set(
+		"Location",
+		"/",
+	)
+
+	w.Header().Set(
+		"Content-Type",
+		"text/html",
+	)
+
+	w.WriteHeader(
+		http.StatusPermanentRedirect,
+	)
+}
+
+// ListProviders implements the v1.ServerInterface.
+func (a *API) ListProviders(w http.ResponseWriter, r *http.Request) {
+	records := make([]Provider, 0)
+
+	for _, provider := range a.identity.Providers {
+		records = append(
+			records,
+			Provider{
+				Name:    ToPtr(provider.Config.Name),
+				Driver:  ToPtr(provider.Config.Driver),
+				Display: ToPtr(provider.Config.Display),
+				Icon:    ToPtr(provider.Config.Icon),
+			},
+		)
+	}
+
+	render.JSON(w, r,
+		ProvidersResponse{
+			Total:     int64(len(records)),
+			Providers: records,
+		},
+	)
 }
 
 // LoginAuth implements the v1.ServerInterface.
-func (a *API) LoginAuth(_ context.Context, _ LoginAuthRequestObject) (LoginAuthResponseObject, error) {
-	return LoginAuth500JSONResponse{InternalServerErrorJSONResponse{
-		Message: ToPtr("Not implemented"),
-		Status:  ToPtr(http.StatusInternalServerError),
-	}}, nil
+func (a *API) LoginAuth(w http.ResponseWriter, r *http.Request) {
+	body := &LoginAuthBody{}
+
+	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
+		log.Error().
+			Err(err).
+			Msg("Failed to decode request body")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to decode request"),
+			Status:  ToPtr(http.StatusBadRequest),
+		})
+
+		return
+	}
+
+	user, err := a.storage.Auth.ByCreds(
+		r.Context(),
+		body.Username,
+		body.Password,
+	)
+
+	if err != nil {
+		if errors.Is(err, store.ErrUserNotFound) {
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Wrong username or password"),
+				Status:  ToPtr(http.StatusUnauthorized),
+			})
+
+			return
+		}
+
+		if errors.Is(err, store.ErrWrongCredentials) {
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Wrong username or password"),
+				Status:  ToPtr(http.StatusUnauthorized),
+			})
+
+			return
+		}
+
+		log.Error().
+			Err(err).
+			Str("username", body.Username).
+			Msg("Failed to authenticate")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to authenticate user"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		})
+
+		return
+	}
+
+	result, err := token.Authed(
+		a.config.Token.Secret,
+		a.config.Token.Expire,
+		user.ID,
+		user.Username,
+		user.Email,
+		user.Fullname,
+		user.Admin,
+	)
+
+	if err != nil {
+		log.Error().
+			Err(err).
+			Str("username", body.Username).
+			Msg("Failed to generate a token")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to generate a token"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		})
+
+		return
+	}
+
+	render.JSON(w, r,
+		a.convertAuthToken(result),
+	)
 }
 
 // RefreshAuth implements the v1.ServerInterface.
-func (a *API) RefreshAuth(_ context.Context, _ RefreshAuthRequestObject) (RefreshAuthResponseObject, error) {
-	return RefreshAuth500JSONResponse{InternalServerErrorJSONResponse{
-		Message: ToPtr("Not implemented"),
-		Status:  ToPtr(http.StatusInternalServerError),
-	}}, nil
+func (a *API) RefreshAuth(w http.ResponseWriter, r *http.Request) {
+	principal := current.GetUser(
+		r.Context(),
+	)
+
+	result, err := token.Authed(
+		a.config.Token.Secret,
+		a.config.Token.Expire,
+		principal.ID,
+		principal.Username,
+		principal.Email,
+		principal.Fullname,
+		principal.Admin,
+	)
+
+	if err != nil {
+		log.Error().
+			Err(err).
+			Str("action", "RefreshAuth").
+			Str("username", principal.Username).
+			Str("uid", principal.ID).
+			Msg("Failed to generate a token")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to generate a token"),
+			Status:  ToPtr(http.StatusUnauthorized),
+		})
+
+		return
+	}
+
+	render.JSON(w, r,
+		a.convertAuthToken(result),
+	)
 }
 
 // VerifyAuth implements the v1.ServerInterface.
-func (a *API) VerifyAuth(_ context.Context, _ VerifyAuthRequestObject) (VerifyAuthResponseObject, error) {
-	return VerifyAuth500JSONResponse{InternalServerErrorJSONResponse{
-		Message: ToPtr("Not implemented"),
-		Status:  ToPtr(http.StatusInternalServerError),
-	}}, nil
+func (a *API) VerifyAuth(w http.ResponseWriter, r *http.Request) {
+	principal := current.GetUser(
+		r.Context(),
+	)
+
+	render.JSON(w, r,
+		a.convertAuthVerify(principal),
+	)
+}
+
+func (a *API) convertAuthToken(record string) AuthToken {
+	return AuthToken{
+		Token: ToPtr(record),
+	}
+}
+
+func (a *API) convertAuthVerify(record *model.User) AuthVerify {
+	return AuthVerify{
+		Username:  ToPtr(record.Username),
+		CreatedAt: ToPtr(record.CreatedAt),
+	}
+}
+
+func detectAdminFor(provider *authn.Provider, external *authn.User) bool {
+	for _, user := range provider.Config.Admins.Users {
+		if user == external.Login {
+			return true
+		}
+	}
+
+	for _, email := range provider.Config.Admins.Emails {
+		g, err := glob.Compile(email)
+
+		if err != nil {
+			log.Error().
+				Str("provider", provider.Config.Name).
+				Str("glob", email).
+				Msg("Failed to compile email glob")
+
+			continue
+		}
+
+		if g.Match(external.Email) {
+			return true
+		}
+	}
+
+	if provider.Config.Mappings.Role != "" {
+		for _, checkRole := range provider.Config.Admins.Roles {
+			for _, assignedRole := range external.Roles {
+				if checkRole == assignedRole {
+					return true
+				}
+			}
+		}
+	}
+
+	return false
+}
+
+// CallbackProviderRedirectResponse defines the response to redirect to frontend after auth.
+type CallbackProviderRedirectResponse struct {
+	URL string
+}
+
+// VisitCallbackProviderResponse implements the middleware.Responder interface for redirects.
+func (r CallbackProviderRedirectResponse) VisitCallbackProviderResponse(w http.ResponseWriter) error {
+	w.Header().Set(
+		"Location",
+		r.URL,
+	)
+
+	w.Header().Set(
+		"Content-Type",
+		"text/html",
+	)
+
+	w.WriteHeader(
+		http.StatusPermanentRedirect,
+	)
+
+	return nil
 }

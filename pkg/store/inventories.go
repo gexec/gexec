@@ -9,8 +9,8 @@ import (
 
 	"github.com/Machiel/slugify"
 	"github.com/dchest/uniuri"
-	"github.com/genexec/genexec/pkg/model"
-	"github.com/genexec/genexec/pkg/validate"
+	"github.com/gexec/gexec/pkg/model"
+	"github.com/gexec/gexec/pkg/validate"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
@@ -67,17 +67,18 @@ func (s *Inventories) List(ctx context.Context, projectID string, params model.L
 }
 
 // Show implements the details for a specific inventory.
-func (s *Inventories) Show(ctx context.Context, projectID, name string) (*model.Inventory, error) {
+func (s *Inventories) Show(ctx context.Context, project *model.Project, name string) (*model.Inventory, error) {
 	record := &model.Inventory{}
 
-	if err := s.client.handle.NewSelect().
+	q := s.client.handle.NewSelect().
 		Model(record).
 		Relation("Repository").
 		Relation("Credential").
 		Relation("Become").
-		Where("inventory.project_id = ?", projectID).
-		Where("inventory.id = ? OR inventory.slug = ?", name, name).
-		Scan(ctx); err != nil {
+		Where("inventory.project_id = ?", project.ID).
+		Where("inventory.id = ? OR inventory.slug = ?", name, name)
+
+	if err := q.Scan(ctx); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return record, ErrInventoryNotFound
 		}
@@ -89,14 +90,14 @@ func (s *Inventories) Show(ctx context.Context, projectID, name string) (*model.
 }
 
 // Create implements the create of a new inventory.
-func (s *Inventories) Create(ctx context.Context, projectID string, record *model.Inventory) error {
+func (s *Inventories) Create(ctx context.Context, project *model.Project, record *model.Inventory) error {
 	if record.Slug == "" {
 		record.Slug = s.slugify(
 			ctx,
 			"slug",
 			record.Name,
 			"",
-			projectID,
+			project.ID,
 		)
 	}
 
@@ -110,18 +111,34 @@ func (s *Inventories) Create(ctx context.Context, projectID string, record *mode
 		return err
 	}
 
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      project.ID,
+				ProjectDisplay: project.Name,
+				ObjectID:       record.ID,
+				ObjectDisplay:  record.Name,
+				ObjectType:     model.EventTypeInventory,
+				Action:         model.EventActionCreate,
+			},
+		)).
+		Exec(ctx); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 // Update implements the update of an existing inventory.
-func (s *Inventories) Update(ctx context.Context, projectID string, record *model.Inventory) error {
+func (s *Inventories) Update(ctx context.Context, project *model.Project, record *model.Inventory) error {
 	if record.Slug == "" {
 		record.Slug = s.slugify(
 			ctx,
 			"slug",
 			record.Name,
 			"",
-			projectID,
+			project.ID,
 		)
 	}
 
@@ -129,9 +146,27 @@ func (s *Inventories) Update(ctx context.Context, projectID string, record *mode
 		return err
 	}
 
-	if _, err := s.client.handle.NewUpdate().
+	q := s.client.handle.NewUpdate().
 		Model(record).
-		Where("id = ? and project_id = ?", record.ID, projectID).
+		Where("project_id = ?", project.ID).
+		Where("id = ?", record.ID)
+
+	if _, err := q.Exec(ctx); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      project.ID,
+				ProjectDisplay: project.Name,
+				ObjectID:       record.ID,
+				ObjectDisplay:  record.Name,
+				ObjectType:     model.EventTypeInventory,
+				Action:         model.EventActionUpdate,
+			},
+		)).
 		Exec(ctx); err != nil {
 		return err
 	}
@@ -140,11 +175,34 @@ func (s *Inventories) Update(ctx context.Context, projectID string, record *mode
 }
 
 // Delete implements the deletion of a inventory.
-func (s *Inventories) Delete(ctx context.Context, projectID, name string) error {
-	if _, err := s.client.handle.NewDelete().
+func (s *Inventories) Delete(ctx context.Context, project *model.Project, name string) error {
+	record, err := s.Show(ctx, project, name)
+
+	if err != nil {
+		return err
+	}
+
+	q := s.client.handle.NewDelete().
 		Model((*model.Inventory)(nil)).
-		Where("project_id = ?", projectID).
-		Where("id = ? OR slug = ?", name, name).
+		Where("project_id = ?", project.ID).
+		Where("id = ? OR slug = ?", name, name)
+
+	if _, err := q.Exec(ctx); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      project.ID,
+				ProjectDisplay: project.Name,
+				ObjectID:       record.ID,
+				ObjectDisplay:  record.Name,
+				ObjectType:     model.EventTypeInventory,
+				Action:         model.EventActionDelete,
+			},
+		)).
 		Exec(ctx); err != nil {
 		return err
 	}
@@ -152,6 +210,7 @@ func (s *Inventories) Delete(ctx context.Context, projectID, name string) error 
 	return nil
 }
 
+// ValidateExists simply provides a validator for this record type.
 func (s *Inventories) ValidateExists(ctx context.Context, projectID string) func(value interface{}) error {
 	return func(value interface{}) error {
 		val, _ := value.(string)
@@ -261,7 +320,8 @@ func (s *Inventories) uniqueValueIsPresent(ctx context.Context, key, id, project
 
 		q := s.client.handle.NewSelect().
 			Model((*model.Inventory)(nil)).
-			Where("project_id = ? AND ? = ?", projectID, bun.Ident(key), val)
+			Where("project_id = ?", projectID).
+			Where("? = ?", bun.Ident(key), val)
 
 		if id != "" {
 			q = q.Where(
@@ -300,7 +360,8 @@ func (s *Inventories) slugify(ctx context.Context, column, value, id, projectID 
 
 		query := s.client.handle.NewSelect().
 			Model((*model.Inventory)(nil)).
-			Where("project_id = ? AND ? = ?", projectID, bun.Ident(column), slug)
+			Where("project_id = ?", projectID).
+			Where("? = ?", bun.Ident(column), slug)
 
 		if id != "" {
 			query = query.Where(

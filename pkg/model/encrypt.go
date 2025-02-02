@@ -10,7 +10,8 @@ import (
 )
 
 var (
-	ErrWronfEncryptionPassphrase = fmt.Errorf("wrong encryption passphrase")
+	// ErrWrongEncryptionPassphrase defines the error if it fails to validate the encryption passphrase.
+	ErrWrongEncryptionPassphrase = fmt.Errorf("wrong encryption passphrase")
 )
 
 func prepareEncrypt(passphrase string) (cipher.AEAD, error) {
@@ -75,7 +76,7 @@ func decryptSecret(gcm cipher.AEAD, secret string) (string, error) {
 
 	if err != nil {
 		if err.Error() == "cipher: message authentication failed" {
-			return "", ErrWronfEncryptionPassphrase
+			return "", ErrWrongEncryptionPassphrase
 		}
 
 		return "", err

@@ -9,8 +9,8 @@ import (
 
 	"github.com/Machiel/slugify"
 	"github.com/dchest/uniuri"
-	"github.com/genexec/genexec/pkg/model"
-	"github.com/genexec/genexec/pkg/validate"
+	"github.com/gexec/gexec/pkg/model"
+	"github.com/gexec/gexec/pkg/validate"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
@@ -65,15 +65,16 @@ func (s *Schedules) List(ctx context.Context, projectID string, params model.Lis
 }
 
 // Show implements the details for a specific schedule.
-func (s *Schedules) Show(ctx context.Context, projectID, name string) (*model.Schedule, error) {
+func (s *Schedules) Show(ctx context.Context, project *model.Project, name string) (*model.Schedule, error) {
 	record := &model.Schedule{}
 
-	if err := s.client.handle.NewSelect().
+	q := s.client.handle.NewSelect().
 		Model(record).
 		Relation("Template").
-		Where("schedule.project_id = ?", projectID).
-		Where("schedule.id = ? OR schedule.slug = ?", name, name).
-		Scan(ctx); err != nil {
+		Where("schedule.project_id = ?", project.ID).
+		Where("schedule.id = ? OR schedule.slug = ?", name, name)
+
+	if err := q.Scan(ctx); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return record, ErrScheduleNotFound
 		}
@@ -85,14 +86,14 @@ func (s *Schedules) Show(ctx context.Context, projectID, name string) (*model.Sc
 }
 
 // Create implements the create of a new schedule.
-func (s *Schedules) Create(ctx context.Context, projectID string, record *model.Schedule) error {
+func (s *Schedules) Create(ctx context.Context, project *model.Project, record *model.Schedule) error {
 	if record.Slug == "" {
 		record.Slug = s.slugify(
 			ctx,
 			"slug",
 			record.Name,
 			"",
-			projectID,
+			project.ID,
 		)
 	}
 
@@ -106,18 +107,34 @@ func (s *Schedules) Create(ctx context.Context, projectID string, record *model.
 		return err
 	}
 
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      project.ID,
+				ProjectDisplay: project.Name,
+				ObjectID:       record.ID,
+				ObjectDisplay:  record.Name,
+				ObjectType:     model.EventTypeSchedule,
+				Action:         model.EventActionCreate,
+			},
+		)).
+		Exec(ctx); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 // Update implements the update of an existing schedule.
-func (s *Schedules) Update(ctx context.Context, projectID string, record *model.Schedule) error {
+func (s *Schedules) Update(ctx context.Context, project *model.Project, record *model.Schedule) error {
 	if record.Slug == "" {
 		record.Slug = s.slugify(
 			ctx,
 			"slug",
 			record.Name,
 			"",
-			projectID,
+			project.ID,
 		)
 	}
 
@@ -125,9 +142,27 @@ func (s *Schedules) Update(ctx context.Context, projectID string, record *model.
 		return err
 	}
 
-	if _, err := s.client.handle.NewUpdate().
+	q := s.client.handle.NewUpdate().
 		Model(record).
-		Where("id = ? and project_id = ?", record.ID, projectID).
+		Where("project_id = ?", project.ID).
+		Where("id = ?", record.ID)
+
+	if _, err := q.Exec(ctx); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      project.ID,
+				ProjectDisplay: project.Name,
+				ObjectID:       record.ID,
+				ObjectDisplay:  record.Name,
+				ObjectType:     model.EventTypeSchedule,
+				Action:         model.EventActionUpdate,
+			},
+		)).
 		Exec(ctx); err != nil {
 		return err
 	}
@@ -136,11 +171,34 @@ func (s *Schedules) Update(ctx context.Context, projectID string, record *model.
 }
 
 // Delete implements the deletion of a schedule.
-func (s *Schedules) Delete(ctx context.Context, projectID, name string) error {
-	if _, err := s.client.handle.NewDelete().
+func (s *Schedules) Delete(ctx context.Context, project *model.Project, name string) error {
+	record, err := s.Show(ctx, project, name)
+
+	if err != nil {
+		return err
+	}
+
+	q := s.client.handle.NewDelete().
 		Model((*model.Schedule)(nil)).
-		Where("project_id = ?", projectID).
-		Where("id = ? OR slug = ?", name, name).
+		Where("project_id = ?", project.ID).
+		Where("id = ? OR slug = ?", name, name)
+
+	if _, err := q.Exec(ctx); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      project.ID,
+				ProjectDisplay: project.Name,
+				ObjectID:       record.ID,
+				ObjectDisplay:  record.Name,
+				ObjectType:     model.EventTypeSchedule,
+				Action:         model.EventActionDelete,
+			},
+		)).
 		Exec(ctx); err != nil {
 		return err
 	}
@@ -148,6 +206,7 @@ func (s *Schedules) Delete(ctx context.Context, projectID, name string) error {
 	return nil
 }
 
+// ValidateExists simply provides a validator for this record type.
 func (s *Schedules) ValidateExists(ctx context.Context, projectID string) func(value interface{}) error {
 	return func(value interface{}) error {
 		val, _ := value.(string)
@@ -237,7 +296,8 @@ func (s *Schedules) uniqueValueIsPresent(ctx context.Context, key, id, projectID
 
 		q := s.client.handle.NewSelect().
 			Model((*model.Schedule)(nil)).
-			Where("project_id = ? AND ? = ?", projectID, bun.Ident(key), val)
+			Where("project_id = ?", projectID).
+			Where("? = ?", bun.Ident(key), val)
 
 		if id != "" {
 			q = q.Where(
@@ -276,7 +336,8 @@ func (s *Schedules) slugify(ctx context.Context, column, value, id, projectID st
 
 		query := s.client.handle.NewSelect().
 			Model((*model.Schedule)(nil)).
-			Where("project_id = ? AND ? = ?", projectID, bun.Ident(column), slug)
+			Where("project_id = ?", projectID).
+			Where("? = ?", bun.Ident(column), slug)
 
 		if id != "" {
 			query = query.Where(

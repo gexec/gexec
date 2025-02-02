@@ -7,14 +7,14 @@ info:
   title: "Genexec OpenAPI"
   contact:
     name: "Genexec"
-    email: "genexec@webhippie.de"
-    url: "https://genexec.eu"
+    email: "gexec@webhippie.de"
+    url: "https://gexec.eu"
   license:
     name: "Apache-2.0"
     url: "http://www.apache.org/licenses/LICENSE-2.0.html"
 
 servers:
-  - url: "https://try.genexec.eu/api/v1"
+  - url: "https://try.gexec.eu/api/v1"
 
 security:
   - Header: []
@@ -22,9 +22,24 @@ security:
   - Basic: []
 
 paths:
-  /auth/{provider}:
+  /auth/{provider}/request:
     get:
-      summary: "Callback for available auth providers"
+      summary: "Request the redirect to defined provider"
+      operationId: "RequestProvider"
+      tags:
+        - "auth"
+      parameters:
+        - $ref: "#/components/parameters/AuthProviderParam"
+      security: []
+      responses:
+        "308":
+          $ref: "#/components/responses/ProviderRequestResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+  /auth/{provider}/callback:
+    get:
+      summary: "Callback to parse the defined provider"
       operationId: "CallbackProvider"
       tags:
         - "auth"
@@ -34,27 +49,23 @@ paths:
         - $ref: "#/components/parameters/AuthCodeParam"
       security: []
       responses:
-        "200":
-          $ref: "#/components/responses/CallbackResponse"
+        "308":
+          $ref: "#/components/responses/ProviderCallbackResponse"
         "404":
           $ref: "#/components/responses/NotFoundError"
         "412":
           $ref: "#/components/responses/ProviderInitError"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
 
   /auth/providers:
     get:
       summary: "Fetch the available auth providers"
-      operationId: "ListProvider"
+      operationId: "ListProviders"
       tags:
         - "auth"
       security: []
       responses:
         "200":
-          $ref: "#/components/responses/ProviderResponse"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+          $ref: "#/components/responses/ProvidersResponse"
 
   /auth/login:
     post:
@@ -143,39 +154,6 @@ paths:
           $ref: "#/components/responses/NotAuthorizedError"
         "422":
           $ref: "#/components/responses/ValidationError"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /ws:
-    get:
-      summary: "Handler for websocket connection"
-      operationId: "Websockets"
-      schemes:
-        - "ws"
-        - "wss"
-      responses:
-        "101":
-          $ref: "#/components/responses/UpgradeConnection"
-        "403":
-          $ref: "#/components/responses/NotAuthorizedError"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /events:
-    get:
-      summary: "Fetch all available events"
-      operationId: "ListEvents"
-      tags:
-        - "event"
-      parameters:
-        - $ref: "#/components/parameters/SearchQueryParam"
-        - $ref: "#/components/parameters/PagingLimitParam"
-        - $ref: "#/components/parameters/PagingOffsetParam"
-      responses:
-        "200":
-          $ref: "#/components/responses/EventsResponse"
-        "403":
-          $ref: "#/components/responses/NotAuthorizedError"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
@@ -364,10 +342,10 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /projects/{project_id}/teams:
+  /projects/{project_id}/groups:
     get:
-      summary: "Fetch all teams attached to project"
-      operationId: "ListProjectTeams"
+      summary: "Fetch all groups attached to project"
+      operationId: "ListProjectGroups"
       tags:
         - "project"
       parameters:
@@ -379,7 +357,7 @@ paths:
         - $ref: "#/components/parameters/PagingOffsetParam"
       responses:
         "200":
-          $ref: "#/components/responses/ProjectTeamsResponse"
+          $ref: "#/components/responses/ProjectGroupsResponse"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -388,14 +366,14 @@ paths:
           $ref: "#/components/responses/InternalServerError"
 
     post:
-      summary: "Attach a team to project"
-      operationId: "AttachProjectToTeam"
+      summary: "Attach a group to project"
+      operationId: "AttachProjectToGroup"
       tags:
         - "project"
       parameters:
         - $ref: "#/components/parameters/ProjectParam"
       requestBody:
-        $ref: "#/components/requestBodies/ProjectTeamPermBody"
+        $ref: "#/components/requestBodies/ProjectGroupPermBody"
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
@@ -411,14 +389,14 @@ paths:
           $ref: "#/components/responses/InternalServerError"
 
     put:
-      summary: "Update team perms for project"
-      operationId: "PermitProjectTeam"
+      summary: "Update group perms for project"
+      operationId: "PermitProjectGroup"
       tags:
         - "project"
       parameters:
         - $ref: "#/components/parameters/ProjectParam"
       requestBody:
-        $ref: "#/components/requestBodies/ProjectTeamPermBody"
+        $ref: "#/components/requestBodies/ProjectGroupPermBody"
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
@@ -434,14 +412,14 @@ paths:
           $ref: "#/components/responses/InternalServerError"
 
     delete:
-      summary: "Unlink a team from project"
-      operationId: "DeleteProjectFromTeam"
+      summary: "Unlink a group from project"
+      operationId: "DeleteProjectFromGroup"
       tags:
         - "project"
       parameters:
         - $ref: "#/components/parameters/ProjectParam"
       requestBody:
-        $ref: "#/components/requestBodies/ProjectTeamDropBody"
+        $ref: "#/components/requestBodies/ProjectGroupDropBody"
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
@@ -451,6 +429,137 @@ paths:
           $ref: "#/components/responses/NotFoundError"
         "412":
           $ref: "#/components/responses/NotAttachedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects/{project_id}/events:
+    get:
+      summary: "Fetch all events for a project"
+      operationId: "ListProjectEvents"
+      tags:
+        - "event"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/SearchQueryParam"
+        - $ref: "#/components/parameters/PagingLimitParam"
+        - $ref: "#/components/parameters/PagingOffsetParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectEventsResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects/{project_id}/runners:
+    get:
+      summary: "Fetch all runners for a project"
+      operationId: "ListProjectRunners"
+      tags:
+        - "project"
+        - "runner"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/SearchQueryParam"
+        - $ref: "#/components/parameters/SortColumnParam"
+        - $ref: "#/components/parameters/SortOrderParam"
+        - $ref: "#/components/parameters/PagingLimitParam"
+        - $ref: "#/components/parameters/PagingOffsetParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectRunnersResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    post:
+      summary: "Create a new runner"
+      operationId: "CreateProjectRunner"
+      tags:
+        - "project"
+        - "runner"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+      requestBody:
+        $ref: "#/components/requestBodies/CreateProjectRunnerBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectRunnerResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects/{project_id}/runners/{runner_id}:
+    get:
+      summary: "Fetch a specific runner for a project"
+      operationId: "ShowProjectRunner"
+      tags:
+        - "project"
+        - "runner"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/RunnerParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectRunnerResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    put:
+      summary: "Update a specific runner for a project"
+      operationId: "UpdateProjectRunner"
+      tags:
+        - "project"
+        - "runner"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/RunnerParam"
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateProjectRunnerBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectRunnerResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      summary: "Delete a specific runner for a project"
+      operationId: "DeleteProjectRunner"
+      tags:
+        - "project"
+        - "runner"
+      parameters:
+        - $ref: "#/components/parameters/ProjectParam"
+        - $ref: "#/components/parameters/RunnerParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessMessage"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "400":
+          $ref: "#/components/responses/ActionFailedError"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
@@ -1507,28 +1616,6 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /projects/{project_id}/executions/{execution_id}/stop:
-    get:
-      summary: "Stop a specific execution for a project"
-      operationId: "StopProjectExecution"
-      tags:
-        - "project"
-        - "execution"
-      parameters:
-        - $ref: "#/components/parameters/ProjectParam"
-        - $ref: "#/components/parameters/ExecutionParam"
-      responses:
-        "200":
-          $ref: "#/components/responses/SuccessMessage"
-        "403":
-          $ref: "#/components/responses/NotAuthorizedError"
-        "404":
-          $ref: "#/components/responses/NotFoundError"
-        "400":
-          $ref: "#/components/responses/ActionFailedError"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
   /projects/{project_id}/executions/{execution_id}/output:
     get:
       summary: "Output a specific execution for a project"
@@ -1541,7 +1628,7 @@ paths:
         - $ref: "#/components/parameters/ExecutionParam"
       responses:
         "200":
-          $ref: "#/components/responses/ProjectLoggingResponse"
+          $ref: "#/components/responses/ProjectOutputResponse"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -1549,10 +1636,28 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
+  /events:
+    get:
+      summary: "Fetch all events"
+      operationId: "ListGlobalEvents"
+      tags:
+        - "event"
+      parameters:
+        - $ref: "#/components/parameters/SearchQueryParam"
+        - $ref: "#/components/parameters/PagingLimitParam"
+        - $ref: "#/components/parameters/PagingOffsetParam"
+      responses:
+        "200":
+          $ref: "#/components/responses/GlobalEventsResponse"
+        "403":
+          $ref: "#/components/responses/NotAuthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
   /runners:
     get:
-      summary: "Fetch all available runners"
-      operationId: "ListRunners"
+      summary: "Fetch all runners"
+      operationId: "ListGlobalRunners"
       tags:
         - "runner"
       parameters:
@@ -1563,22 +1668,22 @@ paths:
         - $ref: "#/components/parameters/PagingOffsetParam"
       responses:
         "200":
-          $ref: "#/components/responses/RunnersResponse"
+          $ref: "#/components/responses/GlobalRunnersResponse"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
     post:
-      summary: "Create a new runner"
-      operationId: "CreateRunner"
+      summary: "Create a new global runner"
+      operationId: "CreateGlobalRunner"
       tags:
         - "runner"
       requestBody:
-        $ref: "#/components/requestBodies/CreateRunnerBody"
+        $ref: "#/components/requestBodies/CreateGlobalRunnerBody"
       responses:
         "200":
-          $ref: "#/components/responses/RunnerResponse"
+          $ref: "#/components/responses/GlobalRunnerResponse"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "422":
@@ -1589,7 +1694,7 @@ paths:
   /runners/{runner_id}:
     get:
       summary: "Fetch a specific runner"
-      operationId: "ShowRunner"
+      operationId: "ShowGlobalRunner"
       tags:
         - "shared"
         - "runner"
@@ -1597,7 +1702,7 @@ paths:
         - $ref: "#/components/parameters/RunnerParam"
       responses:
         "200":
-          $ref: "#/components/responses/RunnerResponse"
+          $ref: "#/components/responses/GlobalRunnerResponse"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -1607,16 +1712,16 @@ paths:
 
     put:
       summary: "Update a specific runner"
-      operationId: "UpdateRunner"
+      operationId: "UpdateGlobalRunner"
       tags:
         - "runner"
       parameters:
         - $ref: "#/components/parameters/RunnerParam"
       requestBody:
-        $ref: "#/components/requestBodies/UpdateRunnerBody"
+        $ref: "#/components/requestBodies/UpdateGlobalRunnerBody"
       responses:
         "200":
-          $ref: "#/components/responses/RunnerResponse"
+          $ref: "#/components/responses/GlobalRunnerResponse"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -1628,7 +1733,7 @@ paths:
 
     delete:
       summary: "Delete a specific runner"
-      operationId: "DeleteRunner"
+      operationId: "DeleteGlobalRunner"
       tags:
         - "shared"
         - "runner"
@@ -1646,12 +1751,12 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /teams:
+  /groups:
     get:
-      summary: "Fetch all available teams"
-      operationId: "ListTeams"
+      summary: "Fetch all available groups"
+      operationId: "ListGroups"
       tags:
-        - "team"
+        - "group"
       parameters:
         - $ref: "#/components/parameters/SearchQueryParam"
         - $ref: "#/components/parameters/SortColumnParam"
@@ -1660,22 +1765,22 @@ paths:
         - $ref: "#/components/parameters/PagingOffsetParam"
       responses:
         "200":
-          $ref: "#/components/responses/TeamsResponse"
+          $ref: "#/components/responses/GroupsResponse"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
     post:
-      summary: "Create a new team"
-      operationId: "CreateTeam"
+      summary: "Create a new group"
+      operationId: "CreateGroup"
       tags:
-        - "team"
+        - "group"
       requestBody:
-        $ref: "#/components/requestBodies/CreateTeamBody"
+        $ref: "#/components/requestBodies/CreateGroupBody"
       responses:
         "200":
-          $ref: "#/components/responses/TeamResponse"
+          $ref: "#/components/responses/GroupResponse"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "422":
@@ -1683,17 +1788,17 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /teams/{team_id}:
+  /groups/{group_id}:
     get:
-      summary: "Fetch a specific team"
-      operationId: "ShowTeam"
+      summary: "Fetch a specific group"
+      operationId: "ShowGroup"
       tags:
-        - "team"
+        - "group"
       parameters:
-        - $ref: "#/components/parameters/TeamParam"
+        - $ref: "#/components/parameters/GroupParam"
       responses:
         "200":
-          $ref: "#/components/responses/TeamResponse"
+          $ref: "#/components/responses/GroupResponse"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -1702,17 +1807,17 @@ paths:
           $ref: "#/components/responses/InternalServerError"
 
     put:
-      summary: "Update a specific team"
-      operationId: "UpdateTeam"
+      summary: "Update a specific group"
+      operationId: "UpdateGroup"
       tags:
-        - "team"
+        - "group"
       parameters:
-        - $ref: "#/components/parameters/TeamParam"
+        - $ref: "#/components/parameters/GroupParam"
       requestBody:
-        $ref: "#/components/requestBodies/UpdateTeamBody"
+        $ref: "#/components/requestBodies/UpdateGroupBody"
       responses:
         "200":
-          $ref: "#/components/responses/TeamResponse"
+          $ref: "#/components/responses/GroupResponse"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -1723,12 +1828,12 @@ paths:
           $ref: "#/components/responses/InternalServerError"
 
     delete:
-      summary: "Delete a specific team"
-      operationId: "DeleteTeam"
+      summary: "Delete a specific group"
+      operationId: "DeleteGroup"
       tags:
-        - "team"
+        - "group"
       parameters:
-        - $ref: "#/components/parameters/TeamParam"
+        - $ref: "#/components/parameters/GroupParam"
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
@@ -1741,14 +1846,14 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /teams/{team_id}/users:
+  /groups/{group_id}/users:
     get:
-      summary: "Fetch all users attached to team"
-      operationId: "ListTeamUsers"
+      summary: "Fetch all users attached to group"
+      operationId: "ListGroupUsers"
       tags:
-        - "team"
+        - "group"
       parameters:
-        - $ref: "#/components/parameters/TeamParam"
+        - $ref: "#/components/parameters/GroupParam"
         - $ref: "#/components/parameters/SearchQueryParam"
         - $ref: "#/components/parameters/SortColumnParam"
         - $ref: "#/components/parameters/SortOrderParam"
@@ -1756,7 +1861,7 @@ paths:
         - $ref: "#/components/parameters/PagingOffsetParam"
       responses:
         "200":
-          $ref: "#/components/responses/TeamUsersResponse"
+          $ref: "#/components/responses/GroupUsersResponse"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -1765,14 +1870,14 @@ paths:
           $ref: "#/components/responses/InternalServerError"
 
     post:
-      summary: "Attach a user to team"
-      operationId: "AttachTeamToUser"
+      summary: "Attach a user to group"
+      operationId: "AttachGroupToUser"
       tags:
-        - "team"
+        - "group"
       parameters:
-        - $ref: "#/components/parameters/TeamParam"
+        - $ref: "#/components/parameters/GroupParam"
       requestBody:
-        $ref: "#/components/requestBodies/TeamUserPermBody"
+        $ref: "#/components/requestBodies/GroupUserPermBody"
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
@@ -1788,14 +1893,14 @@ paths:
           $ref: "#/components/responses/InternalServerError"
 
     put:
-      summary: "Update user perms for team"
-      operationId: "PermitTeamUser"
+      summary: "Update user perms for group"
+      operationId: "PermitGroupUser"
       tags:
-        - "team"
+        - "group"
       parameters:
-        - $ref: "#/components/parameters/TeamParam"
+        - $ref: "#/components/parameters/GroupParam"
       requestBody:
-        $ref: "#/components/requestBodies/TeamUserPermBody"
+        $ref: "#/components/requestBodies/GroupUserPermBody"
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
@@ -1811,14 +1916,14 @@ paths:
           $ref: "#/components/responses/InternalServerError"
 
     delete:
-      summary: "Unlink a user from team"
-      operationId: "DeleteTeamFromUser"
+      summary: "Unlink a user from group"
+      operationId: "DeleteGroupFromUser"
       tags:
-        - "team"
+        - "group"
       parameters:
-        - $ref: "#/components/parameters/TeamParam"
+        - $ref: "#/components/parameters/GroupParam"
       requestBody:
-        $ref: "#/components/requestBodies/TeamUserDropBody"
+        $ref: "#/components/requestBodies/GroupUserDropBody"
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
@@ -1831,14 +1936,14 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /teams/{team_id}/projects:
+  /groups/{group_id}/projects:
     get:
-      summary: "Fetch all projects attached to team"
-      operationId: "ListTeamProjects"
+      summary: "Fetch all projects attached to group"
+      operationId: "ListGroupProjects"
       tags:
-        - "team"
+        - "group"
       parameters:
-        - $ref: "#/components/parameters/TeamParam"
+        - $ref: "#/components/parameters/GroupParam"
         - $ref: "#/components/parameters/SearchQueryParam"
         - $ref: "#/components/parameters/SortColumnParam"
         - $ref: "#/components/parameters/SortOrderParam"
@@ -1846,7 +1951,7 @@ paths:
         - $ref: "#/components/parameters/PagingOffsetParam"
       responses:
         "200":
-          $ref: "#/components/responses/TeamProjectsResponse"
+          $ref: "#/components/responses/GroupProjectsResponse"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -1855,14 +1960,14 @@ paths:
           $ref: "#/components/responses/InternalServerError"
 
     post:
-      summary: "Attach a project to team"
-      operationId: "AttachTeamToProject"
+      summary: "Attach a project to group"
+      operationId: "AttachGroupToProject"
       tags:
-        - "team"
+        - "group"
       parameters:
-        - $ref: "#/components/parameters/TeamParam"
+        - $ref: "#/components/parameters/GroupParam"
       requestBody:
-        $ref: "#/components/requestBodies/TeamProjectPermBody"
+        $ref: "#/components/requestBodies/GroupProjectPermBody"
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
@@ -1878,14 +1983,14 @@ paths:
           $ref: "#/components/responses/InternalServerError"
 
     put:
-      summary: "Update project perms for team"
-      operationId: "PermitTeamProject"
+      summary: "Update project perms for group"
+      operationId: "PermitGroupProject"
       tags:
-        - "team"
+        - "group"
       parameters:
-        - $ref: "#/components/parameters/TeamParam"
+        - $ref: "#/components/parameters/GroupParam"
       requestBody:
-        $ref: "#/components/requestBodies/TeamProjectPermBody"
+        $ref: "#/components/requestBodies/GroupProjectPermBody"
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
@@ -1901,14 +2006,14 @@ paths:
           $ref: "#/components/responses/InternalServerError"
 
     delete:
-      summary: "Unlink a project from team"
-      operationId: "DeleteTeamFromProject"
+      summary: "Unlink a project from group"
+      operationId: "DeleteGroupFromProject"
       tags:
-        - "team"
+        - "group"
       parameters:
-        - $ref: "#/components/parameters/TeamParam"
+        - $ref: "#/components/parameters/GroupParam"
       requestBody:
-        $ref: "#/components/requestBodies/TeamProjectDropBody"
+        $ref: "#/components/requestBodies/GroupProjectDropBody"
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
@@ -2016,10 +2121,10 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /users/{user_id}/teams:
+  /users/{user_id}/groups:
     get:
-      summary: "Fetch all teams attached to user"
-      operationId: "ListUserTeams"
+      summary: "Fetch all groups attached to user"
+      operationId: "ListUserGroups"
       tags:
         - "user"
       parameters:
@@ -2031,7 +2136,7 @@ paths:
         - $ref: "#/components/parameters/PagingOffsetParam"
       responses:
         "200":
-          $ref: "#/components/responses/UserTeamsResponse"
+          $ref: "#/components/responses/UserGroupsResponse"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -2040,14 +2145,14 @@ paths:
           $ref: "#/components/responses/InternalServerError"
 
     post:
-      summary: "Attach a team to user"
-      operationId: "AttachUserToTeam"
+      summary: "Attach a group to user"
+      operationId: "AttachUserToGroup"
       tags:
         - "user"
       parameters:
         - $ref: "#/components/parameters/UserParam"
       requestBody:
-        $ref: "#/components/requestBodies/UserTeamPermBody"
+        $ref: "#/components/requestBodies/UserGroupPermBody"
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
@@ -2063,14 +2168,14 @@ paths:
           $ref: "#/components/responses/InternalServerError"
 
     put:
-      summary: "Update team perms for user"
-      operationId: "PermitUserTeam"
+      summary: "Update group perms for user"
+      operationId: "PermitUserGroup"
       tags:
         - "user"
       parameters:
         - $ref: "#/components/parameters/UserParam"
       requestBody:
-        $ref: "#/components/requestBodies/UserTeamPermBody"
+        $ref: "#/components/requestBodies/UserGroupPermBody"
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
@@ -2086,14 +2191,14 @@ paths:
           $ref: "#/components/responses/InternalServerError"
 
     delete:
-      summary: "Unlink a team from user"
-      operationId: "DeleteUserFromTeam"
+      summary: "Unlink a group from user"
+      operationId: "DeleteUserFromGroup"
       tags:
         - "user"
       parameters:
         - $ref: "#/components/parameters/UserParam"
       requestBody:
-        $ref: "#/components/requestBodies/UserTeamDropBody"
+        $ref: "#/components/requestBodies/UserGroupDropBody"
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
@@ -2288,6 +2393,7 @@ components:
         type: "string"
       required: true
       x-example: "project-1"
+      x-go-name: "ProjectID"
     CredentialParam:
       in: "path"
       name: "credential_id"
@@ -2296,6 +2402,7 @@ components:
         type: "string"
       required: true
       x-example: "credential-1"
+      x-go-name: "CredentialID"
     RepositoryParam:
       in: "path"
       name: "repository_id"
@@ -2304,6 +2411,7 @@ components:
         type: "string"
       required: true
       x-example: "repository-1"
+      x-go-name: "RepositoryID"
     InventoryParam:
       in: "path"
       name: "inventory_id"
@@ -2312,6 +2420,7 @@ components:
         type: "string"
       required: true
       x-example: "inventory-1"
+      x-go-name: "InventoryID"
     EnvironmentParam:
       in: "path"
       name: "environment_id"
@@ -2320,6 +2429,7 @@ components:
         type: "string"
       required: true
       x-example: "environment-1"
+      x-go-name: "EnvironmentID"
     SecretParam:
       in: "path"
       name: "secret_id"
@@ -2328,6 +2438,7 @@ components:
         type: "string"
       required: true
       x-example: "secret-1"
+      x-go-name: "SecretID"
     ValueParam:
       in: "path"
       name: "value_id"
@@ -2336,6 +2447,7 @@ components:
         type: "string"
       required: true
       x-example: "value-1"
+      x-go-name: "ValueID"
     TemplateParam:
       in: "path"
       name: "template_id"
@@ -2344,6 +2456,7 @@ components:
         type: "string"
       required: true
       x-example: "template-1"
+      x-go-name: "TemplateID"
     SurveyParam:
       in: "path"
       name: "survey_id"
@@ -2352,6 +2465,7 @@ components:
         type: "string"
       required: true
       x-example: "survey-1"
+      x-go-name: "SurveyID"
     VaultParam:
       in: "path"
       name: "vault_id"
@@ -2360,6 +2474,7 @@ components:
         type: "string"
       required: true
       x-example: "vault-1"
+      x-go-name: "VaultID"
     ScheduleParam:
       in: "path"
       name: "schedule_id"
@@ -2368,6 +2483,7 @@ components:
         type: "string"
       required: true
       x-example: "schedule-1"
+      x-go-name: "ScheduleID"
     RunnerParam:
       in: "path"
       name: "runner_id"
@@ -2376,6 +2492,7 @@ components:
         type: "string"
       required: true
       x-example: "runner-1"
+      x-go-name: "RunnerID"
     ExecutionParam:
       in: "path"
       name: "execution_id"
@@ -2384,14 +2501,16 @@ components:
         type: "string"
       required: true
       x-example: "execution-1"
-    TeamParam:
+      x-go-name: "ExecutionID"
+    GroupParam:
       in: "path"
-      name: "team_id"
-      description: "A team identifier or slug"
+      name: "group_id"
+      description: "A group identifier or slug"
       schema:
         type: "string"
       required: true
-      x-example: "team-1"
+      x-example: "group-1"
+      x-go-name: "GroupID"
     UserParam:
       in: "path"
       name: "user_id"
@@ -2400,6 +2519,7 @@ components:
         type: "string"
       required: true
       x-example: "jdoe"
+      x-go-name: "UserID"
 
   requestBodies:
     LoginAuthBody:
@@ -2409,6 +2529,9 @@ components:
         application/json:
           schema:
             type: "object"
+            required:
+              - "username"
+              - "password"
             properties:
               username:
                 type: "string"
@@ -2505,33 +2628,74 @@ components:
             properties:
               user:
                 type: "string"
-    ProjectTeamPermBody:
-      description: "The project team data to permit"
+    ProjectGroupPermBody:
+      description: "The project group data to permit"
       required: true
       content:
         application/json:
           schema:
             type: "object"
             required:
-              - "team"
+              - "group"
               - "perm"
             properties:
-              team:
+              group:
                 type: "string"
               perm:
                 type: "string"
-    ProjectTeamDropBody:
-      description: "The project team data to unlink"
+    ProjectGroupDropBody:
+      description: "The project group data to unlink"
       required: true
       content:
         application/json:
           schema:
             type: "object"
             required:
-              - "team"
+              - "group"
             properties:
-              team:
+              group:
                 type: "string"
+
+    CreateProjectRunnerBody:
+      description: "The runner data to create"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            properties:
+              slug:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              name:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              token:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+    UpdateProjectRunnerBody:
+      description: "The runner data to update"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            properties:
+              slug:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              name:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+              token:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
 
     CreateProjectCredentialBody:
       description: "The credential data to create"
@@ -2608,6 +2772,7 @@ components:
             properties:
               credential_id:
                 type: "string"
+                x-go-name: "CredentialID"
               slug:
                 type: "string"
                 x-omitempty: true
@@ -2636,6 +2801,7 @@ components:
                 type: "string"
                 x-omitempty: true
                 x-nullable: true
+                x-go-name: "CredentialID"
               slug:
                 type: "string"
                 x-omitempty: true
@@ -2665,14 +2831,17 @@ components:
                 type: "string"
                 x-omitempty: true
                 x-nullable: true
+                x-go-name: "RepositoryID"
               credential_id:
                 type: "string"
                 x-omitempty: true
                 x-nullable: true
+                x-go-name: "CredentialID"
               become_id:
                 type: "string"
                 x-omitempty: true
                 x-nullable: true
+                x-go-name: "BecomeID"
               slug:
                 type: "string"
                 x-omitempty: true
@@ -2701,14 +2870,17 @@ components:
                 type: "string"
                 x-omitempty: true
                 x-nullable: true
+                x-go-name: "RepositoryID"
               credential_id:
                 type: "string"
                 x-omitempty: true
                 x-nullable: true
+                x-go-name: "CredentialID"
               become_id:
                 type: "string"
                 x-omitempty: true
                 x-nullable: true
+                x-go-name: "BecomeID"
               slug:
                 type: "string"
                 x-omitempty: true
@@ -2875,14 +3047,17 @@ components:
                 type: "string"
                 x-omitempty: true
                 x-nullable: true
+                x-go-name: "RepositoryID"
               inventory_id:
                 type: "string"
                 x-omitempty: true
                 x-nullable: true
+                x-go-name: "InventoryID"
               environment_id:
                 type: "string"
                 x-omitempty: true
                 x-nullable: true
+                x-go-name: "EnvironmentID"
               slug:
                 type: "string"
                 x-omitempty: true
@@ -2941,14 +3116,17 @@ components:
                 type: "string"
                 x-omitempty: true
                 x-nullable: true
+                x-go-name: "RepositoryID"
               inventory_id:
                 type: "string"
                 x-omitempty: true
                 x-nullable: true
+                x-go-name: "InventoryID"
               environment_id:
                 type: "string"
                 x-omitempty: true
                 x-nullable: true
+                x-go-name: "EnvironmentID"
               slug:
                 type: "string"
                 x-omitempty: true
@@ -3073,6 +3251,7 @@ components:
                 type: "string"
                 x-omitempty: true
                 x-nullable: true
+                x-go-name: "CredentialID"
               name:
                 type: "string"
                 x-omitempty: true
@@ -3097,6 +3276,7 @@ components:
                 type: "string"
                 x-omitempty: true
                 x-nullable: true
+                x-go-name: "CredentialID"
               name:
                 type: "string"
                 x-omitempty: true
@@ -3122,6 +3302,7 @@ components:
                 type: "string"
                 x-omitempty: true
                 x-nullable: true
+                x-go-name: "TemplateID"
               slug:
                 type: "string"
                 x-omitempty: true
@@ -3150,6 +3331,7 @@ components:
                 type: "string"
                 x-omitempty: true
                 x-nullable: true
+                x-go-name: "TemplateID"
               slug:
                 type: "string"
                 x-omitempty: true
@@ -3179,6 +3361,7 @@ components:
                 type: "string"
                 x-omitempty: true
                 x-nullable: true
+                x-go-name: "TemplateID"
               status:
                 type: "string"
                 x-omitempty: true
@@ -3208,7 +3391,7 @@ components:
                 x-omitempty: true
                 x-nullable: true
 
-    CreateRunnerBody:
+    CreateGlobalRunnerBody:
       description: "The runner data to create"
       required: true
       content:
@@ -3216,6 +3399,11 @@ components:
           schema:
             type: "object"
             properties:
+              project_id:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+                x-go-name: "ProjectID"
               slug:
                 type: "string"
                 x-omitempty: true
@@ -3228,7 +3416,7 @@ components:
                 type: "string"
                 x-omitempty: true
                 x-nullable: true
-    UpdateRunnerBody:
+    UpdateGlobalRunnerBody:
       description: "The runner data to update"
       required: true
       content:
@@ -3236,6 +3424,11 @@ components:
           schema:
             type: "object"
             properties:
+              project_id:
+                type: "string"
+                x-omitempty: true
+                x-nullable: true
+                x-go-name: "ProjectID"
               slug:
                 type: "string"
                 x-omitempty: true
@@ -3249,8 +3442,8 @@ components:
                 x-omitempty: true
                 x-nullable: true
 
-    CreateTeamBody:
-      description: "The team data to create"
+    CreateGroupBody:
+      description: "The group data to create"
       required: true
       content:
         application/json:
@@ -3265,8 +3458,8 @@ components:
                 type: "string"
                 x-omitempty: true
                 x-nullable: true
-    UpdateTeamBody:
-      description: "The team data to update"
+    UpdateGroupBody:
+      description: "The group data to update"
       required: true
       content:
         application/json:
@@ -3281,8 +3474,8 @@ components:
                 type: "string"
                 x-omitempty: true
                 x-nullable: true
-    TeamUserPermBody:
-      description: "The team user data to permit"
+    GroupUserPermBody:
+      description: "The group user data to permit"
       required: true
       content:
         application/json:
@@ -3296,8 +3489,8 @@ components:
                 type: "string"
               perm:
                 type: "string"
-    TeamUserDropBody:
-      description: "The team user data to unlink"
+    GroupUserDropBody:
+      description: "The group user data to unlink"
       required: true
       content:
         application/json:
@@ -3308,8 +3501,8 @@ components:
             properties:
               user:
                 type: "string"
-    TeamProjectPermBody:
-      description: "The team project data to permit"
+    GroupProjectPermBody:
+      description: "The group project data to permit"
       required: true
       content:
         application/json:
@@ -3323,8 +3516,8 @@ components:
                 type: "string"
               perm:
                 type: "string"
-    TeamProjectDropBody:
-      description: "The team project data to unlink"
+    GroupProjectDropBody:
+      description: "The group project data to unlink"
       required: true
       content:
         application/json:
@@ -3404,32 +3597,32 @@ components:
                 type: "boolean"
                 x-omitempty: true
                 x-nullable: true
-    UserTeamPermBody:
-      description: "The user team data to permit"
+    UserGroupPermBody:
+      description: "The user group data to permit"
       required: true
       content:
         application/json:
           schema:
             type: "object"
             required:
-              - "team"
+              - "group"
               - "perm"
             properties:
-              team:
+              group:
                 type: "string"
               perm:
                 type: "string"
-    UserTeamDropBody:
-      description: "The user team data to unlink"
+    UserGroupDropBody:
+      description: "The user group data to unlink"
       required: true
       content:
         application/json:
           schema:
             type: "object"
             required:
-              - "team"
+              - "group"
             properties:
-              team:
+              group:
                 type: "string"
     UserProjectPermBody:
       description: "The user project data to permit"
@@ -3460,8 +3653,24 @@ components:
                 type: "string"
 
   responses:
-    UpgradeConnection:
-      description: "Upgrade to websocket connection"
+    NotFoundError:
+      description: "Resource not found"
+      content:
+        text/html:
+          schema:
+            type: "string"
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Notification"
+    InternalServerError:
+      description: "Some internal server error"
+      content:
+        text/html:
+          schema:
+            type: "string"
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Notification"
 
     SuccessMessage:
       description: "Plain success message"
@@ -3481,12 +3690,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Notification"
-    NotFoundError:
-      description: "Resource not found"
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Notification"
     AlreadyAttachedError:
       description: "Resource is already attached"
       content:
@@ -3499,12 +3702,7 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Notification"
-    InternalServerError:
-      description: "Some internal server error"
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Notification"
+
     ActionFailedError:
       description: "Failed to execute action for resource"
       content:
@@ -3525,12 +3723,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Notification"
-    ProviderInitError:
-      description: "Failed to initialize provider"
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Notification"
 
     GeneralError:
       description: "Some error unrelated to the handler"
@@ -3539,20 +3731,43 @@ components:
           schema:
             $ref: "#/components/schemas/Notification"
 
-    ProviderResponse:
+    ProviderInitError:
+      description: "Failed to initialize provider"
+      content:
+        text/html:
+          schema:
+            type: "string"
+
+    ProviderRequestResponse:
+      description: "Redirect to the defined provider"
+      content:
+        text/html:
+          schema:
+            type: "string"
+    ProviderCallbackResponse:
+      description: "Generated token with expire date"
+      content:
+        text/html:
+          schema:
+            type: "string"
+
+    ProvidersResponse:
       description: "A collection of auth providers"
       content:
         application/json:
           schema:
-            type: "array"
-            items:
-              $ref: "#/components/schemas/Provider"
-    CallbackResponse:
-      description: "Generated token with expire date"
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/AuthToken"
+            type: "object"
+            required:
+              - "total"
+              - "providers"
+            properties:
+              total:
+                type: integer
+                format: int64
+              providers:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Provider"
 
     VerifyResponse:
       description: "Metadata of the auth token"
@@ -3584,32 +3799,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Profile"
-
-    EventsResponse:
-      description: "A collection of events"
-      content:
-        application/json:
-          schema:
-            type: "object"
-            required:
-              - "total"
-              - "limit"
-              - "offset"
-              - "events"
-            properties:
-              total:
-                type: integer
-                format: int64
-              limit:
-                type: integer
-                format: int64
-              offset:
-                type: integer
-                format: int64
-              events:
-                type: "array"
-                items:
-                  $ref: "#/components/schemas/Event"
 
     ProjectsResponse:
       description: "A collection of projects"
@@ -3670,8 +3859,8 @@ components:
                 type: "array"
                 items:
                   $ref: "#/components/schemas/UserProject"
-    ProjectTeamsResponse:
-      description: "A collection of project teams"
+    ProjectGroupsResponse:
+      description: "A collection of project groups"
       content:
         application/json:
           schema:
@@ -3680,7 +3869,7 @@ components:
               - "total"
               - "limit"
               - "offset"
-              - "teams"
+              - "groups"
             properties:
               total:
                 type: integer
@@ -3694,10 +3883,74 @@ components:
               project:
                 $ref: "#/components/schemas/Project"
                 readOnly: true
-              teams:
+              groups:
                 type: "array"
                 items:
-                  $ref: "#/components/schemas/TeamProject"
+                  $ref: "#/components/schemas/GroupProject"
+
+    ProjectEventsResponse:
+      description: "A collection of events for a project"
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "total"
+              - "limit"
+              - "offset"
+              - "events"
+            properties:
+              total:
+                type: integer
+                format: int64
+              limit:
+                type: integer
+                format: int64
+              offset:
+                type: integer
+                format: int64
+              project:
+                readOnly: true
+                $ref: "#/components/schemas/Project"
+              events:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Event"
+
+    ProjectRunnersResponse:
+      description: "A collection of runners for a project"
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "total"
+              - "limit"
+              - "offset"
+              - "runners"
+            properties:
+              total:
+                type: integer
+                format: int64
+              limit:
+                type: integer
+                format: int64
+              offset:
+                type: integer
+                format: int64
+              project:
+                readOnly: true
+                $ref: "#/components/schemas/Project"
+              runners:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Runner"
+    ProjectRunnerResponse:
+      description: "The details for a runner of a project"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Runner"
 
     ProjectCredentialsResponse:
       description: "A collection of credentials for a project"
@@ -3968,14 +4221,42 @@ components:
           schema:
             $ref: "#/components/schemas/Execution"
 
-    ProjectLoggingResponse:
+    ProjectOutputResponse:
       description: "The logging for a execution of a project"
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Logging"
+            type: "array"
+            items:
+              $ref: "#/components/schemas/Output"
 
-    RunnersResponse:
+    GlobalEventsResponse:
+      description: "A collection of events"
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "total"
+              - "limit"
+              - "offset"
+              - "events"
+            properties:
+              total:
+                type: integer
+                format: int64
+              limit:
+                type: integer
+                format: int64
+              offset:
+                type: integer
+                format: int64
+              events:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Event"
+
+    GlobalRunnersResponse:
       description: "A collection of runners"
       content:
         application/json:
@@ -4000,15 +4281,15 @@ components:
                 type: "array"
                 items:
                   $ref: "#/components/schemas/Runner"
-    RunnerResponse:
+    GlobalRunnerResponse:
       description: "The details for a runner"
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/Runner"
 
-    TeamsResponse:
-      description: "A collection of teams"
+    GroupsResponse:
+      description: "A collection of groups"
       content:
         application/json:
           schema:
@@ -4017,7 +4298,7 @@ components:
               - "total"
               - "limit"
               - "offset"
-              - "teams"
+              - "groups"
             properties:
               total:
                 type: integer
@@ -4028,18 +4309,18 @@ components:
               offset:
                 type: integer
                 format: int64
-              teams:
+              groups:
                 type: "array"
                 items:
-                  $ref: "#/components/schemas/Team"
-    TeamResponse:
-      description: "The details for a team"
+                  $ref: "#/components/schemas/Group"
+    GroupResponse:
+      description: "The details for a group"
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Team"
-    TeamUsersResponse:
-      description: "A collection of team users"
+            $ref: "#/components/schemas/Group"
+    GroupUsersResponse:
+      description: "A collection of group users"
       content:
         application/json:
           schema:
@@ -4059,15 +4340,15 @@ components:
               offset:
                 type: integer
                 format: int64
-              team:
-                $ref: "#/components/schemas/Team"
+              group:
+                $ref: "#/components/schemas/Group"
                 readOnly: true
               users:
                 type: "array"
                 items:
-                  $ref: "#/components/schemas/UserTeam"
-    TeamProjectsResponse:
-      description: "A collection of team projects"
+                  $ref: "#/components/schemas/UserGroup"
+    GroupProjectsResponse:
+      description: "A collection of group projects"
       content:
         application/json:
           schema:
@@ -4087,13 +4368,13 @@ components:
               offset:
                 type: integer
                 format: int64
-              team:
-                $ref: "#/components/schemas/Team"
+              group:
+                $ref: "#/components/schemas/Group"
                 readOnly: true
               projects:
                 type: "array"
                 items:
-                  $ref: "#/components/schemas/TeamProject"
+                  $ref: "#/components/schemas/GroupProject"
 
     UsersResponse:
       description: "A collection of users"
@@ -4126,8 +4407,8 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/User"
-    UserTeamsResponse:
-      description: "A collection of user teams"
+    UserGroupsResponse:
+      description: "A collection of user groups"
       content:
         application/json:
           schema:
@@ -4136,7 +4417,7 @@ components:
               - "total"
               - "limit"
               - "offset"
-              - "teams"
+              - "groups"
             properties:
               total:
                 type: integer
@@ -4150,10 +4431,10 @@ components:
               user:
                 $ref: "#/components/schemas/User"
                 readOnly: true
-              teams:
+              groups:
                 type: "array"
                 items:
-                  $ref: "#/components/schemas/UserTeam"
+                  $ref: "#/components/schemas/UserGroup"
     UserProjectsResponse:
       description: "A collection of user projects"
       content:
@@ -4221,7 +4502,7 @@ components:
       properties:
         id:
           type: "string"
-          readOnly: true
+          x-go-name: "ID"
         username:
           type: "string"
           x-omitempty: true
@@ -4264,13 +4545,13 @@ components:
           readOnly: true
           items:
             $ref: "#/components/schemas/UserAuth"
-        teams:
+        groups:
           type: "array"
           x-omitempty: true
           x-nullable: true
           readOnly: true
           items:
-            $ref: "#/components/schemas/UserTeam"
+            $ref: "#/components/schemas/UserGroup"
         projects:
           type: "array"
           x-omitempty: true
@@ -4288,6 +4569,11 @@ components:
           type: "string"
           x-omitempty: true
           x-nullable: true
+          x-go-name: "UserID"
+        user_handle:
+          type: "string"
+          x-omitempty: true
+          x-nullable: true
         user_display:
           type: "string"
           x-omitempty: true
@@ -4296,44 +4582,68 @@ components:
           type: "string"
           x-omitempty: true
           x-nullable: true
+          x-go-name: "ProjectID"
         project_display:
           type: "string"
           x-omitempty: true
           x-nullable: true
         object_id:
           type: "string"
+          x-go-name: "ObjectID"
         object_display:
           type: "string"
         object_type:
           type: "string"
+          enum:
+            - "credential"
+            - "environment"
+            - "execution"
+            - "group_project"
+            - "group_user"
+            - "group"
+            - "inventory"
+            - "project_group"
+            - "project_user"
+            - "project"
+            - "repository"
+            - "runner"
+            - "schedule"
+            - "template"
+            - "user_group"
+            - "user_project"
+            - "user"
         action:
           type: "string"
-        description:
-          type: "string"
+          enum:
+            - "create"
+            - "update"
+            - "delete"
+        attrs:
+          type: "object"
         created_at:
           type: "string"
           format: "date-time"
           readOnly: true
 
-    Logging:
-      title: "Logging"
-      description: "Model to represent logging"
+    Output:
+      title: "Output"
+      description: "Model to represent output"
       type: "object"
       properties:
         execution_id:
           type: "string"
-          readOnly: true
+          x-go-name: "ExecutionID"
         execution:
           x-omitempty: true
           x-nullable: true
           readOnly: true
           $ref: "#/components/schemas/Execution"
-        time:
+        content:
+          type: "string"
+          readOnly: true
+        created_at:
           type: "string"
           format: "date-time"
-          readOnly: true
-        output:
-          type: "string"
           readOnly: true
 
     Project:
@@ -4343,7 +4653,7 @@ components:
       properties:
         id:
           type: "string"
-          readOnly: true
+          x-go-name: "ID"
         slug:
           type: "string"
         name:
@@ -4364,9 +4674,10 @@ components:
       properties:
         id:
           type: "string"
-          readOnly: true
+          x-go-name: "ID"
         project_id:
           type: "string"
+          x-go-name: "ProjectID"
         slug:
           type: "string"
         name:
@@ -4425,11 +4736,13 @@ components:
       properties:
         id:
           type: "string"
-          readOnly: true
+          x-go-name: "ID"
         project_id:
           type: "string"
+          x-go-name: "ProjectID"
         credential_id:
           type: "string"
+          x-go-name: "CredentialID"
         credential:
           x-omitempty: true
           x-nullable: true
@@ -4459,11 +4772,13 @@ components:
       properties:
         id:
           type: "string"
-          readOnly: true
+          x-go-name: "ID"
         project_id:
           type: "string"
+          x-go-name: "ProjectID"
         repository_id:
           type: "string"
+          x-go-name: "RepositoryID"
         repository:
           x-omitempty: true
           x-nullable: true
@@ -4471,6 +4786,7 @@ components:
           $ref: "#/components/schemas/Repository"
         credential_id:
           type: "string"
+          x-go-name: "CredentialID"
         credential:
           x-omitempty: true
           x-nullable: true
@@ -4478,6 +4794,7 @@ components:
           $ref: "#/components/schemas/Credential"
         become_id:
           type: "string"
+          x-go-name: "BecomeID"
         become:
           x-omitempty: true
           x-nullable: true
@@ -4510,9 +4827,10 @@ components:
       properties:
         id:
           type: "string"
-          readOnly: true
+          x-go-name: "ID"
         project_id:
           type: "string"
+          x-go-name: "ProjectID"
         slug:
           type: "string"
         name:
@@ -4541,6 +4859,7 @@ components:
       properties:
         id:
           type: "string"
+          x-go-name: "ID"
         name:
           type: "string"
         kind:
@@ -4558,6 +4877,7 @@ components:
       properties:
         id:
           type: "string"
+          x-go-name: "ID"
         name:
           type: "string"
         kind:
@@ -4575,11 +4895,13 @@ components:
       properties:
         id:
           type: "string"
-          readOnly: true
+          x-go-name: "ID"
         project_id:
           type: "string"
+          x-go-name: "ProjectID"
         repository_id:
           type: "string"
+          x-go-name: "RepositoryID"
         repository:
           x-omitempty: true
           x-nullable: true
@@ -4587,6 +4909,7 @@ components:
           $ref: "#/components/schemas/Repository"
         inventory_id:
           type: "string"
+          x-go-name: "InventoryID"
         inventory:
           x-omitempty: true
           x-nullable: true
@@ -4594,6 +4917,7 @@ components:
           $ref: "#/components/schemas/Inventory"
         environment_id:
           type: "string"
+          x-go-name: "EnvironmentID"
         environment:
           x-omitempty: true
           x-nullable: true
@@ -4645,6 +4969,7 @@ components:
       properties:
         id:
           type: "string"
+          x-go-name: "ID"
         name:
           type: "string"
         title:
@@ -4672,6 +4997,7 @@ components:
       properties:
         id:
           type: "string"
+          x-go-name: "ID"
         name:
           type: "string"
         value:
@@ -4684,8 +5010,10 @@ components:
       properties:
         id:
           type: "string"
+          x-go-name: "ID"
         credential_id:
           type: "string"
+          x-go-name: "CredentialID"
           x-omitempty: true
           x-nullable: true
         credential:
@@ -4712,11 +5040,13 @@ components:
       properties:
         id:
           type: "string"
-          readOnly: true
+          x-go-name: "ID"
         project_id:
           type: "string"
+          x-go-name: "ProjectID"
         template_id:
           type: "string"
+          x-go-name: "TemplateID"
         template:
           x-omitempty: true
           x-nullable: true
@@ -4746,7 +5076,15 @@ components:
       properties:
         id:
           type: "string"
+          x-go-name: "ID"
+        project_id:
+          type: "string"
+          x-go-name: "ProjectID"
+        project:
+          x-omitempty: true
+          x-nullable: true
           readOnly: true
+          $ref: "#/components/schemas/Project"
         slug:
           type: "string"
         name:
@@ -4769,16 +5107,20 @@ components:
       properties:
         id:
           type: "string"
-          readOnly: true
+          x-go-name: "ID"
         project_id:
           type: "string"
+          x-go-name: "ProjectID"
         template_id:
           type: "string"
+          x-go-name: "TemplateID"
         template:
           x-omitempty: true
           x-nullable: true
           readOnly: true
           $ref: "#/components/schemas/Template"
+        name:
+          type: "string"
         status:
           type: "string"
         debug:
@@ -4802,14 +5144,14 @@ components:
           format: "date-time"
           readOnly: true
 
-    Team:
-      title: "Team"
-      description: "Model to represent team"
+    Group:
+      title: "Group"
+      description: "Model to represent group"
       type: "object"
       properties:
         id:
           type: "string"
-          readOnly: true
+          x-go-name: "ID"
         slug:
           type: "string"
           x-omitempty: true
@@ -4826,49 +5168,26 @@ components:
           type: "string"
           format: "date-time"
           readOnly: true
-        auths:
-          type: "array"
-          x-omitempty: true
-          x-nullable: true
-          readOnly: true
-          items:
-            $ref: "#/components/schemas/TeamAuth"
 
-    TeamAuth:
-      title: "Team Auth"
-      description: "Model to represent team auth"
-      type: "object"
-      properties:
-        provider:
-          type: "string"
-        ref:
-          type: "string"
-        created_at:
-          type: "string"
-          format: "date-time"
-          readOnly: true
-        updated_at:
-          type: "string"
-          format: "date-time"
-          readOnly: true
-
-    TeamProject:
-      title: "Team Project"
-      description: "Model to represent team project"
+    GroupProject:
+      title: "Group Project"
+      description: "Model to represent group project"
       type: "object"
       required:
-        - "team_id"
+        - "group_id"
         - "project_id"
       properties:
-        team_id:
+        group_id:
           type: "string"
-        team:
+          x-go-name: "GroupID"
+        group:
           x-omitempty: true
           x-nullable: true
           readOnly: true
-          $ref: "#/components/schemas/Team"
+          $ref: "#/components/schemas/Group"
         project_id:
           type: "string"
+          x-go-name: "ProjectID"
         project:
           x-omitempty: true
           x-nullable: true
@@ -4897,7 +5216,7 @@ components:
       properties:
         id:
           type: "string"
-          readOnly: true
+          x-go-name: "ID"
         username:
           type: "string"
           x-omitempty: true
@@ -4961,28 +5280,30 @@ components:
           format: "date-time"
           readOnly: true
 
-    UserTeam:
-      title: "User Team"
-      description: "Model to represent user team"
+    UserGroup:
+      title: "User Group"
+      description: "Model to represent user group"
       type: "object"
       required:
         - "user_id"
-        - "team_id"
+        - "group_id"
       properties:
         user_id:
           type: "string"
+          x-go-name: "UserID"
         user:
           x-omitempty: true
           x-nullable: true
           readOnly: true
           $ref: "#/components/schemas/User"
-        team_id:
+        group_id:
           type: "string"
-        team:
+          x-go-name: "GroupID"
+        group:
           x-omitempty: true
           x-nullable: true
           readOnly: true
-          $ref: "#/components/schemas/Team"
+          $ref: "#/components/schemas/Group"
         perm:
           type: "string"
           default: "user"
@@ -5009,6 +5330,7 @@ components:
       properties:
         user_id:
           type: "string"
+          x-go-name: "UserID"
         user:
           x-omitempty: true
           x-nullable: true
@@ -5016,6 +5338,7 @@ components:
           $ref: "#/components/schemas/User"
         project_id:
           type: "string"
+          x-go-name: "ProjectID"
         project:
           x-omitempty: true
           x-nullable: true
@@ -5052,9 +5375,6 @@ components:
           type: "string"
           readOnly: true
         icon:
-          type: "string"
-          readOnly: true
-        url:
           type: "string"
           readOnly: true
 

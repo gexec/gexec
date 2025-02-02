@@ -7,7 +7,7 @@ import (
 	"github.com/elimity-com/scim"
 	"github.com/elimity-com/scim/optional"
 	"github.com/elimity-com/scim/schema"
-	"github.com/genexec/genexec/pkg/config"
+	"github.com/gexec/gexec/pkg/config"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/uptrace/bun"
@@ -43,7 +43,7 @@ func (s *Scim) Server() (http.HandlerFunc, error) {
 	server, err := scim.NewServer(
 		&scim.ServerArgs{
 			ServiceProviderConfig: &scim.ServiceProviderConfig{
-				DocumentationURI: optional.NewString("https://genexec.eu/usage/scim"),
+				DocumentationURI: optional.NewString("https://gexec.eu/usage/scim"),
 				SupportPatch:     true,
 			},
 			ResourceTypes: []scim.ResourceType{

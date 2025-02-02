@@ -4,8 +4,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/genexec/genexec/pkg/config"
-	"github.com/genexec/genexec/pkg/upload"
+	"github.com/gexec/gexec/pkg/config"
+	"github.com/gexec/gexec/pkg/upload"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
@@ -48,12 +48,12 @@ func setupConfig() {
 		viper.SetConfigFile(viper.GetString("config.file"))
 	} else {
 		viper.SetConfigName("api")
-		viper.AddConfigPath("/etc/genexec")
-		viper.AddConfigPath("$HOME/.genexec")
+		viper.AddConfigPath("/etc/gexec")
+		viper.AddConfigPath("$HOME/.gexec")
 		viper.AddConfigPath(".")
 	}
 
-	viper.SetEnvPrefix("genexec")
+	viper.SetEnvPrefix("gexec")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 

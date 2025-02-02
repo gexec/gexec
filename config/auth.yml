@@ -94,7 +94,7 @@ providers:
     client_id: your-client-id # altneratively file://path/to/client_id
     client_secret: your-client-secret # altneratively file://path/to/client_secret
     endpoints:
-      discovery: https://authentik.example.com/application/o/genexec/
+      discovery: https://authentik.example.com/application/o/gexec/
     mappings:
       login: preferred_username
       name: name
@@ -112,7 +112,7 @@ providers:
     client_id: your-client-id # altneratively file://path/to/client_id
     client_secret: your-client-secret # altneratively file://path/to/client_secret
     endpoints:
-      discovery: https://kanidm.example.com/oauth2/openid/genexec/
+      discovery: https://kanidm.example.com/oauth2/openid/gexec/
     mappings:
       login: preferred_username
       name: name

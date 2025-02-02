@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/genexec/genexec/pkg/model"
+	"github.com/gexec/gexec/pkg/model"
 )
 
 type contextKey string

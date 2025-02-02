@@ -1,17 +1,17 @@
 FROM arm32v6/alpine:3.20
 
 RUN apk add --no-cache ca-certificates mailcap && \
-    addgroup -g 1337 genexec && \
-    adduser -D -u 1337 -h /var/lib/genexec -G genexec genexec
+    addgroup -g 1337 gexec && \
+    adduser -D -u 1337 -h /var/lib/gexec -G gexec gexec
 
 EXPOSE 8000 8080
-VOLUME ["/var/lib/genexec"]
-ENTRYPOINT ["/usr/bin/genexec"]
+VOLUME ["/var/lib/gexec"]
+ENTRYPOINT ["/usr/bin/gexec"]
 CMD ["server"]
 
-ENV GENEXEC_DATABASE_DSN sqlite:///var/lib/genexec/database.sqlite3
-ENV GENEXEC_UPLOAD_DSN file:///var/lib/genexec/uploads
+ENV GENEXEC_DATABASE_DSN sqlite:///var/lib/gexec/database.sqlite3
+ENV GENEXEC_UPLOAD_DSN file:///var/lib/gexec/uploads
 
-COPY bin/genexec /usr/bin/genexec
-WORKDIR /var/lib/genexec
-USER genexec
+COPY bin/gexec /usr/bin/gexec
+WORKDIR /var/lib/gexec
+USER gexec

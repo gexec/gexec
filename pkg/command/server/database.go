@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v5"
-	"github.com/genexec/genexec/pkg/store"
+	"github.com/gexec/gexec/pkg/store"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -290,7 +290,8 @@ func dbCreateAction(ccmd *cobra.Command, args []string) {
 func prepareStorage(ctx context.Context) *store.Store {
 	storage, err := store.NewStore(
 		cfg.Database,
-		cfg.Encrypt.Passphrase,
+		cfg.Encrypt,
+		cfg.Scim,
 	)
 
 	if err != nil {

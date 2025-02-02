@@ -33,7 +33,7 @@ var (
 		Args:  cobra.NoArgs,
 	}
 
-	defaultCertGenCertHosts  = []string{"genexec"}
+	defaultCertGenCertHosts  = []string{"gexec"}
 	defaultCertGenCertOrg    = "Genexec"
 	defaultCertGenCertName   = "API"
 	defaultCertGenEcdsaCurve = ""

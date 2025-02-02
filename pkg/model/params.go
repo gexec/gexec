@@ -9,22 +9,22 @@ type ListParams struct {
 	Offset int64
 }
 
-// TeamProjectParams defines parameters for team projects.
-type TeamProjectParams struct {
+// GroupProjectParams defines parameters for group projects.
+type GroupProjectParams struct {
 	ListParams
 
-	TeamID    string
+	GroupID   string
 	ProjectID string
 	Perm      string
 }
 
-// UserTeamParams defines parameters for user teams.
-type UserTeamParams struct {
+// UserGroupParams defines parameters for user groups.
+type UserGroupParams struct {
 	ListParams
 
-	UserID string
-	TeamID string
-	Perm   string
+	UserID  string
+	GroupID string
+	Perm    string
 }
 
 // UserProjectParams defines parameters for user projects.

@@ -19,6 +19,7 @@ type User struct {
 	bun.BaseModel `bun:"table:users"`
 
 	ID        string         `bun:",pk,type:varchar(20)"`
+	Scim      string         `bun:"type:varchar(255)"`
 	Username  string         `bun:",unique,type:varchar(255)"`
 	Password  string         `bun:"-"`
 	Hashword  string         `bun:"type:varchar(255)"`
@@ -30,7 +31,7 @@ type User struct {
 	CreatedAt time.Time      `bun:",nullzero,notnull,default:current_timestamp"`
 	UpdatedAt time.Time      `bun:",nullzero,notnull,default:current_timestamp"`
 	Auths     []*UserAuth    `bun:"rel:has-many,join:id=user_id"`
-	Teams     []*UserTeam    `bun:"rel:has-many,join:id=user_id"`
+	Groups    []*UserGroup   `bun:"rel:has-many,join:id=user_id"`
 	Projects  []*UserProject `bun:"rel:has-many,join:id=user_id"`
 }
 

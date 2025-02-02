@@ -51,6 +51,7 @@ func (m *Repository) BeforeAppendModel(_ context.Context, query bun.Query) error
 	return nil
 }
 
+// SerializeSecret ensures to encrypt all related secrets stored on the database.
 func (m *Repository) SerializeSecret(passphrase string) error {
 	if m.Credential != nil {
 		if err := m.Credential.SerializeSecret(passphrase); err != nil {
@@ -61,6 +62,7 @@ func (m *Repository) SerializeSecret(passphrase string) error {
 	return nil
 }
 
+// DeserializeSecret ensures to decrypt all related secrets stored on the database.
 func (m *Repository) DeserializeSecret(passphrase string) error {
 	if m.Credential != nil {
 		if err := m.Credential.DeserializeSecret(passphrase); err != nil {

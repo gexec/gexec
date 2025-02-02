@@ -5,6 +5,7 @@
     "root": "/",
     "cert": "",
     "key": "",
+    "assets": "",
     "docs": true
   },
   "runner": {
@@ -33,7 +34,7 @@
     "port": "",
     "username": "",
     "password": "",
-    "name": "storage/genexec.sqlite3",
+    "name": "storage/gexec.sqlite3",
     "options": {}
   },
   "upload": {

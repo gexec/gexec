@@ -51,6 +51,7 @@ func (m *Schedule) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+// SerializeSecret ensures to encrypt all related secrets stored on the database.
 func (m *Schedule) SerializeSecret(passphrase string) error {
 	if m.Template != nil {
 		if err := m.Template.SerializeSecret(passphrase); err != nil {
@@ -61,6 +62,7 @@ func (m *Schedule) SerializeSecret(passphrase string) error {
 	return nil
 }
 
+// DeserializeSecret ensures to decrypt all related secrets stored on the database.
 func (m *Schedule) DeserializeSecret(passphrase string) error {
 	if m.Template != nil {
 		if err := m.Template.DeserializeSecret(passphrase); err != nil {

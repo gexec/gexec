@@ -1,62 +1,27 @@
 package v1
 
 import (
-	"context"
-	"errors"
+	"encoding/json"
 	"net/http"
 
-	"github.com/genexec/genexec/pkg/middleware/current"
-	"github.com/genexec/genexec/pkg/model"
-	"github.com/genexec/genexec/pkg/store"
-	"github.com/genexec/genexec/pkg/validate"
+	"github.com/gexec/gexec/pkg/middleware/current"
+	"github.com/gexec/gexec/pkg/model"
+	"github.com/gexec/gexec/pkg/validate"
+	"github.com/go-chi/render"
 	"github.com/rs/zerolog/log"
 )
 
 // ListProjectCredentials implements the v1.ServerInterface.
-func (a *API) ListProjectCredentials(ctx context.Context, request ListProjectCredentialsRequestObject) (ListProjectCredentialsResponseObject, error) {
-	parent, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Projects.Show(
-		ctx,
-		request.ProjectId,
-	)
+func (a *API) ListProjectCredentials(w http.ResponseWriter, r *http.Request, _ ProjectID, params ListProjectCredentialsParams) {
+	ctx := r.Context()
+	project := a.ProjectFromContext(ctx)
+	sort, order, limit, offset, search := listCredentialsSorting(params)
 
-	if err != nil {
-		if errors.Is(err, store.ErrProjectNotFound) {
-			return ListProjectCredentials404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
-		log.Error().
-			Err(err).
-			Str("action", "ListProjectCredentials").
-			Str("project", request.ProjectId).
-			Msg("Failed to load project")
-
-		return ListProjectCredentials500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load project"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
-
-	if !a.permitShowProject(ctx, projectPermissions{
-		User:   current.GetUser(ctx),
-		Record: parent,
-	}) {
-		return ListProjectCredentials404JSONResponse{NotFoundErrorJSONResponse{
-			Message: ToPtr("Failed to find project"),
-			Status:  ToPtr(http.StatusNotFound),
-		}}, nil
-	}
-
-	sort, order, limit, offset, search := listCredentialsSorting(request)
 	records, count, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Credentials.List(
 		ctx,
-		parent.ID,
+		project.ID,
 		model.ListParams{
 			Sort:   sort,
 			Order:  order,
@@ -69,213 +34,138 @@ func (a *API) ListProjectCredentials(ctx context.Context, request ListProjectCre
 	if err != nil {
 		log.Error().
 			Err(err).
+			Str("project", project.ID).
 			Str("action", "ListProjectCredentials").
-			Str("project", parent.ID).
 			Msg("Failed to load credentials")
 
-		return ListProjectCredentials500JSONResponse{InternalServerErrorJSONResponse{
+		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to load credentials"),
 			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+		})
+
+		return
 	}
 
 	payload := make([]Credential, len(records))
 	for id, record := range records {
-		if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil { // TODO: remove it, security risk
+		if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
 			log.Error().
 				Err(err).
+				Str("project", project.ID).
 				Str("action", "ListProjectCredentials").
-				Str("project", parent.ID).
 				Msg("Failed to decrypt secrets")
 
-			return ListProjectCredentials500JSONResponse{InternalServerErrorJSONResponse{
+			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to decrypt secrets"),
 				Status:  ToPtr(http.StatusInternalServerError),
-			}}, nil
+			})
+
+			return
 		}
 
 		payload[id] = a.convertCredential(record)
 	}
 
-	return ListProjectCredentials200JSONResponse{ProjectCredentialsResponseJSONResponse{
+	render.JSON(w, r, ProjectCredentialsResponse{
 		Total:       count,
 		Limit:       limit,
 		Offset:      offset,
-		Project:     ToPtr(a.convertProject(parent)),
+		Project:     ToPtr(a.convertProject(project)),
 		Credentials: payload,
-	}}, nil
+	})
 }
 
 // ShowProjectCredential implements the v1.ServerInterface.
-func (a *API) ShowProjectCredential(ctx context.Context, request ShowProjectCredentialRequestObject) (ShowProjectCredentialResponseObject, error) {
-	parent, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Projects.Show(
-		ctx,
-		request.ProjectId,
-	)
+func (a *API) ShowProjectCredential(w http.ResponseWriter, r *http.Request, _ ProjectID, _ CredentialID) {
+	ctx := r.Context()
+	project := a.ProjectFromContext(ctx)
+	record := a.ProjectCredentialFromContext(ctx)
 
-	if err != nil {
-		if errors.Is(err, store.ErrProjectNotFound) {
-			return ShowProjectCredential404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project or credential"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
+	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		log.Error().
 			Err(err).
-			Str("action", "ShowProjectCredential").
-			Str("project", request.ProjectId).
-			Msg("Failed to load project")
-
-		return ShowProjectCredential500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load project"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
-
-	record, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Credentials.Show(
-		ctx,
-		parent.ID,
-		request.CredentialId,
-	)
-
-	if err != nil {
-		if errors.Is(err, store.ErrCredentialNotFound) {
-			return ShowProjectCredential404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project or credential"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
-		log.Error().
-			Err(err).
-			Str("action", "ShowProjectCredential").
-			Str("project", parent.ID).
-			Str("credential", request.CredentialId).
-			Msg("Failed to load credential")
-
-		return ShowProjectCredential500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load credential"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
-
-	if !a.permitShowCredential(ctx, credentialPermissions{
-		User:    current.GetUser(ctx),
-		Project: parent,
-		Record:  record,
-	}) {
-		return ShowProjectCredential404JSONResponse{NotFoundErrorJSONResponse{
-			Message: ToPtr("Failed to find project or credential"),
-			Status:  ToPtr(http.StatusNotFound),
-		}}, nil
-	}
-
-	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil { // TODO: remove it, security risk
-		log.Error().
-			Err(err).
-			Str("action", "ShowProjectCredential").
-			Str("project", parent.ID).
+			Str("project", project.ID).
 			Str("credential", record.ID).
+			Str("action", "ShowProjectCredential").
 			Msg("Failed to decrypt secrets")
 
-		return ShowProjectCredential500JSONResponse{InternalServerErrorJSONResponse{
+		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decrypt secrets"),
 			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+		})
+
+		return
 	}
 
-	return ShowProjectCredential200JSONResponse{ProjectCredentialResponseJSONResponse(
+	render.JSON(w, r, ProjectCredentialResponse(
 		a.convertCredential(record),
-	)}, nil
+	))
 }
 
 // CreateProjectCredential implements the v1.ServerInterface.
-func (a *API) CreateProjectCredential(ctx context.Context, request CreateProjectCredentialRequestObject) (CreateProjectCredentialResponseObject, error) {
-	parent, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Projects.Show(
-		ctx,
-		request.ProjectId,
-	)
+func (a *API) CreateProjectCredential(w http.ResponseWriter, r *http.Request, _ ProjectID) {
+	ctx := r.Context()
+	project := a.ProjectFromContext(ctx)
+	body := &CreateProjectCredentialBody{}
 
-	if err != nil {
-		if errors.Is(err, store.ErrProjectNotFound) {
-			return CreateProjectCredential404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
+	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
 		log.Error().
 			Err(err).
+			Str("project", project.ID).
 			Str("action", "CreateProjectCredential").
-			Str("project", request.ProjectId).
-			Msg("Failed to load project")
+			Msg("Failed to decode request body")
 
-		return CreateProjectCredential500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load project"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to decode request"),
+			Status:  ToPtr(http.StatusBadRequest),
+		})
 
-	if !a.permitCreateCredential(ctx, credentialPermissions{
-		User:    current.GetUser(ctx),
-		Project: parent,
-	}) {
-		return CreateProjectCredential404JSONResponse{NotFoundErrorJSONResponse{
-			Message: ToPtr("Failed to find project"),
-			Status:  ToPtr(http.StatusNotFound),
-		}}, nil
+		return
 	}
 
 	record := &model.Credential{
-		ProjectID: parent.ID,
+		ProjectID: project.ID,
 	}
 
-	if request.Body.Slug != nil {
-		record.Slug = FromPtr(request.Body.Slug)
+	if body.Slug != nil {
+		record.Slug = FromPtr(body.Slug)
 	}
 
-	if request.Body.Name != nil {
-		record.Name = FromPtr(request.Body.Name)
+	if body.Name != nil {
+		record.Name = FromPtr(body.Name)
 	}
 
-	if request.Body.Kind != nil {
-		record.Kind = FromPtr(request.Body.Kind)
+	if body.Kind != nil {
+		record.Kind = FromPtr(body.Kind)
 	}
 
-	if request.Body.Override != nil {
-		record.Override = FromPtr(request.Body.Override)
+	if body.Override != nil {
+		record.Override = FromPtr(body.Override)
 	}
 
 	switch record.Kind {
 	case "shell":
-		if request.Body.Shell != nil {
-			if request.Body.Shell.Username != nil {
-				record.Shell.Username = FromPtr(request.Body.Shell.Username)
+		if body.Shell != nil {
+			if body.Shell.Username != nil {
+				record.Shell.Username = FromPtr(body.Shell.Username)
 			}
 
-			if request.Body.Shell.Password != nil {
-				record.Shell.Password = FromPtr(request.Body.Shell.Password)
+			if body.Shell.Password != nil {
+				record.Shell.Password = FromPtr(body.Shell.Password)
 			}
 
-			if request.Body.Shell.PrivateKey != nil {
-				record.Shell.PrivateKey = FromPtr(request.Body.Shell.PrivateKey)
+			if body.Shell.PrivateKey != nil {
+				record.Shell.PrivateKey = FromPtr(body.Shell.PrivateKey)
 			}
 		}
 	case "login":
-		if request.Body.Login != nil {
-			if request.Body.Login.Username != nil {
-				record.Login.Username = FromPtr(request.Body.Login.Username)
+		if body.Login != nil {
+			if body.Login.Username != nil {
+				record.Login.Username = FromPtr(body.Login.Username)
 			}
 
-			if request.Body.Login.Password != nil {
-				record.Login.Password = FromPtr(request.Body.Login.Password)
+			if body.Login.Password != nil {
+				record.Login.Password = FromPtr(body.Login.Password)
 			}
 		}
 	}
@@ -283,21 +173,23 @@ func (a *API) CreateProjectCredential(ctx context.Context, request CreateProject
 	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		log.Error().
 			Err(err).
+			Str("project", project.ID).
 			Str("action", "CreateProjectCredential").
-			Str("project", parent.ID).
 			Msg("Failed to encrypt secrets")
 
-		return CreateProjectCredential500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to encrypt credentials"),
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to encrypt secrets"),
 			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+		})
+
+		return
 	}
 
 	if err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Credentials.Create(
 		ctx,
-		parent.ID,
+		project,
 		record,
 	); err != nil {
 		if v, ok := err.(validate.Errors); ok {
@@ -313,170 +205,116 @@ func (a *API) CreateProjectCredential(ctx context.Context, request CreateProject
 				)
 			}
 
-			return CreateProjectCredential422JSONResponse{ValidationErrorJSONResponse{
-				Status:  ToPtr(http.StatusUnprocessableEntity),
+			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to validate credential"),
+				Status:  ToPtr(http.StatusUnprocessableEntity),
 				Errors:  ToPtr(errors),
-			}}, nil
+			})
+
+			return
 		}
 
 		log.Error().
 			Err(err).
+			Str("project", project.ID).
 			Str("action", "CreateProjectCredential").
-			Str("project", parent.ID).
 			Msg("Failed to create credential")
 
-		return CreateProjectCredential500JSONResponse{InternalServerErrorJSONResponse{
+		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to create credential"),
 			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+		})
+
+		return
 	}
 
-	return CreateProjectCredential200JSONResponse{ProjectCredentialResponseJSONResponse(
+	render.JSON(w, r, ProjectCredentialResponse(
 		a.convertCredential(record),
-	)}, nil
+	))
 }
 
 // UpdateProjectCredential implements the v1.ServerInterface.
-func (a *API) UpdateProjectCredential(ctx context.Context, request UpdateProjectCredentialRequestObject) (UpdateProjectCredentialResponseObject, error) {
-	parent, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Projects.Show(
-		ctx,
-		request.ProjectId,
-	)
+func (a *API) UpdateProjectCredential(w http.ResponseWriter, r *http.Request, _ ProjectID, _ CredentialID) {
+	ctx := r.Context()
+	project := a.ProjectFromContext(ctx)
+	record := a.ProjectCredentialFromContext(ctx)
+	body := &UpdateProjectCredentialBody{}
 
-	if err != nil {
-		if errors.Is(err, store.ErrProjectNotFound) {
-			return UpdateProjectCredential404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project or credential"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
+	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
 		log.Error().
 			Err(err).
+			Str("project", project.ID).
+			Str("credential", record.ID).
 			Str("action", "UpdateProjectCredential").
-			Str("project", request.ProjectId).
-			Msg("Failed to load project")
+			Msg("Failed to decode request body")
 
-		return UpdateProjectCredential500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load project"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to decode request"),
+			Status:  ToPtr(http.StatusBadRequest),
+		})
 
-	record, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Credentials.Show(
-		ctx,
-		parent.ID,
-		request.CredentialId,
-	)
-
-	if err != nil {
-		if errors.Is(err, store.ErrCredentialNotFound) {
-			return UpdateProjectCredential404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project or credential"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
-		log.Error().
-			Err(err).
-			Str("action", "UpdateProjectCredential").
-			Str("project", parent.ID).
-			Str("credential", request.CredentialId).
-			Msg("Failed to load credential")
-
-		return UpdateProjectCredential500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load credential"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
-
-	if !a.permitManageCredential(ctx, credentialPermissions{
-		User:    current.GetUser(ctx),
-		Project: parent,
-		Record:  record,
-	}) {
-		return UpdateProjectCredential404JSONResponse{NotFoundErrorJSONResponse{
-			Message: ToPtr("Failed to find project or credential"),
-			Status:  ToPtr(http.StatusNotFound),
-		}}, nil
+		return
 	}
 
 	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		log.Error().
 			Err(err).
-			Str("action", "UpdateProjectCredential").
-			Str("project", parent.ID).
+			Str("project", project.ID).
 			Str("credential", record.ID).
+			Str("action", "UpdateProjectCredential").
 			Msg("Failed to decrypt secrets")
 
-		return UpdateProjectCredential500JSONResponse{InternalServerErrorJSONResponse{
+		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decrypt credentials"),
 			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+		})
+
+		return
 	}
 
-	if request.Body.Slug != nil {
-		record.Slug = FromPtr(request.Body.Slug)
+	if body.Slug != nil {
+		record.Slug = FromPtr(body.Slug)
 	}
 
-	if request.Body.Name != nil {
-		record.Name = FromPtr(request.Body.Name)
+	if body.Name != nil {
+		record.Name = FromPtr(body.Name)
 	}
 
-	if request.Body.Kind != nil {
-		record.Kind = FromPtr(request.Body.Kind)
+	if body.Kind != nil {
+		record.Kind = FromPtr(body.Kind)
 	}
 
-	if request.Body.Override != nil {
-		record.Override = FromPtr(request.Body.Override)
-	}
-
-	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("action", "UpdateProjectCredential").
-			Str("project", parent.ID).
-			Str("credential", record.ID).
-			Msg("Failed to encrypt secrets")
-
-		return UpdateProjectCredential500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to encrypt credentials"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+	if body.Override != nil {
+		record.Override = FromPtr(body.Override)
 	}
 
 	switch record.Kind {
 	case "shell":
 		record.Login = model.CredentialLogin{}
 
-		if request.Body.Shell != nil {
-			if request.Body.Shell.Username != nil {
-				record.Shell.Username = FromPtr(request.Body.Shell.Username)
+		if body.Shell != nil {
+			if body.Shell.Username != nil {
+				record.Shell.Username = FromPtr(body.Shell.Username)
 			}
 
-			if request.Body.Shell.Password != nil {
-				record.Shell.Password = FromPtr(request.Body.Shell.Password)
+			if body.Shell.Password != nil {
+				record.Shell.Password = FromPtr(body.Shell.Password)
 			}
 
-			if request.Body.Shell.PrivateKey != nil {
-				record.Shell.PrivateKey = FromPtr(request.Body.Shell.PrivateKey)
+			if body.Shell.PrivateKey != nil {
+				record.Shell.PrivateKey = FromPtr(body.Shell.PrivateKey)
 			}
 		}
 	case "login":
 		record.Shell = model.CredentialShell{}
 
-		if request.Body.Login != nil {
-			if request.Body.Login.Username != nil {
-				record.Login.Username = FromPtr(request.Body.Login.Username)
+		if body.Login != nil {
+			if body.Login.Username != nil {
+				record.Login.Username = FromPtr(body.Login.Username)
 			}
 
-			if request.Body.Login.Password != nil {
-				record.Login.Password = FromPtr(request.Body.Login.Password)
+			if body.Login.Password != nil {
+				record.Login.Password = FromPtr(body.Login.Password)
 			}
 		}
 	default:
@@ -487,22 +325,24 @@ func (a *API) UpdateProjectCredential(ctx context.Context, request UpdateProject
 	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		log.Error().
 			Err(err).
-			Str("action", "UpdateProjectCredential").
-			Str("project", parent.ID).
+			Str("project", project.ID).
 			Str("credential", record.ID).
+			Str("action", "UpdateProjectCredential").
 			Msg("Failed to encrypt secrets")
 
-		return UpdateProjectCredential500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to encrypt credentials"),
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to encrypt secrets"),
 			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+		})
+
+		return
 	}
 
 	if err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Credentials.Update(
 		ctx,
-		parent.ID,
+		project,
 		record,
 	); err != nil {
 		if v, ok := err.(validate.Errors); ok {
@@ -518,129 +358,72 @@ func (a *API) UpdateProjectCredential(ctx context.Context, request UpdateProject
 				)
 			}
 
-			return UpdateProjectCredential422JSONResponse{ValidationErrorJSONResponse{
-				Status:  ToPtr(http.StatusUnprocessableEntity),
+			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to validate credential"),
+				Status:  ToPtr(http.StatusUnprocessableEntity),
 				Errors:  ToPtr(errors),
-			}}, nil
+			})
+
+			return
 		}
 
 		log.Error().
 			Err(err).
-			Str("action", "UpdateProjectCredential").
-			Str("project", parent.ID).
+			Str("project", project.ID).
 			Str("credential", record.ID).
+			Str("action", "UpdateProjectCredential").
 			Msg("Failed to update credential")
 
-		return UpdateProjectCredential500JSONResponse{InternalServerErrorJSONResponse{
+		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to update credential"),
 			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+		})
+
+		return
 	}
 
-	return UpdateProjectCredential200JSONResponse{ProjectCredentialResponseJSONResponse(
+	render.JSON(w, r, ProjectCredentialResponse(
 		a.convertCredential(record),
-	)}, nil
+	))
 }
 
 // DeleteProjectCredential implements the v1.ServerInterface.
-func (a *API) DeleteProjectCredential(ctx context.Context, request DeleteProjectCredentialRequestObject) (DeleteProjectCredentialResponseObject, error) {
-	parent, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Projects.Show(
-		ctx,
-		request.ProjectId,
-	)
-
-	if err != nil {
-		if errors.Is(err, store.ErrProjectNotFound) {
-			return DeleteProjectCredential404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project or credential"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
-		log.Error().
-			Err(err).
-			Str("action", "DeleteProjectCredential").
-			Str("project", request.ProjectId).
-			Msg("Failed to load project")
-
-		return DeleteProjectCredential500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load project"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
-
-	record, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Credentials.Show(
-		ctx,
-		parent.ID,
-		request.CredentialId,
-	)
-
-	if err != nil {
-		if errors.Is(err, store.ErrCredentialNotFound) {
-			return DeleteProjectCredential404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project or credential"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
-		log.Error().
-			Err(err).
-			Str("action", "DeleteProjectCredential").
-			Str("project", parent.ID).
-			Str("credential", request.CredentialId).
-			Msg("Failed to load credential")
-
-		return DeleteProjectCredential500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load credential"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
-
-	if !a.permitManageCredential(ctx, credentialPermissions{
-		User:    current.GetUser(ctx),
-		Project: parent,
-		Record:  record,
-	}) {
-		return DeleteProjectCredential404JSONResponse{NotFoundErrorJSONResponse{
-			Message: ToPtr("Failed to find project or credential"),
-			Status:  ToPtr(http.StatusNotFound),
-		}}, nil
-	}
+func (a *API) DeleteProjectCredential(w http.ResponseWriter, r *http.Request, _ ProjectID, _ CredentialID) {
+	ctx := r.Context()
+	project := a.ProjectFromContext(ctx)
+	record := a.ProjectCredentialFromContext(ctx)
 
 	if err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Credentials.Delete(
 		ctx,
-		parent.ID,
+		project,
 		record.ID,
 	); err != nil {
 		log.Error().
 			Err(err).
-			Str("action", "DeletProjectCredential").
-			Str("project", parent.ID).
+			Str("project", project.ID).
 			Str("credential", record.ID).
+			Str("action", "DeletProjectCredential").
 			Msg("Failed to delete credential")
 
-		return DeleteProjectCredential400JSONResponse{ActionFailedErrorJSONResponse{
-			Status:  ToPtr(http.StatusBadRequest),
+		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to delete credential"),
-		}}, nil
+			Status:  ToPtr(http.StatusBadRequest),
+		})
+
+		return
 	}
 
-	return DeleteProjectCredential200JSONResponse{SuccessMessageJSONResponse{
-		Status:  ToPtr(http.StatusOK),
+	a.RenderNotify(w, r, Notification{
 		Message: ToPtr("Successfully deleted credential"),
-	}}, nil
+		Status:  ToPtr(http.StatusOK),
+	})
 }
 
 func (a *API) convertCredential(record *model.Credential) Credential {
 	result := Credential{
-		Id:        ToPtr(record.ID),
+		ID:        ToPtr(record.ID),
 		Slug:      ToPtr(record.Slug),
 		Name:      ToPtr(record.Name),
 		Kind:      ToPtr(CredentialKind(record.Kind)),
@@ -670,58 +453,40 @@ func (a *API) convertCredential(record *model.Credential) Credential {
 func (a *API) converCredentialShell(record model.CredentialShell) CredentialShell {
 	return CredentialShell{
 		Username:   ToPtr(record.Username),
-		Password:   ToPtr(record.Password),   // TODO: remove this, security risk
-		PrivateKey: ToPtr(record.PrivateKey), // TODO: remove this, security risk
+		Password:   ToPtr(record.Password),
+		PrivateKey: ToPtr(record.PrivateKey),
 	}
 }
 
 func (a *API) convertCredentialLogin(record model.CredentialLogin) CredentialLogin {
 	return CredentialLogin{
 		Username: ToPtr(record.Username),
-		Password: ToPtr(record.Password), // TODO: remove this, security risk
+		Password: ToPtr(record.Password),
 	}
 }
 
-type credentialPermissions struct {
-	User      *model.User
-	Project   *model.Project
-	Record    *model.Credential
-	OwnerOnly bool
+// AllowShowProjectCredential defines a middleware to check permissions.
+func (a *API) AllowShowProjectCredential(next http.Handler) http.Handler {
+	return a.AllowShowProject(next)
 }
 
-func (a *API) permitCreateCredential(ctx context.Context, definition credentialPermissions) bool {
-	return a.permitManageProject(ctx, projectPermissions{
-		User:   definition.User,
-		Record: definition.Project,
-	})
+// AllowManageProjectCredential defines a middleware to check permissions.
+func (a *API) AllowManageProjectCredential(next http.Handler) http.Handler {
+	return a.AllowManageProject(next)
 }
 
-func (a *API) permitShowCredential(ctx context.Context, definition credentialPermissions) bool {
-	return a.permitShowProject(ctx, projectPermissions{
-		User:   definition.User,
-		Record: definition.Project,
-	})
-}
-
-func (a *API) permitManageCredential(ctx context.Context, definition credentialPermissions) bool {
-	return a.permitManageProject(ctx, projectPermissions{
-		User:   definition.User,
-		Record: definition.Project,
-	})
-}
-
-func listCredentialsSorting(request ListProjectCredentialsRequestObject) (string, string, int64, int64, string) {
+func listCredentialsSorting(request ListProjectCredentialsParams) (string, string, int64, int64, string) {
 	sort, limit, offset, search := toPageParams(
-		request.Params.Sort,
-		request.Params.Limit,
-		request.Params.Offset,
-		request.Params.Search,
+		request.Sort,
+		request.Limit,
+		request.Offset,
+		request.Search,
 	)
 
 	order := ""
 
-	if request.Params.Order != nil {
-		sort = string(FromPtr(request.Params.Order))
+	if request.Order != nil {
+		sort = string(FromPtr(request.Order))
 	}
 
 	return sort, order, limit, offset, search

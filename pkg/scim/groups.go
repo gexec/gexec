@@ -1,14 +1,22 @@
 package scim
 
 import (
+	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
+	"github.com/Machiel/slugify"
+	"github.com/dchest/uniuri"
 	"github.com/elimity-com/scim"
+	serrors "github.com/elimity-com/scim/errors"
 	"github.com/elimity-com/scim/optional"
-	"github.com/genexec/genexec/pkg/config"
-	"github.com/genexec/genexec/pkg/model"
+	"github.com/gexec/gexec/pkg/config"
+	"github.com/gexec/gexec/pkg/model"
 	"github.com/rs/zerolog"
+	"github.com/scim2/filter-parser/v2"
 	"github.com/uptrace/bun"
 )
 
@@ -31,136 +39,118 @@ func (gs *groupHandlers) GetAll(r *http.Request, params scim.ListRequestParams) 
 		Resources:    []scim.Resource{},
 	}
 
-	// q := gs.store.WithContext(
-	// 	r.Context(),
-	// ).Model(
-	// 	&model.Team{},
-	// ).InnerJoins(
-	// 	"Auths",
-	// 	gs.store.Where(&model.TeamAuth{
-	// 		Provider: "scim",
-	// 	}),
-	// ).Order(
-	// 	"name ASC",
-	// )
+	records := make([]*model.Group, 0)
 
-	// if params.FilterValidator != nil {
-	// 	validator := params.FilterValidator
+	q := gs.store.NewSelect().
+		Model(&records).
+		Order("group.name ASC")
 
-	// 	if err := validator.Validate(); err != nil {
-	// 		return result, err
-	// 	}
+	if params.FilterValidator != nil {
+		validator := params.FilterValidator
 
-	// 	q = gs.filter(
-	// 		validator.GetFilter(),
-	// 		q,
-	// 	)
-	// }
+		if err := validator.Validate(); err != nil {
+			return result, err
+		}
 
-	// counter := int64(0)
+		q = gs.filter(
+			validator.GetFilter(),
+			q,
+		)
+	}
 
-	// if err := q.Count(
-	// 	&counter,
-	// ).Error; err != nil {
-	// 	return result, err
-	// }
+	counter, err := q.Count(r.Context())
 
-	// result.TotalResults = int(counter)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return result, nil
+		}
 
-	// if params.Count > 0 {
-	// 	q = q.Limit(
-	// 		params.Count,
-	// 	)
+		gs.logger.Error().
+			Err(err).
+			Msg("Failed to count all")
 
-	// 	if params.StartIndex < 1 {
-	// 		params.StartIndex = 1
-	// 	}
+		return result, err
+	}
 
-	// 	if params.StartIndex > 1 {
-	// 		q = q.Offset(
-	// 			params.StartIndex * params.Count,
-	// 		)
-	// 	}
+	result.TotalResults = counter
 
-	// 	records := make([]*model.Team, 0)
+	if params.Count > 0 {
+		q = q.Limit(
+			params.Count,
+		)
 
-	// 	if err := q.Find(
-	// 		&records,
-	// 	).Error; err != nil {
-	// 		return result, err
-	// 	}
+		if params.StartIndex < 1 {
+			params.StartIndex = 1
+		}
 
-	// 	for _, record := range records {
-	// 		auth := &model.TeamAuth{}
+		if params.StartIndex > 1 {
+			q = q.Offset(
+				params.StartIndex * params.Count,
+			)
+		}
 
-	// 		for _, row := range record.Auths {
-	// 			if row.Provider == "scim" {
-	// 				auth = row
-	// 			}
-	// 		}
+		if err := q.Scan(r.Context()); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return result, nil
+			}
 
-	// 		result.Resources = append(
-	// 			result.Resources,
-	// 			scim.Resource{
-	// 				ID:         record.ID,
-	// 				ExternalID: optional.NewString(auth.Ref),
-	// 				Meta: scim.Meta{
-	// 					Created:      &record.CreatedAt,
-	// 					LastModified: &record.UpdatedAt,
-	// 				},
-	// 				Attributes: scim.ResourceAttributes{
-	// 					"displayName": auth.Name,
-	// 				},
-	// 			},
-	// 		)
-	// 	}
-	// }
+			gs.logger.Error().
+				Err(err).
+				Msg("Failed to fetch all")
+
+			return result, err
+		}
+
+		for _, record := range records {
+			result.Resources = append(
+				result.Resources,
+				scim.Resource{
+					ID:         record.ID,
+					ExternalID: optional.NewString(record.Scim),
+					Meta: scim.Meta{
+						Created:      &record.CreatedAt,
+						LastModified: &record.UpdatedAt,
+					},
+					Attributes: scim.ResourceAttributes{
+						"displayName": record.Name,
+					},
+				},
+			)
+		}
+	}
 
 	return result, nil
 }
 
 // Get implements the SCIM v2 server interface for groups.
 func (gs *groupHandlers) Get(r *http.Request, id string) (scim.Resource, error) {
-	record := &model.Team{}
+	record := &model.Group{}
 
-	// if err := gs.store.WithContext(
-	// 	r.Context(),
-	// ).Model(
-	// 	&model.Team{},
-	// ).InnerJoins(
-	// 	"Auths",
-	// 	gs.store.Where(&model.TeamAuth{
-	// 		Provider: "scim",
-	// 	}),
-	// ).Where(&model.Team{
-	// 	ID: id,
-	// }).First(
-	// 	record,
-	// ).Error; err != nil {
-	// 	if err == gorm.ErrRecordNotFound {
-	// 		return scim.Resource{}, errors.ScimErrorResourceNotFound(id)
-	// 	}
-
-	// 	return scim.Resource{}, err
-	// }
-
-	auth := &model.TeamAuth{}
-
-	for _, row := range record.Auths {
-		if row.Provider == "scim" {
-			auth = row
+	if err := gs.store.NewSelect().
+		Model(record).
+		Where("id = ?", id).
+		Scan(r.Context()); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return scim.Resource{}, serrors.ScimErrorResourceNotFound(id)
 		}
+
+		gs.logger.Error().
+			Err(err).
+			Str("id", id).
+			Msg("Failed to fetch group")
+
+		return scim.Resource{}, err
 	}
 
 	result := scim.Resource{
 		ID:         record.ID,
-		ExternalID: optional.NewString(auth.Ref),
+		ExternalID: optional.NewString(record.Scim),
 		Meta: scim.Meta{
 			Created:      &record.CreatedAt,
 			LastModified: &record.UpdatedAt,
 		},
 		Attributes: scim.ResourceAttributes{
-			"displayName": auth.Name,
+			"displayName": record.Name,
 		},
 	}
 
@@ -169,14 +159,9 @@ func (gs *groupHandlers) Get(r *http.Request, id string) (scim.Resource, error) 
 
 // Create implements the SCIM v2 server interface for groups.
 func (gs *groupHandlers) Create(r *http.Request, attributes scim.ResourceAttributes) (scim.Resource, error) {
-	// tx := gs.store.WithContext(
-	// 	r.Context(),
-	// ).Begin()
-	// defer tx.Rollback()
-
-	externalId := ""
+	externalID := ""
 	if val, ok := attributes["externalId"]; ok {
-		externalId = val.(string)
+		externalID = val.(string)
 	}
 
 	displayName := ""
@@ -184,59 +169,63 @@ func (gs *groupHandlers) Create(r *http.Request, attributes scim.ResourceAttribu
 		displayName = val.(string)
 	}
 
-	auth := &model.TeamAuth{
-		Provider: "scim",
-		Ref:      externalId,
-		Name:     displayName,
+	record := &model.Group{}
+
+	if err := gs.store.NewSelect().
+		Model(record).
+		Where("name = ? OR scim = ?", displayName, externalID).
+		Scan(r.Context()); err != nil && err != sql.ErrNoRows {
+		gs.logger.Error().
+			Err(err).
+			Str("group", displayName).
+			Msg("Failed to check if group exists")
+
+		return scim.Resource{}, err
 	}
 
-	record := &model.Team{}
-
-	// if err := tx.Model(
-	// 	&model.Team{},
-	// ).InnerJoins(
-	// 	"Auths",
-	// 	gs.store.Where(&model.TeamAuth{
-	// 		Provider: "scim",
-	// 		Name:     displayName,
-	// 	}),
-	// ).First(record).Error; err != nil && err != gorm.ErrRecordNotFound {
-	// 	return scim.Resource{}, err
-	// }
-
+	record.Scim = externalID
 	record.Name = displayName
 
 	if record.ID == "" {
-		record.Auths = []*model.TeamAuth{auth}
+		record.Slug = gs.slugify(r.Context(), displayName, record.ID)
 
-		// if err := tx.Create(record).Error; err != nil {
-		// 	return scim.Resource{}, err
-		// }
+		gs.logger.Debug().
+			Str("group", record.Name).
+			Msg("Creating new group")
+
+		if _, err := gs.store.NewInsert().
+			Model(record).
+			Exec(r.Context()); err != nil {
+			gs.logger.Error().
+				Err(err).
+				Str("group", record.Name).
+				Msg("Failed to create group")
+
+			return scim.Resource{}, err
+		}
 	} else {
-		for _, row := range record.Auths {
-			if row.Provider == "scim" && row.Ref == externalId {
-				auth.Name = displayName
+		if _, err := gs.store.NewUpdate().
+			Model(record).
+			Where("id = ?", record.ID).
+			Exec(r.Context()); err != nil {
+			gs.logger.Error().
+				Err(err).
+				Str("group", record.Name).
+				Msg("Failed to update group")
 
-				// if err := tx.Save(record).Error; err != nil {
-				// 	return scim.Resource{}, err
-				// }
-			}
+			return scim.Resource{}, err
 		}
 	}
 
-	// if err := tx.Commit().Error; err != nil {
-	// 	return scim.Resource{}, err
-	// }
-
 	result := scim.Resource{
 		ID:         record.ID,
-		ExternalID: optional.NewString(auth.Ref),
+		ExternalID: optional.NewString(record.Scim),
 		Meta: scim.Meta{
 			Created:      &record.CreatedAt,
 			LastModified: &record.UpdatedAt,
 		},
 		Attributes: scim.ResourceAttributes{
-			"displayName": auth.Name,
+			"displayName": record.Name,
 		},
 	}
 
@@ -245,14 +234,9 @@ func (gs *groupHandlers) Create(r *http.Request, attributes scim.ResourceAttribu
 
 // Replace implements the SCIM v2 server interface for groups.
 func (gs *groupHandlers) Replace(r *http.Request, id string, attributes scim.ResourceAttributes) (scim.Resource, error) {
-	// tx := gs.store.WithContext(
-	// 	r.Context(),
-	// ).Begin()
-	// defer tx.Rollback()
-
-	externalId := ""
+	externalID := ""
 	if val, ok := attributes["externalId"]; ok {
-		externalId = val.(string)
+		externalID = val.(string)
 	}
 
 	displayName := ""
@@ -260,71 +244,48 @@ func (gs *groupHandlers) Replace(r *http.Request, id string, attributes scim.Res
 		displayName = val.(string)
 	}
 
-	auth := &model.TeamAuth{
-		Provider: "scim",
-		Ref:      externalId,
-		Name:     displayName,
+	record := &model.Group{}
+
+	if err := gs.store.NewSelect().
+		Model(record).
+		Where("id = ? OR scim = ?", id, externalID).
+		Scan(r.Context()); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return scim.Resource{}, serrors.ScimErrorResourceNotFound(id)
+		}
+
+		gs.logger.Error().
+			Err(err).
+			Str("id", id).
+			Msg("Failed to fetch group")
+
+		return scim.Resource{}, err
 	}
 
-	record := &model.Team{}
-
-	// if err := gs.store.WithContext(
-	// 	r.Context(),
-	// ).InnerJoins(
-	// 	"Auths",
-	// 	gs.store.Where(&model.TeamAuth{
-	// 		Provider: "scim",
-	// 	}),
-	// ).Where(&model.Team{
-	// 	ID: id,
-	// }).First(
-	// 	record,
-	// ).Error; err != nil {
-	// 	if err == gorm.ErrRecordNotFound {
-	// 		return scim.Resource{}, errors.ScimErrorResourceNotFound(id)
-	// 	}
-
-	// 	return scim.Resource{}, err
-	// }
-
+	record.Scim = externalID
 	record.Name = displayName
 
-	for _, row := range record.Auths {
-		if auth.Provider == "scim" && auth.Ref == externalId {
-			auth = row
-			auth.Name = displayName
-		}
+	if _, err := gs.store.NewUpdate().
+		Model(record).
+		Where("id = ?", record.ID).
+		Exec(r.Context()); err != nil {
+		gs.logger.Error().
+			Err(err).
+			Str("id", id).
+			Msg("Failed to update group")
+
+		return scim.Resource{}, err
 	}
-
-	if auth.ID == "" {
-		auth.TeamID = record.ID
-
-		// if err := tx.Create(auth).Error; err != nil {
-		// 	return scim.Resource{}, err
-		// }
-	} else {
-		// if err := tx.Save(auth).Error; err != nil {
-		// 	return scim.Resource{}, err
-		// }
-	}
-
-	// if err := tx.Save(record).Error; err != nil {
-	// 	return scim.Resource{}, err
-	// }
-
-	// if err := tx.Commit().Error; err != nil {
-	// 	return scim.Resource{}, err
-	// }
 
 	result := scim.Resource{
 		ID:         record.ID,
-		ExternalID: optional.NewString(auth.Ref),
+		ExternalID: optional.NewString(record.Scim),
 		Meta: scim.Meta{
 			Created:      &record.CreatedAt,
 			LastModified: &record.UpdatedAt,
 		},
 		Attributes: scim.ResourceAttributes{
-			"displayName": auth.Name,
+			"displayName": record.Name,
 		},
 	}
 
@@ -333,33 +294,23 @@ func (gs *groupHandlers) Replace(r *http.Request, id string, attributes scim.Res
 
 // Patch implements the SCIM v2 server interface for groups.
 func (gs *groupHandlers) Patch(r *http.Request, id string, operations []scim.PatchOperation) (scim.Resource, error) {
-	record := &model.Team{}
+	record := &model.Group{}
 
-	// if err := gs.store.WithContext(
-	// 	r.Context(),
-	// ).Model(
-	// 	&model.Team{},
-	// ).InnerJoins(
-	// 	"Auths",
-	// 	gs.store.Where(&model.TeamAuth{
-	// 		Provider: "scim",
-	// 	}),
-	// ).Where(&model.Team{
-	// 	ID: id,
-	// }).First(
-	// 	record,
-	// ).Error; err != nil {
-	// 	if err == gorm.ErrRecordNotFound {
-	// 		return scim.Resource{}, errors.ScimErrorResourceNotFound(id)
-	// 	}
+	if err := gs.store.NewSelect().
+		Model(record).
+		Where("id = ?", id).
+		Scan(r.Context()); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return scim.Resource{}, serrors.ScimErrorResourceNotFound(id)
+		}
 
-	// 	return scim.Resource{}, err
-	// }
+		gs.logger.Error().
+			Err(err).
+			Str("id", id).
+			Msg("Failed to fetch group")
 
-	// tx := gs.store.WithContext(
-	// 	r.Context(),
-	// ).Begin()
-	// defer tx.Rollback()
+		return scim.Resource{}, err
+	}
 
 	for _, operation := range operations {
 		switch op := operation.Op; op {
@@ -369,15 +320,19 @@ func (gs *groupHandlers) Patch(r *http.Request, id string, operations []scim.Pat
 				if is, ok := operation.Value.([]interface{}); ok {
 					for _, i := range is {
 						if vs, ok := i.(map[string]interface{}); ok {
-							if _, ok := vs["value"]; ok {
-								// if err := tx.Where(
-								// 	model.UserTeam{
-								// 		TeamID: record.ID,
-								// 		UserID: v.(string),
-								// 	},
-								// ).Delete(&model.UserTeam{}).Error; err != nil {
-								// 	return scim.Resource{}, err
-								// }
+							if v, ok := vs["value"]; ok {
+								if _, err := gs.store.NewDelete().
+									Model((*model.UserGroup)(nil)).
+									Where("group_id = ? AND user_id = ?", record.ID, v.(string)).
+									Exec(r.Context()); err != nil {
+									gs.logger.Error().
+										Err(err).
+										Str("group", record.Name).
+										Str("user", v.(string)).
+										Msg("Failed to delete member")
+
+									return scim.Resource{}, err
+								}
 							} else {
 								gs.logger.Error().
 									Str("method", "patch").
@@ -422,19 +377,64 @@ func (gs *groupHandlers) Patch(r *http.Request, id string, operations []scim.Pat
 				if is, ok := operation.Value.([]interface{}); ok {
 					for _, i := range is {
 						if vs, ok := i.(map[string]interface{}); ok {
-							if _, ok := vs["value"]; ok {
-								// if err := tx.Where(
-								// 	model.UserTeam{
-								// 		TeamID: record.ID,
-								// 		UserID: v.(string),
-								// 	},
-								// ).Attrs(
-								// 	model.UserTeam{
-								// 		Perm: "owner",
-								// 	},
-								// ).FirstOrCreate(&model.UserTeam{}).Error; err != nil {
-								// 	return scim.Resource{}, err
-								// }
+							if v, ok := vs["value"]; ok {
+								user := &model.User{}
+
+								if err := gs.store.NewSelect().
+									Model(user).
+									Where("id = ?", v.(string)).
+									Scan(r.Context()); err != nil {
+									if errors.Is(err, sql.ErrNoRows) {
+										continue
+									}
+
+									gs.logger.Error().
+										Err(err).
+										Str("group", record.Name).
+										Str("user", v.(string)).
+										Msg("Failed to fetch user")
+
+									return scim.Resource{}, err
+								}
+
+								exists, err := gs.store.NewSelect().
+									Model((*model.UserGroup)(nil)).
+									Where("group_id = ? AND user_id = ?", record.ID, user.ID).
+									Exists(r.Context())
+
+								if err != nil {
+									gs.logger.Error().
+										Err(err).
+										Str("group", record.Name).
+										Str("user", user.Username).
+										Msg("Failed to check member")
+
+									return scim.Resource{}, err
+								}
+
+								if exists {
+									gs.logger.Debug().
+										Str("group", record.Name).
+										Str("user", user.Username).
+										Msg("Member already exists")
+
+									continue
+								}
+
+								if _, err := gs.store.NewInsert().
+									Model(&model.UserGroup{
+										GroupID: record.ID,
+										UserID:  user.ID,
+										Perm:    "owner",
+									}).Exec(r.Context()); err != nil {
+									gs.logger.Error().
+										Err(err).
+										Str("group", record.Name).
+										Str("user", user.Username).
+										Msg("Failed to append member")
+
+									return scim.Resource{}, err
+								}
 							} else {
 								gs.logger.Error().
 									Str("method", "patch").
@@ -487,27 +487,15 @@ func (gs *groupHandlers) Patch(r *http.Request, id string, operations []scim.Pat
 		}
 	}
 
-	// if err := tx.Commit().Error; err != nil {
-	// 	return scim.Resource{}, err
-	// }
-
-	auth := &model.TeamAuth{}
-
-	for _, row := range record.Auths {
-		if row.Provider == "scim" {
-			auth = row
-		}
-	}
-
 	result := scim.Resource{
 		ID:         record.ID,
-		ExternalID: optional.NewString(auth.Ref),
+		ExternalID: optional.NewString(record.Scim),
 		Meta: scim.Meta{
 			Created:      &record.CreatedAt,
 			LastModified: &record.UpdatedAt,
 		},
 		Attributes: scim.ResourceAttributes{
-			"displayName": auth.Name,
+			"displayName": record.Name,
 		},
 	}
 
@@ -516,82 +504,107 @@ func (gs *groupHandlers) Patch(r *http.Request, id string, operations []scim.Pat
 
 // Delete implements the SCIM v2 server interface for groups.
 func (gs *groupHandlers) Delete(r *http.Request, id string) error {
-	// tx := gs.store.WithContext(
-	// 	r.Context(),
-	// ).Begin()
-	// defer tx.Rollback()
+	if _, err := gs.store.NewDelete().
+		Model((*model.Group)(nil)).
+		Where("id = ?", id).
+		Exec(r.Context()); err != nil {
+		gs.logger.Error().
+			Err(err).
+			Str("id", id).
+			Msg("Failed to delete group")
 
-	// if err := tx.Model(
-	// 	&model.Team{},
-	// ).InnerJoins(
-	// 	"Auths",
-	// 	gs.store.Where(&model.TeamAuth{
-	// 		Provider: "scim",
-	// 	}),
-	// ).Where(&model.Team{
-	// 	ID: id,
-	// }).Delete(
-	// 	&model.Team{},
-	// ).Error; err != nil {
-	// 	return err
-	// }
-
-	// return tx.Commit().Error
+		return err
+	}
 
 	return nil
 }
 
-// func (gs *groupHandlers) filter(expr filter.Expression, db *gorm.DB) *gorm.DB {
-// 	switch e := expr.(type) {
-// 	case *filter.AttributeExpression:
-// 		return gs.handleAttributeExpression(e, db)
-// 	default:
-// 		gs.logger.Error().
-// 			Str("type", fmt.Sprintf("%T", e)).
-// 			Msg("Unsupported expression type for group filter")
-// 	}
+func (gs *groupHandlers) slugify(ctx context.Context, value, id string) string {
+	var (
+		slug string
+	)
 
-// 	return db
-// }
+	for i := 0; true; i++ {
+		if i == 0 {
+			slug = slugify.Slugify(value)
+		} else {
+			slug = slugify.Slugify(
+				fmt.Sprintf("%s-%s", value, uniuri.NewLen(6)),
+			)
+		}
 
-// func (gs *groupHandlers) handleAttributeExpression(e *filter.AttributeExpression, db *gorm.DB) *gorm.DB {
-// 	scimAttr := e.AttributePath.String()
-// 	column, ok := groupAttributeMapping[scimAttr]
+		query := gs.store.NewSelect().
+			Model((*model.Group)(nil)).
+			Where("slug = ?", slug)
 
-// 	if !ok {
-// 		gs.logger.Error().
-// 			Str("attribute", scimAttr).
-// 			Msg("Attribute is not mapped for groups")
+		if id != "" {
+			query = query.Where(
+				"id != ?",
+				id,
+			)
+		}
 
-// 		return db
-// 	}
+		if count, err := query.Count(
+			ctx,
+		); err == nil && count == 0 {
+			break
+		}
+	}
 
-// 	value := e.CompareValue
+	return slug
+}
 
-// 	switch operator := strings.ToLower(string(e.Operator)); operator {
-// 	case "eq":
-// 		return db.Where(fmt.Sprintf("%s = ?", column), value)
-// 	case "ne":
-// 		return db.Where(fmt.Sprintf("%s <> ?", column), value)
-// 	case "co":
-// 		return db.Where(fmt.Sprintf("%s LIKE ?", column), "%"+fmt.Sprintf("%v", value)+"%")
-// 	case "sw":
-// 		return db.Where(fmt.Sprintf("%s LIKE ?", column), fmt.Sprintf("%v", value)+"%")
-// 	case "ew":
-// 		return db.Where(fmt.Sprintf("%s LIKE ?", column), "%"+fmt.Sprintf("%v", value))
-// 	case "gt":
-// 		return db.Where(fmt.Sprintf("%s > ?", column), value)
-// 	case "ge":
-// 		return db.Where(fmt.Sprintf("%s >= ?", column), value)
-// 	case "lt":
-// 		return db.Where(fmt.Sprintf("%s < ?", column), value)
-// 	case "le":
-// 		return db.Where(fmt.Sprintf("%s <= ?", column), value)
-// 	default:
-// 		gs.logger.Error().
-// 			Str("operator", operator).
-// 			Msgf("Unsupported attribute operator for group filter")
-// 	}
+func (gs *groupHandlers) filter(expr filter.Expression, db *bun.SelectQuery) *bun.SelectQuery {
+	switch e := expr.(type) {
+	case *filter.AttributeExpression:
+		return gs.handleAttributeExpression(e, db)
+	default:
+		gs.logger.Error().
+			Str("type", fmt.Sprintf("%T", e)).
+			Msg("Unsupported expression type for group filter")
+	}
 
-// 	return db
-// }
+	return db
+}
+
+func (gs *groupHandlers) handleAttributeExpression(e *filter.AttributeExpression, db *bun.SelectQuery) *bun.SelectQuery {
+	scimAttr := e.AttributePath.String()
+	column, ok := groupAttributeMapping[scimAttr]
+
+	if !ok {
+		gs.logger.Error().
+			Str("attribute", scimAttr).
+			Msg("Attribute is not mapped for groups")
+
+		return db
+	}
+
+	value := e.CompareValue
+
+	switch operator := strings.ToLower(string(e.Operator)); operator {
+	case "eq":
+		return db.Where("? = ?", bun.Ident(column), value)
+	case "ne":
+		return db.Where("? <> ?", bun.Ident(column), value)
+	case "co":
+		return db.Where("? LIKE ?", bun.Ident(column), "%"+fmt.Sprintf("%v", value)+"%")
+	case "sw":
+		return db.Where("? LIKE ?", bun.Ident(column), fmt.Sprintf("%v", value)+"%")
+	case "ew":
+		return db.Where("? LIKE ?", bun.Ident(column), "%"+fmt.Sprintf("%v", value))
+	case "gt":
+		return db.Where("? > ?", bun.Ident(column), value)
+	case "ge":
+		return db.Where("? >= ?", bun.Ident(column), value)
+	case "lt":
+		return db.Where("? < ?", bun.Ident(column), value)
+	case "le":
+		return db.Where("? <= ?", bun.Ident(column), value)
+	default:
+		gs.logger.Error().
+			Str("operator", operator).
+			Msgf("Unsupported attribute operator for group filter")
+	}
+
+	return db
+}

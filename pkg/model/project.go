@@ -17,14 +17,14 @@ var (
 type Project struct {
 	bun.BaseModel `bun:"table:projects"`
 
-	ID        string         `bun:",pk,type:varchar(20)"`
-	Demo      bool           `bun:"-"`
-	Slug      string         `bun:",unique,type:varchar(255)"`
-	Name      string         `bun:"type:varchar(255)"`
-	CreatedAt time.Time      `bun:",nullzero,notnull,default:current_timestamp"`
-	UpdatedAt time.Time      `bun:",nullzero,notnull,default:current_timestamp"`
-	Teams     []*TeamProject `bun:"rel:has-many,join:id=project_id"`
-	Users     []*UserProject `bun:"rel:has-many,join:id=project_id"`
+	ID        string          `bun:",pk,type:varchar(20)"`
+	Demo      bool            `bun:"-"`
+	Slug      string          `bun:",unique,type:varchar(255)"`
+	Name      string          `bun:"type:varchar(255)"`
+	CreatedAt time.Time       `bun:",nullzero,notnull,default:current_timestamp"`
+	UpdatedAt time.Time       `bun:",nullzero,notnull,default:current_timestamp"`
+	Groups    []*GroupProject `bun:"rel:has-many,join:id=project_id"`
+	Users     []*UserProject  `bun:"rel:has-many,join:id=project_id"`
 }
 
 // BeforeAppendModel implements the bun hook interface.

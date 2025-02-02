@@ -14,14 +14,17 @@ var (
 	// ErrNotAssigned defines the error if relation is not assigned.
 	ErrNotAssigned = errors.New("user pack is not defined")
 
-	// ErrTeamNotFound is returned when a user was not found.
-	ErrTeamNotFound = errors.New("team not found")
+	// ErrGroupNotFound is returned when a user was not found.
+	ErrGroupNotFound = errors.New("group not found")
 
 	// ErrUserNotFound is returned when a user was not found.
 	ErrUserNotFound = errors.New("user not found")
 
 	// ErrProjectNotFound is returned when a user was not found.
 	ErrProjectNotFound = errors.New("project not found")
+
+	// ErrRunnerNotFound is returned when a runner was not found.
+	ErrRunnerNotFound = errors.New("runner not found")
 
 	// ErrCredentialNotFound is returned when a credential was not found.
 	ErrCredentialNotFound = errors.New("credential not found")

@@ -7,9 +7,9 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/genexec/genexec/pkg/config"
-	"github.com/genexec/genexec/pkg/metrics"
-	"github.com/genexec/genexec/pkg/router"
+	"github.com/gexec/gexec/pkg/config"
+	"github.com/gexec/gexec/pkg/metrics"
+	"github.com/gexec/gexec/pkg/router"
 	"github.com/oklog/run"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -67,7 +67,7 @@ func serverAction(_ *cobra.Command, _ []string) {
 	}
 
 	registry := metrics.New(
-		metrics.WithNamespace("genexec_runner"),
+		metrics.WithNamespace("gexec_runner"),
 		metrics.WithToken(token),
 	)
 

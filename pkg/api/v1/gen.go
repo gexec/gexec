@@ -10,6 +10,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -50,17 +51,45 @@ const (
 	EnvironmentValueKindVar EnvironmentValueKind = "var"
 )
 
+// Defines values for EventAction.
+const (
+	Create EventAction = "create"
+	Delete EventAction = "delete"
+	Update EventAction = "update"
+)
+
+// Defines values for EventObjectType.
+const (
+	EventObjectTypeCredential   EventObjectType = "credential"
+	EventObjectTypeEnvironment  EventObjectType = "environment"
+	EventObjectTypeExecution    EventObjectType = "execution"
+	EventObjectTypeGroup        EventObjectType = "group"
+	EventObjectTypeGroupProject EventObjectType = "group_project"
+	EventObjectTypeGroupUser    EventObjectType = "group_user"
+	EventObjectTypeInventory    EventObjectType = "inventory"
+	EventObjectTypeProject      EventObjectType = "project"
+	EventObjectTypeProjectGroup EventObjectType = "project_group"
+	EventObjectTypeProjectUser  EventObjectType = "project_user"
+	EventObjectTypeRepository   EventObjectType = "repository"
+	EventObjectTypeRunner       EventObjectType = "runner"
+	EventObjectTypeSchedule     EventObjectType = "schedule"
+	EventObjectTypeTemplate     EventObjectType = "template"
+	EventObjectTypeUser         EventObjectType = "user"
+	EventObjectTypeUserGroup    EventObjectType = "user_group"
+	EventObjectTypeUserProject  EventObjectType = "user_project"
+)
+
+// Defines values for GroupProjectPerm.
+const (
+	GroupProjectPermAdmin GroupProjectPerm = "admin"
+	GroupProjectPermOwner GroupProjectPerm = "owner"
+	GroupProjectPermUser  GroupProjectPerm = "user"
+)
+
 // Defines values for InventoryKind.
 const (
 	File   InventoryKind = "file"
 	Static InventoryKind = "static"
-)
-
-// Defines values for TeamProjectPerm.
-const (
-	TeamProjectPermAdmin TeamProjectPerm = "admin"
-	TeamProjectPermOwner TeamProjectPerm = "owner"
-	TeamProjectPermUser  TeamProjectPerm = "user"
 )
 
 // Defines values for TemplateSurveyKind.
@@ -77,6 +106,13 @@ const (
 	Script   TemplateVaultKind = "script"
 )
 
+// Defines values for UserGroupPerm.
+const (
+	UserGroupPermAdmin UserGroupPerm = "admin"
+	UserGroupPermOwner UserGroupPerm = "owner"
+	UserGroupPermUser  UserGroupPerm = "user"
+)
+
 // Defines values for UserProjectPerm.
 const (
 	UserProjectPermAdmin UserProjectPerm = "admin"
@@ -84,17 +120,28 @@ const (
 	UserProjectPermUser  UserProjectPerm = "user"
 )
 
-// Defines values for UserTeamPerm.
-const (
-	UserTeamPermAdmin UserTeamPerm = "admin"
-	UserTeamPermOwner UserTeamPerm = "owner"
-	UserTeamPermUser  UserTeamPerm = "user"
-)
-
 // Defines values for SortOrderParam.
 const (
 	SortOrderParamAsc  SortOrderParam = "asc"
 	SortOrderParamDesc SortOrderParam = "desc"
+)
+
+// Defines values for ListGroupsParamsOrder.
+const (
+	ListGroupsParamsOrderAsc  ListGroupsParamsOrder = "asc"
+	ListGroupsParamsOrderDesc ListGroupsParamsOrder = "desc"
+)
+
+// Defines values for ListGroupProjectsParamsOrder.
+const (
+	ListGroupProjectsParamsOrderAsc  ListGroupProjectsParamsOrder = "asc"
+	ListGroupProjectsParamsOrderDesc ListGroupProjectsParamsOrder = "desc"
+)
+
+// Defines values for ListGroupUsersParamsOrder.
+const (
+	ListGroupUsersParamsOrderAsc  ListGroupUsersParamsOrder = "asc"
+	ListGroupUsersParamsOrderDesc ListGroupUsersParamsOrder = "desc"
 )
 
 // Defines values for ListProjectsParamsOrder.
@@ -121,6 +168,12 @@ const (
 	ListProjectExecutionsParamsOrderDesc ListProjectExecutionsParamsOrder = "desc"
 )
 
+// Defines values for ListProjectGroupsParamsOrder.
+const (
+	ListProjectGroupsParamsOrderAsc  ListProjectGroupsParamsOrder = "asc"
+	ListProjectGroupsParamsOrderDesc ListProjectGroupsParamsOrder = "desc"
+)
+
 // Defines values for ListProjectInventoriesParamsOrder.
 const (
 	ListProjectInventoriesParamsOrderAsc  ListProjectInventoriesParamsOrder = "asc"
@@ -133,16 +186,16 @@ const (
 	ListProjectRepositoriesParamsOrderDesc ListProjectRepositoriesParamsOrder = "desc"
 )
 
+// Defines values for ListProjectRunnersParamsOrder.
+const (
+	ListProjectRunnersParamsOrderAsc  ListProjectRunnersParamsOrder = "asc"
+	ListProjectRunnersParamsOrderDesc ListProjectRunnersParamsOrder = "desc"
+)
+
 // Defines values for ListProjectSchedulesParamsOrder.
 const (
 	ListProjectSchedulesParamsOrderAsc  ListProjectSchedulesParamsOrder = "asc"
 	ListProjectSchedulesParamsOrderDesc ListProjectSchedulesParamsOrder = "desc"
-)
-
-// Defines values for ListProjectTeamsParamsOrder.
-const (
-	ListProjectTeamsParamsOrderAsc  ListProjectTeamsParamsOrder = "asc"
-	ListProjectTeamsParamsOrderDesc ListProjectTeamsParamsOrder = "desc"
 )
 
 // Defines values for ListProjectTemplatesParamsOrder.
@@ -157,28 +210,10 @@ const (
 	ListProjectUsersParamsOrderDesc ListProjectUsersParamsOrder = "desc"
 )
 
-// Defines values for ListRunnersParamsOrder.
+// Defines values for ListGlobalRunnersParamsOrder.
 const (
-	ListRunnersParamsOrderAsc  ListRunnersParamsOrder = "asc"
-	ListRunnersParamsOrderDesc ListRunnersParamsOrder = "desc"
-)
-
-// Defines values for ListTeamsParamsOrder.
-const (
-	ListTeamsParamsOrderAsc  ListTeamsParamsOrder = "asc"
-	ListTeamsParamsOrderDesc ListTeamsParamsOrder = "desc"
-)
-
-// Defines values for ListTeamProjectsParamsOrder.
-const (
-	ListTeamProjectsParamsOrderAsc  ListTeamProjectsParamsOrder = "asc"
-	ListTeamProjectsParamsOrderDesc ListTeamProjectsParamsOrder = "desc"
-)
-
-// Defines values for ListTeamUsersParamsOrder.
-const (
-	ListTeamUsersParamsOrderAsc  ListTeamUsersParamsOrder = "asc"
-	ListTeamUsersParamsOrderDesc ListTeamUsersParamsOrder = "desc"
+	ListGlobalRunnersParamsOrderAsc  ListGlobalRunnersParamsOrder = "asc"
+	ListGlobalRunnersParamsOrderDesc ListGlobalRunnersParamsOrder = "desc"
 )
 
 // Defines values for ListUsersParamsOrder.
@@ -187,16 +222,16 @@ const (
 	ListUsersParamsOrderDesc ListUsersParamsOrder = "desc"
 )
 
-// Defines values for ListUserProjectsParamsOrder.
+// Defines values for ListUserGroupsParamsOrder.
 const (
-	ListUserProjectsParamsOrderAsc  ListUserProjectsParamsOrder = "asc"
-	ListUserProjectsParamsOrderDesc ListUserProjectsParamsOrder = "desc"
+	ListUserGroupsParamsOrderAsc  ListUserGroupsParamsOrder = "asc"
+	ListUserGroupsParamsOrderDesc ListUserGroupsParamsOrder = "desc"
 )
 
-// Defines values for ListUserTeamsParamsOrder.
+// Defines values for ListUserProjectsParamsOrder.
 const (
-	ListUserTeamsParamsOrderAsc  ListUserTeamsParamsOrder = "asc"
-	ListUserTeamsParamsOrderDesc ListUserTeamsParamsOrder = "desc"
+	Asc  ListUserProjectsParamsOrder = "asc"
+	Desc ListUserProjectsParamsOrder = "desc"
 )
 
 // AuthToken defines model for AuthToken.
@@ -214,14 +249,14 @@ type AuthVerify struct {
 // Credential Model to represent credential
 type Credential struct {
 	CreatedAt *time.Time      `json:"created_at,omitempty"`
-	Id        *string         `json:"id,omitempty"`
+	ID        *string         `json:"id,omitempty"`
 	Kind      *CredentialKind `json:"kind,omitempty"`
 
 	// Login Model to represent credential login
 	Login     *CredentialLogin `json:"login,omitempty"`
 	Name      *string          `json:"name,omitempty"`
 	Override  *bool            `json:"override,omitempty"`
-	ProjectId *string          `json:"project_id,omitempty"`
+	ProjectID *string          `json:"project_id,omitempty"`
 
 	// Shell Model to represent credential shell
 	Shell     *CredentialShell `json:"shell,omitempty"`
@@ -248,9 +283,9 @@ type CredentialShell struct {
 // Environment Model to represent environment
 type Environment struct {
 	CreatedAt *time.Time           `json:"created_at,omitempty"`
-	Id        *string              `json:"id,omitempty"`
+	ID        *string              `json:"id,omitempty"`
 	Name      *string              `json:"name,omitempty"`
-	ProjectId *string              `json:"project_id,omitempty"`
+	ProjectID *string              `json:"project_id,omitempty"`
 	Secrets   *[]EnvironmentSecret `json:"secrets,omitempty"`
 	Slug      *string              `json:"slug,omitempty"`
 	UpdatedAt *time.Time           `json:"updated_at,omitempty"`
@@ -260,7 +295,7 @@ type Environment struct {
 // EnvironmentSecret Model to represent environment secret
 type EnvironmentSecret struct {
 	Content *string                `json:"content,omitempty"`
-	Id      *string                `json:"id,omitempty"`
+	ID      *string                `json:"id,omitempty"`
 	Kind    *EnvironmentSecretKind `json:"kind,omitempty"`
 	Name    *string                `json:"name,omitempty"`
 }
@@ -271,7 +306,7 @@ type EnvironmentSecretKind string
 // EnvironmentValue Model to represent environment value
 type EnvironmentValue struct {
 	Content *string               `json:"content,omitempty"`
-	Id      *string               `json:"id,omitempty"`
+	ID      *string               `json:"id,omitempty"`
 	Kind    *EnvironmentValueKind `json:"kind,omitempty"`
 	Name    *string               `json:"name,omitempty"`
 }
@@ -281,17 +316,24 @@ type EnvironmentValueKind string
 
 // Event Model to represent event
 type Event struct {
-	Action         *string    `json:"action,omitempty"`
-	CreatedAt      *time.Time `json:"created_at,omitempty"`
-	Description    *string    `json:"description,omitempty"`
-	ObjectDisplay  *string    `json:"object_display,omitempty"`
-	ObjectId       *string    `json:"object_id,omitempty"`
-	ObjectType     *string    `json:"object_type,omitempty"`
-	ProjectDisplay *string    `json:"project_display,omitempty"`
-	ProjectId      *string    `json:"project_id,omitempty"`
-	UserDisplay    *string    `json:"user_display,omitempty"`
-	UserId         *string    `json:"user_id,omitempty"`
+	Action         *EventAction            `json:"action,omitempty"`
+	Attrs          *map[string]interface{} `json:"attrs,omitempty"`
+	CreatedAt      *time.Time              `json:"created_at,omitempty"`
+	ObjectDisplay  *string                 `json:"object_display,omitempty"`
+	ObjectID       *string                 `json:"object_id,omitempty"`
+	ObjectType     *EventObjectType        `json:"object_type,omitempty"`
+	ProjectDisplay *string                 `json:"project_display,omitempty"`
+	ProjectID      *string                 `json:"project_id,omitempty"`
+	UserDisplay    *string                 `json:"user_display,omitempty"`
+	UserHandle     *string                 `json:"user_handle,omitempty"`
+	UserID         *string                 `json:"user_id,omitempty"`
 }
+
+// EventAction defines model for Event.Action.
+type EventAction string
+
+// EventObjectType defines model for Event.ObjectType.
+type EventObjectType string
 
 // Execution Model to represent execution
 type Execution struct {
@@ -299,38 +341,66 @@ type Execution struct {
 	CreatedAt   *time.Time `json:"created_at,omitempty"`
 	Debug       *bool      `json:"debug,omitempty"`
 	Environment *string    `json:"environment,omitempty"`
-	Id          *string    `json:"id,omitempty"`
+	ID          *string    `json:"id,omitempty"`
 	Limit       *string    `json:"limit,omitempty"`
+	Name        *string    `json:"name,omitempty"`
 	Playbook    *string    `json:"playbook,omitempty"`
-	ProjectId   *string    `json:"project_id,omitempty"`
+	ProjectID   *string    `json:"project_id,omitempty"`
 	Secret      *string    `json:"secret,omitempty"`
 	Status      *string    `json:"status,omitempty"`
 
 	// Template Model to represent template
 	Template   *Template  `json:"template,omitempty"`
-	TemplateId *string    `json:"template_id,omitempty"`
+	TemplateID *string    `json:"template_id,omitempty"`
 	UpdatedAt  *time.Time `json:"updated_at,omitempty"`
 }
+
+// Group Model to represent group
+type Group struct {
+	CreatedAt *time.Time `json:"created_at,omitempty"`
+	ID        *string    `json:"id,omitempty"`
+	Name      *string    `json:"name,omitempty"`
+	Slug      *string    `json:"slug,omitempty"`
+	UpdatedAt *time.Time `json:"updated_at,omitempty"`
+}
+
+// GroupProject Model to represent group project
+type GroupProject struct {
+	CreatedAt *time.Time `json:"created_at,omitempty"`
+
+	// Group Model to represent group
+	Group   *Group            `json:"group,omitempty"`
+	GroupID string            `json:"group_id"`
+	Perm    *GroupProjectPerm `json:"perm,omitempty"`
+
+	// Project Model to represent project
+	Project   *Project   `json:"project,omitempty"`
+	ProjectID string     `json:"project_id"`
+	UpdatedAt *time.Time `json:"updated_at,omitempty"`
+}
+
+// GroupProjectPerm defines model for GroupProject.Perm.
+type GroupProjectPerm string
 
 // Inventory Model to represent inventory
 type Inventory struct {
 	// Become Model to represent credential
 	Become    *Credential `json:"become,omitempty"`
-	BecomeId  *string     `json:"become_id,omitempty"`
+	BecomeID  *string     `json:"become_id,omitempty"`
 	Content   *string     `json:"content,omitempty"`
 	CreatedAt *time.Time  `json:"created_at,omitempty"`
 
 	// Credential Model to represent credential
 	Credential   *Credential    `json:"credential,omitempty"`
-	CredentialId *string        `json:"credential_id,omitempty"`
-	Id           *string        `json:"id,omitempty"`
+	CredentialID *string        `json:"credential_id,omitempty"`
+	ID           *string        `json:"id,omitempty"`
 	Kind         *InventoryKind `json:"kind,omitempty"`
 	Name         *string        `json:"name,omitempty"`
-	ProjectId    *string        `json:"project_id,omitempty"`
+	ProjectID    *string        `json:"project_id,omitempty"`
 
 	// Repository Model to represent repository
 	Repository   *Repository `json:"repository,omitempty"`
-	RepositoryId *string     `json:"repository_id,omitempty"`
+	RepositoryID *string     `json:"repository_id,omitempty"`
 	Slug         *string     `json:"slug,omitempty"`
 	UpdatedAt    *time.Time  `json:"updated_at,omitempty"`
 }
@@ -338,20 +408,21 @@ type Inventory struct {
 // InventoryKind defines model for Inventory.Kind.
 type InventoryKind string
 
-// Logging Model to represent logging
-type Logging struct {
-	// Execution Model to represent execution
-	Execution   *Execution `json:"execution,omitempty"`
-	ExecutionId *string    `json:"execution_id,omitempty"`
-	Output      *string    `json:"output,omitempty"`
-	Time        *time.Time `json:"time,omitempty"`
-}
-
 // Notification Generic response for errors and validations
 type Notification struct {
 	Errors  *[]Validation `json:"errors,omitempty"`
 	Message *string       `json:"message,omitempty"`
 	Status  *int          `json:"status,omitempty"`
+}
+
+// Output Model to represent output
+type Output struct {
+	Content   *string    `json:"content,omitempty"`
+	CreatedAt *time.Time `json:"created_at,omitempty"`
+
+	// Execution Model to represent execution
+	Execution   *Execution `json:"execution,omitempty"`
+	ExecutionID *string    `json:"execution_id,omitempty"`
 }
 
 // Profile Model to represent profile
@@ -362,11 +433,11 @@ type Profile struct {
 	CreatedAt *time.Time     `json:"created_at,omitempty"`
 	Email     *string        `json:"email,omitempty"`
 	Fullname  *string        `json:"fullname,omitempty"`
-	Id        *string        `json:"id,omitempty"`
+	Groups    *[]UserGroup   `json:"groups,omitempty"`
+	ID        *string        `json:"id,omitempty"`
 	Password  *string        `json:"password,omitempty"`
 	Profile   *string        `json:"profile,omitempty"`
 	Projects  *[]UserProject `json:"projects,omitempty"`
-	Teams     *[]UserTeam    `json:"teams,omitempty"`
 	UpdatedAt *time.Time     `json:"updated_at,omitempty"`
 	Username  *string        `json:"username,omitempty"`
 }
@@ -374,7 +445,7 @@ type Profile struct {
 // Project Model to represent project
 type Project struct {
 	CreatedAt *time.Time `json:"created_at,omitempty"`
-	Id        *string    `json:"id,omitempty"`
+	ID        *string    `json:"id,omitempty"`
 	Name      *string    `json:"name,omitempty"`
 	Slug      *string    `json:"slug,omitempty"`
 	UpdatedAt *time.Time `json:"updated_at,omitempty"`
@@ -386,7 +457,6 @@ type Provider struct {
 	Driver  *string `json:"driver,omitempty"`
 	Icon    *string `json:"icon,omitempty"`
 	Name    *string `json:"name,omitempty"`
-	Url     *string `json:"url,omitempty"`
 }
 
 // Repository Model to represent repository
@@ -396,10 +466,10 @@ type Repository struct {
 
 	// Credential Model to represent credential
 	Credential   *Credential `json:"credential,omitempty"`
-	CredentialId *string     `json:"credential_id,omitempty"`
-	Id           *string     `json:"id,omitempty"`
+	CredentialID *string     `json:"credential_id,omitempty"`
+	ID           *string     `json:"id,omitempty"`
 	Name         *string     `json:"name,omitempty"`
-	ProjectId    *string     `json:"project_id,omitempty"`
+	ProjectID    *string     `json:"project_id,omitempty"`
 	Slug         *string     `json:"slug,omitempty"`
 	UpdatedAt    *time.Time  `json:"updated_at,omitempty"`
 	Url          *string     `json:"url,omitempty"`
@@ -408,8 +478,12 @@ type Repository struct {
 // Runner Model to represent runner
 type Runner struct {
 	CreatedAt *time.Time `json:"created_at,omitempty"`
-	Id        *string    `json:"id,omitempty"`
+	ID        *string    `json:"id,omitempty"`
 	Name      *string    `json:"name,omitempty"`
+
+	// Project Model to represent project
+	Project   *Project   `json:"project,omitempty"`
+	ProjectID *string    `json:"project_id,omitempty"`
 	Slug      *string    `json:"slug,omitempty"`
 	Token     *string    `json:"token,omitempty"`
 	UpdatedAt *time.Time `json:"updated_at,omitempty"`
@@ -420,52 +494,16 @@ type Schedule struct {
 	Active    *bool      `json:"active,omitempty"`
 	CreatedAt *time.Time `json:"created_at,omitempty"`
 	Cron      *string    `json:"cron,omitempty"`
-	Id        *string    `json:"id,omitempty"`
+	ID        *string    `json:"id,omitempty"`
 	Name      *string    `json:"name,omitempty"`
-	ProjectId *string    `json:"project_id,omitempty"`
+	ProjectID *string    `json:"project_id,omitempty"`
 	Slug      *string    `json:"slug,omitempty"`
 
 	// Template Model to represent template
 	Template   *Template  `json:"template,omitempty"`
-	TemplateId *string    `json:"template_id,omitempty"`
+	TemplateID *string    `json:"template_id,omitempty"`
 	UpdatedAt  *time.Time `json:"updated_at,omitempty"`
 }
-
-// Team Model to represent team
-type Team struct {
-	Auths     *[]TeamAuth `json:"auths,omitempty"`
-	CreatedAt *time.Time  `json:"created_at,omitempty"`
-	Id        *string     `json:"id,omitempty"`
-	Name      *string     `json:"name,omitempty"`
-	Slug      *string     `json:"slug,omitempty"`
-	UpdatedAt *time.Time  `json:"updated_at,omitempty"`
-}
-
-// TeamAuth Model to represent team auth
-type TeamAuth struct {
-	CreatedAt *time.Time `json:"created_at,omitempty"`
-	Provider  *string    `json:"provider,omitempty"`
-	Ref       *string    `json:"ref,omitempty"`
-	UpdatedAt *time.Time `json:"updated_at,omitempty"`
-}
-
-// TeamProject Model to represent team project
-type TeamProject struct {
-	CreatedAt *time.Time       `json:"created_at,omitempty"`
-	Perm      *TeamProjectPerm `json:"perm,omitempty"`
-
-	// Project Model to represent project
-	Project   *Project `json:"project,omitempty"`
-	ProjectId string   `json:"project_id"`
-
-	// Team Model to represent team
-	Team      *Team      `json:"team,omitempty"`
-	TeamId    string     `json:"team_id"`
-	UpdatedAt *time.Time `json:"updated_at,omitempty"`
-}
-
-// TeamProjectPerm defines model for TeamProject.Perm.
-type TeamProjectPerm string
 
 // Template Model to represent template
 type Template struct {
@@ -477,21 +515,21 @@ type Template struct {
 
 	// Environment Model to represent environment
 	Environment   *Environment `json:"environment,omitempty"`
-	EnvironmentId *string      `json:"environment_id,omitempty"`
+	EnvironmentID *string      `json:"environment_id,omitempty"`
 	Executor      *string      `json:"executor,omitempty"`
-	Id            *string      `json:"id,omitempty"`
+	ID            *string      `json:"id,omitempty"`
 
 	// Inventory Model to represent inventory
 	Inventory   *Inventory `json:"inventory,omitempty"`
-	InventoryId *string    `json:"inventory_id,omitempty"`
+	InventoryID *string    `json:"inventory_id,omitempty"`
 	Limit       *string    `json:"limit,omitempty"`
 	Name        *string    `json:"name,omitempty"`
 	Playbook    *string    `json:"playbook,omitempty"`
-	ProjectId   *string    `json:"project_id,omitempty"`
+	ProjectID   *string    `json:"project_id,omitempty"`
 
 	// Repository Model to represent repository
 	Repository   *Repository       `json:"repository,omitempty"`
-	RepositoryId *string           `json:"repository_id,omitempty"`
+	RepositoryID *string           `json:"repository_id,omitempty"`
 	Slug         *string           `json:"slug,omitempty"`
 	Surveys      *[]TemplateSurvey `json:"surveys,omitempty"`
 	UpdatedAt    *time.Time        `json:"updated_at,omitempty"`
@@ -501,7 +539,7 @@ type Template struct {
 // TemplateSurvey Model to represent template survey
 type TemplateSurvey struct {
 	Description *string             `json:"description,omitempty"`
-	Id          *string             `json:"id,omitempty"`
+	ID          *string             `json:"id,omitempty"`
 	Kind        *TemplateSurveyKind `json:"kind,omitempty"`
 	Name        *string             `json:"name,omitempty"`
 	Required    *bool               `json:"required,omitempty"`
@@ -514,7 +552,7 @@ type TemplateSurveyKind string
 
 // TemplateValue Model to represent template value
 type TemplateValue struct {
-	Id    *string `json:"id,omitempty"`
+	ID    *string `json:"id,omitempty"`
 	Name  *string `json:"name,omitempty"`
 	Value *string `json:"value,omitempty"`
 }
@@ -523,8 +561,8 @@ type TemplateValue struct {
 type TemplateVault struct {
 	// Credential Model to represent credential
 	Credential   *Credential        `json:"credential,omitempty"`
-	CredentialId *string            `json:"credential_id,omitempty"`
-	Id           *string            `json:"id,omitempty"`
+	CredentialID *string            `json:"credential_id,omitempty"`
+	ID           *string            `json:"id,omitempty"`
 	Kind         *TemplateVaultKind `json:"kind,omitempty"`
 	Name         *string            `json:"name,omitempty"`
 	Script       *string            `json:"script,omitempty"`
@@ -541,7 +579,7 @@ type User struct {
 	CreatedAt *time.Time  `json:"created_at,omitempty"`
 	Email     *string     `json:"email,omitempty"`
 	Fullname  *string     `json:"fullname,omitempty"`
-	Id        *string     `json:"id,omitempty"`
+	ID        *string     `json:"id,omitempty"`
 	Password  *string     `json:"password,omitempty"`
 	Profile   *string     `json:"profile,omitempty"`
 	UpdatedAt *time.Time  `json:"updated_at,omitempty"`
@@ -556,6 +594,24 @@ type UserAuth struct {
 	UpdatedAt *time.Time `json:"updated_at,omitempty"`
 }
 
+// UserGroup Model to represent user group
+type UserGroup struct {
+	CreatedAt *time.Time `json:"created_at,omitempty"`
+
+	// Group Model to represent group
+	Group     *Group         `json:"group,omitempty"`
+	GroupID   string         `json:"group_id"`
+	Perm      *UserGroupPerm `json:"perm,omitempty"`
+	UpdatedAt *time.Time     `json:"updated_at,omitempty"`
+
+	// User Model to represent user
+	User   *User  `json:"user,omitempty"`
+	UserID string `json:"user_id"`
+}
+
+// UserGroupPerm defines model for UserGroup.Perm.
+type UserGroupPerm string
+
 // UserProject Model to represent user project
 type UserProject struct {
 	CreatedAt *time.Time       `json:"created_at,omitempty"`
@@ -563,34 +619,16 @@ type UserProject struct {
 
 	// Project Model to represent project
 	Project   *Project   `json:"project,omitempty"`
-	ProjectId string     `json:"project_id"`
+	ProjectID string     `json:"project_id"`
 	UpdatedAt *time.Time `json:"updated_at,omitempty"`
 
 	// User Model to represent user
 	User   *User  `json:"user,omitempty"`
-	UserId string `json:"user_id"`
+	UserID string `json:"user_id"`
 }
 
 // UserProjectPerm defines model for UserProject.Perm.
 type UserProjectPerm string
-
-// UserTeam Model to represent user team
-type UserTeam struct {
-	CreatedAt *time.Time    `json:"created_at,omitempty"`
-	Perm      *UserTeamPerm `json:"perm,omitempty"`
-
-	// Team Model to represent team
-	Team      *Team      `json:"team,omitempty"`
-	TeamId    string     `json:"team_id"`
-	UpdatedAt *time.Time `json:"updated_at,omitempty"`
-
-	// User Model to represent user
-	User   *User  `json:"user,omitempty"`
-	UserId string `json:"user_id"`
-}
-
-// UserTeamPerm defines model for UserTeam.Perm.
-type UserTeamPerm string
 
 // Validation General structure to show validation errors
 type Validation struct {
@@ -607,17 +645,20 @@ type AuthProviderParam = string
 // AuthStateParam defines model for AuthStateParam.
 type AuthStateParam = string
 
-// CredentialParam defines model for CredentialParam.
-type CredentialParam = string
+// CredentialID defines model for CredentialParam.
+type CredentialID = string
 
-// EnvironmentParam defines model for EnvironmentParam.
-type EnvironmentParam = string
+// EnvironmentID defines model for EnvironmentParam.
+type EnvironmentID = string
 
-// ExecutionParam defines model for ExecutionParam.
-type ExecutionParam = string
+// ExecutionID defines model for ExecutionParam.
+type ExecutionID = string
 
-// InventoryParam defines model for InventoryParam.
-type InventoryParam = string
+// GroupID defines model for GroupParam.
+type GroupID = string
+
+// InventoryID defines model for InventoryParam.
+type InventoryID = string
 
 // PagingLimitParam defines model for PagingLimitParam.
 type PagingLimitParam = int
@@ -625,23 +666,23 @@ type PagingLimitParam = int
 // PagingOffsetParam defines model for PagingOffsetParam.
 type PagingOffsetParam = int
 
-// ProjectParam defines model for ProjectParam.
-type ProjectParam = string
+// ProjectID defines model for ProjectParam.
+type ProjectID = string
 
-// RepositoryParam defines model for RepositoryParam.
-type RepositoryParam = string
+// RepositoryID defines model for RepositoryParam.
+type RepositoryID = string
 
-// RunnerParam defines model for RunnerParam.
-type RunnerParam = string
+// RunnerID defines model for RunnerParam.
+type RunnerID = string
 
-// ScheduleParam defines model for ScheduleParam.
-type ScheduleParam = string
+// ScheduleID defines model for ScheduleParam.
+type ScheduleID = string
 
 // SearchQueryParam defines model for SearchQueryParam.
 type SearchQueryParam = string
 
-// SecretParam defines model for SecretParam.
-type SecretParam = string
+// SecretID defines model for SecretParam.
+type SecretID = string
 
 // SortColumnParam defines model for SortColumnParam.
 type SortColumnParam = string
@@ -649,23 +690,20 @@ type SortColumnParam = string
 // SortOrderParam defines model for SortOrderParam.
 type SortOrderParam string
 
-// SurveyParam defines model for SurveyParam.
-type SurveyParam = string
+// SurveyID defines model for SurveyParam.
+type SurveyID = string
 
-// TeamParam defines model for TeamParam.
-type TeamParam = string
+// TemplateID defines model for TemplateParam.
+type TemplateID = string
 
-// TemplateParam defines model for TemplateParam.
-type TemplateParam = string
+// UserID defines model for UserParam.
+type UserID = string
 
-// UserParam defines model for UserParam.
-type UserParam = string
+// ValueID defines model for ValueParam.
+type ValueID = string
 
-// ValueParam defines model for ValueParam.
-type ValueParam = string
-
-// VaultParam defines model for VaultParam.
-type VaultParam = string
+// VaultID defines model for VaultParam.
+type VaultID = string
 
 // ActionFailedError Generic response for errors and validations
 type ActionFailedError = Notification
@@ -676,12 +714,51 @@ type AlreadyAttachedError = Notification
 // BadCredentialsError Generic response for errors and validations
 type BadCredentialsError = Notification
 
-// CallbackResponse defines model for CallbackResponse.
-type CallbackResponse = AuthToken
-
-// EventsResponse defines model for EventsResponse.
-type EventsResponse struct {
+// GlobalEventsResponse defines model for GlobalEventsResponse.
+type GlobalEventsResponse struct {
 	Events []Event `json:"events"`
+	Limit  int64   `json:"limit"`
+	Offset int64   `json:"offset"`
+	Total  int64   `json:"total"`
+}
+
+// GlobalRunnerResponse Model to represent runner
+type GlobalRunnerResponse = Runner
+
+// GlobalRunnersResponse defines model for GlobalRunnersResponse.
+type GlobalRunnersResponse struct {
+	Limit   int64    `json:"limit"`
+	Offset  int64    `json:"offset"`
+	Runners []Runner `json:"runners"`
+	Total   int64    `json:"total"`
+}
+
+// GroupProjectsResponse defines model for GroupProjectsResponse.
+type GroupProjectsResponse struct {
+	// Group Model to represent group
+	Group    *Group         `json:"group,omitempty"`
+	Limit    int64          `json:"limit"`
+	Offset   int64          `json:"offset"`
+	Projects []GroupProject `json:"projects"`
+	Total    int64          `json:"total"`
+}
+
+// GroupResponse Model to represent group
+type GroupResponse = Group
+
+// GroupUsersResponse defines model for GroupUsersResponse.
+type GroupUsersResponse struct {
+	// Group Model to represent group
+	Group  *Group      `json:"group,omitempty"`
+	Limit  int64       `json:"limit"`
+	Offset int64       `json:"offset"`
+	Total  int64       `json:"total"`
+	Users  []UserGroup `json:"users"`
+}
+
+// GroupsResponse defines model for GroupsResponse.
+type GroupsResponse struct {
+	Groups []Group `json:"groups"`
 	Limit  int64   `json:"limit"`
 	Offset int64   `json:"offset"`
 	Total  int64   `json:"total"`
@@ -742,6 +819,17 @@ type ProjectEnvironmentsResponse struct {
 	Total   int64    `json:"total"`
 }
 
+// ProjectEventsResponse defines model for ProjectEventsResponse.
+type ProjectEventsResponse struct {
+	Events []Event `json:"events"`
+	Limit  int64   `json:"limit"`
+	Offset int64   `json:"offset"`
+
+	// Project Model to represent project
+	Project *Project `json:"project,omitempty"`
+	Total   int64    `json:"total"`
+}
+
 // ProjectExecutionResponse Model to represent execution
 type ProjectExecutionResponse = Execution
 
@@ -750,6 +838,17 @@ type ProjectExecutionsResponse struct {
 	Executions []Execution `json:"executions"`
 	Limit      int64       `json:"limit"`
 	Offset     int64       `json:"offset"`
+
+	// Project Model to represent project
+	Project *Project `json:"project,omitempty"`
+	Total   int64    `json:"total"`
+}
+
+// ProjectGroupsResponse defines model for ProjectGroupsResponse.
+type ProjectGroupsResponse struct {
+	Groups []GroupProject `json:"groups"`
+	Limit  int64          `json:"limit"`
+	Offset int64          `json:"offset"`
 
 	// Project Model to represent project
 	Project *Project `json:"project,omitempty"`
@@ -770,8 +869,8 @@ type ProjectInventoriesResponse struct {
 // ProjectInventoryResponse Model to represent inventory
 type ProjectInventoryResponse = Inventory
 
-// ProjectLoggingResponse Model to represent logging
-type ProjectLoggingResponse = Logging
+// ProjectOutputResponse defines model for ProjectOutputResponse.
+type ProjectOutputResponse = []Output
 
 // ProjectRepositoriesResponse defines model for ProjectRepositoriesResponse.
 type ProjectRepositoriesResponse struct {
@@ -790,6 +889,20 @@ type ProjectRepositoryResponse = Repository
 // ProjectResponse Model to represent project
 type ProjectResponse = Project
 
+// ProjectRunnerResponse Model to represent runner
+type ProjectRunnerResponse = Runner
+
+// ProjectRunnersResponse defines model for ProjectRunnersResponse.
+type ProjectRunnersResponse struct {
+	Limit  int64 `json:"limit"`
+	Offset int64 `json:"offset"`
+
+	// Project Model to represent project
+	Project *Project `json:"project,omitempty"`
+	Runners []Runner `json:"runners"`
+	Total   int64    `json:"total"`
+}
+
 // ProjectScheduleResponse Model to represent schedule
 type ProjectScheduleResponse = Schedule
 
@@ -802,17 +915,6 @@ type ProjectSchedulesResponse struct {
 	Project   *Project   `json:"project,omitempty"`
 	Schedules []Schedule `json:"schedules"`
 	Total     int64      `json:"total"`
-}
-
-// ProjectTeamsResponse defines model for ProjectTeamsResponse.
-type ProjectTeamsResponse struct {
-	Limit  int64 `json:"limit"`
-	Offset int64 `json:"offset"`
-
-	// Project Model to represent project
-	Project *Project      `json:"project,omitempty"`
-	Teams   []TeamProject `json:"teams"`
-	Total   int64         `json:"total"`
 }
 
 // ProjectTemplateResponse Model to represent template
@@ -854,64 +956,31 @@ type ProjectsResponse struct {
 	Total    int64     `json:"total"`
 }
 
-// ProviderInitError Generic response for errors and validations
-type ProviderInitError = Notification
-
-// ProviderResponse defines model for ProviderResponse.
-type ProviderResponse = []Provider
+// ProvidersResponse defines model for ProvidersResponse.
+type ProvidersResponse struct {
+	Providers []Provider `json:"providers"`
+	Total     int64      `json:"total"`
+}
 
 // RefreshResponse defines model for RefreshResponse.
 type RefreshResponse = AuthToken
 
-// RunnerResponse Model to represent runner
-type RunnerResponse = Runner
-
-// RunnersResponse defines model for RunnersResponse.
-type RunnersResponse struct {
-	Limit   int64    `json:"limit"`
-	Offset  int64    `json:"offset"`
-	Runners []Runner `json:"runners"`
-	Total   int64    `json:"total"`
-}
-
 // SuccessMessage Generic response for errors and validations
 type SuccessMessage = Notification
 
-// TeamProjectsResponse defines model for TeamProjectsResponse.
-type TeamProjectsResponse struct {
-	Limit    int64         `json:"limit"`
-	Offset   int64         `json:"offset"`
-	Projects []TeamProject `json:"projects"`
-
-	// Team Model to represent team
-	Team  *Team `json:"team,omitempty"`
-	Total int64 `json:"total"`
-}
-
-// TeamResponse Model to represent team
-type TeamResponse = Team
-
-// TeamUsersResponse defines model for TeamUsersResponse.
-type TeamUsersResponse struct {
-	Limit  int64 `json:"limit"`
-	Offset int64 `json:"offset"`
-
-	// Team Model to represent team
-	Team  *Team      `json:"team,omitempty"`
-	Total int64      `json:"total"`
-	Users []UserTeam `json:"users"`
-}
-
-// TeamsResponse defines model for TeamsResponse.
-type TeamsResponse struct {
-	Limit  int64  `json:"limit"`
-	Offset int64  `json:"offset"`
-	Teams  []Team `json:"teams"`
-	Total  int64  `json:"total"`
-}
-
 // TokenResponse defines model for TokenResponse.
 type TokenResponse = AuthToken
+
+// UserGroupsResponse defines model for UserGroupsResponse.
+type UserGroupsResponse struct {
+	Groups []UserGroup `json:"groups"`
+	Limit  int64       `json:"limit"`
+	Offset int64       `json:"offset"`
+	Total  int64       `json:"total"`
+
+	// User Model to represent user
+	User *User `json:"user,omitempty"`
+}
 
 // UserProjectsResponse defines model for UserProjectsResponse.
 type UserProjectsResponse struct {
@@ -927,17 +996,6 @@ type UserProjectsResponse struct {
 // UserResponse Model to represent user
 type UserResponse = User
 
-// UserTeamsResponse defines model for UserTeamsResponse.
-type UserTeamsResponse struct {
-	Limit  int64      `json:"limit"`
-	Offset int64      `json:"offset"`
-	Teams  []UserTeam `json:"teams"`
-	Total  int64      `json:"total"`
-
-	// User Model to represent user
-	User *User `json:"user,omitempty"`
-}
-
 // UsersResponse defines model for UsersResponse.
 type UsersResponse struct {
 	Limit  int64  `json:"limit"`
@@ -951,6 +1009,20 @@ type ValidationError = Notification
 
 // VerifyResponse defines model for VerifyResponse.
 type VerifyResponse = AuthVerify
+
+// CreateGlobalRunnerBody defines model for CreateGlobalRunnerBody.
+type CreateGlobalRunnerBody struct {
+	Name      *string `json:"name,omitempty"`
+	ProjectID *string `json:"project_id,omitempty"`
+	Slug      *string `json:"slug,omitempty"`
+	Token     *string `json:"token,omitempty"`
+}
+
+// CreateGroupBody defines model for CreateGroupBody.
+type CreateGroupBody struct {
+	Name *string `json:"name,omitempty"`
+	Slug *string `json:"slug,omitempty"`
+}
 
 // CreateProjectBody defines model for CreateProjectBody.
 type CreateProjectBody struct {
@@ -1004,27 +1076,34 @@ type CreateProjectExecutionBody struct {
 	Playbook    *string `json:"playbook,omitempty"`
 	Secret      *string `json:"secret,omitempty"`
 	Status      *string `json:"status,omitempty"`
-	TemplateId  *string `json:"template_id,omitempty"`
+	TemplateID  *string `json:"template_id,omitempty"`
 }
 
 // CreateProjectInventoryBody defines model for CreateProjectInventoryBody.
 type CreateProjectInventoryBody struct {
-	BecomeId     *string `json:"become_id,omitempty"`
+	BecomeID     *string `json:"become_id,omitempty"`
 	Content      *string `json:"content,omitempty"`
-	CredentialId *string `json:"credential_id,omitempty"`
+	CredentialID *string `json:"credential_id,omitempty"`
 	Kind         *string `json:"kind,omitempty"`
 	Name         *string `json:"name,omitempty"`
-	RepositoryId *string `json:"repository_id,omitempty"`
+	RepositoryID *string `json:"repository_id,omitempty"`
 	Slug         *string `json:"slug,omitempty"`
 }
 
 // CreateProjectRepositoryBody defines model for CreateProjectRepositoryBody.
 type CreateProjectRepositoryBody struct {
 	Branch       *string `json:"branch,omitempty"`
-	CredentialId *string `json:"credential_id,omitempty"`
+	CredentialID *string `json:"credential_id,omitempty"`
 	Name         *string `json:"name,omitempty"`
 	Slug         *string `json:"slug,omitempty"`
 	Url          *string `json:"url,omitempty"`
+}
+
+// CreateProjectRunnerBody defines model for CreateProjectRunnerBody.
+type CreateProjectRunnerBody struct {
+	Name  *string `json:"name,omitempty"`
+	Slug  *string `json:"slug,omitempty"`
+	Token *string `json:"token,omitempty"`
 }
 
 // CreateProjectScheduleBody defines model for CreateProjectScheduleBody.
@@ -1033,7 +1112,7 @@ type CreateProjectScheduleBody struct {
 	Cron       *string `json:"cron,omitempty"`
 	Name       *string `json:"name,omitempty"`
 	Slug       *string `json:"slug,omitempty"`
-	TemplateId *string `json:"template_id,omitempty"`
+	TemplateID *string `json:"template_id,omitempty"`
 }
 
 // CreateProjectTemplateBody defines model for CreateProjectTemplateBody.
@@ -1042,13 +1121,13 @@ type CreateProjectTemplateBody struct {
 	Arguments     *string           `json:"arguments,omitempty"`
 	Branch        *string           `json:"branch,omitempty"`
 	Description   *string           `json:"description,omitempty"`
-	EnvironmentId *string           `json:"environment_id,omitempty"`
+	EnvironmentID *string           `json:"environment_id,omitempty"`
 	Executor      *string           `json:"executor,omitempty"`
-	InventoryId   *string           `json:"inventory_id,omitempty"`
+	InventoryID   *string           `json:"inventory_id,omitempty"`
 	Limit         *string           `json:"limit,omitempty"`
 	Name          *string           `json:"name,omitempty"`
 	Playbook      *string           `json:"playbook,omitempty"`
-	RepositoryId  *string           `json:"repository_id,omitempty"`
+	RepositoryID  *string           `json:"repository_id,omitempty"`
 	Slug          *string           `json:"slug,omitempty"`
 	Surveys       *[]TemplateSurvey `json:"surveys,omitempty"`
 	Vaults        *[]TemplateVault  `json:"vaults,omitempty"`
@@ -1066,23 +1145,10 @@ type CreateProjectTemplateSurveyBody struct {
 
 // CreateProjectTemplateVaultBody defines model for CreateProjectTemplateVaultBody.
 type CreateProjectTemplateVaultBody struct {
-	CredentialId *string `json:"credential_id,omitempty"`
+	CredentialID *string `json:"credential_id,omitempty"`
 	Kind         *string `json:"kind,omitempty"`
 	Name         *string `json:"name,omitempty"`
 	Script       *string `json:"script,omitempty"`
-}
-
-// CreateRunnerBody defines model for CreateRunnerBody.
-type CreateRunnerBody struct {
-	Name  *string `json:"name,omitempty"`
-	Slug  *string `json:"slug,omitempty"`
-	Token *string `json:"token,omitempty"`
-}
-
-// CreateTeamBody defines model for CreateTeamBody.
-type CreateTeamBody struct {
-	Name *string `json:"name,omitempty"`
-	Slug *string `json:"slug,omitempty"`
 }
 
 // CreateUserBody defines model for CreateUserBody.
@@ -1095,21 +1161,43 @@ type CreateUserBody struct {
 	Username *string `json:"username,omitempty"`
 }
 
+// GroupProjectDropBody defines model for GroupProjectDropBody.
+type GroupProjectDropBody struct {
+	Project string `json:"project"`
+}
+
+// GroupProjectPermBody defines model for GroupProjectPermBody.
+type GroupProjectPermBody struct {
+	Perm    string `json:"perm"`
+	Project string `json:"project"`
+}
+
+// GroupUserDropBody defines model for GroupUserDropBody.
+type GroupUserDropBody struct {
+	User string `json:"user"`
+}
+
+// GroupUserPermBody defines model for GroupUserPermBody.
+type GroupUserPermBody struct {
+	Perm string `json:"perm"`
+	User string `json:"user"`
+}
+
 // LoginAuthBody defines model for LoginAuthBody.
 type LoginAuthBody struct {
-	Password *string `json:"password,omitempty"`
-	Username *string `json:"username,omitempty"`
+	Password string `json:"password"`
+	Username string `json:"username"`
 }
 
-// ProjectTeamDropBody defines model for ProjectTeamDropBody.
-type ProjectTeamDropBody struct {
-	Team string `json:"team"`
+// ProjectGroupDropBody defines model for ProjectGroupDropBody.
+type ProjectGroupDropBody struct {
+	Group string `json:"group"`
 }
 
-// ProjectTeamPermBody defines model for ProjectTeamPermBody.
-type ProjectTeamPermBody struct {
-	Perm string `json:"perm"`
-	Team string `json:"team"`
+// ProjectGroupPermBody defines model for ProjectGroupPermBody.
+type ProjectGroupPermBody struct {
+	Group string `json:"group"`
+	Perm  string `json:"perm"`
 }
 
 // ProjectUserDropBody defines model for ProjectUserDropBody.
@@ -1123,26 +1211,18 @@ type ProjectUserPermBody struct {
 	User string `json:"user"`
 }
 
-// TeamProjectDropBody defines model for TeamProjectDropBody.
-type TeamProjectDropBody struct {
-	Project string `json:"project"`
+// UpdateGlobalRunnerBody defines model for UpdateGlobalRunnerBody.
+type UpdateGlobalRunnerBody struct {
+	Name      *string `json:"name,omitempty"`
+	ProjectID *string `json:"project_id,omitempty"`
+	Slug      *string `json:"slug,omitempty"`
+	Token     *string `json:"token,omitempty"`
 }
 
-// TeamProjectPermBody defines model for TeamProjectPermBody.
-type TeamProjectPermBody struct {
-	Perm    string `json:"perm"`
-	Project string `json:"project"`
-}
-
-// TeamUserDropBody defines model for TeamUserDropBody.
-type TeamUserDropBody struct {
-	User string `json:"user"`
-}
-
-// TeamUserPermBody defines model for TeamUserPermBody.
-type TeamUserPermBody struct {
-	Perm string `json:"perm"`
-	User string `json:"user"`
+// UpdateGroupBody defines model for UpdateGroupBody.
+type UpdateGroupBody struct {
+	Name *string `json:"name,omitempty"`
+	Slug *string `json:"slug,omitempty"`
 }
 
 // UpdateProfileBody defines model for UpdateProfileBody.
@@ -1197,22 +1277,29 @@ type UpdateProjectEnvironmentValueBody struct {
 
 // UpdateProjectInventoryBody defines model for UpdateProjectInventoryBody.
 type UpdateProjectInventoryBody struct {
-	BecomeId     *string `json:"become_id,omitempty"`
+	BecomeID     *string `json:"become_id,omitempty"`
 	Content      *string `json:"content,omitempty"`
-	CredentialId *string `json:"credential_id,omitempty"`
+	CredentialID *string `json:"credential_id,omitempty"`
 	Kind         *string `json:"kind,omitempty"`
 	Name         *string `json:"name,omitempty"`
-	RepositoryId *string `json:"repository_id,omitempty"`
+	RepositoryID *string `json:"repository_id,omitempty"`
 	Slug         *string `json:"slug,omitempty"`
 }
 
 // UpdateProjectRepositoryBody defines model for UpdateProjectRepositoryBody.
 type UpdateProjectRepositoryBody struct {
 	Branch       *string `json:"branch,omitempty"`
-	CredentialId *string `json:"credential_id,omitempty"`
+	CredentialID *string `json:"credential_id,omitempty"`
 	Name         *string `json:"name,omitempty"`
 	Slug         *string `json:"slug,omitempty"`
 	Url          *string `json:"url,omitempty"`
+}
+
+// UpdateProjectRunnerBody defines model for UpdateProjectRunnerBody.
+type UpdateProjectRunnerBody struct {
+	Name  *string `json:"name,omitempty"`
+	Slug  *string `json:"slug,omitempty"`
+	Token *string `json:"token,omitempty"`
 }
 
 // UpdateProjectScheduleBody defines model for UpdateProjectScheduleBody.
@@ -1221,7 +1308,7 @@ type UpdateProjectScheduleBody struct {
 	Cron       *string `json:"cron,omitempty"`
 	Name       *string `json:"name,omitempty"`
 	Slug       *string `json:"slug,omitempty"`
-	TemplateId *string `json:"template_id,omitempty"`
+	TemplateID *string `json:"template_id,omitempty"`
 }
 
 // UpdateProjectTemplateBody defines model for UpdateProjectTemplateBody.
@@ -1230,12 +1317,12 @@ type UpdateProjectTemplateBody struct {
 	Arguments     *string           `json:"arguments,omitempty"`
 	Branch        *string           `json:"branch,omitempty"`
 	Description   *string           `json:"description,omitempty"`
-	EnvironmentId *string           `json:"environment_id,omitempty"`
-	InventoryId   *string           `json:"inventory_id,omitempty"`
+	EnvironmentID *string           `json:"environment_id,omitempty"`
+	InventoryID   *string           `json:"inventory_id,omitempty"`
 	Limit         *string           `json:"limit,omitempty"`
 	Name          *string           `json:"name,omitempty"`
 	Playbook      *string           `json:"playbook,omitempty"`
-	RepositoryId  *string           `json:"repository_id,omitempty"`
+	RepositoryID  *string           `json:"repository_id,omitempty"`
 	Slug          *string           `json:"slug,omitempty"`
 	Surveys       *[]TemplateSurvey `json:"surveys,omitempty"`
 	Vaults        *[]TemplateVault  `json:"vaults,omitempty"`
@@ -1253,23 +1340,10 @@ type UpdateProjectTemplateSurveyBody struct {
 
 // UpdateProjectTemplateVaultBody defines model for UpdateProjectTemplateVaultBody.
 type UpdateProjectTemplateVaultBody struct {
-	CredentialId *string `json:"credential_id,omitempty"`
+	CredentialID *string `json:"credential_id,omitempty"`
 	Kind         *string `json:"kind,omitempty"`
 	Name         *string `json:"name,omitempty"`
 	Script       *string `json:"script,omitempty"`
-}
-
-// UpdateRunnerBody defines model for UpdateRunnerBody.
-type UpdateRunnerBody struct {
-	Name  *string `json:"name,omitempty"`
-	Slug  *string `json:"slug,omitempty"`
-	Token *string `json:"token,omitempty"`
-}
-
-// UpdateTeamBody defines model for UpdateTeamBody.
-type UpdateTeamBody struct {
-	Name *string `json:"name,omitempty"`
-	Slug *string `json:"slug,omitempty"`
 }
 
 // UpdateUserBody defines model for UpdateUserBody.
@@ -1280,6 +1354,17 @@ type UpdateUserBody struct {
 	Fullname *string `json:"fullname,omitempty"`
 	Password *string `json:"password,omitempty"`
 	Username *string `json:"username,omitempty"`
+}
+
+// UserGroupDropBody defines model for UserGroupDropBody.
+type UserGroupDropBody struct {
+	Group string `json:"group"`
+}
+
+// UserGroupPermBody defines model for UserGroupPermBody.
+type UserGroupPermBody struct {
+	Group string `json:"group"`
+	Perm  string `json:"perm"`
 }
 
 // UserProjectDropBody defines model for UserProjectDropBody.
@@ -1293,21 +1378,10 @@ type UserProjectPermBody struct {
 	Project string `json:"project"`
 }
 
-// UserTeamDropBody defines model for UserTeamDropBody.
-type UserTeamDropBody struct {
-	Team string `json:"team"`
-}
-
-// UserTeamPermBody defines model for UserTeamPermBody.
-type UserTeamPermBody struct {
-	Perm string `json:"perm"`
-	Team string `json:"team"`
-}
-
 // LoginAuthJSONBody defines parameters for LoginAuth.
 type LoginAuthJSONBody struct {
-	Password *string `json:"password,omitempty"`
-	Username *string `json:"username,omitempty"`
+	Password string `json:"password"`
+	Username string `json:"username"`
 }
 
 // CallbackProviderParams defines parameters for CallbackProvider.
@@ -1319,8 +1393,8 @@ type CallbackProviderParams struct {
 	Code *AuthCodeParam `form:"code,omitempty" json:"code,omitempty"`
 }
 
-// ListEventsParams defines parameters for ListEvents.
-type ListEventsParams struct {
+// ListGlobalEventsParams defines parameters for ListGlobalEvents.
+type ListGlobalEventsParams struct {
 	// Search Search query
 	Search *SearchQueryParam `form:"search,omitempty" json:"search,omitempty"`
 
@@ -1329,6 +1403,115 @@ type ListEventsParams struct {
 
 	// Offset Paging offset
 	Offset *PagingOffsetParam `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// ListGroupsParams defines parameters for ListGroups.
+type ListGroupsParams struct {
+	// Search Search query
+	Search *SearchQueryParam `form:"search,omitempty" json:"search,omitempty"`
+
+	// Sort Sorting column
+	Sort *SortColumnParam `form:"sort,omitempty" json:"sort,omitempty"`
+
+	// Order Sorting order
+	Order *ListGroupsParamsOrder `form:"order,omitempty" json:"order,omitempty"`
+
+	// Limit Paging limit
+	Limit *PagingLimitParam `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Paging offset
+	Offset *PagingOffsetParam `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// ListGroupsParamsOrder defines parameters for ListGroups.
+type ListGroupsParamsOrder string
+
+// CreateGroupJSONBody defines parameters for CreateGroup.
+type CreateGroupJSONBody struct {
+	Name *string `json:"name,omitempty"`
+	Slug *string `json:"slug,omitempty"`
+}
+
+// UpdateGroupJSONBody defines parameters for UpdateGroup.
+type UpdateGroupJSONBody struct {
+	Name *string `json:"name,omitempty"`
+	Slug *string `json:"slug,omitempty"`
+}
+
+// DeleteGroupFromProjectJSONBody defines parameters for DeleteGroupFromProject.
+type DeleteGroupFromProjectJSONBody struct {
+	Project string `json:"project"`
+}
+
+// ListGroupProjectsParams defines parameters for ListGroupProjects.
+type ListGroupProjectsParams struct {
+	// Search Search query
+	Search *SearchQueryParam `form:"search,omitempty" json:"search,omitempty"`
+
+	// Sort Sorting column
+	Sort *SortColumnParam `form:"sort,omitempty" json:"sort,omitempty"`
+
+	// Order Sorting order
+	Order *ListGroupProjectsParamsOrder `form:"order,omitempty" json:"order,omitempty"`
+
+	// Limit Paging limit
+	Limit *PagingLimitParam `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Paging offset
+	Offset *PagingOffsetParam `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// ListGroupProjectsParamsOrder defines parameters for ListGroupProjects.
+type ListGroupProjectsParamsOrder string
+
+// AttachGroupToProjectJSONBody defines parameters for AttachGroupToProject.
+type AttachGroupToProjectJSONBody struct {
+	Perm    string `json:"perm"`
+	Project string `json:"project"`
+}
+
+// PermitGroupProjectJSONBody defines parameters for PermitGroupProject.
+type PermitGroupProjectJSONBody struct {
+	Perm    string `json:"perm"`
+	Project string `json:"project"`
+}
+
+// DeleteGroupFromUserJSONBody defines parameters for DeleteGroupFromUser.
+type DeleteGroupFromUserJSONBody struct {
+	User string `json:"user"`
+}
+
+// ListGroupUsersParams defines parameters for ListGroupUsers.
+type ListGroupUsersParams struct {
+	// Search Search query
+	Search *SearchQueryParam `form:"search,omitempty" json:"search,omitempty"`
+
+	// Sort Sorting column
+	Sort *SortColumnParam `form:"sort,omitempty" json:"sort,omitempty"`
+
+	// Order Sorting order
+	Order *ListGroupUsersParamsOrder `form:"order,omitempty" json:"order,omitempty"`
+
+	// Limit Paging limit
+	Limit *PagingLimitParam `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Paging offset
+	Offset *PagingOffsetParam `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// ListGroupUsersParamsOrder defines parameters for ListGroupUsers.
+type ListGroupUsersParamsOrder string
+
+// AttachGroupToUserJSONBody defines parameters for AttachGroupToUser.
+type AttachGroupToUserJSONBody struct {
+	Perm string `json:"perm"`
+	User string `json:"user"`
+}
+
+// PermitGroupUserJSONBody defines parameters for PermitGroupUser.
+type PermitGroupUserJSONBody struct {
+	Perm string `json:"perm"`
+	User string `json:"user"`
 }
 
 // UpdateProfileJSONBody defines parameters for UpdateProfile.
@@ -1487,6 +1670,18 @@ type UpdateProjectEnvironmentValueJSONBody struct {
 	Name    *string `json:"name,omitempty"`
 }
 
+// ListProjectEventsParams defines parameters for ListProjectEvents.
+type ListProjectEventsParams struct {
+	// Search Search query
+	Search *SearchQueryParam `form:"search,omitempty" json:"search,omitempty"`
+
+	// Limit Paging limit
+	Limit *PagingLimitParam `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Paging offset
+	Offset *PagingOffsetParam `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
 // ListProjectExecutionsParams defines parameters for ListProjectExecutions.
 type ListProjectExecutionsParams struct {
 	// Search Search query
@@ -1517,7 +1712,45 @@ type CreateProjectExecutionJSONBody struct {
 	Playbook    *string `json:"playbook,omitempty"`
 	Secret      *string `json:"secret,omitempty"`
 	Status      *string `json:"status,omitempty"`
-	TemplateId  *string `json:"template_id,omitempty"`
+	TemplateID  *string `json:"template_id,omitempty"`
+}
+
+// DeleteProjectFromGroupJSONBody defines parameters for DeleteProjectFromGroup.
+type DeleteProjectFromGroupJSONBody struct {
+	Group string `json:"group"`
+}
+
+// ListProjectGroupsParams defines parameters for ListProjectGroups.
+type ListProjectGroupsParams struct {
+	// Search Search query
+	Search *SearchQueryParam `form:"search,omitempty" json:"search,omitempty"`
+
+	// Sort Sorting column
+	Sort *SortColumnParam `form:"sort,omitempty" json:"sort,omitempty"`
+
+	// Order Sorting order
+	Order *ListProjectGroupsParamsOrder `form:"order,omitempty" json:"order,omitempty"`
+
+	// Limit Paging limit
+	Limit *PagingLimitParam `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Paging offset
+	Offset *PagingOffsetParam `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// ListProjectGroupsParamsOrder defines parameters for ListProjectGroups.
+type ListProjectGroupsParamsOrder string
+
+// AttachProjectToGroupJSONBody defines parameters for AttachProjectToGroup.
+type AttachProjectToGroupJSONBody struct {
+	Group string `json:"group"`
+	Perm  string `json:"perm"`
+}
+
+// PermitProjectGroupJSONBody defines parameters for PermitProjectGroup.
+type PermitProjectGroupJSONBody struct {
+	Group string `json:"group"`
+	Perm  string `json:"perm"`
 }
 
 // ListProjectInventoriesParams defines parameters for ListProjectInventories.
@@ -1543,23 +1776,23 @@ type ListProjectInventoriesParamsOrder string
 
 // CreateProjectInventoryJSONBody defines parameters for CreateProjectInventory.
 type CreateProjectInventoryJSONBody struct {
-	BecomeId     *string `json:"become_id,omitempty"`
+	BecomeID     *string `json:"become_id,omitempty"`
 	Content      *string `json:"content,omitempty"`
-	CredentialId *string `json:"credential_id,omitempty"`
+	CredentialID *string `json:"credential_id,omitempty"`
 	Kind         *string `json:"kind,omitempty"`
 	Name         *string `json:"name,omitempty"`
-	RepositoryId *string `json:"repository_id,omitempty"`
+	RepositoryID *string `json:"repository_id,omitempty"`
 	Slug         *string `json:"slug,omitempty"`
 }
 
 // UpdateProjectInventoryJSONBody defines parameters for UpdateProjectInventory.
 type UpdateProjectInventoryJSONBody struct {
-	BecomeId     *string `json:"become_id,omitempty"`
+	BecomeID     *string `json:"become_id,omitempty"`
 	Content      *string `json:"content,omitempty"`
-	CredentialId *string `json:"credential_id,omitempty"`
+	CredentialID *string `json:"credential_id,omitempty"`
 	Kind         *string `json:"kind,omitempty"`
 	Name         *string `json:"name,omitempty"`
-	RepositoryId *string `json:"repository_id,omitempty"`
+	RepositoryID *string `json:"repository_id,omitempty"`
 	Slug         *string `json:"slug,omitempty"`
 }
 
@@ -1587,7 +1820,7 @@ type ListProjectRepositoriesParamsOrder string
 // CreateProjectRepositoryJSONBody defines parameters for CreateProjectRepository.
 type CreateProjectRepositoryJSONBody struct {
 	Branch       *string `json:"branch,omitempty"`
-	CredentialId *string `json:"credential_id,omitempty"`
+	CredentialID *string `json:"credential_id,omitempty"`
 	Name         *string `json:"name,omitempty"`
 	Slug         *string `json:"slug,omitempty"`
 	Url          *string `json:"url,omitempty"`
@@ -1596,10 +1829,45 @@ type CreateProjectRepositoryJSONBody struct {
 // UpdateProjectRepositoryJSONBody defines parameters for UpdateProjectRepository.
 type UpdateProjectRepositoryJSONBody struct {
 	Branch       *string `json:"branch,omitempty"`
-	CredentialId *string `json:"credential_id,omitempty"`
+	CredentialID *string `json:"credential_id,omitempty"`
 	Name         *string `json:"name,omitempty"`
 	Slug         *string `json:"slug,omitempty"`
 	Url          *string `json:"url,omitempty"`
+}
+
+// ListProjectRunnersParams defines parameters for ListProjectRunners.
+type ListProjectRunnersParams struct {
+	// Search Search query
+	Search *SearchQueryParam `form:"search,omitempty" json:"search,omitempty"`
+
+	// Sort Sorting column
+	Sort *SortColumnParam `form:"sort,omitempty" json:"sort,omitempty"`
+
+	// Order Sorting order
+	Order *ListProjectRunnersParamsOrder `form:"order,omitempty" json:"order,omitempty"`
+
+	// Limit Paging limit
+	Limit *PagingLimitParam `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Paging offset
+	Offset *PagingOffsetParam `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// ListProjectRunnersParamsOrder defines parameters for ListProjectRunners.
+type ListProjectRunnersParamsOrder string
+
+// CreateProjectRunnerJSONBody defines parameters for CreateProjectRunner.
+type CreateProjectRunnerJSONBody struct {
+	Name  *string `json:"name,omitempty"`
+	Slug  *string `json:"slug,omitempty"`
+	Token *string `json:"token,omitempty"`
+}
+
+// UpdateProjectRunnerJSONBody defines parameters for UpdateProjectRunner.
+type UpdateProjectRunnerJSONBody struct {
+	Name  *string `json:"name,omitempty"`
+	Slug  *string `json:"slug,omitempty"`
+	Token *string `json:"token,omitempty"`
 }
 
 // ListProjectSchedulesParams defines parameters for ListProjectSchedules.
@@ -1629,7 +1897,7 @@ type CreateProjectScheduleJSONBody struct {
 	Cron       *string `json:"cron,omitempty"`
 	Name       *string `json:"name,omitempty"`
 	Slug       *string `json:"slug,omitempty"`
-	TemplateId *string `json:"template_id,omitempty"`
+	TemplateID *string `json:"template_id,omitempty"`
 }
 
 // UpdateProjectScheduleJSONBody defines parameters for UpdateProjectSchedule.
@@ -1638,45 +1906,7 @@ type UpdateProjectScheduleJSONBody struct {
 	Cron       *string `json:"cron,omitempty"`
 	Name       *string `json:"name,omitempty"`
 	Slug       *string `json:"slug,omitempty"`
-	TemplateId *string `json:"template_id,omitempty"`
-}
-
-// DeleteProjectFromTeamJSONBody defines parameters for DeleteProjectFromTeam.
-type DeleteProjectFromTeamJSONBody struct {
-	Team string `json:"team"`
-}
-
-// ListProjectTeamsParams defines parameters for ListProjectTeams.
-type ListProjectTeamsParams struct {
-	// Search Search query
-	Search *SearchQueryParam `form:"search,omitempty" json:"search,omitempty"`
-
-	// Sort Sorting column
-	Sort *SortColumnParam `form:"sort,omitempty" json:"sort,omitempty"`
-
-	// Order Sorting order
-	Order *ListProjectTeamsParamsOrder `form:"order,omitempty" json:"order,omitempty"`
-
-	// Limit Paging limit
-	Limit *PagingLimitParam `form:"limit,omitempty" json:"limit,omitempty"`
-
-	// Offset Paging offset
-	Offset *PagingOffsetParam `form:"offset,omitempty" json:"offset,omitempty"`
-}
-
-// ListProjectTeamsParamsOrder defines parameters for ListProjectTeams.
-type ListProjectTeamsParamsOrder string
-
-// AttachProjectToTeamJSONBody defines parameters for AttachProjectToTeam.
-type AttachProjectToTeamJSONBody struct {
-	Perm string `json:"perm"`
-	Team string `json:"team"`
-}
-
-// PermitProjectTeamJSONBody defines parameters for PermitProjectTeam.
-type PermitProjectTeamJSONBody struct {
-	Perm string `json:"perm"`
-	Team string `json:"team"`
+	TemplateID *string `json:"template_id,omitempty"`
 }
 
 // ListProjectTemplatesParams defines parameters for ListProjectTemplates.
@@ -1706,13 +1936,13 @@ type CreateProjectTemplateJSONBody struct {
 	Arguments     *string           `json:"arguments,omitempty"`
 	Branch        *string           `json:"branch,omitempty"`
 	Description   *string           `json:"description,omitempty"`
-	EnvironmentId *string           `json:"environment_id,omitempty"`
+	EnvironmentID *string           `json:"environment_id,omitempty"`
 	Executor      *string           `json:"executor,omitempty"`
-	InventoryId   *string           `json:"inventory_id,omitempty"`
+	InventoryID   *string           `json:"inventory_id,omitempty"`
 	Limit         *string           `json:"limit,omitempty"`
 	Name          *string           `json:"name,omitempty"`
 	Playbook      *string           `json:"playbook,omitempty"`
-	RepositoryId  *string           `json:"repository_id,omitempty"`
+	RepositoryID  *string           `json:"repository_id,omitempty"`
 	Slug          *string           `json:"slug,omitempty"`
 	Surveys       *[]TemplateSurvey `json:"surveys,omitempty"`
 	Vaults        *[]TemplateVault  `json:"vaults,omitempty"`
@@ -1724,12 +1954,12 @@ type UpdateProjectTemplateJSONBody struct {
 	Arguments     *string           `json:"arguments,omitempty"`
 	Branch        *string           `json:"branch,omitempty"`
 	Description   *string           `json:"description,omitempty"`
-	EnvironmentId *string           `json:"environment_id,omitempty"`
-	InventoryId   *string           `json:"inventory_id,omitempty"`
+	EnvironmentID *string           `json:"environment_id,omitempty"`
+	InventoryID   *string           `json:"inventory_id,omitempty"`
 	Limit         *string           `json:"limit,omitempty"`
 	Name          *string           `json:"name,omitempty"`
 	Playbook      *string           `json:"playbook,omitempty"`
-	RepositoryId  *string           `json:"repository_id,omitempty"`
+	RepositoryID  *string           `json:"repository_id,omitempty"`
 	Slug          *string           `json:"slug,omitempty"`
 	Surveys       *[]TemplateSurvey `json:"surveys,omitempty"`
 	Vaults        *[]TemplateVault  `json:"vaults,omitempty"`
@@ -1757,7 +1987,7 @@ type UpdateProjectTemplateSurveyJSONBody struct {
 
 // CreateProjectTemplateVaultJSONBody defines parameters for CreateProjectTemplateVault.
 type CreateProjectTemplateVaultJSONBody struct {
-	CredentialId *string `json:"credential_id,omitempty"`
+	CredentialID *string `json:"credential_id,omitempty"`
 	Kind         *string `json:"kind,omitempty"`
 	Name         *string `json:"name,omitempty"`
 	Script       *string `json:"script,omitempty"`
@@ -1765,7 +1995,7 @@ type CreateProjectTemplateVaultJSONBody struct {
 
 // UpdateProjectTemplateVaultJSONBody defines parameters for UpdateProjectTemplateVault.
 type UpdateProjectTemplateVaultJSONBody struct {
-	CredentialId *string `json:"credential_id,omitempty"`
+	CredentialID *string `json:"credential_id,omitempty"`
 	Kind         *string `json:"kind,omitempty"`
 	Name         *string `json:"name,omitempty"`
 	Script       *string `json:"script,omitempty"`
@@ -1809,8 +2039,8 @@ type PermitProjectUserJSONBody struct {
 	User string `json:"user"`
 }
 
-// ListRunnersParams defines parameters for ListRunners.
-type ListRunnersParams struct {
+// ListGlobalRunnersParams defines parameters for ListGlobalRunners.
+type ListGlobalRunnersParams struct {
 	// Search Search query
 	Search *SearchQueryParam `form:"search,omitempty" json:"search,omitempty"`
 
@@ -1818,7 +2048,7 @@ type ListRunnersParams struct {
 	Sort *SortColumnParam `form:"sort,omitempty" json:"sort,omitempty"`
 
 	// Order Sorting order
-	Order *ListRunnersParamsOrder `form:"order,omitempty" json:"order,omitempty"`
+	Order *ListGlobalRunnersParamsOrder `form:"order,omitempty" json:"order,omitempty"`
 
 	// Limit Paging limit
 	Limit *PagingLimitParam `form:"limit,omitempty" json:"limit,omitempty"`
@@ -1827,130 +2057,23 @@ type ListRunnersParams struct {
 	Offset *PagingOffsetParam `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
-// ListRunnersParamsOrder defines parameters for ListRunners.
-type ListRunnersParamsOrder string
+// ListGlobalRunnersParamsOrder defines parameters for ListGlobalRunners.
+type ListGlobalRunnersParamsOrder string
 
-// CreateRunnerJSONBody defines parameters for CreateRunner.
-type CreateRunnerJSONBody struct {
-	Name  *string `json:"name,omitempty"`
-	Slug  *string `json:"slug,omitempty"`
-	Token *string `json:"token,omitempty"`
+// CreateGlobalRunnerJSONBody defines parameters for CreateGlobalRunner.
+type CreateGlobalRunnerJSONBody struct {
+	Name      *string `json:"name,omitempty"`
+	ProjectID *string `json:"project_id,omitempty"`
+	Slug      *string `json:"slug,omitempty"`
+	Token     *string `json:"token,omitempty"`
 }
 
-// UpdateRunnerJSONBody defines parameters for UpdateRunner.
-type UpdateRunnerJSONBody struct {
-	Name  *string `json:"name,omitempty"`
-	Slug  *string `json:"slug,omitempty"`
-	Token *string `json:"token,omitempty"`
-}
-
-// ListTeamsParams defines parameters for ListTeams.
-type ListTeamsParams struct {
-	// Search Search query
-	Search *SearchQueryParam `form:"search,omitempty" json:"search,omitempty"`
-
-	// Sort Sorting column
-	Sort *SortColumnParam `form:"sort,omitempty" json:"sort,omitempty"`
-
-	// Order Sorting order
-	Order *ListTeamsParamsOrder `form:"order,omitempty" json:"order,omitempty"`
-
-	// Limit Paging limit
-	Limit *PagingLimitParam `form:"limit,omitempty" json:"limit,omitempty"`
-
-	// Offset Paging offset
-	Offset *PagingOffsetParam `form:"offset,omitempty" json:"offset,omitempty"`
-}
-
-// ListTeamsParamsOrder defines parameters for ListTeams.
-type ListTeamsParamsOrder string
-
-// CreateTeamJSONBody defines parameters for CreateTeam.
-type CreateTeamJSONBody struct {
-	Name *string `json:"name,omitempty"`
-	Slug *string `json:"slug,omitempty"`
-}
-
-// UpdateTeamJSONBody defines parameters for UpdateTeam.
-type UpdateTeamJSONBody struct {
-	Name *string `json:"name,omitempty"`
-	Slug *string `json:"slug,omitempty"`
-}
-
-// DeleteTeamFromProjectJSONBody defines parameters for DeleteTeamFromProject.
-type DeleteTeamFromProjectJSONBody struct {
-	Project string `json:"project"`
-}
-
-// ListTeamProjectsParams defines parameters for ListTeamProjects.
-type ListTeamProjectsParams struct {
-	// Search Search query
-	Search *SearchQueryParam `form:"search,omitempty" json:"search,omitempty"`
-
-	// Sort Sorting column
-	Sort *SortColumnParam `form:"sort,omitempty" json:"sort,omitempty"`
-
-	// Order Sorting order
-	Order *ListTeamProjectsParamsOrder `form:"order,omitempty" json:"order,omitempty"`
-
-	// Limit Paging limit
-	Limit *PagingLimitParam `form:"limit,omitempty" json:"limit,omitempty"`
-
-	// Offset Paging offset
-	Offset *PagingOffsetParam `form:"offset,omitempty" json:"offset,omitempty"`
-}
-
-// ListTeamProjectsParamsOrder defines parameters for ListTeamProjects.
-type ListTeamProjectsParamsOrder string
-
-// AttachTeamToProjectJSONBody defines parameters for AttachTeamToProject.
-type AttachTeamToProjectJSONBody struct {
-	Perm    string `json:"perm"`
-	Project string `json:"project"`
-}
-
-// PermitTeamProjectJSONBody defines parameters for PermitTeamProject.
-type PermitTeamProjectJSONBody struct {
-	Perm    string `json:"perm"`
-	Project string `json:"project"`
-}
-
-// DeleteTeamFromUserJSONBody defines parameters for DeleteTeamFromUser.
-type DeleteTeamFromUserJSONBody struct {
-	User string `json:"user"`
-}
-
-// ListTeamUsersParams defines parameters for ListTeamUsers.
-type ListTeamUsersParams struct {
-	// Search Search query
-	Search *SearchQueryParam `form:"search,omitempty" json:"search,omitempty"`
-
-	// Sort Sorting column
-	Sort *SortColumnParam `form:"sort,omitempty" json:"sort,omitempty"`
-
-	// Order Sorting order
-	Order *ListTeamUsersParamsOrder `form:"order,omitempty" json:"order,omitempty"`
-
-	// Limit Paging limit
-	Limit *PagingLimitParam `form:"limit,omitempty" json:"limit,omitempty"`
-
-	// Offset Paging offset
-	Offset *PagingOffsetParam `form:"offset,omitempty" json:"offset,omitempty"`
-}
-
-// ListTeamUsersParamsOrder defines parameters for ListTeamUsers.
-type ListTeamUsersParamsOrder string
-
-// AttachTeamToUserJSONBody defines parameters for AttachTeamToUser.
-type AttachTeamToUserJSONBody struct {
-	Perm string `json:"perm"`
-	User string `json:"user"`
-}
-
-// PermitTeamUserJSONBody defines parameters for PermitTeamUser.
-type PermitTeamUserJSONBody struct {
-	Perm string `json:"perm"`
-	User string `json:"user"`
+// UpdateGlobalRunnerJSONBody defines parameters for UpdateGlobalRunner.
+type UpdateGlobalRunnerJSONBody struct {
+	Name      *string `json:"name,omitempty"`
+	ProjectID *string `json:"project_id,omitempty"`
+	Slug      *string `json:"slug,omitempty"`
+	Token     *string `json:"token,omitempty"`
 }
 
 // ListUsersParams defines parameters for ListUsers.
@@ -1994,6 +2117,44 @@ type UpdateUserJSONBody struct {
 	Username *string `json:"username,omitempty"`
 }
 
+// DeleteUserFromGroupJSONBody defines parameters for DeleteUserFromGroup.
+type DeleteUserFromGroupJSONBody struct {
+	Group string `json:"group"`
+}
+
+// ListUserGroupsParams defines parameters for ListUserGroups.
+type ListUserGroupsParams struct {
+	// Search Search query
+	Search *SearchQueryParam `form:"search,omitempty" json:"search,omitempty"`
+
+	// Sort Sorting column
+	Sort *SortColumnParam `form:"sort,omitempty" json:"sort,omitempty"`
+
+	// Order Sorting order
+	Order *ListUserGroupsParamsOrder `form:"order,omitempty" json:"order,omitempty"`
+
+	// Limit Paging limit
+	Limit *PagingLimitParam `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Paging offset
+	Offset *PagingOffsetParam `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// ListUserGroupsParamsOrder defines parameters for ListUserGroups.
+type ListUserGroupsParamsOrder string
+
+// AttachUserToGroupJSONBody defines parameters for AttachUserToGroup.
+type AttachUserToGroupJSONBody struct {
+	Group string `json:"group"`
+	Perm  string `json:"perm"`
+}
+
+// PermitUserGroupJSONBody defines parameters for PermitUserGroup.
+type PermitUserGroupJSONBody struct {
+	Group string `json:"group"`
+	Perm  string `json:"perm"`
+}
+
 // DeleteUserFromProjectJSONBody defines parameters for DeleteUserFromProject.
 type DeleteUserFromProjectJSONBody struct {
 	Project string `json:"project"`
@@ -2032,46 +2193,32 @@ type PermitUserProjectJSONBody struct {
 	Project string `json:"project"`
 }
 
-// DeleteUserFromTeamJSONBody defines parameters for DeleteUserFromTeam.
-type DeleteUserFromTeamJSONBody struct {
-	Team string `json:"team"`
-}
-
-// ListUserTeamsParams defines parameters for ListUserTeams.
-type ListUserTeamsParams struct {
-	// Search Search query
-	Search *SearchQueryParam `form:"search,omitempty" json:"search,omitempty"`
-
-	// Sort Sorting column
-	Sort *SortColumnParam `form:"sort,omitempty" json:"sort,omitempty"`
-
-	// Order Sorting order
-	Order *ListUserTeamsParamsOrder `form:"order,omitempty" json:"order,omitempty"`
-
-	// Limit Paging limit
-	Limit *PagingLimitParam `form:"limit,omitempty" json:"limit,omitempty"`
-
-	// Offset Paging offset
-	Offset *PagingOffsetParam `form:"offset,omitempty" json:"offset,omitempty"`
-}
-
-// ListUserTeamsParamsOrder defines parameters for ListUserTeams.
-type ListUserTeamsParamsOrder string
-
-// AttachUserToTeamJSONBody defines parameters for AttachUserToTeam.
-type AttachUserToTeamJSONBody struct {
-	Perm string `json:"perm"`
-	Team string `json:"team"`
-}
-
-// PermitUserTeamJSONBody defines parameters for PermitUserTeam.
-type PermitUserTeamJSONBody struct {
-	Perm string `json:"perm"`
-	Team string `json:"team"`
-}
-
 // LoginAuthJSONRequestBody defines body for LoginAuth for application/json ContentType.
 type LoginAuthJSONRequestBody LoginAuthJSONBody
+
+// CreateGroupJSONRequestBody defines body for CreateGroup for application/json ContentType.
+type CreateGroupJSONRequestBody CreateGroupJSONBody
+
+// UpdateGroupJSONRequestBody defines body for UpdateGroup for application/json ContentType.
+type UpdateGroupJSONRequestBody UpdateGroupJSONBody
+
+// DeleteGroupFromProjectJSONRequestBody defines body for DeleteGroupFromProject for application/json ContentType.
+type DeleteGroupFromProjectJSONRequestBody DeleteGroupFromProjectJSONBody
+
+// AttachGroupToProjectJSONRequestBody defines body for AttachGroupToProject for application/json ContentType.
+type AttachGroupToProjectJSONRequestBody AttachGroupToProjectJSONBody
+
+// PermitGroupProjectJSONRequestBody defines body for PermitGroupProject for application/json ContentType.
+type PermitGroupProjectJSONRequestBody PermitGroupProjectJSONBody
+
+// DeleteGroupFromUserJSONRequestBody defines body for DeleteGroupFromUser for application/json ContentType.
+type DeleteGroupFromUserJSONRequestBody DeleteGroupFromUserJSONBody
+
+// AttachGroupToUserJSONRequestBody defines body for AttachGroupToUser for application/json ContentType.
+type AttachGroupToUserJSONRequestBody AttachGroupToUserJSONBody
+
+// PermitGroupUserJSONRequestBody defines body for PermitGroupUser for application/json ContentType.
+type PermitGroupUserJSONRequestBody PermitGroupUserJSONBody
 
 // UpdateProfileJSONRequestBody defines body for UpdateProfile for application/json ContentType.
 type UpdateProfileJSONRequestBody UpdateProfileJSONBody
@@ -2109,6 +2256,15 @@ type UpdateProjectEnvironmentValueJSONRequestBody UpdateProjectEnvironmentValueJ
 // CreateProjectExecutionJSONRequestBody defines body for CreateProjectExecution for application/json ContentType.
 type CreateProjectExecutionJSONRequestBody CreateProjectExecutionJSONBody
 
+// DeleteProjectFromGroupJSONRequestBody defines body for DeleteProjectFromGroup for application/json ContentType.
+type DeleteProjectFromGroupJSONRequestBody DeleteProjectFromGroupJSONBody
+
+// AttachProjectToGroupJSONRequestBody defines body for AttachProjectToGroup for application/json ContentType.
+type AttachProjectToGroupJSONRequestBody AttachProjectToGroupJSONBody
+
+// PermitProjectGroupJSONRequestBody defines body for PermitProjectGroup for application/json ContentType.
+type PermitProjectGroupJSONRequestBody PermitProjectGroupJSONBody
+
 // CreateProjectInventoryJSONRequestBody defines body for CreateProjectInventory for application/json ContentType.
 type CreateProjectInventoryJSONRequestBody CreateProjectInventoryJSONBody
 
@@ -2121,20 +2277,17 @@ type CreateProjectRepositoryJSONRequestBody CreateProjectRepositoryJSONBody
 // UpdateProjectRepositoryJSONRequestBody defines body for UpdateProjectRepository for application/json ContentType.
 type UpdateProjectRepositoryJSONRequestBody UpdateProjectRepositoryJSONBody
 
+// CreateProjectRunnerJSONRequestBody defines body for CreateProjectRunner for application/json ContentType.
+type CreateProjectRunnerJSONRequestBody CreateProjectRunnerJSONBody
+
+// UpdateProjectRunnerJSONRequestBody defines body for UpdateProjectRunner for application/json ContentType.
+type UpdateProjectRunnerJSONRequestBody UpdateProjectRunnerJSONBody
+
 // CreateProjectScheduleJSONRequestBody defines body for CreateProjectSchedule for application/json ContentType.
 type CreateProjectScheduleJSONRequestBody CreateProjectScheduleJSONBody
 
 // UpdateProjectScheduleJSONRequestBody defines body for UpdateProjectSchedule for application/json ContentType.
 type UpdateProjectScheduleJSONRequestBody UpdateProjectScheduleJSONBody
-
-// DeleteProjectFromTeamJSONRequestBody defines body for DeleteProjectFromTeam for application/json ContentType.
-type DeleteProjectFromTeamJSONRequestBody DeleteProjectFromTeamJSONBody
-
-// AttachProjectToTeamJSONRequestBody defines body for AttachProjectToTeam for application/json ContentType.
-type AttachProjectToTeamJSONRequestBody AttachProjectToTeamJSONBody
-
-// PermitProjectTeamJSONRequestBody defines body for PermitProjectTeam for application/json ContentType.
-type PermitProjectTeamJSONRequestBody PermitProjectTeamJSONBody
 
 // CreateProjectTemplateJSONRequestBody defines body for CreateProjectTemplate for application/json ContentType.
 type CreateProjectTemplateJSONRequestBody CreateProjectTemplateJSONBody
@@ -2163,41 +2316,26 @@ type AttachProjectToUserJSONRequestBody AttachProjectToUserJSONBody
 // PermitProjectUserJSONRequestBody defines body for PermitProjectUser for application/json ContentType.
 type PermitProjectUserJSONRequestBody PermitProjectUserJSONBody
 
-// CreateRunnerJSONRequestBody defines body for CreateRunner for application/json ContentType.
-type CreateRunnerJSONRequestBody CreateRunnerJSONBody
+// CreateGlobalRunnerJSONRequestBody defines body for CreateGlobalRunner for application/json ContentType.
+type CreateGlobalRunnerJSONRequestBody CreateGlobalRunnerJSONBody
 
-// UpdateRunnerJSONRequestBody defines body for UpdateRunner for application/json ContentType.
-type UpdateRunnerJSONRequestBody UpdateRunnerJSONBody
-
-// CreateTeamJSONRequestBody defines body for CreateTeam for application/json ContentType.
-type CreateTeamJSONRequestBody CreateTeamJSONBody
-
-// UpdateTeamJSONRequestBody defines body for UpdateTeam for application/json ContentType.
-type UpdateTeamJSONRequestBody UpdateTeamJSONBody
-
-// DeleteTeamFromProjectJSONRequestBody defines body for DeleteTeamFromProject for application/json ContentType.
-type DeleteTeamFromProjectJSONRequestBody DeleteTeamFromProjectJSONBody
-
-// AttachTeamToProjectJSONRequestBody defines body for AttachTeamToProject for application/json ContentType.
-type AttachTeamToProjectJSONRequestBody AttachTeamToProjectJSONBody
-
-// PermitTeamProjectJSONRequestBody defines body for PermitTeamProject for application/json ContentType.
-type PermitTeamProjectJSONRequestBody PermitTeamProjectJSONBody
-
-// DeleteTeamFromUserJSONRequestBody defines body for DeleteTeamFromUser for application/json ContentType.
-type DeleteTeamFromUserJSONRequestBody DeleteTeamFromUserJSONBody
-
-// AttachTeamToUserJSONRequestBody defines body for AttachTeamToUser for application/json ContentType.
-type AttachTeamToUserJSONRequestBody AttachTeamToUserJSONBody
-
-// PermitTeamUserJSONRequestBody defines body for PermitTeamUser for application/json ContentType.
-type PermitTeamUserJSONRequestBody PermitTeamUserJSONBody
+// UpdateGlobalRunnerJSONRequestBody defines body for UpdateGlobalRunner for application/json ContentType.
+type UpdateGlobalRunnerJSONRequestBody UpdateGlobalRunnerJSONBody
 
 // CreateUserJSONRequestBody defines body for CreateUser for application/json ContentType.
 type CreateUserJSONRequestBody CreateUserJSONBody
 
 // UpdateUserJSONRequestBody defines body for UpdateUser for application/json ContentType.
 type UpdateUserJSONRequestBody UpdateUserJSONBody
+
+// DeleteUserFromGroupJSONRequestBody defines body for DeleteUserFromGroup for application/json ContentType.
+type DeleteUserFromGroupJSONRequestBody DeleteUserFromGroupJSONBody
+
+// AttachUserToGroupJSONRequestBody defines body for AttachUserToGroup for application/json ContentType.
+type AttachUserToGroupJSONRequestBody AttachUserToGroupJSONBody
+
+// PermitUserGroupJSONRequestBody defines body for PermitUserGroup for application/json ContentType.
+type PermitUserGroupJSONRequestBody PermitUserGroupJSONBody
 
 // DeleteUserFromProjectJSONRequestBody defines body for DeleteUserFromProject for application/json ContentType.
 type DeleteUserFromProjectJSONRequestBody DeleteUserFromProjectJSONBody
@@ -2208,15 +2346,6 @@ type AttachUserToProjectJSONRequestBody AttachUserToProjectJSONBody
 // PermitUserProjectJSONRequestBody defines body for PermitUserProject for application/json ContentType.
 type PermitUserProjectJSONRequestBody PermitUserProjectJSONBody
 
-// DeleteUserFromTeamJSONRequestBody defines body for DeleteUserFromTeam for application/json ContentType.
-type DeleteUserFromTeamJSONRequestBody DeleteUserFromTeamJSONBody
-
-// AttachUserToTeamJSONRequestBody defines body for AttachUserToTeam for application/json ContentType.
-type AttachUserToTeamJSONRequestBody AttachUserToTeamJSONBody
-
-// PermitUserTeamJSONRequestBody defines body for PermitUserTeam for application/json ContentType.
-type PermitUserTeamJSONRequestBody PermitUserTeamJSONBody
-
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Authenticate an user by credentials
@@ -2224,19 +2353,61 @@ type ServerInterface interface {
 	LoginAuth(w http.ResponseWriter, r *http.Request)
 	// Fetch the available auth providers
 	// (GET /auth/providers)
-	ListProvider(w http.ResponseWriter, r *http.Request)
+	ListProviders(w http.ResponseWriter, r *http.Request)
 	// Refresh an auth token before it expires
 	// (GET /auth/refresh)
 	RefreshAuth(w http.ResponseWriter, r *http.Request)
 	// Verify validity for an authentication token
 	// (GET /auth/verify)
 	VerifyAuth(w http.ResponseWriter, r *http.Request)
-	// Callback for available auth providers
-	// (GET /auth/{provider})
+	// Callback to parse the defined provider
+	// (GET /auth/{provider}/callback)
 	CallbackProvider(w http.ResponseWriter, r *http.Request, provider AuthProviderParam, params CallbackProviderParams)
-	// Fetch all available events
+	// Request the redirect to defined provider
+	// (GET /auth/{provider}/request)
+	RequestProvider(w http.ResponseWriter, r *http.Request, provider AuthProviderParam)
+	// Fetch all events
 	// (GET /events)
-	ListEvents(w http.ResponseWriter, r *http.Request, params ListEventsParams)
+	ListGlobalEvents(w http.ResponseWriter, r *http.Request, params ListGlobalEventsParams)
+	// Fetch all available groups
+	// (GET /groups)
+	ListGroups(w http.ResponseWriter, r *http.Request, params ListGroupsParams)
+	// Create a new group
+	// (POST /groups)
+	CreateGroup(w http.ResponseWriter, r *http.Request)
+	// Delete a specific group
+	// (DELETE /groups/{group_id})
+	DeleteGroup(w http.ResponseWriter, r *http.Request, groupID GroupID)
+	// Fetch a specific group
+	// (GET /groups/{group_id})
+	ShowGroup(w http.ResponseWriter, r *http.Request, groupID GroupID)
+	// Update a specific group
+	// (PUT /groups/{group_id})
+	UpdateGroup(w http.ResponseWriter, r *http.Request, groupID GroupID)
+	// Unlink a project from group
+	// (DELETE /groups/{group_id}/projects)
+	DeleteGroupFromProject(w http.ResponseWriter, r *http.Request, groupID GroupID)
+	// Fetch all projects attached to group
+	// (GET /groups/{group_id}/projects)
+	ListGroupProjects(w http.ResponseWriter, r *http.Request, groupID GroupID, params ListGroupProjectsParams)
+	// Attach a project to group
+	// (POST /groups/{group_id}/projects)
+	AttachGroupToProject(w http.ResponseWriter, r *http.Request, groupID GroupID)
+	// Update project perms for group
+	// (PUT /groups/{group_id}/projects)
+	PermitGroupProject(w http.ResponseWriter, r *http.Request, groupID GroupID)
+	// Unlink a user from group
+	// (DELETE /groups/{group_id}/users)
+	DeleteGroupFromUser(w http.ResponseWriter, r *http.Request, groupID GroupID)
+	// Fetch all users attached to group
+	// (GET /groups/{group_id}/users)
+	ListGroupUsers(w http.ResponseWriter, r *http.Request, groupID GroupID, params ListGroupUsersParams)
+	// Attach a user to group
+	// (POST /groups/{group_id}/users)
+	AttachGroupToUser(w http.ResponseWriter, r *http.Request, groupID GroupID)
+	// Update user perms for group
+	// (PUT /groups/{group_id}/users)
+	PermitGroupUser(w http.ResponseWriter, r *http.Request, groupID GroupID)
 	// Fetch profile details of the personal account
 	// (GET /profile/self)
 	ShowProfile(w http.ResponseWriter, r *http.Request)
@@ -2254,238 +2425,214 @@ type ServerInterface interface {
 	CreateProject(w http.ResponseWriter, r *http.Request)
 	// Delete a specific project
 	// (DELETE /projects/{project_id})
-	DeleteProject(w http.ResponseWriter, r *http.Request, projectId ProjectParam)
+	DeleteProject(w http.ResponseWriter, r *http.Request, projectID ProjectID)
 	// Fetch a specific project
 	// (GET /projects/{project_id})
-	ShowProject(w http.ResponseWriter, r *http.Request, projectId ProjectParam)
+	ShowProject(w http.ResponseWriter, r *http.Request, projectID ProjectID)
 	// Update a specific project
 	// (PUT /projects/{project_id})
-	UpdateProject(w http.ResponseWriter, r *http.Request, projectId ProjectParam)
+	UpdateProject(w http.ResponseWriter, r *http.Request, projectID ProjectID)
 	// Fetch all credentials for a project
 	// (GET /projects/{project_id}/credentials)
-	ListProjectCredentials(w http.ResponseWriter, r *http.Request, projectId ProjectParam, params ListProjectCredentialsParams)
+	ListProjectCredentials(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectCredentialsParams)
 	// Create a new credential
 	// (POST /projects/{project_id}/credentials)
-	CreateProjectCredential(w http.ResponseWriter, r *http.Request, projectId ProjectParam)
+	CreateProjectCredential(w http.ResponseWriter, r *http.Request, projectID ProjectID)
 	// Delete a specific credential for a project
 	// (DELETE /projects/{project_id}/credentials/{credential_id})
-	DeleteProjectCredential(w http.ResponseWriter, r *http.Request, projectId ProjectParam, credentialId CredentialParam)
+	DeleteProjectCredential(w http.ResponseWriter, r *http.Request, projectID ProjectID, credentialID CredentialID)
 	// Fetch a specific credential for a project
 	// (GET /projects/{project_id}/credentials/{credential_id})
-	ShowProjectCredential(w http.ResponseWriter, r *http.Request, projectId ProjectParam, credentialId CredentialParam)
+	ShowProjectCredential(w http.ResponseWriter, r *http.Request, projectID ProjectID, credentialID CredentialID)
 	// Update a specific credential for a project
 	// (PUT /projects/{project_id}/credentials/{credential_id})
-	UpdateProjectCredential(w http.ResponseWriter, r *http.Request, projectId ProjectParam, credentialId CredentialParam)
+	UpdateProjectCredential(w http.ResponseWriter, r *http.Request, projectID ProjectID, credentialID CredentialID)
 	// Fetch all environments for a project
 	// (GET /projects/{project_id}/environments)
-	ListProjectEnvironments(w http.ResponseWriter, r *http.Request, projectId ProjectParam, params ListProjectEnvironmentsParams)
+	ListProjectEnvironments(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectEnvironmentsParams)
 	// Create a new environment
 	// (POST /projects/{project_id}/environments)
-	CreateProjectEnvironment(w http.ResponseWriter, r *http.Request, projectId ProjectParam)
+	CreateProjectEnvironment(w http.ResponseWriter, r *http.Request, projectID ProjectID)
 	// Delete a specific environment for a project
 	// (DELETE /projects/{project_id}/environments/{environment_id})
-	DeleteProjectEnvironment(w http.ResponseWriter, r *http.Request, projectId ProjectParam, environmentId EnvironmentParam)
+	DeleteProjectEnvironment(w http.ResponseWriter, r *http.Request, projectID ProjectID, environmentID EnvironmentID)
 	// Fetch a specific environment for a project
 	// (GET /projects/{project_id}/environments/{environment_id})
-	ShowProjectEnvironment(w http.ResponseWriter, r *http.Request, projectId ProjectParam, environmentId EnvironmentParam)
+	ShowProjectEnvironment(w http.ResponseWriter, r *http.Request, projectID ProjectID, environmentID EnvironmentID)
 	// Update a specific environment for a project
 	// (PUT /projects/{project_id}/environments/{environment_id})
-	UpdateProjectEnvironment(w http.ResponseWriter, r *http.Request, projectId ProjectParam, environmentId EnvironmentParam)
+	UpdateProjectEnvironment(w http.ResponseWriter, r *http.Request, projectID ProjectID, environmentID EnvironmentID)
 	// Create a new secret on an environment
 	// (POST /projects/{project_id}/environments/{environment_id}/secrets)
-	CreateProjectEnvironmentSecret(w http.ResponseWriter, r *http.Request, projectId ProjectParam, environmentId EnvironmentParam)
+	CreateProjectEnvironmentSecret(w http.ResponseWriter, r *http.Request, projectID ProjectID, environmentID EnvironmentID)
 	// Delete a secret on an environment for a project
 	// (DELETE /projects/{project_id}/environments/{environment_id}/secrets/{secret_id})
-	DeleteProjectEnvironmentSecret(w http.ResponseWriter, r *http.Request, projectId ProjectParam, environmentId EnvironmentParam, secretId SecretParam)
+	DeleteProjectEnvironmentSecret(w http.ResponseWriter, r *http.Request, projectID ProjectID, environmentID EnvironmentID, secretID SecretID)
 	// Update a secret on an environment for a project
 	// (PUT /projects/{project_id}/environments/{environment_id}/secrets/{secret_id})
-	UpdateProjectEnvironmentSecret(w http.ResponseWriter, r *http.Request, projectId ProjectParam, environmentId EnvironmentParam, secretId SecretParam)
+	UpdateProjectEnvironmentSecret(w http.ResponseWriter, r *http.Request, projectID ProjectID, environmentID EnvironmentID, secretID SecretID)
 	// Create a new value on an environment
 	// (POST /projects/{project_id}/environments/{environment_id}/values)
-	CreateProjectEnvironmentValue(w http.ResponseWriter, r *http.Request, projectId ProjectParam, environmentId EnvironmentParam)
+	CreateProjectEnvironmentValue(w http.ResponseWriter, r *http.Request, projectID ProjectID, environmentID EnvironmentID)
 	// Delete a value on an environment for a project
 	// (DELETE /projects/{project_id}/environments/{environment_id}/values/{value_id})
-	DeleteProjectEnvironmentValue(w http.ResponseWriter, r *http.Request, projectId ProjectParam, environmentId EnvironmentParam, valueId ValueParam)
+	DeleteProjectEnvironmentValue(w http.ResponseWriter, r *http.Request, projectID ProjectID, environmentID EnvironmentID, valueID ValueID)
 	// Update a value on an environment for a project
 	// (PUT /projects/{project_id}/environments/{environment_id}/values/{value_id})
-	UpdateProjectEnvironmentValue(w http.ResponseWriter, r *http.Request, projectId ProjectParam, environmentId EnvironmentParam, valueId ValueParam)
+	UpdateProjectEnvironmentValue(w http.ResponseWriter, r *http.Request, projectID ProjectID, environmentID EnvironmentID, valueID ValueID)
+	// Fetch all events for a project
+	// (GET /projects/{project_id}/events)
+	ListProjectEvents(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectEventsParams)
 	// Fetch all executions for a project
 	// (GET /projects/{project_id}/executions)
-	ListProjectExecutions(w http.ResponseWriter, r *http.Request, projectId ProjectParam, params ListProjectExecutionsParams)
+	ListProjectExecutions(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectExecutionsParams)
 	// Create a new execution
 	// (POST /projects/{project_id}/executions)
-	CreateProjectExecution(w http.ResponseWriter, r *http.Request, projectId ProjectParam)
+	CreateProjectExecution(w http.ResponseWriter, r *http.Request, projectID ProjectID)
 	// Delete a specific execution for a project
 	// (DELETE /projects/{project_id}/executions/{execution_id})
-	DeleteProjectExecution(w http.ResponseWriter, r *http.Request, projectId ProjectParam, executionId ExecutionParam)
+	DeleteProjectExecution(w http.ResponseWriter, r *http.Request, projectID ProjectID, executionID ExecutionID)
 	// Fetch a specific execution for a project
 	// (GET /projects/{project_id}/executions/{execution_id})
-	ShowProjectExecution(w http.ResponseWriter, r *http.Request, projectId ProjectParam, executionId ExecutionParam)
+	ShowProjectExecution(w http.ResponseWriter, r *http.Request, projectID ProjectID, executionID ExecutionID)
 	// Output a specific execution for a project
 	// (GET /projects/{project_id}/executions/{execution_id}/output)
-	OutputProjectExecution(w http.ResponseWriter, r *http.Request, projectId ProjectParam, executionId ExecutionParam)
+	OutputProjectExecution(w http.ResponseWriter, r *http.Request, projectID ProjectID, executionID ExecutionID)
 	// Purge a specific execution for a project
 	// (GET /projects/{project_id}/executions/{execution_id}/purge)
-	PurgeProjectExecution(w http.ResponseWriter, r *http.Request, projectId ProjectParam, executionId ExecutionParam)
-	// Stop a specific execution for a project
-	// (GET /projects/{project_id}/executions/{execution_id}/stop)
-	StopProjectExecution(w http.ResponseWriter, r *http.Request, projectId ProjectParam, executionId ExecutionParam)
+	PurgeProjectExecution(w http.ResponseWriter, r *http.Request, projectID ProjectID, executionID ExecutionID)
+	// Unlink a group from project
+	// (DELETE /projects/{project_id}/groups)
+	DeleteProjectFromGroup(w http.ResponseWriter, r *http.Request, projectID ProjectID)
+	// Fetch all groups attached to project
+	// (GET /projects/{project_id}/groups)
+	ListProjectGroups(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectGroupsParams)
+	// Attach a group to project
+	// (POST /projects/{project_id}/groups)
+	AttachProjectToGroup(w http.ResponseWriter, r *http.Request, projectID ProjectID)
+	// Update group perms for project
+	// (PUT /projects/{project_id}/groups)
+	PermitProjectGroup(w http.ResponseWriter, r *http.Request, projectID ProjectID)
 	// Fetch all inventories for a project
 	// (GET /projects/{project_id}/inventories)
-	ListProjectInventories(w http.ResponseWriter, r *http.Request, projectId ProjectParam, params ListProjectInventoriesParams)
+	ListProjectInventories(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectInventoriesParams)
 	// Create a new inventory
 	// (POST /projects/{project_id}/inventories)
-	CreateProjectInventory(w http.ResponseWriter, r *http.Request, projectId ProjectParam)
+	CreateProjectInventory(w http.ResponseWriter, r *http.Request, projectID ProjectID)
 	// Delete a specific inventory for a project
 	// (DELETE /projects/{project_id}/inventories/{inventory_id})
-	DeleteProjectInventory(w http.ResponseWriter, r *http.Request, projectId ProjectParam, inventoryId InventoryParam)
+	DeleteProjectInventory(w http.ResponseWriter, r *http.Request, projectID ProjectID, inventoryID InventoryID)
 	// Fetch a specific inventory for a project
 	// (GET /projects/{project_id}/inventories/{inventory_id})
-	ShowProjectInventory(w http.ResponseWriter, r *http.Request, projectId ProjectParam, inventoryId InventoryParam)
+	ShowProjectInventory(w http.ResponseWriter, r *http.Request, projectID ProjectID, inventoryID InventoryID)
 	// Update a specific inventory for a project
 	// (PUT /projects/{project_id}/inventories/{inventory_id})
-	UpdateProjectInventory(w http.ResponseWriter, r *http.Request, projectId ProjectParam, inventoryId InventoryParam)
+	UpdateProjectInventory(w http.ResponseWriter, r *http.Request, projectID ProjectID, inventoryID InventoryID)
 	// Fetch all repositories for a project
 	// (GET /projects/{project_id}/repositories)
-	ListProjectRepositories(w http.ResponseWriter, r *http.Request, projectId ProjectParam, params ListProjectRepositoriesParams)
+	ListProjectRepositories(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectRepositoriesParams)
 	// Create a new repository
 	// (POST /projects/{project_id}/repositories)
-	CreateProjectRepository(w http.ResponseWriter, r *http.Request, projectId ProjectParam)
+	CreateProjectRepository(w http.ResponseWriter, r *http.Request, projectID ProjectID)
 	// Delete a specific repository for a project
 	// (DELETE /projects/{project_id}/repositories/{repository_id})
-	DeleteProjectRepository(w http.ResponseWriter, r *http.Request, projectId ProjectParam, repositoryId RepositoryParam)
+	DeleteProjectRepository(w http.ResponseWriter, r *http.Request, projectID ProjectID, repositoryID RepositoryID)
 	// Fetch a specific repository for a project
 	// (GET /projects/{project_id}/repositories/{repository_id})
-	ShowProjectRepository(w http.ResponseWriter, r *http.Request, projectId ProjectParam, repositoryId RepositoryParam)
+	ShowProjectRepository(w http.ResponseWriter, r *http.Request, projectID ProjectID, repositoryID RepositoryID)
 	// Update a specific repository for a project
 	// (PUT /projects/{project_id}/repositories/{repository_id})
-	UpdateProjectRepository(w http.ResponseWriter, r *http.Request, projectId ProjectParam, repositoryId RepositoryParam)
+	UpdateProjectRepository(w http.ResponseWriter, r *http.Request, projectID ProjectID, repositoryID RepositoryID)
+	// Fetch all runners for a project
+	// (GET /projects/{project_id}/runners)
+	ListProjectRunners(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectRunnersParams)
+	// Create a new runner
+	// (POST /projects/{project_id}/runners)
+	CreateProjectRunner(w http.ResponseWriter, r *http.Request, projectID ProjectID)
+	// Delete a specific runner for a project
+	// (DELETE /projects/{project_id}/runners/{runner_id})
+	DeleteProjectRunner(w http.ResponseWriter, r *http.Request, projectID ProjectID, runnerID RunnerID)
+	// Fetch a specific runner for a project
+	// (GET /projects/{project_id}/runners/{runner_id})
+	ShowProjectRunner(w http.ResponseWriter, r *http.Request, projectID ProjectID, runnerID RunnerID)
+	// Update a specific runner for a project
+	// (PUT /projects/{project_id}/runners/{runner_id})
+	UpdateProjectRunner(w http.ResponseWriter, r *http.Request, projectID ProjectID, runnerID RunnerID)
 	// Fetch all schedules for a project
 	// (GET /projects/{project_id}/schedules)
-	ListProjectSchedules(w http.ResponseWriter, r *http.Request, projectId ProjectParam, params ListProjectSchedulesParams)
+	ListProjectSchedules(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectSchedulesParams)
 	// Create a new schedule
 	// (POST /projects/{project_id}/schedules)
-	CreateProjectSchedule(w http.ResponseWriter, r *http.Request, projectId ProjectParam)
+	CreateProjectSchedule(w http.ResponseWriter, r *http.Request, projectID ProjectID)
 	// Delete a specific schedule for a project
 	// (DELETE /projects/{project_id}/schedules/{schedule_id})
-	DeleteProjectSchedule(w http.ResponseWriter, r *http.Request, projectId ProjectParam, scheduleId ScheduleParam)
+	DeleteProjectSchedule(w http.ResponseWriter, r *http.Request, projectID ProjectID, scheduleID ScheduleID)
 	// Fetch a specific schedule for a project
 	// (GET /projects/{project_id}/schedules/{schedule_id})
-	ShowProjectSchedule(w http.ResponseWriter, r *http.Request, projectId ProjectParam, scheduleId ScheduleParam)
+	ShowProjectSchedule(w http.ResponseWriter, r *http.Request, projectID ProjectID, scheduleID ScheduleID)
 	// Update a specific schedule for a project
 	// (PUT /projects/{project_id}/schedules/{schedule_id})
-	UpdateProjectSchedule(w http.ResponseWriter, r *http.Request, projectId ProjectParam, scheduleId ScheduleParam)
-	// Unlink a team from project
-	// (DELETE /projects/{project_id}/teams)
-	DeleteProjectFromTeam(w http.ResponseWriter, r *http.Request, projectId ProjectParam)
-	// Fetch all teams attached to project
-	// (GET /projects/{project_id}/teams)
-	ListProjectTeams(w http.ResponseWriter, r *http.Request, projectId ProjectParam, params ListProjectTeamsParams)
-	// Attach a team to project
-	// (POST /projects/{project_id}/teams)
-	AttachProjectToTeam(w http.ResponseWriter, r *http.Request, projectId ProjectParam)
-	// Update team perms for project
-	// (PUT /projects/{project_id}/teams)
-	PermitProjectTeam(w http.ResponseWriter, r *http.Request, projectId ProjectParam)
+	UpdateProjectSchedule(w http.ResponseWriter, r *http.Request, projectID ProjectID, scheduleID ScheduleID)
 	// Fetch all templates for a project
 	// (GET /projects/{project_id}/templates)
-	ListProjectTemplates(w http.ResponseWriter, r *http.Request, projectId ProjectParam, params ListProjectTemplatesParams)
+	ListProjectTemplates(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectTemplatesParams)
 	// Create a new template
 	// (POST /projects/{project_id}/templates)
-	CreateProjectTemplate(w http.ResponseWriter, r *http.Request, projectId ProjectParam)
+	CreateProjectTemplate(w http.ResponseWriter, r *http.Request, projectID ProjectID)
 	// Delete a specific template for a project
 	// (DELETE /projects/{project_id}/templates/{template_id})
-	DeleteProjectTemplate(w http.ResponseWriter, r *http.Request, projectId ProjectParam, templateId TemplateParam)
+	DeleteProjectTemplate(w http.ResponseWriter, r *http.Request, projectID ProjectID, templateID TemplateID)
 	// Fetch a specific template for a project
 	// (GET /projects/{project_id}/templates/{template_id})
-	ShowProjectTemplate(w http.ResponseWriter, r *http.Request, projectId ProjectParam, templateId TemplateParam)
+	ShowProjectTemplate(w http.ResponseWriter, r *http.Request, projectID ProjectID, templateID TemplateID)
 	// Update a specific template for a project
 	// (PUT /projects/{project_id}/templates/{template_id})
-	UpdateProjectTemplate(w http.ResponseWriter, r *http.Request, projectId ProjectParam, templateId TemplateParam)
+	UpdateProjectTemplate(w http.ResponseWriter, r *http.Request, projectID ProjectID, templateID TemplateID)
 	// Create a new survey on a template
 	// (POST /projects/{project_id}/templates/{template_id}/surveys)
-	CreateProjectTemplateSurvey(w http.ResponseWriter, r *http.Request, projectId ProjectParam, templateId TemplateParam)
+	CreateProjectTemplateSurvey(w http.ResponseWriter, r *http.Request, projectID ProjectID, templateID TemplateID)
 	// Delete a survey on a template for a project
 	// (DELETE /projects/{project_id}/templates/{template_id}/surveys/{survey_id})
-	DeleteProjectTemplateSurvey(w http.ResponseWriter, r *http.Request, projectId ProjectParam, templateId TemplateParam, surveyId SurveyParam)
+	DeleteProjectTemplateSurvey(w http.ResponseWriter, r *http.Request, projectID ProjectID, templateID TemplateID, surveyID SurveyID)
 	// Update a survey on a template for a project
 	// (PUT /projects/{project_id}/templates/{template_id}/surveys/{survey_id})
-	UpdateProjectTemplateSurvey(w http.ResponseWriter, r *http.Request, projectId ProjectParam, templateId TemplateParam, surveyId SurveyParam)
+	UpdateProjectTemplateSurvey(w http.ResponseWriter, r *http.Request, projectID ProjectID, templateID TemplateID, surveyID SurveyID)
 	// Create a new vault on a template
 	// (POST /projects/{project_id}/templates/{template_id}/vaults)
-	CreateProjectTemplateVault(w http.ResponseWriter, r *http.Request, projectId ProjectParam, templateId TemplateParam)
+	CreateProjectTemplateVault(w http.ResponseWriter, r *http.Request, projectID ProjectID, templateID TemplateID)
 	// Delete a vault on a template for a project
 	// (DELETE /projects/{project_id}/templates/{template_id}/vaults/{vault_id})
-	DeleteProjectTemplateVault(w http.ResponseWriter, r *http.Request, projectId ProjectParam, templateId TemplateParam, vaultId VaultParam)
+	DeleteProjectTemplateVault(w http.ResponseWriter, r *http.Request, projectID ProjectID, templateID TemplateID, vaultID VaultID)
 	// Update a vault on a template for a project
 	// (PUT /projects/{project_id}/templates/{template_id}/vaults/{vault_id})
-	UpdateProjectTemplateVault(w http.ResponseWriter, r *http.Request, projectId ProjectParam, templateId TemplateParam, vaultId VaultParam)
+	UpdateProjectTemplateVault(w http.ResponseWriter, r *http.Request, projectID ProjectID, templateID TemplateID, vaultID VaultID)
 	// Unlink a user from project
 	// (DELETE /projects/{project_id}/users)
-	DeleteProjectFromUser(w http.ResponseWriter, r *http.Request, projectId ProjectParam)
+	DeleteProjectFromUser(w http.ResponseWriter, r *http.Request, projectID ProjectID)
 	// Fetch all users attached to project
 	// (GET /projects/{project_id}/users)
-	ListProjectUsers(w http.ResponseWriter, r *http.Request, projectId ProjectParam, params ListProjectUsersParams)
+	ListProjectUsers(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectUsersParams)
 	// Attach a user to project
 	// (POST /projects/{project_id}/users)
-	AttachProjectToUser(w http.ResponseWriter, r *http.Request, projectId ProjectParam)
+	AttachProjectToUser(w http.ResponseWriter, r *http.Request, projectID ProjectID)
 	// Update user perms for project
 	// (PUT /projects/{project_id}/users)
-	PermitProjectUser(w http.ResponseWriter, r *http.Request, projectId ProjectParam)
-	// Fetch all available runners
+	PermitProjectUser(w http.ResponseWriter, r *http.Request, projectID ProjectID)
+	// Fetch all runners
 	// (GET /runners)
-	ListRunners(w http.ResponseWriter, r *http.Request, params ListRunnersParams)
-	// Create a new runner
+	ListGlobalRunners(w http.ResponseWriter, r *http.Request, params ListGlobalRunnersParams)
+	// Create a new global runner
 	// (POST /runners)
-	CreateRunner(w http.ResponseWriter, r *http.Request)
+	CreateGlobalRunner(w http.ResponseWriter, r *http.Request)
 	// Delete a specific runner
 	// (DELETE /runners/{runner_id})
-	DeleteRunner(w http.ResponseWriter, r *http.Request, runnerId RunnerParam)
+	DeleteGlobalRunner(w http.ResponseWriter, r *http.Request, runnerID RunnerID)
 	// Fetch a specific runner
 	// (GET /runners/{runner_id})
-	ShowRunner(w http.ResponseWriter, r *http.Request, runnerId RunnerParam)
+	ShowGlobalRunner(w http.ResponseWriter, r *http.Request, runnerID RunnerID)
 	// Update a specific runner
 	// (PUT /runners/{runner_id})
-	UpdateRunner(w http.ResponseWriter, r *http.Request, runnerId RunnerParam)
-	// Fetch all available teams
-	// (GET /teams)
-	ListTeams(w http.ResponseWriter, r *http.Request, params ListTeamsParams)
-	// Create a new team
-	// (POST /teams)
-	CreateTeam(w http.ResponseWriter, r *http.Request)
-	// Delete a specific team
-	// (DELETE /teams/{team_id})
-	DeleteTeam(w http.ResponseWriter, r *http.Request, teamId TeamParam)
-	// Fetch a specific team
-	// (GET /teams/{team_id})
-	ShowTeam(w http.ResponseWriter, r *http.Request, teamId TeamParam)
-	// Update a specific team
-	// (PUT /teams/{team_id})
-	UpdateTeam(w http.ResponseWriter, r *http.Request, teamId TeamParam)
-	// Unlink a project from team
-	// (DELETE /teams/{team_id}/projects)
-	DeleteTeamFromProject(w http.ResponseWriter, r *http.Request, teamId TeamParam)
-	// Fetch all projects attached to team
-	// (GET /teams/{team_id}/projects)
-	ListTeamProjects(w http.ResponseWriter, r *http.Request, teamId TeamParam, params ListTeamProjectsParams)
-	// Attach a project to team
-	// (POST /teams/{team_id}/projects)
-	AttachTeamToProject(w http.ResponseWriter, r *http.Request, teamId TeamParam)
-	// Update project perms for team
-	// (PUT /teams/{team_id}/projects)
-	PermitTeamProject(w http.ResponseWriter, r *http.Request, teamId TeamParam)
-	// Unlink a user from team
-	// (DELETE /teams/{team_id}/users)
-	DeleteTeamFromUser(w http.ResponseWriter, r *http.Request, teamId TeamParam)
-	// Fetch all users attached to team
-	// (GET /teams/{team_id}/users)
-	ListTeamUsers(w http.ResponseWriter, r *http.Request, teamId TeamParam, params ListTeamUsersParams)
-	// Attach a user to team
-	// (POST /teams/{team_id}/users)
-	AttachTeamToUser(w http.ResponseWriter, r *http.Request, teamId TeamParam)
-	// Update user perms for team
-	// (PUT /teams/{team_id}/users)
-	PermitTeamUser(w http.ResponseWriter, r *http.Request, teamId TeamParam)
+	UpdateGlobalRunner(w http.ResponseWriter, r *http.Request, runnerID RunnerID)
 	// Fetch all available users
 	// (GET /users)
 	ListUsers(w http.ResponseWriter, r *http.Request, params ListUsersParams)
@@ -2494,40 +2641,37 @@ type ServerInterface interface {
 	CreateUser(w http.ResponseWriter, r *http.Request)
 	// Delete a specific user
 	// (DELETE /users/{user_id})
-	DeleteUser(w http.ResponseWriter, r *http.Request, userId UserParam)
+	DeleteUser(w http.ResponseWriter, r *http.Request, userID UserID)
 	// Fetch a specific user
 	// (GET /users/{user_id})
-	ShowUser(w http.ResponseWriter, r *http.Request, userId UserParam)
+	ShowUser(w http.ResponseWriter, r *http.Request, userID UserID)
 	// Update a specific user
 	// (PUT /users/{user_id})
-	UpdateUser(w http.ResponseWriter, r *http.Request, userId UserParam)
+	UpdateUser(w http.ResponseWriter, r *http.Request, userID UserID)
+	// Unlink a group from user
+	// (DELETE /users/{user_id}/groups)
+	DeleteUserFromGroup(w http.ResponseWriter, r *http.Request, userID UserID)
+	// Fetch all groups attached to user
+	// (GET /users/{user_id}/groups)
+	ListUserGroups(w http.ResponseWriter, r *http.Request, userID UserID, params ListUserGroupsParams)
+	// Attach a group to user
+	// (POST /users/{user_id}/groups)
+	AttachUserToGroup(w http.ResponseWriter, r *http.Request, userID UserID)
+	// Update group perms for user
+	// (PUT /users/{user_id}/groups)
+	PermitUserGroup(w http.ResponseWriter, r *http.Request, userID UserID)
 	// Unlink a project from user
 	// (DELETE /users/{user_id}/projects)
-	DeleteUserFromProject(w http.ResponseWriter, r *http.Request, userId UserParam)
+	DeleteUserFromProject(w http.ResponseWriter, r *http.Request, userID UserID)
 	// Fetch all projects attached to user
 	// (GET /users/{user_id}/projects)
-	ListUserProjects(w http.ResponseWriter, r *http.Request, userId UserParam, params ListUserProjectsParams)
+	ListUserProjects(w http.ResponseWriter, r *http.Request, userID UserID, params ListUserProjectsParams)
 	// Attach a project to user
 	// (POST /users/{user_id}/projects)
-	AttachUserToProject(w http.ResponseWriter, r *http.Request, userId UserParam)
+	AttachUserToProject(w http.ResponseWriter, r *http.Request, userID UserID)
 	// Update project perms for user
 	// (PUT /users/{user_id}/projects)
-	PermitUserProject(w http.ResponseWriter, r *http.Request, userId UserParam)
-	// Unlink a team from user
-	// (DELETE /users/{user_id}/teams)
-	DeleteUserFromTeam(w http.ResponseWriter, r *http.Request, userId UserParam)
-	// Fetch all teams attached to user
-	// (GET /users/{user_id}/teams)
-	ListUserTeams(w http.ResponseWriter, r *http.Request, userId UserParam, params ListUserTeamsParams)
-	// Attach a team to user
-	// (POST /users/{user_id}/teams)
-	AttachUserToTeam(w http.ResponseWriter, r *http.Request, userId UserParam)
-	// Update team perms for user
-	// (PUT /users/{user_id}/teams)
-	PermitUserTeam(w http.ResponseWriter, r *http.Request, userId UserParam)
-	// Handler for websocket connection
-	// (GET /ws)
-	Websockets(w http.ResponseWriter, r *http.Request)
+	PermitUserProject(w http.ResponseWriter, r *http.Request, userID UserID)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
@@ -2542,7 +2686,7 @@ func (_ Unimplemented) LoginAuth(w http.ResponseWriter, r *http.Request) {
 
 // Fetch the available auth providers
 // (GET /auth/providers)
-func (_ Unimplemented) ListProvider(w http.ResponseWriter, r *http.Request) {
+func (_ Unimplemented) ListProviders(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -2558,15 +2702,99 @@ func (_ Unimplemented) VerifyAuth(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Callback for available auth providers
-// (GET /auth/{provider})
+// Callback to parse the defined provider
+// (GET /auth/{provider}/callback)
 func (_ Unimplemented) CallbackProvider(w http.ResponseWriter, r *http.Request, provider AuthProviderParam, params CallbackProviderParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Fetch all available events
+// Request the redirect to defined provider
+// (GET /auth/{provider}/request)
+func (_ Unimplemented) RequestProvider(w http.ResponseWriter, r *http.Request, provider AuthProviderParam) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Fetch all events
 // (GET /events)
-func (_ Unimplemented) ListEvents(w http.ResponseWriter, r *http.Request, params ListEventsParams) {
+func (_ Unimplemented) ListGlobalEvents(w http.ResponseWriter, r *http.Request, params ListGlobalEventsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Fetch all available groups
+// (GET /groups)
+func (_ Unimplemented) ListGroups(w http.ResponseWriter, r *http.Request, params ListGroupsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Create a new group
+// (POST /groups)
+func (_ Unimplemented) CreateGroup(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Delete a specific group
+// (DELETE /groups/{group_id})
+func (_ Unimplemented) DeleteGroup(w http.ResponseWriter, r *http.Request, groupID GroupID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Fetch a specific group
+// (GET /groups/{group_id})
+func (_ Unimplemented) ShowGroup(w http.ResponseWriter, r *http.Request, groupID GroupID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update a specific group
+// (PUT /groups/{group_id})
+func (_ Unimplemented) UpdateGroup(w http.ResponseWriter, r *http.Request, groupID GroupID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Unlink a project from group
+// (DELETE /groups/{group_id}/projects)
+func (_ Unimplemented) DeleteGroupFromProject(w http.ResponseWriter, r *http.Request, groupID GroupID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Fetch all projects attached to group
+// (GET /groups/{group_id}/projects)
+func (_ Unimplemented) ListGroupProjects(w http.ResponseWriter, r *http.Request, groupID GroupID, params ListGroupProjectsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Attach a project to group
+// (POST /groups/{group_id}/projects)
+func (_ Unimplemented) AttachGroupToProject(w http.ResponseWriter, r *http.Request, groupID GroupID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update project perms for group
+// (PUT /groups/{group_id}/projects)
+func (_ Unimplemented) PermitGroupProject(w http.ResponseWriter, r *http.Request, groupID GroupID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Unlink a user from group
+// (DELETE /groups/{group_id}/users)
+func (_ Unimplemented) DeleteGroupFromUser(w http.ResponseWriter, r *http.Request, groupID GroupID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Fetch all users attached to group
+// (GET /groups/{group_id}/users)
+func (_ Unimplemented) ListGroupUsers(w http.ResponseWriter, r *http.Request, groupID GroupID, params ListGroupUsersParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Attach a user to group
+// (POST /groups/{group_id}/users)
+func (_ Unimplemented) AttachGroupToUser(w http.ResponseWriter, r *http.Request, groupID GroupID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update user perms for group
+// (PUT /groups/{group_id}/users)
+func (_ Unimplemented) PermitGroupUser(w http.ResponseWriter, r *http.Request, groupID GroupID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -2602,469 +2830,421 @@ func (_ Unimplemented) CreateProject(w http.ResponseWriter, r *http.Request) {
 
 // Delete a specific project
 // (DELETE /projects/{project_id})
-func (_ Unimplemented) DeleteProject(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
+func (_ Unimplemented) DeleteProject(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Fetch a specific project
 // (GET /projects/{project_id})
-func (_ Unimplemented) ShowProject(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
+func (_ Unimplemented) ShowProject(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Update a specific project
 // (PUT /projects/{project_id})
-func (_ Unimplemented) UpdateProject(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
+func (_ Unimplemented) UpdateProject(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Fetch all credentials for a project
 // (GET /projects/{project_id}/credentials)
-func (_ Unimplemented) ListProjectCredentials(w http.ResponseWriter, r *http.Request, projectId ProjectParam, params ListProjectCredentialsParams) {
+func (_ Unimplemented) ListProjectCredentials(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectCredentialsParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Create a new credential
 // (POST /projects/{project_id}/credentials)
-func (_ Unimplemented) CreateProjectCredential(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
+func (_ Unimplemented) CreateProjectCredential(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Delete a specific credential for a project
 // (DELETE /projects/{project_id}/credentials/{credential_id})
-func (_ Unimplemented) DeleteProjectCredential(w http.ResponseWriter, r *http.Request, projectId ProjectParam, credentialId CredentialParam) {
+func (_ Unimplemented) DeleteProjectCredential(w http.ResponseWriter, r *http.Request, projectID ProjectID, credentialID CredentialID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Fetch a specific credential for a project
 // (GET /projects/{project_id}/credentials/{credential_id})
-func (_ Unimplemented) ShowProjectCredential(w http.ResponseWriter, r *http.Request, projectId ProjectParam, credentialId CredentialParam) {
+func (_ Unimplemented) ShowProjectCredential(w http.ResponseWriter, r *http.Request, projectID ProjectID, credentialID CredentialID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Update a specific credential for a project
 // (PUT /projects/{project_id}/credentials/{credential_id})
-func (_ Unimplemented) UpdateProjectCredential(w http.ResponseWriter, r *http.Request, projectId ProjectParam, credentialId CredentialParam) {
+func (_ Unimplemented) UpdateProjectCredential(w http.ResponseWriter, r *http.Request, projectID ProjectID, credentialID CredentialID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Fetch all environments for a project
 // (GET /projects/{project_id}/environments)
-func (_ Unimplemented) ListProjectEnvironments(w http.ResponseWriter, r *http.Request, projectId ProjectParam, params ListProjectEnvironmentsParams) {
+func (_ Unimplemented) ListProjectEnvironments(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectEnvironmentsParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Create a new environment
 // (POST /projects/{project_id}/environments)
-func (_ Unimplemented) CreateProjectEnvironment(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
+func (_ Unimplemented) CreateProjectEnvironment(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Delete a specific environment for a project
 // (DELETE /projects/{project_id}/environments/{environment_id})
-func (_ Unimplemented) DeleteProjectEnvironment(w http.ResponseWriter, r *http.Request, projectId ProjectParam, environmentId EnvironmentParam) {
+func (_ Unimplemented) DeleteProjectEnvironment(w http.ResponseWriter, r *http.Request, projectID ProjectID, environmentID EnvironmentID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Fetch a specific environment for a project
 // (GET /projects/{project_id}/environments/{environment_id})
-func (_ Unimplemented) ShowProjectEnvironment(w http.ResponseWriter, r *http.Request, projectId ProjectParam, environmentId EnvironmentParam) {
+func (_ Unimplemented) ShowProjectEnvironment(w http.ResponseWriter, r *http.Request, projectID ProjectID, environmentID EnvironmentID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Update a specific environment for a project
 // (PUT /projects/{project_id}/environments/{environment_id})
-func (_ Unimplemented) UpdateProjectEnvironment(w http.ResponseWriter, r *http.Request, projectId ProjectParam, environmentId EnvironmentParam) {
+func (_ Unimplemented) UpdateProjectEnvironment(w http.ResponseWriter, r *http.Request, projectID ProjectID, environmentID EnvironmentID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Create a new secret on an environment
 // (POST /projects/{project_id}/environments/{environment_id}/secrets)
-func (_ Unimplemented) CreateProjectEnvironmentSecret(w http.ResponseWriter, r *http.Request, projectId ProjectParam, environmentId EnvironmentParam) {
+func (_ Unimplemented) CreateProjectEnvironmentSecret(w http.ResponseWriter, r *http.Request, projectID ProjectID, environmentID EnvironmentID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Delete a secret on an environment for a project
 // (DELETE /projects/{project_id}/environments/{environment_id}/secrets/{secret_id})
-func (_ Unimplemented) DeleteProjectEnvironmentSecret(w http.ResponseWriter, r *http.Request, projectId ProjectParam, environmentId EnvironmentParam, secretId SecretParam) {
+func (_ Unimplemented) DeleteProjectEnvironmentSecret(w http.ResponseWriter, r *http.Request, projectID ProjectID, environmentID EnvironmentID, secretID SecretID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Update a secret on an environment for a project
 // (PUT /projects/{project_id}/environments/{environment_id}/secrets/{secret_id})
-func (_ Unimplemented) UpdateProjectEnvironmentSecret(w http.ResponseWriter, r *http.Request, projectId ProjectParam, environmentId EnvironmentParam, secretId SecretParam) {
+func (_ Unimplemented) UpdateProjectEnvironmentSecret(w http.ResponseWriter, r *http.Request, projectID ProjectID, environmentID EnvironmentID, secretID SecretID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Create a new value on an environment
 // (POST /projects/{project_id}/environments/{environment_id}/values)
-func (_ Unimplemented) CreateProjectEnvironmentValue(w http.ResponseWriter, r *http.Request, projectId ProjectParam, environmentId EnvironmentParam) {
+func (_ Unimplemented) CreateProjectEnvironmentValue(w http.ResponseWriter, r *http.Request, projectID ProjectID, environmentID EnvironmentID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Delete a value on an environment for a project
 // (DELETE /projects/{project_id}/environments/{environment_id}/values/{value_id})
-func (_ Unimplemented) DeleteProjectEnvironmentValue(w http.ResponseWriter, r *http.Request, projectId ProjectParam, environmentId EnvironmentParam, valueId ValueParam) {
+func (_ Unimplemented) DeleteProjectEnvironmentValue(w http.ResponseWriter, r *http.Request, projectID ProjectID, environmentID EnvironmentID, valueID ValueID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Update a value on an environment for a project
 // (PUT /projects/{project_id}/environments/{environment_id}/values/{value_id})
-func (_ Unimplemented) UpdateProjectEnvironmentValue(w http.ResponseWriter, r *http.Request, projectId ProjectParam, environmentId EnvironmentParam, valueId ValueParam) {
+func (_ Unimplemented) UpdateProjectEnvironmentValue(w http.ResponseWriter, r *http.Request, projectID ProjectID, environmentID EnvironmentID, valueID ValueID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Fetch all events for a project
+// (GET /projects/{project_id}/events)
+func (_ Unimplemented) ListProjectEvents(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectEventsParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Fetch all executions for a project
 // (GET /projects/{project_id}/executions)
-func (_ Unimplemented) ListProjectExecutions(w http.ResponseWriter, r *http.Request, projectId ProjectParam, params ListProjectExecutionsParams) {
+func (_ Unimplemented) ListProjectExecutions(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectExecutionsParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Create a new execution
 // (POST /projects/{project_id}/executions)
-func (_ Unimplemented) CreateProjectExecution(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
+func (_ Unimplemented) CreateProjectExecution(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Delete a specific execution for a project
 // (DELETE /projects/{project_id}/executions/{execution_id})
-func (_ Unimplemented) DeleteProjectExecution(w http.ResponseWriter, r *http.Request, projectId ProjectParam, executionId ExecutionParam) {
+func (_ Unimplemented) DeleteProjectExecution(w http.ResponseWriter, r *http.Request, projectID ProjectID, executionID ExecutionID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Fetch a specific execution for a project
 // (GET /projects/{project_id}/executions/{execution_id})
-func (_ Unimplemented) ShowProjectExecution(w http.ResponseWriter, r *http.Request, projectId ProjectParam, executionId ExecutionParam) {
+func (_ Unimplemented) ShowProjectExecution(w http.ResponseWriter, r *http.Request, projectID ProjectID, executionID ExecutionID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Output a specific execution for a project
 // (GET /projects/{project_id}/executions/{execution_id}/output)
-func (_ Unimplemented) OutputProjectExecution(w http.ResponseWriter, r *http.Request, projectId ProjectParam, executionId ExecutionParam) {
+func (_ Unimplemented) OutputProjectExecution(w http.ResponseWriter, r *http.Request, projectID ProjectID, executionID ExecutionID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Purge a specific execution for a project
 // (GET /projects/{project_id}/executions/{execution_id}/purge)
-func (_ Unimplemented) PurgeProjectExecution(w http.ResponseWriter, r *http.Request, projectId ProjectParam, executionId ExecutionParam) {
+func (_ Unimplemented) PurgeProjectExecution(w http.ResponseWriter, r *http.Request, projectID ProjectID, executionID ExecutionID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Stop a specific execution for a project
-// (GET /projects/{project_id}/executions/{execution_id}/stop)
-func (_ Unimplemented) StopProjectExecution(w http.ResponseWriter, r *http.Request, projectId ProjectParam, executionId ExecutionParam) {
+// Unlink a group from project
+// (DELETE /projects/{project_id}/groups)
+func (_ Unimplemented) DeleteProjectFromGroup(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Fetch all groups attached to project
+// (GET /projects/{project_id}/groups)
+func (_ Unimplemented) ListProjectGroups(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectGroupsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Attach a group to project
+// (POST /projects/{project_id}/groups)
+func (_ Unimplemented) AttachProjectToGroup(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update group perms for project
+// (PUT /projects/{project_id}/groups)
+func (_ Unimplemented) PermitProjectGroup(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Fetch all inventories for a project
 // (GET /projects/{project_id}/inventories)
-func (_ Unimplemented) ListProjectInventories(w http.ResponseWriter, r *http.Request, projectId ProjectParam, params ListProjectInventoriesParams) {
+func (_ Unimplemented) ListProjectInventories(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectInventoriesParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Create a new inventory
 // (POST /projects/{project_id}/inventories)
-func (_ Unimplemented) CreateProjectInventory(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
+func (_ Unimplemented) CreateProjectInventory(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Delete a specific inventory for a project
 // (DELETE /projects/{project_id}/inventories/{inventory_id})
-func (_ Unimplemented) DeleteProjectInventory(w http.ResponseWriter, r *http.Request, projectId ProjectParam, inventoryId InventoryParam) {
+func (_ Unimplemented) DeleteProjectInventory(w http.ResponseWriter, r *http.Request, projectID ProjectID, inventoryID InventoryID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Fetch a specific inventory for a project
 // (GET /projects/{project_id}/inventories/{inventory_id})
-func (_ Unimplemented) ShowProjectInventory(w http.ResponseWriter, r *http.Request, projectId ProjectParam, inventoryId InventoryParam) {
+func (_ Unimplemented) ShowProjectInventory(w http.ResponseWriter, r *http.Request, projectID ProjectID, inventoryID InventoryID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Update a specific inventory for a project
 // (PUT /projects/{project_id}/inventories/{inventory_id})
-func (_ Unimplemented) UpdateProjectInventory(w http.ResponseWriter, r *http.Request, projectId ProjectParam, inventoryId InventoryParam) {
+func (_ Unimplemented) UpdateProjectInventory(w http.ResponseWriter, r *http.Request, projectID ProjectID, inventoryID InventoryID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Fetch all repositories for a project
 // (GET /projects/{project_id}/repositories)
-func (_ Unimplemented) ListProjectRepositories(w http.ResponseWriter, r *http.Request, projectId ProjectParam, params ListProjectRepositoriesParams) {
+func (_ Unimplemented) ListProjectRepositories(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectRepositoriesParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Create a new repository
 // (POST /projects/{project_id}/repositories)
-func (_ Unimplemented) CreateProjectRepository(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
+func (_ Unimplemented) CreateProjectRepository(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Delete a specific repository for a project
 // (DELETE /projects/{project_id}/repositories/{repository_id})
-func (_ Unimplemented) DeleteProjectRepository(w http.ResponseWriter, r *http.Request, projectId ProjectParam, repositoryId RepositoryParam) {
+func (_ Unimplemented) DeleteProjectRepository(w http.ResponseWriter, r *http.Request, projectID ProjectID, repositoryID RepositoryID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Fetch a specific repository for a project
 // (GET /projects/{project_id}/repositories/{repository_id})
-func (_ Unimplemented) ShowProjectRepository(w http.ResponseWriter, r *http.Request, projectId ProjectParam, repositoryId RepositoryParam) {
+func (_ Unimplemented) ShowProjectRepository(w http.ResponseWriter, r *http.Request, projectID ProjectID, repositoryID RepositoryID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Update a specific repository for a project
 // (PUT /projects/{project_id}/repositories/{repository_id})
-func (_ Unimplemented) UpdateProjectRepository(w http.ResponseWriter, r *http.Request, projectId ProjectParam, repositoryId RepositoryParam) {
+func (_ Unimplemented) UpdateProjectRepository(w http.ResponseWriter, r *http.Request, projectID ProjectID, repositoryID RepositoryID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Fetch all runners for a project
+// (GET /projects/{project_id}/runners)
+func (_ Unimplemented) ListProjectRunners(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectRunnersParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Create a new runner
+// (POST /projects/{project_id}/runners)
+func (_ Unimplemented) CreateProjectRunner(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Delete a specific runner for a project
+// (DELETE /projects/{project_id}/runners/{runner_id})
+func (_ Unimplemented) DeleteProjectRunner(w http.ResponseWriter, r *http.Request, projectID ProjectID, runnerID RunnerID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Fetch a specific runner for a project
+// (GET /projects/{project_id}/runners/{runner_id})
+func (_ Unimplemented) ShowProjectRunner(w http.ResponseWriter, r *http.Request, projectID ProjectID, runnerID RunnerID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update a specific runner for a project
+// (PUT /projects/{project_id}/runners/{runner_id})
+func (_ Unimplemented) UpdateProjectRunner(w http.ResponseWriter, r *http.Request, projectID ProjectID, runnerID RunnerID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Fetch all schedules for a project
 // (GET /projects/{project_id}/schedules)
-func (_ Unimplemented) ListProjectSchedules(w http.ResponseWriter, r *http.Request, projectId ProjectParam, params ListProjectSchedulesParams) {
+func (_ Unimplemented) ListProjectSchedules(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectSchedulesParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Create a new schedule
 // (POST /projects/{project_id}/schedules)
-func (_ Unimplemented) CreateProjectSchedule(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
+func (_ Unimplemented) CreateProjectSchedule(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Delete a specific schedule for a project
 // (DELETE /projects/{project_id}/schedules/{schedule_id})
-func (_ Unimplemented) DeleteProjectSchedule(w http.ResponseWriter, r *http.Request, projectId ProjectParam, scheduleId ScheduleParam) {
+func (_ Unimplemented) DeleteProjectSchedule(w http.ResponseWriter, r *http.Request, projectID ProjectID, scheduleID ScheduleID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Fetch a specific schedule for a project
 // (GET /projects/{project_id}/schedules/{schedule_id})
-func (_ Unimplemented) ShowProjectSchedule(w http.ResponseWriter, r *http.Request, projectId ProjectParam, scheduleId ScheduleParam) {
+func (_ Unimplemented) ShowProjectSchedule(w http.ResponseWriter, r *http.Request, projectID ProjectID, scheduleID ScheduleID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Update a specific schedule for a project
 // (PUT /projects/{project_id}/schedules/{schedule_id})
-func (_ Unimplemented) UpdateProjectSchedule(w http.ResponseWriter, r *http.Request, projectId ProjectParam, scheduleId ScheduleParam) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Unlink a team from project
-// (DELETE /projects/{project_id}/teams)
-func (_ Unimplemented) DeleteProjectFromTeam(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Fetch all teams attached to project
-// (GET /projects/{project_id}/teams)
-func (_ Unimplemented) ListProjectTeams(w http.ResponseWriter, r *http.Request, projectId ProjectParam, params ListProjectTeamsParams) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Attach a team to project
-// (POST /projects/{project_id}/teams)
-func (_ Unimplemented) AttachProjectToTeam(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Update team perms for project
-// (PUT /projects/{project_id}/teams)
-func (_ Unimplemented) PermitProjectTeam(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
+func (_ Unimplemented) UpdateProjectSchedule(w http.ResponseWriter, r *http.Request, projectID ProjectID, scheduleID ScheduleID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Fetch all templates for a project
 // (GET /projects/{project_id}/templates)
-func (_ Unimplemented) ListProjectTemplates(w http.ResponseWriter, r *http.Request, projectId ProjectParam, params ListProjectTemplatesParams) {
+func (_ Unimplemented) ListProjectTemplates(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectTemplatesParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Create a new template
 // (POST /projects/{project_id}/templates)
-func (_ Unimplemented) CreateProjectTemplate(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
+func (_ Unimplemented) CreateProjectTemplate(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Delete a specific template for a project
 // (DELETE /projects/{project_id}/templates/{template_id})
-func (_ Unimplemented) DeleteProjectTemplate(w http.ResponseWriter, r *http.Request, projectId ProjectParam, templateId TemplateParam) {
+func (_ Unimplemented) DeleteProjectTemplate(w http.ResponseWriter, r *http.Request, projectID ProjectID, templateID TemplateID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Fetch a specific template for a project
 // (GET /projects/{project_id}/templates/{template_id})
-func (_ Unimplemented) ShowProjectTemplate(w http.ResponseWriter, r *http.Request, projectId ProjectParam, templateId TemplateParam) {
+func (_ Unimplemented) ShowProjectTemplate(w http.ResponseWriter, r *http.Request, projectID ProjectID, templateID TemplateID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Update a specific template for a project
 // (PUT /projects/{project_id}/templates/{template_id})
-func (_ Unimplemented) UpdateProjectTemplate(w http.ResponseWriter, r *http.Request, projectId ProjectParam, templateId TemplateParam) {
+func (_ Unimplemented) UpdateProjectTemplate(w http.ResponseWriter, r *http.Request, projectID ProjectID, templateID TemplateID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Create a new survey on a template
 // (POST /projects/{project_id}/templates/{template_id}/surveys)
-func (_ Unimplemented) CreateProjectTemplateSurvey(w http.ResponseWriter, r *http.Request, projectId ProjectParam, templateId TemplateParam) {
+func (_ Unimplemented) CreateProjectTemplateSurvey(w http.ResponseWriter, r *http.Request, projectID ProjectID, templateID TemplateID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Delete a survey on a template for a project
 // (DELETE /projects/{project_id}/templates/{template_id}/surveys/{survey_id})
-func (_ Unimplemented) DeleteProjectTemplateSurvey(w http.ResponseWriter, r *http.Request, projectId ProjectParam, templateId TemplateParam, surveyId SurveyParam) {
+func (_ Unimplemented) DeleteProjectTemplateSurvey(w http.ResponseWriter, r *http.Request, projectID ProjectID, templateID TemplateID, surveyID SurveyID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Update a survey on a template for a project
 // (PUT /projects/{project_id}/templates/{template_id}/surveys/{survey_id})
-func (_ Unimplemented) UpdateProjectTemplateSurvey(w http.ResponseWriter, r *http.Request, projectId ProjectParam, templateId TemplateParam, surveyId SurveyParam) {
+func (_ Unimplemented) UpdateProjectTemplateSurvey(w http.ResponseWriter, r *http.Request, projectID ProjectID, templateID TemplateID, surveyID SurveyID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Create a new vault on a template
 // (POST /projects/{project_id}/templates/{template_id}/vaults)
-func (_ Unimplemented) CreateProjectTemplateVault(w http.ResponseWriter, r *http.Request, projectId ProjectParam, templateId TemplateParam) {
+func (_ Unimplemented) CreateProjectTemplateVault(w http.ResponseWriter, r *http.Request, projectID ProjectID, templateID TemplateID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Delete a vault on a template for a project
 // (DELETE /projects/{project_id}/templates/{template_id}/vaults/{vault_id})
-func (_ Unimplemented) DeleteProjectTemplateVault(w http.ResponseWriter, r *http.Request, projectId ProjectParam, templateId TemplateParam, vaultId VaultParam) {
+func (_ Unimplemented) DeleteProjectTemplateVault(w http.ResponseWriter, r *http.Request, projectID ProjectID, templateID TemplateID, vaultID VaultID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Update a vault on a template for a project
 // (PUT /projects/{project_id}/templates/{template_id}/vaults/{vault_id})
-func (_ Unimplemented) UpdateProjectTemplateVault(w http.ResponseWriter, r *http.Request, projectId ProjectParam, templateId TemplateParam, vaultId VaultParam) {
+func (_ Unimplemented) UpdateProjectTemplateVault(w http.ResponseWriter, r *http.Request, projectID ProjectID, templateID TemplateID, vaultID VaultID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Unlink a user from project
 // (DELETE /projects/{project_id}/users)
-func (_ Unimplemented) DeleteProjectFromUser(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
+func (_ Unimplemented) DeleteProjectFromUser(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Fetch all users attached to project
 // (GET /projects/{project_id}/users)
-func (_ Unimplemented) ListProjectUsers(w http.ResponseWriter, r *http.Request, projectId ProjectParam, params ListProjectUsersParams) {
+func (_ Unimplemented) ListProjectUsers(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectUsersParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Attach a user to project
 // (POST /projects/{project_id}/users)
-func (_ Unimplemented) AttachProjectToUser(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
+func (_ Unimplemented) AttachProjectToUser(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Update user perms for project
 // (PUT /projects/{project_id}/users)
-func (_ Unimplemented) PermitProjectUser(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
+func (_ Unimplemented) PermitProjectUser(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Fetch all available runners
+// Fetch all runners
 // (GET /runners)
-func (_ Unimplemented) ListRunners(w http.ResponseWriter, r *http.Request, params ListRunnersParams) {
+func (_ Unimplemented) ListGlobalRunners(w http.ResponseWriter, r *http.Request, params ListGlobalRunnersParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Create a new runner
+// Create a new global runner
 // (POST /runners)
-func (_ Unimplemented) CreateRunner(w http.ResponseWriter, r *http.Request) {
+func (_ Unimplemented) CreateGlobalRunner(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Delete a specific runner
 // (DELETE /runners/{runner_id})
-func (_ Unimplemented) DeleteRunner(w http.ResponseWriter, r *http.Request, runnerId RunnerParam) {
+func (_ Unimplemented) DeleteGlobalRunner(w http.ResponseWriter, r *http.Request, runnerID RunnerID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Fetch a specific runner
 // (GET /runners/{runner_id})
-func (_ Unimplemented) ShowRunner(w http.ResponseWriter, r *http.Request, runnerId RunnerParam) {
+func (_ Unimplemented) ShowGlobalRunner(w http.ResponseWriter, r *http.Request, runnerID RunnerID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Update a specific runner
 // (PUT /runners/{runner_id})
-func (_ Unimplemented) UpdateRunner(w http.ResponseWriter, r *http.Request, runnerId RunnerParam) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Fetch all available teams
-// (GET /teams)
-func (_ Unimplemented) ListTeams(w http.ResponseWriter, r *http.Request, params ListTeamsParams) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Create a new team
-// (POST /teams)
-func (_ Unimplemented) CreateTeam(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Delete a specific team
-// (DELETE /teams/{team_id})
-func (_ Unimplemented) DeleteTeam(w http.ResponseWriter, r *http.Request, teamId TeamParam) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Fetch a specific team
-// (GET /teams/{team_id})
-func (_ Unimplemented) ShowTeam(w http.ResponseWriter, r *http.Request, teamId TeamParam) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Update a specific team
-// (PUT /teams/{team_id})
-func (_ Unimplemented) UpdateTeam(w http.ResponseWriter, r *http.Request, teamId TeamParam) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Unlink a project from team
-// (DELETE /teams/{team_id}/projects)
-func (_ Unimplemented) DeleteTeamFromProject(w http.ResponseWriter, r *http.Request, teamId TeamParam) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Fetch all projects attached to team
-// (GET /teams/{team_id}/projects)
-func (_ Unimplemented) ListTeamProjects(w http.ResponseWriter, r *http.Request, teamId TeamParam, params ListTeamProjectsParams) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Attach a project to team
-// (POST /teams/{team_id}/projects)
-func (_ Unimplemented) AttachTeamToProject(w http.ResponseWriter, r *http.Request, teamId TeamParam) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Update project perms for team
-// (PUT /teams/{team_id}/projects)
-func (_ Unimplemented) PermitTeamProject(w http.ResponseWriter, r *http.Request, teamId TeamParam) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Unlink a user from team
-// (DELETE /teams/{team_id}/users)
-func (_ Unimplemented) DeleteTeamFromUser(w http.ResponseWriter, r *http.Request, teamId TeamParam) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Fetch all users attached to team
-// (GET /teams/{team_id}/users)
-func (_ Unimplemented) ListTeamUsers(w http.ResponseWriter, r *http.Request, teamId TeamParam, params ListTeamUsersParams) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Attach a user to team
-// (POST /teams/{team_id}/users)
-func (_ Unimplemented) AttachTeamToUser(w http.ResponseWriter, r *http.Request, teamId TeamParam) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Update user perms for team
-// (PUT /teams/{team_id}/users)
-func (_ Unimplemented) PermitTeamUser(w http.ResponseWriter, r *http.Request, teamId TeamParam) {
+func (_ Unimplemented) UpdateGlobalRunner(w http.ResponseWriter, r *http.Request, runnerID RunnerID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -3082,73 +3262,67 @@ func (_ Unimplemented) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 // Delete a specific user
 // (DELETE /users/{user_id})
-func (_ Unimplemented) DeleteUser(w http.ResponseWriter, r *http.Request, userId UserParam) {
+func (_ Unimplemented) DeleteUser(w http.ResponseWriter, r *http.Request, userID UserID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Fetch a specific user
 // (GET /users/{user_id})
-func (_ Unimplemented) ShowUser(w http.ResponseWriter, r *http.Request, userId UserParam) {
+func (_ Unimplemented) ShowUser(w http.ResponseWriter, r *http.Request, userID UserID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Update a specific user
 // (PUT /users/{user_id})
-func (_ Unimplemented) UpdateUser(w http.ResponseWriter, r *http.Request, userId UserParam) {
+func (_ Unimplemented) UpdateUser(w http.ResponseWriter, r *http.Request, userID UserID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Unlink a group from user
+// (DELETE /users/{user_id}/groups)
+func (_ Unimplemented) DeleteUserFromGroup(w http.ResponseWriter, r *http.Request, userID UserID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Fetch all groups attached to user
+// (GET /users/{user_id}/groups)
+func (_ Unimplemented) ListUserGroups(w http.ResponseWriter, r *http.Request, userID UserID, params ListUserGroupsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Attach a group to user
+// (POST /users/{user_id}/groups)
+func (_ Unimplemented) AttachUserToGroup(w http.ResponseWriter, r *http.Request, userID UserID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update group perms for user
+// (PUT /users/{user_id}/groups)
+func (_ Unimplemented) PermitUserGroup(w http.ResponseWriter, r *http.Request, userID UserID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Unlink a project from user
 // (DELETE /users/{user_id}/projects)
-func (_ Unimplemented) DeleteUserFromProject(w http.ResponseWriter, r *http.Request, userId UserParam) {
+func (_ Unimplemented) DeleteUserFromProject(w http.ResponseWriter, r *http.Request, userID UserID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Fetch all projects attached to user
 // (GET /users/{user_id}/projects)
-func (_ Unimplemented) ListUserProjects(w http.ResponseWriter, r *http.Request, userId UserParam, params ListUserProjectsParams) {
+func (_ Unimplemented) ListUserProjects(w http.ResponseWriter, r *http.Request, userID UserID, params ListUserProjectsParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Attach a project to user
 // (POST /users/{user_id}/projects)
-func (_ Unimplemented) AttachUserToProject(w http.ResponseWriter, r *http.Request, userId UserParam) {
+func (_ Unimplemented) AttachUserToProject(w http.ResponseWriter, r *http.Request, userID UserID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Update project perms for user
 // (PUT /users/{user_id}/projects)
-func (_ Unimplemented) PermitUserProject(w http.ResponseWriter, r *http.Request, userId UserParam) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Unlink a team from user
-// (DELETE /users/{user_id}/teams)
-func (_ Unimplemented) DeleteUserFromTeam(w http.ResponseWriter, r *http.Request, userId UserParam) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Fetch all teams attached to user
-// (GET /users/{user_id}/teams)
-func (_ Unimplemented) ListUserTeams(w http.ResponseWriter, r *http.Request, userId UserParam, params ListUserTeamsParams) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Attach a team to user
-// (POST /users/{user_id}/teams)
-func (_ Unimplemented) AttachUserToTeam(w http.ResponseWriter, r *http.Request, userId UserParam) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Update team perms for user
-// (PUT /users/{user_id}/teams)
-func (_ Unimplemented) PermitUserTeam(w http.ResponseWriter, r *http.Request, userId UserParam) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Handler for websocket connection
-// (GET /ws)
-func (_ Unimplemented) Websockets(w http.ResponseWriter, r *http.Request) {
+func (_ Unimplemented) PermitUserProject(w http.ResponseWriter, r *http.Request, userID UserID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -3175,11 +3349,11 @@ func (siw *ServerInterfaceWrapper) LoginAuth(w http.ResponseWriter, r *http.Requ
 	handler.ServeHTTP(w, r)
 }
 
-// ListProvider operation middleware
-func (siw *ServerInterfaceWrapper) ListProvider(w http.ResponseWriter, r *http.Request) {
+// ListProviders operation middleware
+func (siw *ServerInterfaceWrapper) ListProviders(w http.ResponseWriter, r *http.Request) {
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListProvider(w, r)
+		siw.Handler.ListProviders(w, r)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -3281,8 +3455,33 @@ func (siw *ServerInterfaceWrapper) CallbackProvider(w http.ResponseWriter, r *ht
 	handler.ServeHTTP(w, r)
 }
 
-// ListEvents operation middleware
-func (siw *ServerInterfaceWrapper) ListEvents(w http.ResponseWriter, r *http.Request) {
+// RequestProvider operation middleware
+func (siw *ServerInterfaceWrapper) RequestProvider(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "provider" -------------
+	var provider AuthProviderParam
+
+	err = runtime.BindStyledParameterWithOptions("simple", "provider", chi.URLParam(r, "provider"), &provider, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "provider", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RequestProvider(w, r, provider)
+	}))
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListGlobalEvents operation middleware
+func (siw *ServerInterfaceWrapper) ListGlobalEvents(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
@@ -3297,7 +3496,7 @@ func (siw *ServerInterfaceWrapper) ListEvents(w http.ResponseWriter, r *http.Req
 	r = r.WithContext(ctx)
 
 	// Parameter object where we will unmarshal all parameters from the context
-	var params ListEventsParams
+	var params ListGlobalEventsParams
 
 	// ------------- Optional query parameter "search" -------------
 
@@ -3324,7 +3523,571 @@ func (siw *ServerInterfaceWrapper) ListEvents(w http.ResponseWriter, r *http.Req
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListEvents(w, r, params)
+		siw.Handler.ListGlobalEvents(w, r, params)
+	}))
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListGroups operation middleware
+func (siw *ServerInterfaceWrapper) ListGroups(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, HeaderScopes, []string{})
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, BasicScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListGroupsParams
+
+	// ------------- Optional query parameter "search" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "search", r.URL.Query(), &params.Search)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "search", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "sort" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "sort", r.URL.Query(), &params.Sort)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "order" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "order", r.URL.Query(), &params.Order)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "order", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListGroups(w, r, params)
+	}))
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateGroup operation middleware
+func (siw *ServerInterfaceWrapper) CreateGroup(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, HeaderScopes, []string{})
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, BasicScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateGroup(w, r)
+	}))
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteGroup operation middleware
+func (siw *ServerInterfaceWrapper) DeleteGroup(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "group_id" -------------
+	var groupID GroupID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "group_id", chi.URLParam(r, "group_id"), &groupID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "group_id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, HeaderScopes, []string{})
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, BasicScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteGroup(w, r, groupID)
+	}))
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ShowGroup operation middleware
+func (siw *ServerInterfaceWrapper) ShowGroup(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "group_id" -------------
+	var groupID GroupID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "group_id", chi.URLParam(r, "group_id"), &groupID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "group_id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, HeaderScopes, []string{})
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, BasicScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ShowGroup(w, r, groupID)
+	}))
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateGroup operation middleware
+func (siw *ServerInterfaceWrapper) UpdateGroup(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "group_id" -------------
+	var groupID GroupID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "group_id", chi.URLParam(r, "group_id"), &groupID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "group_id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, HeaderScopes, []string{})
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, BasicScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateGroup(w, r, groupID)
+	}))
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteGroupFromProject operation middleware
+func (siw *ServerInterfaceWrapper) DeleteGroupFromProject(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "group_id" -------------
+	var groupID GroupID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "group_id", chi.URLParam(r, "group_id"), &groupID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "group_id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, HeaderScopes, []string{})
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, BasicScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteGroupFromProject(w, r, groupID)
+	}))
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListGroupProjects operation middleware
+func (siw *ServerInterfaceWrapper) ListGroupProjects(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "group_id" -------------
+	var groupID GroupID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "group_id", chi.URLParam(r, "group_id"), &groupID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "group_id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, HeaderScopes, []string{})
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, BasicScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListGroupProjectsParams
+
+	// ------------- Optional query parameter "search" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "search", r.URL.Query(), &params.Search)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "search", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "sort" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "sort", r.URL.Query(), &params.Sort)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "order" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "order", r.URL.Query(), &params.Order)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "order", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListGroupProjects(w, r, groupID, params)
+	}))
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AttachGroupToProject operation middleware
+func (siw *ServerInterfaceWrapper) AttachGroupToProject(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "group_id" -------------
+	var groupID GroupID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "group_id", chi.URLParam(r, "group_id"), &groupID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "group_id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, HeaderScopes, []string{})
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, BasicScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AttachGroupToProject(w, r, groupID)
+	}))
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PermitGroupProject operation middleware
+func (siw *ServerInterfaceWrapper) PermitGroupProject(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "group_id" -------------
+	var groupID GroupID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "group_id", chi.URLParam(r, "group_id"), &groupID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "group_id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, HeaderScopes, []string{})
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, BasicScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PermitGroupProject(w, r, groupID)
+	}))
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteGroupFromUser operation middleware
+func (siw *ServerInterfaceWrapper) DeleteGroupFromUser(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "group_id" -------------
+	var groupID GroupID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "group_id", chi.URLParam(r, "group_id"), &groupID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "group_id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, HeaderScopes, []string{})
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, BasicScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteGroupFromUser(w, r, groupID)
+	}))
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListGroupUsers operation middleware
+func (siw *ServerInterfaceWrapper) ListGroupUsers(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "group_id" -------------
+	var groupID GroupID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "group_id", chi.URLParam(r, "group_id"), &groupID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "group_id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, HeaderScopes, []string{})
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, BasicScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListGroupUsersParams
+
+	// ------------- Optional query parameter "search" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "search", r.URL.Query(), &params.Search)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "search", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "sort" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "sort", r.URL.Query(), &params.Sort)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "order" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "order", r.URL.Query(), &params.Order)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "order", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListGroupUsers(w, r, groupID, params)
+	}))
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AttachGroupToUser operation middleware
+func (siw *ServerInterfaceWrapper) AttachGroupToUser(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "group_id" -------------
+	var groupID GroupID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "group_id", chi.URLParam(r, "group_id"), &groupID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "group_id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, HeaderScopes, []string{})
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, BasicScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AttachGroupToUser(w, r, groupID)
+	}))
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PermitGroupUser operation middleware
+func (siw *ServerInterfaceWrapper) PermitGroupUser(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "group_id" -------------
+	var groupID GroupID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "group_id", chi.URLParam(r, "group_id"), &groupID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "group_id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, HeaderScopes, []string{})
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, BasicScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PermitGroupUser(w, r, groupID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -3505,9 +4268,9 @@ func (siw *ServerInterfaceWrapper) DeleteProject(w http.ResponseWriter, r *http.
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
@@ -3524,7 +4287,7 @@ func (siw *ServerInterfaceWrapper) DeleteProject(w http.ResponseWriter, r *http.
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeleteProject(w, r, projectId)
+		siw.Handler.DeleteProject(w, r, projectID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -3540,9 +4303,9 @@ func (siw *ServerInterfaceWrapper) ShowProject(w http.ResponseWriter, r *http.Re
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
@@ -3559,7 +4322,7 @@ func (siw *ServerInterfaceWrapper) ShowProject(w http.ResponseWriter, r *http.Re
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ShowProject(w, r, projectId)
+		siw.Handler.ShowProject(w, r, projectID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -3575,9 +4338,9 @@ func (siw *ServerInterfaceWrapper) UpdateProject(w http.ResponseWriter, r *http.
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
@@ -3594,7 +4357,7 @@ func (siw *ServerInterfaceWrapper) UpdateProject(w http.ResponseWriter, r *http.
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.UpdateProject(w, r, projectId)
+		siw.Handler.UpdateProject(w, r, projectID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -3610,9 +4373,9 @@ func (siw *ServerInterfaceWrapper) ListProjectCredentials(w http.ResponseWriter,
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
@@ -3672,7 +4435,7 @@ func (siw *ServerInterfaceWrapper) ListProjectCredentials(w http.ResponseWriter,
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListProjectCredentials(w, r, projectId, params)
+		siw.Handler.ListProjectCredentials(w, r, projectID, params)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -3688,9 +4451,9 @@ func (siw *ServerInterfaceWrapper) CreateProjectCredential(w http.ResponseWriter
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
@@ -3707,7 +4470,7 @@ func (siw *ServerInterfaceWrapper) CreateProjectCredential(w http.ResponseWriter
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.CreateProjectCredential(w, r, projectId)
+		siw.Handler.CreateProjectCredential(w, r, projectID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -3723,18 +4486,18 @@ func (siw *ServerInterfaceWrapper) DeleteProjectCredential(w http.ResponseWriter
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "credential_id" -------------
-	var credentialId CredentialParam
+	var credentialID CredentialID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "credential_id", chi.URLParam(r, "credential_id"), &credentialId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "credential_id", chi.URLParam(r, "credential_id"), &credentialID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "credential_id", Err: err})
 		return
@@ -3751,7 +4514,7 @@ func (siw *ServerInterfaceWrapper) DeleteProjectCredential(w http.ResponseWriter
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeleteProjectCredential(w, r, projectId, credentialId)
+		siw.Handler.DeleteProjectCredential(w, r, projectID, credentialID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -3767,18 +4530,18 @@ func (siw *ServerInterfaceWrapper) ShowProjectCredential(w http.ResponseWriter, 
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "credential_id" -------------
-	var credentialId CredentialParam
+	var credentialID CredentialID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "credential_id", chi.URLParam(r, "credential_id"), &credentialId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "credential_id", chi.URLParam(r, "credential_id"), &credentialID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "credential_id", Err: err})
 		return
@@ -3795,7 +4558,7 @@ func (siw *ServerInterfaceWrapper) ShowProjectCredential(w http.ResponseWriter, 
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ShowProjectCredential(w, r, projectId, credentialId)
+		siw.Handler.ShowProjectCredential(w, r, projectID, credentialID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -3811,18 +4574,18 @@ func (siw *ServerInterfaceWrapper) UpdateProjectCredential(w http.ResponseWriter
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "credential_id" -------------
-	var credentialId CredentialParam
+	var credentialID CredentialID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "credential_id", chi.URLParam(r, "credential_id"), &credentialId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "credential_id", chi.URLParam(r, "credential_id"), &credentialID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "credential_id", Err: err})
 		return
@@ -3839,7 +4602,7 @@ func (siw *ServerInterfaceWrapper) UpdateProjectCredential(w http.ResponseWriter
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.UpdateProjectCredential(w, r, projectId, credentialId)
+		siw.Handler.UpdateProjectCredential(w, r, projectID, credentialID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -3855,9 +4618,9 @@ func (siw *ServerInterfaceWrapper) ListProjectEnvironments(w http.ResponseWriter
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
@@ -3917,7 +4680,7 @@ func (siw *ServerInterfaceWrapper) ListProjectEnvironments(w http.ResponseWriter
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListProjectEnvironments(w, r, projectId, params)
+		siw.Handler.ListProjectEnvironments(w, r, projectID, params)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -3933,9 +4696,9 @@ func (siw *ServerInterfaceWrapper) CreateProjectEnvironment(w http.ResponseWrite
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
@@ -3952,7 +4715,7 @@ func (siw *ServerInterfaceWrapper) CreateProjectEnvironment(w http.ResponseWrite
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.CreateProjectEnvironment(w, r, projectId)
+		siw.Handler.CreateProjectEnvironment(w, r, projectID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -3968,18 +4731,18 @@ func (siw *ServerInterfaceWrapper) DeleteProjectEnvironment(w http.ResponseWrite
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "environment_id" -------------
-	var environmentId EnvironmentParam
+	var environmentID EnvironmentID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "environment_id", chi.URLParam(r, "environment_id"), &environmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "environment_id", chi.URLParam(r, "environment_id"), &environmentID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "environment_id", Err: err})
 		return
@@ -3996,7 +4759,7 @@ func (siw *ServerInterfaceWrapper) DeleteProjectEnvironment(w http.ResponseWrite
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeleteProjectEnvironment(w, r, projectId, environmentId)
+		siw.Handler.DeleteProjectEnvironment(w, r, projectID, environmentID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -4012,18 +4775,18 @@ func (siw *ServerInterfaceWrapper) ShowProjectEnvironment(w http.ResponseWriter,
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "environment_id" -------------
-	var environmentId EnvironmentParam
+	var environmentID EnvironmentID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "environment_id", chi.URLParam(r, "environment_id"), &environmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "environment_id", chi.URLParam(r, "environment_id"), &environmentID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "environment_id", Err: err})
 		return
@@ -4040,7 +4803,7 @@ func (siw *ServerInterfaceWrapper) ShowProjectEnvironment(w http.ResponseWriter,
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ShowProjectEnvironment(w, r, projectId, environmentId)
+		siw.Handler.ShowProjectEnvironment(w, r, projectID, environmentID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -4056,18 +4819,18 @@ func (siw *ServerInterfaceWrapper) UpdateProjectEnvironment(w http.ResponseWrite
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "environment_id" -------------
-	var environmentId EnvironmentParam
+	var environmentID EnvironmentID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "environment_id", chi.URLParam(r, "environment_id"), &environmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "environment_id", chi.URLParam(r, "environment_id"), &environmentID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "environment_id", Err: err})
 		return
@@ -4084,7 +4847,7 @@ func (siw *ServerInterfaceWrapper) UpdateProjectEnvironment(w http.ResponseWrite
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.UpdateProjectEnvironment(w, r, projectId, environmentId)
+		siw.Handler.UpdateProjectEnvironment(w, r, projectID, environmentID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -4100,18 +4863,18 @@ func (siw *ServerInterfaceWrapper) CreateProjectEnvironmentSecret(w http.Respons
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "environment_id" -------------
-	var environmentId EnvironmentParam
+	var environmentID EnvironmentID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "environment_id", chi.URLParam(r, "environment_id"), &environmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "environment_id", chi.URLParam(r, "environment_id"), &environmentID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "environment_id", Err: err})
 		return
@@ -4128,7 +4891,7 @@ func (siw *ServerInterfaceWrapper) CreateProjectEnvironmentSecret(w http.Respons
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.CreateProjectEnvironmentSecret(w, r, projectId, environmentId)
+		siw.Handler.CreateProjectEnvironmentSecret(w, r, projectID, environmentID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -4144,27 +4907,27 @@ func (siw *ServerInterfaceWrapper) DeleteProjectEnvironmentSecret(w http.Respons
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "environment_id" -------------
-	var environmentId EnvironmentParam
+	var environmentID EnvironmentID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "environment_id", chi.URLParam(r, "environment_id"), &environmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "environment_id", chi.URLParam(r, "environment_id"), &environmentID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "environment_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "secret_id" -------------
-	var secretId SecretParam
+	var secretID SecretID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "secret_id", chi.URLParam(r, "secret_id"), &secretId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "secret_id", chi.URLParam(r, "secret_id"), &secretID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "secret_id", Err: err})
 		return
@@ -4181,7 +4944,7 @@ func (siw *ServerInterfaceWrapper) DeleteProjectEnvironmentSecret(w http.Respons
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeleteProjectEnvironmentSecret(w, r, projectId, environmentId, secretId)
+		siw.Handler.DeleteProjectEnvironmentSecret(w, r, projectID, environmentID, secretID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -4197,27 +4960,27 @@ func (siw *ServerInterfaceWrapper) UpdateProjectEnvironmentSecret(w http.Respons
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "environment_id" -------------
-	var environmentId EnvironmentParam
+	var environmentID EnvironmentID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "environment_id", chi.URLParam(r, "environment_id"), &environmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "environment_id", chi.URLParam(r, "environment_id"), &environmentID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "environment_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "secret_id" -------------
-	var secretId SecretParam
+	var secretID SecretID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "secret_id", chi.URLParam(r, "secret_id"), &secretId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "secret_id", chi.URLParam(r, "secret_id"), &secretID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "secret_id", Err: err})
 		return
@@ -4234,7 +4997,7 @@ func (siw *ServerInterfaceWrapper) UpdateProjectEnvironmentSecret(w http.Respons
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.UpdateProjectEnvironmentSecret(w, r, projectId, environmentId, secretId)
+		siw.Handler.UpdateProjectEnvironmentSecret(w, r, projectID, environmentID, secretID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -4250,18 +5013,18 @@ func (siw *ServerInterfaceWrapper) CreateProjectEnvironmentValue(w http.Response
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "environment_id" -------------
-	var environmentId EnvironmentParam
+	var environmentID EnvironmentID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "environment_id", chi.URLParam(r, "environment_id"), &environmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "environment_id", chi.URLParam(r, "environment_id"), &environmentID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "environment_id", Err: err})
 		return
@@ -4278,7 +5041,7 @@ func (siw *ServerInterfaceWrapper) CreateProjectEnvironmentValue(w http.Response
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.CreateProjectEnvironmentValue(w, r, projectId, environmentId)
+		siw.Handler.CreateProjectEnvironmentValue(w, r, projectID, environmentID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -4294,27 +5057,27 @@ func (siw *ServerInterfaceWrapper) DeleteProjectEnvironmentValue(w http.Response
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "environment_id" -------------
-	var environmentId EnvironmentParam
+	var environmentID EnvironmentID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "environment_id", chi.URLParam(r, "environment_id"), &environmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "environment_id", chi.URLParam(r, "environment_id"), &environmentID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "environment_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "value_id" -------------
-	var valueId ValueParam
+	var valueID ValueID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "value_id", chi.URLParam(r, "value_id"), &valueId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "value_id", chi.URLParam(r, "value_id"), &valueID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "value_id", Err: err})
 		return
@@ -4331,7 +5094,7 @@ func (siw *ServerInterfaceWrapper) DeleteProjectEnvironmentValue(w http.Response
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeleteProjectEnvironmentValue(w, r, projectId, environmentId, valueId)
+		siw.Handler.DeleteProjectEnvironmentValue(w, r, projectID, environmentID, valueID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -4347,27 +5110,27 @@ func (siw *ServerInterfaceWrapper) UpdateProjectEnvironmentValue(w http.Response
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "environment_id" -------------
-	var environmentId EnvironmentParam
+	var environmentID EnvironmentID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "environment_id", chi.URLParam(r, "environment_id"), &environmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "environment_id", chi.URLParam(r, "environment_id"), &environmentID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "environment_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "value_id" -------------
-	var valueId ValueParam
+	var valueID ValueID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "value_id", chi.URLParam(r, "value_id"), &valueId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "value_id", chi.URLParam(r, "value_id"), &valueID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "value_id", Err: err})
 		return
@@ -4384,7 +5147,69 @@ func (siw *ServerInterfaceWrapper) UpdateProjectEnvironmentValue(w http.Response
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.UpdateProjectEnvironmentValue(w, r, projectId, environmentId, valueId)
+		siw.Handler.UpdateProjectEnvironmentValue(w, r, projectID, environmentID, valueID)
+	}))
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListProjectEvents operation middleware
+func (siw *ServerInterfaceWrapper) ListProjectEvents(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "project_id" -------------
+	var projectID ProjectID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, HeaderScopes, []string{})
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, BasicScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListProjectEventsParams
+
+	// ------------- Optional query parameter "search" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "search", r.URL.Query(), &params.Search)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "search", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListProjectEvents(w, r, projectID, params)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -4400,9 +5225,9 @@ func (siw *ServerInterfaceWrapper) ListProjectExecutions(w http.ResponseWriter, 
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
@@ -4462,7 +5287,7 @@ func (siw *ServerInterfaceWrapper) ListProjectExecutions(w http.ResponseWriter, 
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListProjectExecutions(w, r, projectId, params)
+		siw.Handler.ListProjectExecutions(w, r, projectID, params)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -4478,9 +5303,9 @@ func (siw *ServerInterfaceWrapper) CreateProjectExecution(w http.ResponseWriter,
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
@@ -4497,7 +5322,7 @@ func (siw *ServerInterfaceWrapper) CreateProjectExecution(w http.ResponseWriter,
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.CreateProjectExecution(w, r, projectId)
+		siw.Handler.CreateProjectExecution(w, r, projectID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -4513,18 +5338,18 @@ func (siw *ServerInterfaceWrapper) DeleteProjectExecution(w http.ResponseWriter,
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "execution_id" -------------
-	var executionId ExecutionParam
+	var executionID ExecutionID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "execution_id", chi.URLParam(r, "execution_id"), &executionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "execution_id", chi.URLParam(r, "execution_id"), &executionID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "execution_id", Err: err})
 		return
@@ -4541,7 +5366,7 @@ func (siw *ServerInterfaceWrapper) DeleteProjectExecution(w http.ResponseWriter,
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeleteProjectExecution(w, r, projectId, executionId)
+		siw.Handler.DeleteProjectExecution(w, r, projectID, executionID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -4557,18 +5382,18 @@ func (siw *ServerInterfaceWrapper) ShowProjectExecution(w http.ResponseWriter, r
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "execution_id" -------------
-	var executionId ExecutionParam
+	var executionID ExecutionID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "execution_id", chi.URLParam(r, "execution_id"), &executionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "execution_id", chi.URLParam(r, "execution_id"), &executionID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "execution_id", Err: err})
 		return
@@ -4585,7 +5410,7 @@ func (siw *ServerInterfaceWrapper) ShowProjectExecution(w http.ResponseWriter, r
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ShowProjectExecution(w, r, projectId, executionId)
+		siw.Handler.ShowProjectExecution(w, r, projectID, executionID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -4601,18 +5426,18 @@ func (siw *ServerInterfaceWrapper) OutputProjectExecution(w http.ResponseWriter,
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "execution_id" -------------
-	var executionId ExecutionParam
+	var executionID ExecutionID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "execution_id", chi.URLParam(r, "execution_id"), &executionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "execution_id", chi.URLParam(r, "execution_id"), &executionID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "execution_id", Err: err})
 		return
@@ -4629,7 +5454,7 @@ func (siw *ServerInterfaceWrapper) OutputProjectExecution(w http.ResponseWriter,
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.OutputProjectExecution(w, r, projectId, executionId)
+		siw.Handler.OutputProjectExecution(w, r, projectID, executionID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -4645,18 +5470,18 @@ func (siw *ServerInterfaceWrapper) PurgeProjectExecution(w http.ResponseWriter, 
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "execution_id" -------------
-	var executionId ExecutionParam
+	var executionID ExecutionID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "execution_id", chi.URLParam(r, "execution_id"), &executionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "execution_id", chi.URLParam(r, "execution_id"), &executionID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "execution_id", Err: err})
 		return
@@ -4673,7 +5498,7 @@ func (siw *ServerInterfaceWrapper) PurgeProjectExecution(w http.ResponseWriter, 
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.PurgeProjectExecution(w, r, projectId, executionId)
+		siw.Handler.PurgeProjectExecution(w, r, projectID, executionID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -4683,26 +5508,17 @@ func (siw *ServerInterfaceWrapper) PurgeProjectExecution(w http.ResponseWriter, 
 	handler.ServeHTTP(w, r)
 }
 
-// StopProjectExecution operation middleware
-func (siw *ServerInterfaceWrapper) StopProjectExecution(w http.ResponseWriter, r *http.Request) {
+// DeleteProjectFromGroup operation middleware
+func (siw *ServerInterfaceWrapper) DeleteProjectFromGroup(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
-		return
-	}
-
-	// ------------- Path parameter "execution_id" -------------
-	var executionId ExecutionParam
-
-	err = runtime.BindStyledParameterWithOptions("simple", "execution_id", chi.URLParam(r, "execution_id"), &executionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "execution_id", Err: err})
 		return
 	}
 
@@ -4717,7 +5533,155 @@ func (siw *ServerInterfaceWrapper) StopProjectExecution(w http.ResponseWriter, r
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.StopProjectExecution(w, r, projectId, executionId)
+		siw.Handler.DeleteProjectFromGroup(w, r, projectID)
+	}))
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListProjectGroups operation middleware
+func (siw *ServerInterfaceWrapper) ListProjectGroups(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "project_id" -------------
+	var projectID ProjectID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, HeaderScopes, []string{})
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, BasicScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListProjectGroupsParams
+
+	// ------------- Optional query parameter "search" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "search", r.URL.Query(), &params.Search)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "search", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "sort" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "sort", r.URL.Query(), &params.Sort)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "order" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "order", r.URL.Query(), &params.Order)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "order", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListProjectGroups(w, r, projectID, params)
+	}))
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AttachProjectToGroup operation middleware
+func (siw *ServerInterfaceWrapper) AttachProjectToGroup(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "project_id" -------------
+	var projectID ProjectID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, HeaderScopes, []string{})
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, BasicScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AttachProjectToGroup(w, r, projectID)
+	}))
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PermitProjectGroup operation middleware
+func (siw *ServerInterfaceWrapper) PermitProjectGroup(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "project_id" -------------
+	var projectID ProjectID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, HeaderScopes, []string{})
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, BasicScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PermitProjectGroup(w, r, projectID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -4733,9 +5697,9 @@ func (siw *ServerInterfaceWrapper) ListProjectInventories(w http.ResponseWriter,
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
@@ -4795,7 +5759,7 @@ func (siw *ServerInterfaceWrapper) ListProjectInventories(w http.ResponseWriter,
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListProjectInventories(w, r, projectId, params)
+		siw.Handler.ListProjectInventories(w, r, projectID, params)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -4811,9 +5775,9 @@ func (siw *ServerInterfaceWrapper) CreateProjectInventory(w http.ResponseWriter,
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
@@ -4830,7 +5794,7 @@ func (siw *ServerInterfaceWrapper) CreateProjectInventory(w http.ResponseWriter,
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.CreateProjectInventory(w, r, projectId)
+		siw.Handler.CreateProjectInventory(w, r, projectID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -4846,18 +5810,18 @@ func (siw *ServerInterfaceWrapper) DeleteProjectInventory(w http.ResponseWriter,
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "inventory_id" -------------
-	var inventoryId InventoryParam
+	var inventoryID InventoryID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "inventory_id", chi.URLParam(r, "inventory_id"), &inventoryId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "inventory_id", chi.URLParam(r, "inventory_id"), &inventoryID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "inventory_id", Err: err})
 		return
@@ -4874,7 +5838,7 @@ func (siw *ServerInterfaceWrapper) DeleteProjectInventory(w http.ResponseWriter,
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeleteProjectInventory(w, r, projectId, inventoryId)
+		siw.Handler.DeleteProjectInventory(w, r, projectID, inventoryID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -4890,18 +5854,18 @@ func (siw *ServerInterfaceWrapper) ShowProjectInventory(w http.ResponseWriter, r
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "inventory_id" -------------
-	var inventoryId InventoryParam
+	var inventoryID InventoryID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "inventory_id", chi.URLParam(r, "inventory_id"), &inventoryId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "inventory_id", chi.URLParam(r, "inventory_id"), &inventoryID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "inventory_id", Err: err})
 		return
@@ -4918,7 +5882,7 @@ func (siw *ServerInterfaceWrapper) ShowProjectInventory(w http.ResponseWriter, r
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ShowProjectInventory(w, r, projectId, inventoryId)
+		siw.Handler.ShowProjectInventory(w, r, projectID, inventoryID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -4934,18 +5898,18 @@ func (siw *ServerInterfaceWrapper) UpdateProjectInventory(w http.ResponseWriter,
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "inventory_id" -------------
-	var inventoryId InventoryParam
+	var inventoryID InventoryID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "inventory_id", chi.URLParam(r, "inventory_id"), &inventoryId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "inventory_id", chi.URLParam(r, "inventory_id"), &inventoryID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "inventory_id", Err: err})
 		return
@@ -4962,7 +5926,7 @@ func (siw *ServerInterfaceWrapper) UpdateProjectInventory(w http.ResponseWriter,
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.UpdateProjectInventory(w, r, projectId, inventoryId)
+		siw.Handler.UpdateProjectInventory(w, r, projectID, inventoryID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -4978,9 +5942,9 @@ func (siw *ServerInterfaceWrapper) ListProjectRepositories(w http.ResponseWriter
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
@@ -5040,7 +6004,7 @@ func (siw *ServerInterfaceWrapper) ListProjectRepositories(w http.ResponseWriter
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListProjectRepositories(w, r, projectId, params)
+		siw.Handler.ListProjectRepositories(w, r, projectID, params)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -5056,9 +6020,9 @@ func (siw *ServerInterfaceWrapper) CreateProjectRepository(w http.ResponseWriter
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
@@ -5075,7 +6039,7 @@ func (siw *ServerInterfaceWrapper) CreateProjectRepository(w http.ResponseWriter
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.CreateProjectRepository(w, r, projectId)
+		siw.Handler.CreateProjectRepository(w, r, projectID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -5091,18 +6055,18 @@ func (siw *ServerInterfaceWrapper) DeleteProjectRepository(w http.ResponseWriter
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "repository_id" -------------
-	var repositoryId RepositoryParam
+	var repositoryID RepositoryID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "repository_id", chi.URLParam(r, "repository_id"), &repositoryId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "repository_id", chi.URLParam(r, "repository_id"), &repositoryID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "repository_id", Err: err})
 		return
@@ -5119,7 +6083,7 @@ func (siw *ServerInterfaceWrapper) DeleteProjectRepository(w http.ResponseWriter
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeleteProjectRepository(w, r, projectId, repositoryId)
+		siw.Handler.DeleteProjectRepository(w, r, projectID, repositoryID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -5135,18 +6099,18 @@ func (siw *ServerInterfaceWrapper) ShowProjectRepository(w http.ResponseWriter, 
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "repository_id" -------------
-	var repositoryId RepositoryParam
+	var repositoryID RepositoryID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "repository_id", chi.URLParam(r, "repository_id"), &repositoryId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "repository_id", chi.URLParam(r, "repository_id"), &repositoryID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "repository_id", Err: err})
 		return
@@ -5163,7 +6127,7 @@ func (siw *ServerInterfaceWrapper) ShowProjectRepository(w http.ResponseWriter, 
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ShowProjectRepository(w, r, projectId, repositoryId)
+		siw.Handler.ShowProjectRepository(w, r, projectID, repositoryID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -5179,18 +6143,18 @@ func (siw *ServerInterfaceWrapper) UpdateProjectRepository(w http.ResponseWriter
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "repository_id" -------------
-	var repositoryId RepositoryParam
+	var repositoryID RepositoryID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "repository_id", chi.URLParam(r, "repository_id"), &repositoryId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "repository_id", chi.URLParam(r, "repository_id"), &repositoryID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "repository_id", Err: err})
 		return
@@ -5207,7 +6171,252 @@ func (siw *ServerInterfaceWrapper) UpdateProjectRepository(w http.ResponseWriter
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.UpdateProjectRepository(w, r, projectId, repositoryId)
+		siw.Handler.UpdateProjectRepository(w, r, projectID, repositoryID)
+	}))
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListProjectRunners operation middleware
+func (siw *ServerInterfaceWrapper) ListProjectRunners(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "project_id" -------------
+	var projectID ProjectID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, HeaderScopes, []string{})
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, BasicScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListProjectRunnersParams
+
+	// ------------- Optional query parameter "search" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "search", r.URL.Query(), &params.Search)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "search", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "sort" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "sort", r.URL.Query(), &params.Sort)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "order" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "order", r.URL.Query(), &params.Order)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "order", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListProjectRunners(w, r, projectID, params)
+	}))
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateProjectRunner operation middleware
+func (siw *ServerInterfaceWrapper) CreateProjectRunner(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "project_id" -------------
+	var projectID ProjectID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, HeaderScopes, []string{})
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, BasicScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateProjectRunner(w, r, projectID)
+	}))
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteProjectRunner operation middleware
+func (siw *ServerInterfaceWrapper) DeleteProjectRunner(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "project_id" -------------
+	var projectID ProjectID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "runner_id" -------------
+	var runnerID RunnerID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "runner_id", chi.URLParam(r, "runner_id"), &runnerID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "runner_id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, HeaderScopes, []string{})
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, BasicScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteProjectRunner(w, r, projectID, runnerID)
+	}))
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ShowProjectRunner operation middleware
+func (siw *ServerInterfaceWrapper) ShowProjectRunner(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "project_id" -------------
+	var projectID ProjectID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "runner_id" -------------
+	var runnerID RunnerID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "runner_id", chi.URLParam(r, "runner_id"), &runnerID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "runner_id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, HeaderScopes, []string{})
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, BasicScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ShowProjectRunner(w, r, projectID, runnerID)
+	}))
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateProjectRunner operation middleware
+func (siw *ServerInterfaceWrapper) UpdateProjectRunner(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "project_id" -------------
+	var projectID ProjectID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "runner_id" -------------
+	var runnerID RunnerID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "runner_id", chi.URLParam(r, "runner_id"), &runnerID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "runner_id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, HeaderScopes, []string{})
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, BasicScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateProjectRunner(w, r, projectID, runnerID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -5223,9 +6432,9 @@ func (siw *ServerInterfaceWrapper) ListProjectSchedules(w http.ResponseWriter, r
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
@@ -5285,7 +6494,7 @@ func (siw *ServerInterfaceWrapper) ListProjectSchedules(w http.ResponseWriter, r
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListProjectSchedules(w, r, projectId, params)
+		siw.Handler.ListProjectSchedules(w, r, projectID, params)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -5301,9 +6510,9 @@ func (siw *ServerInterfaceWrapper) CreateProjectSchedule(w http.ResponseWriter, 
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
@@ -5320,7 +6529,7 @@ func (siw *ServerInterfaceWrapper) CreateProjectSchedule(w http.ResponseWriter, 
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.CreateProjectSchedule(w, r, projectId)
+		siw.Handler.CreateProjectSchedule(w, r, projectID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -5336,18 +6545,18 @@ func (siw *ServerInterfaceWrapper) DeleteProjectSchedule(w http.ResponseWriter, 
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "schedule_id" -------------
-	var scheduleId ScheduleParam
+	var scheduleID ScheduleID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "schedule_id", chi.URLParam(r, "schedule_id"), &scheduleId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "schedule_id", chi.URLParam(r, "schedule_id"), &scheduleID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "schedule_id", Err: err})
 		return
@@ -5364,7 +6573,7 @@ func (siw *ServerInterfaceWrapper) DeleteProjectSchedule(w http.ResponseWriter, 
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeleteProjectSchedule(w, r, projectId, scheduleId)
+		siw.Handler.DeleteProjectSchedule(w, r, projectID, scheduleID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -5380,18 +6589,18 @@ func (siw *ServerInterfaceWrapper) ShowProjectSchedule(w http.ResponseWriter, r 
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "schedule_id" -------------
-	var scheduleId ScheduleParam
+	var scheduleID ScheduleID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "schedule_id", chi.URLParam(r, "schedule_id"), &scheduleId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "schedule_id", chi.URLParam(r, "schedule_id"), &scheduleID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "schedule_id", Err: err})
 		return
@@ -5408,7 +6617,7 @@ func (siw *ServerInterfaceWrapper) ShowProjectSchedule(w http.ResponseWriter, r 
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ShowProjectSchedule(w, r, projectId, scheduleId)
+		siw.Handler.ShowProjectSchedule(w, r, projectID, scheduleID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -5424,18 +6633,18 @@ func (siw *ServerInterfaceWrapper) UpdateProjectSchedule(w http.ResponseWriter, 
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "schedule_id" -------------
-	var scheduleId ScheduleParam
+	var scheduleID ScheduleID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "schedule_id", chi.URLParam(r, "schedule_id"), &scheduleId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "schedule_id", chi.URLParam(r, "schedule_id"), &scheduleID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "schedule_id", Err: err})
 		return
@@ -5452,190 +6661,7 @@ func (siw *ServerInterfaceWrapper) UpdateProjectSchedule(w http.ResponseWriter, 
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.UpdateProjectSchedule(w, r, projectId, scheduleId)
-	}))
-
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// DeleteProjectFromTeam operation middleware
-func (siw *ServerInterfaceWrapper) DeleteProjectFromTeam(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
-
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, HeaderScopes, []string{})
-
-	ctx = context.WithValue(ctx, BearerScopes, []string{})
-
-	ctx = context.WithValue(ctx, BasicScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeleteProjectFromTeam(w, r, projectId)
-	}))
-
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// ListProjectTeams operation middleware
-func (siw *ServerInterfaceWrapper) ListProjectTeams(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
-
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, HeaderScopes, []string{})
-
-	ctx = context.WithValue(ctx, BearerScopes, []string{})
-
-	ctx = context.WithValue(ctx, BasicScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params ListProjectTeamsParams
-
-	// ------------- Optional query parameter "search" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "search", r.URL.Query(), &params.Search)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "search", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "sort" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "sort", r.URL.Query(), &params.Sort)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "order" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "order", r.URL.Query(), &params.Order)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "order", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "limit" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "offset" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListProjectTeams(w, r, projectId, params)
-	}))
-
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// AttachProjectToTeam operation middleware
-func (siw *ServerInterfaceWrapper) AttachProjectToTeam(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
-
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, HeaderScopes, []string{})
-
-	ctx = context.WithValue(ctx, BearerScopes, []string{})
-
-	ctx = context.WithValue(ctx, BasicScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.AttachProjectToTeam(w, r, projectId)
-	}))
-
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// PermitProjectTeam operation middleware
-func (siw *ServerInterfaceWrapper) PermitProjectTeam(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
-
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, HeaderScopes, []string{})
-
-	ctx = context.WithValue(ctx, BearerScopes, []string{})
-
-	ctx = context.WithValue(ctx, BasicScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.PermitProjectTeam(w, r, projectId)
+		siw.Handler.UpdateProjectSchedule(w, r, projectID, scheduleID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -5651,9 +6677,9 @@ func (siw *ServerInterfaceWrapper) ListProjectTemplates(w http.ResponseWriter, r
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
@@ -5713,7 +6739,7 @@ func (siw *ServerInterfaceWrapper) ListProjectTemplates(w http.ResponseWriter, r
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListProjectTemplates(w, r, projectId, params)
+		siw.Handler.ListProjectTemplates(w, r, projectID, params)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -5729,9 +6755,9 @@ func (siw *ServerInterfaceWrapper) CreateProjectTemplate(w http.ResponseWriter, 
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
@@ -5748,7 +6774,7 @@ func (siw *ServerInterfaceWrapper) CreateProjectTemplate(w http.ResponseWriter, 
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.CreateProjectTemplate(w, r, projectId)
+		siw.Handler.CreateProjectTemplate(w, r, projectID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -5764,18 +6790,18 @@ func (siw *ServerInterfaceWrapper) DeleteProjectTemplate(w http.ResponseWriter, 
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "template_id" -------------
-	var templateId TemplateParam
+	var templateID TemplateID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "template_id", chi.URLParam(r, "template_id"), &templateId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "template_id", chi.URLParam(r, "template_id"), &templateID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "template_id", Err: err})
 		return
@@ -5792,7 +6818,7 @@ func (siw *ServerInterfaceWrapper) DeleteProjectTemplate(w http.ResponseWriter, 
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeleteProjectTemplate(w, r, projectId, templateId)
+		siw.Handler.DeleteProjectTemplate(w, r, projectID, templateID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -5808,18 +6834,18 @@ func (siw *ServerInterfaceWrapper) ShowProjectTemplate(w http.ResponseWriter, r 
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "template_id" -------------
-	var templateId TemplateParam
+	var templateID TemplateID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "template_id", chi.URLParam(r, "template_id"), &templateId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "template_id", chi.URLParam(r, "template_id"), &templateID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "template_id", Err: err})
 		return
@@ -5836,7 +6862,7 @@ func (siw *ServerInterfaceWrapper) ShowProjectTemplate(w http.ResponseWriter, r 
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ShowProjectTemplate(w, r, projectId, templateId)
+		siw.Handler.ShowProjectTemplate(w, r, projectID, templateID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -5852,18 +6878,18 @@ func (siw *ServerInterfaceWrapper) UpdateProjectTemplate(w http.ResponseWriter, 
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "template_id" -------------
-	var templateId TemplateParam
+	var templateID TemplateID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "template_id", chi.URLParam(r, "template_id"), &templateId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "template_id", chi.URLParam(r, "template_id"), &templateID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "template_id", Err: err})
 		return
@@ -5880,7 +6906,7 @@ func (siw *ServerInterfaceWrapper) UpdateProjectTemplate(w http.ResponseWriter, 
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.UpdateProjectTemplate(w, r, projectId, templateId)
+		siw.Handler.UpdateProjectTemplate(w, r, projectID, templateID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -5896,18 +6922,18 @@ func (siw *ServerInterfaceWrapper) CreateProjectTemplateSurvey(w http.ResponseWr
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "template_id" -------------
-	var templateId TemplateParam
+	var templateID TemplateID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "template_id", chi.URLParam(r, "template_id"), &templateId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "template_id", chi.URLParam(r, "template_id"), &templateID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "template_id", Err: err})
 		return
@@ -5924,7 +6950,7 @@ func (siw *ServerInterfaceWrapper) CreateProjectTemplateSurvey(w http.ResponseWr
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.CreateProjectTemplateSurvey(w, r, projectId, templateId)
+		siw.Handler.CreateProjectTemplateSurvey(w, r, projectID, templateID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -5940,27 +6966,27 @@ func (siw *ServerInterfaceWrapper) DeleteProjectTemplateSurvey(w http.ResponseWr
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "template_id" -------------
-	var templateId TemplateParam
+	var templateID TemplateID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "template_id", chi.URLParam(r, "template_id"), &templateId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "template_id", chi.URLParam(r, "template_id"), &templateID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "template_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "survey_id" -------------
-	var surveyId SurveyParam
+	var surveyID SurveyID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "survey_id", chi.URLParam(r, "survey_id"), &surveyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "survey_id", chi.URLParam(r, "survey_id"), &surveyID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "survey_id", Err: err})
 		return
@@ -5977,7 +7003,7 @@ func (siw *ServerInterfaceWrapper) DeleteProjectTemplateSurvey(w http.ResponseWr
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeleteProjectTemplateSurvey(w, r, projectId, templateId, surveyId)
+		siw.Handler.DeleteProjectTemplateSurvey(w, r, projectID, templateID, surveyID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -5993,27 +7019,27 @@ func (siw *ServerInterfaceWrapper) UpdateProjectTemplateSurvey(w http.ResponseWr
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "template_id" -------------
-	var templateId TemplateParam
+	var templateID TemplateID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "template_id", chi.URLParam(r, "template_id"), &templateId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "template_id", chi.URLParam(r, "template_id"), &templateID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "template_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "survey_id" -------------
-	var surveyId SurveyParam
+	var surveyID SurveyID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "survey_id", chi.URLParam(r, "survey_id"), &surveyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "survey_id", chi.URLParam(r, "survey_id"), &surveyID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "survey_id", Err: err})
 		return
@@ -6030,7 +7056,7 @@ func (siw *ServerInterfaceWrapper) UpdateProjectTemplateSurvey(w http.ResponseWr
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.UpdateProjectTemplateSurvey(w, r, projectId, templateId, surveyId)
+		siw.Handler.UpdateProjectTemplateSurvey(w, r, projectID, templateID, surveyID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -6046,18 +7072,18 @@ func (siw *ServerInterfaceWrapper) CreateProjectTemplateVault(w http.ResponseWri
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "template_id" -------------
-	var templateId TemplateParam
+	var templateID TemplateID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "template_id", chi.URLParam(r, "template_id"), &templateId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "template_id", chi.URLParam(r, "template_id"), &templateID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "template_id", Err: err})
 		return
@@ -6074,7 +7100,7 @@ func (siw *ServerInterfaceWrapper) CreateProjectTemplateVault(w http.ResponseWri
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.CreateProjectTemplateVault(w, r, projectId, templateId)
+		siw.Handler.CreateProjectTemplateVault(w, r, projectID, templateID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -6090,27 +7116,27 @@ func (siw *ServerInterfaceWrapper) DeleteProjectTemplateVault(w http.ResponseWri
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "template_id" -------------
-	var templateId TemplateParam
+	var templateID TemplateID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "template_id", chi.URLParam(r, "template_id"), &templateId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "template_id", chi.URLParam(r, "template_id"), &templateID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "template_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "vault_id" -------------
-	var vaultId VaultParam
+	var vaultID VaultID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "vault_id", chi.URLParam(r, "vault_id"), &vaultId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "vault_id", chi.URLParam(r, "vault_id"), &vaultID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "vault_id", Err: err})
 		return
@@ -6127,7 +7153,7 @@ func (siw *ServerInterfaceWrapper) DeleteProjectTemplateVault(w http.ResponseWri
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeleteProjectTemplateVault(w, r, projectId, templateId, vaultId)
+		siw.Handler.DeleteProjectTemplateVault(w, r, projectID, templateID, vaultID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -6143,27 +7169,27 @@ func (siw *ServerInterfaceWrapper) UpdateProjectTemplateVault(w http.ResponseWri
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "template_id" -------------
-	var templateId TemplateParam
+	var templateID TemplateID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "template_id", chi.URLParam(r, "template_id"), &templateId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "template_id", chi.URLParam(r, "template_id"), &templateID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "template_id", Err: err})
 		return
 	}
 
 	// ------------- Path parameter "vault_id" -------------
-	var vaultId VaultParam
+	var vaultID VaultID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "vault_id", chi.URLParam(r, "vault_id"), &vaultId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "vault_id", chi.URLParam(r, "vault_id"), &vaultID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "vault_id", Err: err})
 		return
@@ -6180,7 +7206,7 @@ func (siw *ServerInterfaceWrapper) UpdateProjectTemplateVault(w http.ResponseWri
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.UpdateProjectTemplateVault(w, r, projectId, templateId, vaultId)
+		siw.Handler.UpdateProjectTemplateVault(w, r, projectID, templateID, vaultID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -6196,9 +7222,9 @@ func (siw *ServerInterfaceWrapper) DeleteProjectFromUser(w http.ResponseWriter, 
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
@@ -6215,7 +7241,7 @@ func (siw *ServerInterfaceWrapper) DeleteProjectFromUser(w http.ResponseWriter, 
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeleteProjectFromUser(w, r, projectId)
+		siw.Handler.DeleteProjectFromUser(w, r, projectID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -6231,9 +7257,9 @@ func (siw *ServerInterfaceWrapper) ListProjectUsers(w http.ResponseWriter, r *ht
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
@@ -6293,7 +7319,7 @@ func (siw *ServerInterfaceWrapper) ListProjectUsers(w http.ResponseWriter, r *ht
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListProjectUsers(w, r, projectId, params)
+		siw.Handler.ListProjectUsers(w, r, projectID, params)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -6309,9 +7335,9 @@ func (siw *ServerInterfaceWrapper) AttachProjectToUser(w http.ResponseWriter, r 
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
@@ -6328,7 +7354,7 @@ func (siw *ServerInterfaceWrapper) AttachProjectToUser(w http.ResponseWriter, r 
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.AttachProjectToUser(w, r, projectId)
+		siw.Handler.AttachProjectToUser(w, r, projectID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -6344,9 +7370,9 @@ func (siw *ServerInterfaceWrapper) PermitProjectUser(w http.ResponseWriter, r *h
 	var err error
 
 	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectParam
+	var projectID ProjectID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", chi.URLParam(r, "project_id"), &projectID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
 		return
@@ -6363,7 +7389,7 @@ func (siw *ServerInterfaceWrapper) PermitProjectUser(w http.ResponseWriter, r *h
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.PermitProjectUser(w, r, projectId)
+		siw.Handler.PermitProjectUser(w, r, projectID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -6373,8 +7399,8 @@ func (siw *ServerInterfaceWrapper) PermitProjectUser(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r)
 }
 
-// ListRunners operation middleware
-func (siw *ServerInterfaceWrapper) ListRunners(w http.ResponseWriter, r *http.Request) {
+// ListGlobalRunners operation middleware
+func (siw *ServerInterfaceWrapper) ListGlobalRunners(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
@@ -6389,7 +7415,7 @@ func (siw *ServerInterfaceWrapper) ListRunners(w http.ResponseWriter, r *http.Re
 	r = r.WithContext(ctx)
 
 	// Parameter object where we will unmarshal all parameters from the context
-	var params ListRunnersParams
+	var params ListGlobalRunnersParams
 
 	// ------------- Optional query parameter "search" -------------
 
@@ -6432,7 +7458,7 @@ func (siw *ServerInterfaceWrapper) ListRunners(w http.ResponseWriter, r *http.Re
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListRunners(w, r, params)
+		siw.Handler.ListGlobalRunners(w, r, params)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -6442,8 +7468,8 @@ func (siw *ServerInterfaceWrapper) ListRunners(w http.ResponseWriter, r *http.Re
 	handler.ServeHTTP(w, r)
 }
 
-// CreateRunner operation middleware
-func (siw *ServerInterfaceWrapper) CreateRunner(w http.ResponseWriter, r *http.Request) {
+// CreateGlobalRunner operation middleware
+func (siw *ServerInterfaceWrapper) CreateGlobalRunner(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
@@ -6456,7 +7482,7 @@ func (siw *ServerInterfaceWrapper) CreateRunner(w http.ResponseWriter, r *http.R
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.CreateRunner(w, r)
+		siw.Handler.CreateGlobalRunner(w, r)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -6466,15 +7492,15 @@ func (siw *ServerInterfaceWrapper) CreateRunner(w http.ResponseWriter, r *http.R
 	handler.ServeHTTP(w, r)
 }
 
-// DeleteRunner operation middleware
-func (siw *ServerInterfaceWrapper) DeleteRunner(w http.ResponseWriter, r *http.Request) {
+// DeleteGlobalRunner operation middleware
+func (siw *ServerInterfaceWrapper) DeleteGlobalRunner(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
 	// ------------- Path parameter "runner_id" -------------
-	var runnerId RunnerParam
+	var runnerID RunnerID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "runner_id", chi.URLParam(r, "runner_id"), &runnerId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "runner_id", chi.URLParam(r, "runner_id"), &runnerID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "runner_id", Err: err})
 		return
@@ -6491,7 +7517,7 @@ func (siw *ServerInterfaceWrapper) DeleteRunner(w http.ResponseWriter, r *http.R
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeleteRunner(w, r, runnerId)
+		siw.Handler.DeleteGlobalRunner(w, r, runnerID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -6501,15 +7527,15 @@ func (siw *ServerInterfaceWrapper) DeleteRunner(w http.ResponseWriter, r *http.R
 	handler.ServeHTTP(w, r)
 }
 
-// ShowRunner operation middleware
-func (siw *ServerInterfaceWrapper) ShowRunner(w http.ResponseWriter, r *http.Request) {
+// ShowGlobalRunner operation middleware
+func (siw *ServerInterfaceWrapper) ShowGlobalRunner(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
 	// ------------- Path parameter "runner_id" -------------
-	var runnerId RunnerParam
+	var runnerID RunnerID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "runner_id", chi.URLParam(r, "runner_id"), &runnerId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "runner_id", chi.URLParam(r, "runner_id"), &runnerID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "runner_id", Err: err})
 		return
@@ -6526,7 +7552,7 @@ func (siw *ServerInterfaceWrapper) ShowRunner(w http.ResponseWriter, r *http.Req
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ShowRunner(w, r, runnerId)
+		siw.Handler.ShowGlobalRunner(w, r, runnerID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -6536,15 +7562,15 @@ func (siw *ServerInterfaceWrapper) ShowRunner(w http.ResponseWriter, r *http.Req
 	handler.ServeHTTP(w, r)
 }
 
-// UpdateRunner operation middleware
-func (siw *ServerInterfaceWrapper) UpdateRunner(w http.ResponseWriter, r *http.Request) {
+// UpdateGlobalRunner operation middleware
+func (siw *ServerInterfaceWrapper) UpdateGlobalRunner(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
 	// ------------- Path parameter "runner_id" -------------
-	var runnerId RunnerParam
+	var runnerID RunnerID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "runner_id", chi.URLParam(r, "runner_id"), &runnerId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "runner_id", chi.URLParam(r, "runner_id"), &runnerID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "runner_id", Err: err})
 		return
@@ -6561,571 +7587,7 @@ func (siw *ServerInterfaceWrapper) UpdateRunner(w http.ResponseWriter, r *http.R
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.UpdateRunner(w, r, runnerId)
-	}))
-
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// ListTeams operation middleware
-func (siw *ServerInterfaceWrapper) ListTeams(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, HeaderScopes, []string{})
-
-	ctx = context.WithValue(ctx, BearerScopes, []string{})
-
-	ctx = context.WithValue(ctx, BasicScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params ListTeamsParams
-
-	// ------------- Optional query parameter "search" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "search", r.URL.Query(), &params.Search)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "search", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "sort" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "sort", r.URL.Query(), &params.Sort)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "order" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "order", r.URL.Query(), &params.Order)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "order", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "limit" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "offset" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListTeams(w, r, params)
-	}))
-
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// CreateTeam operation middleware
-func (siw *ServerInterfaceWrapper) CreateTeam(w http.ResponseWriter, r *http.Request) {
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, HeaderScopes, []string{})
-
-	ctx = context.WithValue(ctx, BearerScopes, []string{})
-
-	ctx = context.WithValue(ctx, BasicScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.CreateTeam(w, r)
-	}))
-
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// DeleteTeam operation middleware
-func (siw *ServerInterfaceWrapper) DeleteTeam(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "team_id" -------------
-	var teamId TeamParam
-
-	err = runtime.BindStyledParameterWithOptions("simple", "team_id", chi.URLParam(r, "team_id"), &teamId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "team_id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, HeaderScopes, []string{})
-
-	ctx = context.WithValue(ctx, BearerScopes, []string{})
-
-	ctx = context.WithValue(ctx, BasicScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeleteTeam(w, r, teamId)
-	}))
-
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// ShowTeam operation middleware
-func (siw *ServerInterfaceWrapper) ShowTeam(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "team_id" -------------
-	var teamId TeamParam
-
-	err = runtime.BindStyledParameterWithOptions("simple", "team_id", chi.URLParam(r, "team_id"), &teamId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "team_id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, HeaderScopes, []string{})
-
-	ctx = context.WithValue(ctx, BearerScopes, []string{})
-
-	ctx = context.WithValue(ctx, BasicScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ShowTeam(w, r, teamId)
-	}))
-
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// UpdateTeam operation middleware
-func (siw *ServerInterfaceWrapper) UpdateTeam(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "team_id" -------------
-	var teamId TeamParam
-
-	err = runtime.BindStyledParameterWithOptions("simple", "team_id", chi.URLParam(r, "team_id"), &teamId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "team_id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, HeaderScopes, []string{})
-
-	ctx = context.WithValue(ctx, BearerScopes, []string{})
-
-	ctx = context.WithValue(ctx, BasicScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.UpdateTeam(w, r, teamId)
-	}))
-
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// DeleteTeamFromProject operation middleware
-func (siw *ServerInterfaceWrapper) DeleteTeamFromProject(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "team_id" -------------
-	var teamId TeamParam
-
-	err = runtime.BindStyledParameterWithOptions("simple", "team_id", chi.URLParam(r, "team_id"), &teamId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "team_id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, HeaderScopes, []string{})
-
-	ctx = context.WithValue(ctx, BearerScopes, []string{})
-
-	ctx = context.WithValue(ctx, BasicScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeleteTeamFromProject(w, r, teamId)
-	}))
-
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// ListTeamProjects operation middleware
-func (siw *ServerInterfaceWrapper) ListTeamProjects(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "team_id" -------------
-	var teamId TeamParam
-
-	err = runtime.BindStyledParameterWithOptions("simple", "team_id", chi.URLParam(r, "team_id"), &teamId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "team_id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, HeaderScopes, []string{})
-
-	ctx = context.WithValue(ctx, BearerScopes, []string{})
-
-	ctx = context.WithValue(ctx, BasicScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params ListTeamProjectsParams
-
-	// ------------- Optional query parameter "search" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "search", r.URL.Query(), &params.Search)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "search", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "sort" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "sort", r.URL.Query(), &params.Sort)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "order" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "order", r.URL.Query(), &params.Order)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "order", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "limit" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "offset" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListTeamProjects(w, r, teamId, params)
-	}))
-
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// AttachTeamToProject operation middleware
-func (siw *ServerInterfaceWrapper) AttachTeamToProject(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "team_id" -------------
-	var teamId TeamParam
-
-	err = runtime.BindStyledParameterWithOptions("simple", "team_id", chi.URLParam(r, "team_id"), &teamId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "team_id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, HeaderScopes, []string{})
-
-	ctx = context.WithValue(ctx, BearerScopes, []string{})
-
-	ctx = context.WithValue(ctx, BasicScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.AttachTeamToProject(w, r, teamId)
-	}))
-
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// PermitTeamProject operation middleware
-func (siw *ServerInterfaceWrapper) PermitTeamProject(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "team_id" -------------
-	var teamId TeamParam
-
-	err = runtime.BindStyledParameterWithOptions("simple", "team_id", chi.URLParam(r, "team_id"), &teamId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "team_id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, HeaderScopes, []string{})
-
-	ctx = context.WithValue(ctx, BearerScopes, []string{})
-
-	ctx = context.WithValue(ctx, BasicScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.PermitTeamProject(w, r, teamId)
-	}))
-
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// DeleteTeamFromUser operation middleware
-func (siw *ServerInterfaceWrapper) DeleteTeamFromUser(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "team_id" -------------
-	var teamId TeamParam
-
-	err = runtime.BindStyledParameterWithOptions("simple", "team_id", chi.URLParam(r, "team_id"), &teamId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "team_id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, HeaderScopes, []string{})
-
-	ctx = context.WithValue(ctx, BearerScopes, []string{})
-
-	ctx = context.WithValue(ctx, BasicScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeleteTeamFromUser(w, r, teamId)
-	}))
-
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// ListTeamUsers operation middleware
-func (siw *ServerInterfaceWrapper) ListTeamUsers(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "team_id" -------------
-	var teamId TeamParam
-
-	err = runtime.BindStyledParameterWithOptions("simple", "team_id", chi.URLParam(r, "team_id"), &teamId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "team_id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, HeaderScopes, []string{})
-
-	ctx = context.WithValue(ctx, BearerScopes, []string{})
-
-	ctx = context.WithValue(ctx, BasicScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params ListTeamUsersParams
-
-	// ------------- Optional query parameter "search" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "search", r.URL.Query(), &params.Search)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "search", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "sort" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "sort", r.URL.Query(), &params.Sort)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "order" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "order", r.URL.Query(), &params.Order)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "order", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "limit" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "offset" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListTeamUsers(w, r, teamId, params)
-	}))
-
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// AttachTeamToUser operation middleware
-func (siw *ServerInterfaceWrapper) AttachTeamToUser(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "team_id" -------------
-	var teamId TeamParam
-
-	err = runtime.BindStyledParameterWithOptions("simple", "team_id", chi.URLParam(r, "team_id"), &teamId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "team_id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, HeaderScopes, []string{})
-
-	ctx = context.WithValue(ctx, BearerScopes, []string{})
-
-	ctx = context.WithValue(ctx, BasicScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.AttachTeamToUser(w, r, teamId)
-	}))
-
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// PermitTeamUser operation middleware
-func (siw *ServerInterfaceWrapper) PermitTeamUser(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "team_id" -------------
-	var teamId TeamParam
-
-	err = runtime.BindStyledParameterWithOptions("simple", "team_id", chi.URLParam(r, "team_id"), &teamId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "team_id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, HeaderScopes, []string{})
-
-	ctx = context.WithValue(ctx, BearerScopes, []string{})
-
-	ctx = context.WithValue(ctx, BasicScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.PermitTeamUser(w, r, teamId)
+		siw.Handler.UpdateGlobalRunner(w, r, runnerID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -7234,9 +7696,9 @@ func (siw *ServerInterfaceWrapper) DeleteUser(w http.ResponseWriter, r *http.Req
 	var err error
 
 	// ------------- Path parameter "user_id" -------------
-	var userId UserParam
+	var userID UserID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "user_id", chi.URLParam(r, "user_id"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "user_id", chi.URLParam(r, "user_id"), &userID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
 		return
@@ -7253,7 +7715,7 @@ func (siw *ServerInterfaceWrapper) DeleteUser(w http.ResponseWriter, r *http.Req
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeleteUser(w, r, userId)
+		siw.Handler.DeleteUser(w, r, userID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -7269,9 +7731,9 @@ func (siw *ServerInterfaceWrapper) ShowUser(w http.ResponseWriter, r *http.Reque
 	var err error
 
 	// ------------- Path parameter "user_id" -------------
-	var userId UserParam
+	var userID UserID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "user_id", chi.URLParam(r, "user_id"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "user_id", chi.URLParam(r, "user_id"), &userID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
 		return
@@ -7288,7 +7750,7 @@ func (siw *ServerInterfaceWrapper) ShowUser(w http.ResponseWriter, r *http.Reque
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ShowUser(w, r, userId)
+		siw.Handler.ShowUser(w, r, userID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -7304,9 +7766,9 @@ func (siw *ServerInterfaceWrapper) UpdateUser(w http.ResponseWriter, r *http.Req
 	var err error
 
 	// ------------- Path parameter "user_id" -------------
-	var userId UserParam
+	var userID UserID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "user_id", chi.URLParam(r, "user_id"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "user_id", chi.URLParam(r, "user_id"), &userID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
 		return
@@ -7323,7 +7785,190 @@ func (siw *ServerInterfaceWrapper) UpdateUser(w http.ResponseWriter, r *http.Req
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.UpdateUser(w, r, userId)
+		siw.Handler.UpdateUser(w, r, userID)
+	}))
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteUserFromGroup operation middleware
+func (siw *ServerInterfaceWrapper) DeleteUserFromGroup(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "user_id" -------------
+	var userID UserID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "user_id", chi.URLParam(r, "user_id"), &userID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, HeaderScopes, []string{})
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, BasicScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteUserFromGroup(w, r, userID)
+	}))
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListUserGroups operation middleware
+func (siw *ServerInterfaceWrapper) ListUserGroups(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "user_id" -------------
+	var userID UserID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "user_id", chi.URLParam(r, "user_id"), &userID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, HeaderScopes, []string{})
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, BasicScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListUserGroupsParams
+
+	// ------------- Optional query parameter "search" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "search", r.URL.Query(), &params.Search)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "search", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "sort" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "sort", r.URL.Query(), &params.Sort)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "order" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "order", r.URL.Query(), &params.Order)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "order", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListUserGroups(w, r, userID, params)
+	}))
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AttachUserToGroup operation middleware
+func (siw *ServerInterfaceWrapper) AttachUserToGroup(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "user_id" -------------
+	var userID UserID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "user_id", chi.URLParam(r, "user_id"), &userID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, HeaderScopes, []string{})
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, BasicScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AttachUserToGroup(w, r, userID)
+	}))
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PermitUserGroup operation middleware
+func (siw *ServerInterfaceWrapper) PermitUserGroup(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "user_id" -------------
+	var userID UserID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "user_id", chi.URLParam(r, "user_id"), &userID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, HeaderScopes, []string{})
+
+	ctx = context.WithValue(ctx, BearerScopes, []string{})
+
+	ctx = context.WithValue(ctx, BasicScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PermitUserGroup(w, r, userID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -7339,9 +7984,9 @@ func (siw *ServerInterfaceWrapper) DeleteUserFromProject(w http.ResponseWriter, 
 	var err error
 
 	// ------------- Path parameter "user_id" -------------
-	var userId UserParam
+	var userID UserID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "user_id", chi.URLParam(r, "user_id"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "user_id", chi.URLParam(r, "user_id"), &userID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
 		return
@@ -7358,7 +8003,7 @@ func (siw *ServerInterfaceWrapper) DeleteUserFromProject(w http.ResponseWriter, 
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeleteUserFromProject(w, r, userId)
+		siw.Handler.DeleteUserFromProject(w, r, userID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -7374,9 +8019,9 @@ func (siw *ServerInterfaceWrapper) ListUserProjects(w http.ResponseWriter, r *ht
 	var err error
 
 	// ------------- Path parameter "user_id" -------------
-	var userId UserParam
+	var userID UserID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "user_id", chi.URLParam(r, "user_id"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "user_id", chi.URLParam(r, "user_id"), &userID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
 		return
@@ -7436,7 +8081,7 @@ func (siw *ServerInterfaceWrapper) ListUserProjects(w http.ResponseWriter, r *ht
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListUserProjects(w, r, userId, params)
+		siw.Handler.ListUserProjects(w, r, userID, params)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -7452,9 +8097,9 @@ func (siw *ServerInterfaceWrapper) AttachUserToProject(w http.ResponseWriter, r 
 	var err error
 
 	// ------------- Path parameter "user_id" -------------
-	var userId UserParam
+	var userID UserID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "user_id", chi.URLParam(r, "user_id"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "user_id", chi.URLParam(r, "user_id"), &userID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
 		return
@@ -7471,7 +8116,7 @@ func (siw *ServerInterfaceWrapper) AttachUserToProject(w http.ResponseWriter, r 
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.AttachUserToProject(w, r, userId)
+		siw.Handler.AttachUserToProject(w, r, userID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -7487,9 +8132,9 @@ func (siw *ServerInterfaceWrapper) PermitUserProject(w http.ResponseWriter, r *h
 	var err error
 
 	// ------------- Path parameter "user_id" -------------
-	var userId UserParam
+	var userID UserID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "user_id", chi.URLParam(r, "user_id"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "user_id", chi.URLParam(r, "user_id"), &userID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
 		return
@@ -7506,214 +8151,7 @@ func (siw *ServerInterfaceWrapper) PermitUserProject(w http.ResponseWriter, r *h
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.PermitUserProject(w, r, userId)
-	}))
-
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// DeleteUserFromTeam operation middleware
-func (siw *ServerInterfaceWrapper) DeleteUserFromTeam(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "user_id" -------------
-	var userId UserParam
-
-	err = runtime.BindStyledParameterWithOptions("simple", "user_id", chi.URLParam(r, "user_id"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, HeaderScopes, []string{})
-
-	ctx = context.WithValue(ctx, BearerScopes, []string{})
-
-	ctx = context.WithValue(ctx, BasicScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeleteUserFromTeam(w, r, userId)
-	}))
-
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// ListUserTeams operation middleware
-func (siw *ServerInterfaceWrapper) ListUserTeams(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "user_id" -------------
-	var userId UserParam
-
-	err = runtime.BindStyledParameterWithOptions("simple", "user_id", chi.URLParam(r, "user_id"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, HeaderScopes, []string{})
-
-	ctx = context.WithValue(ctx, BearerScopes, []string{})
-
-	ctx = context.WithValue(ctx, BasicScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params ListUserTeamsParams
-
-	// ------------- Optional query parameter "search" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "search", r.URL.Query(), &params.Search)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "search", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "sort" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "sort", r.URL.Query(), &params.Sort)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "order" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "order", r.URL.Query(), &params.Order)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "order", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "limit" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "offset" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListUserTeams(w, r, userId, params)
-	}))
-
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// AttachUserToTeam operation middleware
-func (siw *ServerInterfaceWrapper) AttachUserToTeam(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "user_id" -------------
-	var userId UserParam
-
-	err = runtime.BindStyledParameterWithOptions("simple", "user_id", chi.URLParam(r, "user_id"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, HeaderScopes, []string{})
-
-	ctx = context.WithValue(ctx, BearerScopes, []string{})
-
-	ctx = context.WithValue(ctx, BasicScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.AttachUserToTeam(w, r, userId)
-	}))
-
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// PermitUserTeam operation middleware
-func (siw *ServerInterfaceWrapper) PermitUserTeam(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "user_id" -------------
-	var userId UserParam
-
-	err = runtime.BindStyledParameterWithOptions("simple", "user_id", chi.URLParam(r, "user_id"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, HeaderScopes, []string{})
-
-	ctx = context.WithValue(ctx, BearerScopes, []string{})
-
-	ctx = context.WithValue(ctx, BasicScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.PermitUserTeam(w, r, userId)
-	}))
-
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// Websockets operation middleware
-func (siw *ServerInterfaceWrapper) Websockets(w http.ResponseWriter, r *http.Request) {
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, HeaderScopes, []string{})
-
-	ctx = context.WithValue(ctx, BearerScopes, []string{})
-
-	ctx = context.WithValue(ctx, BasicScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.Websockets(w, r)
+		siw.Handler.PermitUserProject(w, r, userID)
 	}))
 
 	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
@@ -7840,7 +8278,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/auth/login", wrapper.LoginAuth)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/auth/providers", wrapper.ListProvider)
+		r.Get(options.BaseURL+"/auth/providers", wrapper.ListProviders)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/auth/refresh", wrapper.RefreshAuth)
@@ -7849,10 +8287,52 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/auth/verify", wrapper.VerifyAuth)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/auth/{provider}", wrapper.CallbackProvider)
+		r.Get(options.BaseURL+"/auth/{provider}/callback", wrapper.CallbackProvider)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/events", wrapper.ListEvents)
+		r.Get(options.BaseURL+"/auth/{provider}/request", wrapper.RequestProvider)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/events", wrapper.ListGlobalEvents)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/groups", wrapper.ListGroups)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/groups", wrapper.CreateGroup)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/groups/{group_id}", wrapper.DeleteGroup)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/groups/{group_id}", wrapper.ShowGroup)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/groups/{group_id}", wrapper.UpdateGroup)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/groups/{group_id}/projects", wrapper.DeleteGroupFromProject)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/groups/{group_id}/projects", wrapper.ListGroupProjects)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/groups/{group_id}/projects", wrapper.AttachGroupToProject)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/groups/{group_id}/projects", wrapper.PermitGroupProject)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/groups/{group_id}/users", wrapper.DeleteGroupFromUser)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/groups/{group_id}/users", wrapper.ListGroupUsers)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/groups/{group_id}/users", wrapper.AttachGroupToUser)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/groups/{group_id}/users", wrapper.PermitGroupUser)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/profile/self", wrapper.ShowProfile)
@@ -7927,6 +8407,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Put(options.BaseURL+"/projects/{project_id}/environments/{environment_id}/values/{value_id}", wrapper.UpdateProjectEnvironmentValue)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/projects/{project_id}/events", wrapper.ListProjectEvents)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/projects/{project_id}/executions", wrapper.ListProjectExecutions)
 	})
 	r.Group(func(r chi.Router) {
@@ -7945,7 +8428,16 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/projects/{project_id}/executions/{execution_id}/purge", wrapper.PurgeProjectExecution)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/projects/{project_id}/executions/{execution_id}/stop", wrapper.StopProjectExecution)
+		r.Delete(options.BaseURL+"/projects/{project_id}/groups", wrapper.DeleteProjectFromGroup)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/projects/{project_id}/groups", wrapper.ListProjectGroups)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/projects/{project_id}/groups", wrapper.AttachProjectToGroup)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/projects/{project_id}/groups", wrapper.PermitProjectGroup)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/projects/{project_id}/inventories", wrapper.ListProjectInventories)
@@ -7978,6 +8470,21 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Put(options.BaseURL+"/projects/{project_id}/repositories/{repository_id}", wrapper.UpdateProjectRepository)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/projects/{project_id}/runners", wrapper.ListProjectRunners)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/projects/{project_id}/runners", wrapper.CreateProjectRunner)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/projects/{project_id}/runners/{runner_id}", wrapper.DeleteProjectRunner)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/projects/{project_id}/runners/{runner_id}", wrapper.ShowProjectRunner)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/projects/{project_id}/runners/{runner_id}", wrapper.UpdateProjectRunner)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/projects/{project_id}/schedules", wrapper.ListProjectSchedules)
 	})
 	r.Group(func(r chi.Router) {
@@ -7991,18 +8498,6 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/projects/{project_id}/schedules/{schedule_id}", wrapper.UpdateProjectSchedule)
-	})
-	r.Group(func(r chi.Router) {
-		r.Delete(options.BaseURL+"/projects/{project_id}/teams", wrapper.DeleteProjectFromTeam)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/projects/{project_id}/teams", wrapper.ListProjectTeams)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/projects/{project_id}/teams", wrapper.AttachProjectToTeam)
-	})
-	r.Group(func(r chi.Router) {
-		r.Put(options.BaseURL+"/projects/{project_id}/teams", wrapper.PermitProjectTeam)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/projects/{project_id}/templates", wrapper.ListProjectTemplates)
@@ -8050,58 +8545,19 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Put(options.BaseURL+"/projects/{project_id}/users", wrapper.PermitProjectUser)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/runners", wrapper.ListRunners)
+		r.Get(options.BaseURL+"/runners", wrapper.ListGlobalRunners)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/runners", wrapper.CreateRunner)
+		r.Post(options.BaseURL+"/runners", wrapper.CreateGlobalRunner)
 	})
 	r.Group(func(r chi.Router) {
-		r.Delete(options.BaseURL+"/runners/{runner_id}", wrapper.DeleteRunner)
+		r.Delete(options.BaseURL+"/runners/{runner_id}", wrapper.DeleteGlobalRunner)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/runners/{runner_id}", wrapper.ShowRunner)
+		r.Get(options.BaseURL+"/runners/{runner_id}", wrapper.ShowGlobalRunner)
 	})
 	r.Group(func(r chi.Router) {
-		r.Put(options.BaseURL+"/runners/{runner_id}", wrapper.UpdateRunner)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/teams", wrapper.ListTeams)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/teams", wrapper.CreateTeam)
-	})
-	r.Group(func(r chi.Router) {
-		r.Delete(options.BaseURL+"/teams/{team_id}", wrapper.DeleteTeam)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/teams/{team_id}", wrapper.ShowTeam)
-	})
-	r.Group(func(r chi.Router) {
-		r.Put(options.BaseURL+"/teams/{team_id}", wrapper.UpdateTeam)
-	})
-	r.Group(func(r chi.Router) {
-		r.Delete(options.BaseURL+"/teams/{team_id}/projects", wrapper.DeleteTeamFromProject)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/teams/{team_id}/projects", wrapper.ListTeamProjects)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/teams/{team_id}/projects", wrapper.AttachTeamToProject)
-	})
-	r.Group(func(r chi.Router) {
-		r.Put(options.BaseURL+"/teams/{team_id}/projects", wrapper.PermitTeamProject)
-	})
-	r.Group(func(r chi.Router) {
-		r.Delete(options.BaseURL+"/teams/{team_id}/users", wrapper.DeleteTeamFromUser)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/teams/{team_id}/users", wrapper.ListTeamUsers)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/teams/{team_id}/users", wrapper.AttachTeamToUser)
-	})
-	r.Group(func(r chi.Router) {
-		r.Put(options.BaseURL+"/teams/{team_id}/users", wrapper.PermitTeamUser)
+		r.Put(options.BaseURL+"/runners/{runner_id}", wrapper.UpdateGlobalRunner)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/users", wrapper.ListUsers)
@@ -8119,6 +8575,18 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Put(options.BaseURL+"/users/{user_id}", wrapper.UpdateUser)
 	})
 	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/users/{user_id}/groups", wrapper.DeleteUserFromGroup)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/users/{user_id}/groups", wrapper.ListUserGroups)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/users/{user_id}/groups", wrapper.AttachUserToGroup)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/users/{user_id}/groups", wrapper.PermitUserGroup)
+	})
+	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/users/{user_id}/projects", wrapper.DeleteUserFromProject)
 	})
 	r.Group(func(r chi.Router) {
@@ -8130,21 +8598,6 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/users/{user_id}/projects", wrapper.PermitUserProject)
 	})
-	r.Group(func(r chi.Router) {
-		r.Delete(options.BaseURL+"/users/{user_id}/teams", wrapper.DeleteUserFromTeam)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/users/{user_id}/teams", wrapper.ListUserTeams)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/users/{user_id}/teams", wrapper.AttachUserToTeam)
-	})
-	r.Group(func(r chi.Router) {
-		r.Put(options.BaseURL+"/users/{user_id}/teams", wrapper.PermitUserTeam)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/ws", wrapper.Websockets)
-	})
 
 	return r
 }
@@ -8155,16 +8608,55 @@ type AlreadyAttachedErrorJSONResponse Notification
 
 type BadCredentialsErrorJSONResponse Notification
 
-type CallbackResponseJSONResponse AuthToken
-
-type EventsResponseJSONResponse struct {
+type GlobalEventsResponseJSONResponse struct {
 	Events []Event `json:"events"`
 	Limit  int64   `json:"limit"`
 	Offset int64   `json:"offset"`
 	Total  int64   `json:"total"`
 }
 
+type GlobalRunnerResponseJSONResponse Runner
+
+type GlobalRunnersResponseJSONResponse struct {
+	Limit   int64    `json:"limit"`
+	Offset  int64    `json:"offset"`
+	Runners []Runner `json:"runners"`
+	Total   int64    `json:"total"`
+}
+
+type GroupProjectsResponseJSONResponse struct {
+	// Group Model to represent group
+	Group    *Group         `json:"group,omitempty"`
+	Limit    int64          `json:"limit"`
+	Offset   int64          `json:"offset"`
+	Projects []GroupProject `json:"projects"`
+	Total    int64          `json:"total"`
+}
+
+type GroupResponseJSONResponse Group
+
+type GroupUsersResponseJSONResponse struct {
+	// Group Model to represent group
+	Group  *Group      `json:"group,omitempty"`
+	Limit  int64       `json:"limit"`
+	Offset int64       `json:"offset"`
+	Total  int64       `json:"total"`
+	Users  []UserGroup `json:"users"`
+}
+
+type GroupsResponseJSONResponse struct {
+	Groups []Group `json:"groups"`
+	Limit  int64   `json:"limit"`
+	Offset int64   `json:"offset"`
+	Total  int64   `json:"total"`
+}
+
 type InternalServerErrorJSONResponse Notification
+type InternalServerErrorTexthtmlResponse struct {
+	Body io.Reader
+
+	ContentLength int64
+}
 
 type InvalidTokenErrorJSONResponse Notification
 
@@ -8175,6 +8667,11 @@ type NotAttachedErrorJSONResponse Notification
 type NotAuthorizedErrorJSONResponse Notification
 
 type NotFoundErrorJSONResponse Notification
+type NotFoundErrorTexthtmlResponse struct {
+	Body io.Reader
+
+	ContentLength int64
+}
 
 type ProfileResponseJSONResponse Profile
 
@@ -8206,12 +8703,32 @@ type ProjectEnvironmentsResponseJSONResponse struct {
 	Total   int64    `json:"total"`
 }
 
+type ProjectEventsResponseJSONResponse struct {
+	Events []Event `json:"events"`
+	Limit  int64   `json:"limit"`
+	Offset int64   `json:"offset"`
+
+	// Project Model to represent project
+	Project *Project `json:"project,omitempty"`
+	Total   int64    `json:"total"`
+}
+
 type ProjectExecutionResponseJSONResponse Execution
 
 type ProjectExecutionsResponseJSONResponse struct {
 	Executions []Execution `json:"executions"`
 	Limit      int64       `json:"limit"`
 	Offset     int64       `json:"offset"`
+
+	// Project Model to represent project
+	Project *Project `json:"project,omitempty"`
+	Total   int64    `json:"total"`
+}
+
+type ProjectGroupsResponseJSONResponse struct {
+	Groups []GroupProject `json:"groups"`
+	Limit  int64          `json:"limit"`
+	Offset int64          `json:"offset"`
 
 	// Project Model to represent project
 	Project *Project `json:"project,omitempty"`
@@ -8230,7 +8747,7 @@ type ProjectInventoriesResponseJSONResponse struct {
 
 type ProjectInventoryResponseJSONResponse Inventory
 
-type ProjectLoggingResponseJSONResponse Logging
+type ProjectOutputResponseJSONResponse []Output
 
 type ProjectRepositoriesResponseJSONResponse struct {
 	Limit  int64 `json:"limit"`
@@ -8246,6 +8763,18 @@ type ProjectRepositoryResponseJSONResponse Repository
 
 type ProjectResponseJSONResponse Project
 
+type ProjectRunnerResponseJSONResponse Runner
+
+type ProjectRunnersResponseJSONResponse struct {
+	Limit  int64 `json:"limit"`
+	Offset int64 `json:"offset"`
+
+	// Project Model to represent project
+	Project *Project `json:"project,omitempty"`
+	Runners []Runner `json:"runners"`
+	Total   int64    `json:"total"`
+}
+
 type ProjectScheduleResponseJSONResponse Schedule
 
 type ProjectSchedulesResponseJSONResponse struct {
@@ -8256,16 +8785,6 @@ type ProjectSchedulesResponseJSONResponse struct {
 	Project   *Project   `json:"project,omitempty"`
 	Schedules []Schedule `json:"schedules"`
 	Total     int64      `json:"total"`
-}
-
-type ProjectTeamsResponseJSONResponse struct {
-	Limit  int64 `json:"limit"`
-	Offset int64 `json:"offset"`
-
-	// Project Model to represent project
-	Project *Project      `json:"project,omitempty"`
-	Teams   []TeamProject `json:"teams"`
-	Total   int64         `json:"total"`
 }
 
 type ProjectTemplateResponseJSONResponse Template
@@ -8301,55 +8820,43 @@ type ProjectsResponseJSONResponse struct {
 	Total    int64     `json:"total"`
 }
 
-type ProviderInitErrorJSONResponse Notification
+type ProviderCallbackResponseTexthtmlResponse struct {
+	Body io.Reader
 
-type ProviderResponseJSONResponse []Provider
+	ContentLength int64
+}
+
+type ProviderInitErrorTexthtmlResponse struct {
+	Body io.Reader
+
+	ContentLength int64
+}
+
+type ProviderRequestResponseTexthtmlResponse struct {
+	Body io.Reader
+
+	ContentLength int64
+}
+
+type ProvidersResponseJSONResponse struct {
+	Providers []Provider `json:"providers"`
+	Total     int64      `json:"total"`
+}
 
 type RefreshResponseJSONResponse AuthToken
 
-type RunnerResponseJSONResponse Runner
-
-type RunnersResponseJSONResponse struct {
-	Limit   int64    `json:"limit"`
-	Offset  int64    `json:"offset"`
-	Runners []Runner `json:"runners"`
-	Total   int64    `json:"total"`
-}
-
 type SuccessMessageJSONResponse Notification
-
-type TeamProjectsResponseJSONResponse struct {
-	Limit    int64         `json:"limit"`
-	Offset   int64         `json:"offset"`
-	Projects []TeamProject `json:"projects"`
-
-	// Team Model to represent team
-	Team  *Team `json:"team,omitempty"`
-	Total int64 `json:"total"`
-}
-
-type TeamResponseJSONResponse Team
-
-type TeamUsersResponseJSONResponse struct {
-	Limit  int64 `json:"limit"`
-	Offset int64 `json:"offset"`
-
-	// Team Model to represent team
-	Team  *Team      `json:"team,omitempty"`
-	Total int64      `json:"total"`
-	Users []UserTeam `json:"users"`
-}
-
-type TeamsResponseJSONResponse struct {
-	Limit  int64  `json:"limit"`
-	Offset int64  `json:"offset"`
-	Teams  []Team `json:"teams"`
-	Total  int64  `json:"total"`
-}
 
 type TokenResponseJSONResponse AuthToken
 
-type UpgradeConnectionResponse struct {
+type UserGroupsResponseJSONResponse struct {
+	Groups []UserGroup `json:"groups"`
+	Limit  int64       `json:"limit"`
+	Offset int64       `json:"offset"`
+	Total  int64       `json:"total"`
+
+	// User Model to represent user
+	User *User `json:"user,omitempty"`
 }
 
 type UserProjectsResponseJSONResponse struct {
@@ -8363,16 +8870,6 @@ type UserProjectsResponseJSONResponse struct {
 }
 
 type UserResponseJSONResponse User
-
-type UserTeamsResponseJSONResponse struct {
-	Limit  int64      `json:"limit"`
-	Offset int64      `json:"offset"`
-	Teams  []UserTeam `json:"teams"`
-	Total  int64      `json:"total"`
-
-	// User Model to represent user
-	User *User `json:"user,omitempty"`
-}
 
 type UsersResponseJSONResponse struct {
 	Limit  int64  `json:"limit"`
@@ -8424,29 +8921,36 @@ func (response LoginAuth500JSONResponse) VisitLoginAuthResponse(w http.ResponseW
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ListProviderRequestObject struct {
+type LoginAuth500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
 }
 
-type ListProviderResponseObject interface {
-	VisitListProviderResponse(w http.ResponseWriter) error
+func (response LoginAuth500TexthtmlResponse) VisitLoginAuthResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
 }
 
-type ListProvider200JSONResponse struct{ ProviderResponseJSONResponse }
+type ListProvidersRequestObject struct {
+}
 
-func (response ListProvider200JSONResponse) VisitListProviderResponse(w http.ResponseWriter) error {
+type ListProvidersResponseObject interface {
+	VisitListProvidersResponse(w http.ResponseWriter) error
+}
+
+type ListProviders200JSONResponse struct{ ProvidersResponseJSONResponse }
+
+func (response ListProviders200JSONResponse) VisitListProvidersResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type ListProvider500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response ListProvider500JSONResponse) VisitListProviderResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
 }
@@ -8487,6 +8991,24 @@ func (response RefreshAuth500JSONResponse) VisitRefreshAuthResponse(w http.Respo
 	return json.NewEncoder(w).Encode(response)
 }
 
+type RefreshAuth500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response RefreshAuth500TexthtmlResponse) VisitRefreshAuthResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type VerifyAuthRequestObject struct {
 }
 
@@ -8523,6 +9045,24 @@ func (response VerifyAuth500JSONResponse) VisitVerifyAuthResponse(w http.Respons
 	return json.NewEncoder(w).Encode(response)
 }
 
+type VerifyAuth500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response VerifyAuth500TexthtmlResponse) VisitVerifyAuthResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type CallbackProviderRequestObject struct {
 	Provider AuthProviderParam `json:"provider"`
 	Params   CallbackProviderParams
@@ -8532,13 +9072,22 @@ type CallbackProviderResponseObject interface {
 	VisitCallbackProviderResponse(w http.ResponseWriter) error
 }
 
-type CallbackProvider200JSONResponse struct{ CallbackResponseJSONResponse }
+type CallbackProvider308TexthtmlResponse struct {
+	ProviderCallbackResponseTexthtmlResponse
+}
 
-func (response CallbackProvider200JSONResponse) VisitCallbackProviderResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+func (response CallbackProvider308TexthtmlResponse) VisitCallbackProviderResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(308)
 
-	return json.NewEncoder(w).Encode(response)
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
 }
 
 type CallbackProvider404JSONResponse struct{ NotFoundErrorJSONResponse }
@@ -8550,61 +9099,1268 @@ func (response CallbackProvider404JSONResponse) VisitCallbackProviderResponse(w 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type CallbackProvider412JSONResponse struct{ ProviderInitErrorJSONResponse }
+type CallbackProvider404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
 
-func (response CallbackProvider412JSONResponse) VisitCallbackProviderResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
+func (response CallbackProvider404TexthtmlResponse) VisitCallbackProviderResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type CallbackProvider412TexthtmlResponse struct {
+	ProviderInitErrorTexthtmlResponse
+}
+
+func (response CallbackProvider412TexthtmlResponse) VisitCallbackProviderResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
 	w.WriteHeader(412)
 
-	return json.NewEncoder(w).Encode(response)
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
 }
 
-type CallbackProvider500JSONResponse struct {
-	InternalServerErrorJSONResponse
+type RequestProviderRequestObject struct {
+	Provider AuthProviderParam `json:"provider"`
 }
 
-func (response CallbackProvider500JSONResponse) VisitCallbackProviderResponse(w http.ResponseWriter) error {
+type RequestProviderResponseObject interface {
+	VisitRequestProviderResponse(w http.ResponseWriter) error
+}
+
+type RequestProvider308TexthtmlResponse struct {
+	ProviderRequestResponseTexthtmlResponse
+}
+
+func (response RequestProvider308TexthtmlResponse) VisitRequestProviderResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(308)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type RequestProvider404JSONResponse struct{ NotFoundErrorJSONResponse }
+
+func (response RequestProvider404JSONResponse) VisitRequestProviderResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
+	w.WriteHeader(404)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ListEventsRequestObject struct {
-	Params ListEventsParams
+type RequestProvider404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response RequestProvider404TexthtmlResponse) VisitRequestProviderResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
 }
 
-type ListEventsResponseObject interface {
-	VisitListEventsResponse(w http.ResponseWriter) error
+type ListGlobalEventsRequestObject struct {
+	Params ListGlobalEventsParams
 }
 
-type ListEvents200JSONResponse struct{ EventsResponseJSONResponse }
+type ListGlobalEventsResponseObject interface {
+	VisitListGlobalEventsResponse(w http.ResponseWriter) error
+}
 
-func (response ListEvents200JSONResponse) VisitListEventsResponse(w http.ResponseWriter) error {
+type ListGlobalEvents200JSONResponse struct {
+	GlobalEventsResponseJSONResponse
+}
+
+func (response ListGlobalEvents200JSONResponse) VisitListGlobalEventsResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ListEvents403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+type ListGlobalEvents403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
 
-func (response ListEvents403JSONResponse) VisitListEventsResponse(w http.ResponseWriter) error {
+func (response ListGlobalEvents403JSONResponse) VisitListGlobalEventsResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(403)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ListEvents500JSONResponse struct {
+type ListGlobalEvents500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
 
-func (response ListEvents500JSONResponse) VisitListEventsResponse(w http.ResponseWriter) error {
+func (response ListGlobalEvents500JSONResponse) VisitListGlobalEventsResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
+}
+
+type ListGlobalEvents500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response ListGlobalEvents500TexthtmlResponse) VisitListGlobalEventsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type ListGroupsRequestObject struct {
+	Params ListGroupsParams
+}
+
+type ListGroupsResponseObject interface {
+	VisitListGroupsResponse(w http.ResponseWriter) error
+}
+
+type ListGroups200JSONResponse struct{ GroupsResponseJSONResponse }
+
+func (response ListGroups200JSONResponse) VisitListGroupsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListGroups403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+
+func (response ListGroups403JSONResponse) VisitListGroupsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListGroups500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response ListGroups500JSONResponse) VisitListGroupsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListGroups500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response ListGroups500TexthtmlResponse) VisitListGroupsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type CreateGroupRequestObject struct {
+	Body *CreateGroupJSONRequestBody
+}
+
+type CreateGroupResponseObject interface {
+	VisitCreateGroupResponse(w http.ResponseWriter) error
+}
+
+type CreateGroup200JSONResponse struct{ GroupResponseJSONResponse }
+
+func (response CreateGroup200JSONResponse) VisitCreateGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateGroup403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+
+func (response CreateGroup403JSONResponse) VisitCreateGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateGroup422JSONResponse struct{ ValidationErrorJSONResponse }
+
+func (response CreateGroup422JSONResponse) VisitCreateGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(422)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateGroup500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response CreateGroup500JSONResponse) VisitCreateGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateGroup500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response CreateGroup500TexthtmlResponse) VisitCreateGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type DeleteGroupRequestObject struct {
+	GroupID GroupID `json:"group_id"`
+}
+
+type DeleteGroupResponseObject interface {
+	VisitDeleteGroupResponse(w http.ResponseWriter) error
+}
+
+type DeleteGroup200JSONResponse struct{ SuccessMessageJSONResponse }
+
+func (response DeleteGroup200JSONResponse) VisitDeleteGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteGroup400JSONResponse struct{ ActionFailedErrorJSONResponse }
+
+func (response DeleteGroup400JSONResponse) VisitDeleteGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteGroup403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+
+func (response DeleteGroup403JSONResponse) VisitDeleteGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteGroup404JSONResponse struct{ NotFoundErrorJSONResponse }
+
+func (response DeleteGroup404JSONResponse) VisitDeleteGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteGroup404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response DeleteGroup404TexthtmlResponse) VisitDeleteGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type DeleteGroup500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response DeleteGroup500JSONResponse) VisitDeleteGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteGroup500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response DeleteGroup500TexthtmlResponse) VisitDeleteGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type ShowGroupRequestObject struct {
+	GroupID GroupID `json:"group_id"`
+}
+
+type ShowGroupResponseObject interface {
+	VisitShowGroupResponse(w http.ResponseWriter) error
+}
+
+type ShowGroup200JSONResponse struct{ GroupResponseJSONResponse }
+
+func (response ShowGroup200JSONResponse) VisitShowGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ShowGroup403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+
+func (response ShowGroup403JSONResponse) VisitShowGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ShowGroup404JSONResponse struct{ NotFoundErrorJSONResponse }
+
+func (response ShowGroup404JSONResponse) VisitShowGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ShowGroup404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response ShowGroup404TexthtmlResponse) VisitShowGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type ShowGroup500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response ShowGroup500JSONResponse) VisitShowGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ShowGroup500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response ShowGroup500TexthtmlResponse) VisitShowGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type UpdateGroupRequestObject struct {
+	GroupID GroupID `json:"group_id"`
+	Body    *UpdateGroupJSONRequestBody
+}
+
+type UpdateGroupResponseObject interface {
+	VisitUpdateGroupResponse(w http.ResponseWriter) error
+}
+
+type UpdateGroup200JSONResponse struct{ GroupResponseJSONResponse }
+
+func (response UpdateGroup200JSONResponse) VisitUpdateGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateGroup403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+
+func (response UpdateGroup403JSONResponse) VisitUpdateGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateGroup404JSONResponse struct{ NotFoundErrorJSONResponse }
+
+func (response UpdateGroup404JSONResponse) VisitUpdateGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateGroup404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response UpdateGroup404TexthtmlResponse) VisitUpdateGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type UpdateGroup422JSONResponse struct{ ValidationErrorJSONResponse }
+
+func (response UpdateGroup422JSONResponse) VisitUpdateGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(422)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateGroup500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response UpdateGroup500JSONResponse) VisitUpdateGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateGroup500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response UpdateGroup500TexthtmlResponse) VisitUpdateGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type DeleteGroupFromProjectRequestObject struct {
+	GroupID GroupID `json:"group_id"`
+	Body    *DeleteGroupFromProjectJSONRequestBody
+}
+
+type DeleteGroupFromProjectResponseObject interface {
+	VisitDeleteGroupFromProjectResponse(w http.ResponseWriter) error
+}
+
+type DeleteGroupFromProject200JSONResponse struct{ SuccessMessageJSONResponse }
+
+func (response DeleteGroupFromProject200JSONResponse) VisitDeleteGroupFromProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteGroupFromProject403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+
+func (response DeleteGroupFromProject403JSONResponse) VisitDeleteGroupFromProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteGroupFromProject404JSONResponse struct{ NotFoundErrorJSONResponse }
+
+func (response DeleteGroupFromProject404JSONResponse) VisitDeleteGroupFromProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteGroupFromProject404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response DeleteGroupFromProject404TexthtmlResponse) VisitDeleteGroupFromProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type DeleteGroupFromProject412JSONResponse struct{ NotAttachedErrorJSONResponse }
+
+func (response DeleteGroupFromProject412JSONResponse) VisitDeleteGroupFromProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(412)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteGroupFromProject500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response DeleteGroupFromProject500JSONResponse) VisitDeleteGroupFromProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteGroupFromProject500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response DeleteGroupFromProject500TexthtmlResponse) VisitDeleteGroupFromProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type ListGroupProjectsRequestObject struct {
+	GroupID GroupID `json:"group_id"`
+	Params  ListGroupProjectsParams
+}
+
+type ListGroupProjectsResponseObject interface {
+	VisitListGroupProjectsResponse(w http.ResponseWriter) error
+}
+
+type ListGroupProjects200JSONResponse struct {
+	GroupProjectsResponseJSONResponse
+}
+
+func (response ListGroupProjects200JSONResponse) VisitListGroupProjectsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListGroupProjects403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+
+func (response ListGroupProjects403JSONResponse) VisitListGroupProjectsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListGroupProjects404JSONResponse struct{ NotFoundErrorJSONResponse }
+
+func (response ListGroupProjects404JSONResponse) VisitListGroupProjectsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListGroupProjects404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response ListGroupProjects404TexthtmlResponse) VisitListGroupProjectsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type ListGroupProjects500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response ListGroupProjects500JSONResponse) VisitListGroupProjectsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListGroupProjects500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response ListGroupProjects500TexthtmlResponse) VisitListGroupProjectsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type AttachGroupToProjectRequestObject struct {
+	GroupID GroupID `json:"group_id"`
+	Body    *AttachGroupToProjectJSONRequestBody
+}
+
+type AttachGroupToProjectResponseObject interface {
+	VisitAttachGroupToProjectResponse(w http.ResponseWriter) error
+}
+
+type AttachGroupToProject200JSONResponse struct{ SuccessMessageJSONResponse }
+
+func (response AttachGroupToProject200JSONResponse) VisitAttachGroupToProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AttachGroupToProject403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+
+func (response AttachGroupToProject403JSONResponse) VisitAttachGroupToProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AttachGroupToProject404JSONResponse struct{ NotFoundErrorJSONResponse }
+
+func (response AttachGroupToProject404JSONResponse) VisitAttachGroupToProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AttachGroupToProject404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response AttachGroupToProject404TexthtmlResponse) VisitAttachGroupToProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type AttachGroupToProject412JSONResponse struct {
+	AlreadyAttachedErrorJSONResponse
+}
+
+func (response AttachGroupToProject412JSONResponse) VisitAttachGroupToProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(412)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AttachGroupToProject422JSONResponse struct{ ValidationErrorJSONResponse }
+
+func (response AttachGroupToProject422JSONResponse) VisitAttachGroupToProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(422)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AttachGroupToProject500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response AttachGroupToProject500JSONResponse) VisitAttachGroupToProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AttachGroupToProject500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response AttachGroupToProject500TexthtmlResponse) VisitAttachGroupToProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type PermitGroupProjectRequestObject struct {
+	GroupID GroupID `json:"group_id"`
+	Body    *PermitGroupProjectJSONRequestBody
+}
+
+type PermitGroupProjectResponseObject interface {
+	VisitPermitGroupProjectResponse(w http.ResponseWriter) error
+}
+
+type PermitGroupProject200JSONResponse struct{ SuccessMessageJSONResponse }
+
+func (response PermitGroupProject200JSONResponse) VisitPermitGroupProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PermitGroupProject403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+
+func (response PermitGroupProject403JSONResponse) VisitPermitGroupProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PermitGroupProject404JSONResponse struct{ NotFoundErrorJSONResponse }
+
+func (response PermitGroupProject404JSONResponse) VisitPermitGroupProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PermitGroupProject404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response PermitGroupProject404TexthtmlResponse) VisitPermitGroupProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type PermitGroupProject412JSONResponse struct{ NotAttachedErrorJSONResponse }
+
+func (response PermitGroupProject412JSONResponse) VisitPermitGroupProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(412)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PermitGroupProject422JSONResponse struct{ ValidationErrorJSONResponse }
+
+func (response PermitGroupProject422JSONResponse) VisitPermitGroupProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(422)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PermitGroupProject500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response PermitGroupProject500JSONResponse) VisitPermitGroupProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PermitGroupProject500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response PermitGroupProject500TexthtmlResponse) VisitPermitGroupProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type DeleteGroupFromUserRequestObject struct {
+	GroupID GroupID `json:"group_id"`
+	Body    *DeleteGroupFromUserJSONRequestBody
+}
+
+type DeleteGroupFromUserResponseObject interface {
+	VisitDeleteGroupFromUserResponse(w http.ResponseWriter) error
+}
+
+type DeleteGroupFromUser200JSONResponse struct{ SuccessMessageJSONResponse }
+
+func (response DeleteGroupFromUser200JSONResponse) VisitDeleteGroupFromUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteGroupFromUser403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+
+func (response DeleteGroupFromUser403JSONResponse) VisitDeleteGroupFromUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteGroupFromUser404JSONResponse struct{ NotFoundErrorJSONResponse }
+
+func (response DeleteGroupFromUser404JSONResponse) VisitDeleteGroupFromUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteGroupFromUser404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response DeleteGroupFromUser404TexthtmlResponse) VisitDeleteGroupFromUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type DeleteGroupFromUser412JSONResponse struct{ NotAttachedErrorJSONResponse }
+
+func (response DeleteGroupFromUser412JSONResponse) VisitDeleteGroupFromUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(412)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteGroupFromUser500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response DeleteGroupFromUser500JSONResponse) VisitDeleteGroupFromUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteGroupFromUser500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response DeleteGroupFromUser500TexthtmlResponse) VisitDeleteGroupFromUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type ListGroupUsersRequestObject struct {
+	GroupID GroupID `json:"group_id"`
+	Params  ListGroupUsersParams
+}
+
+type ListGroupUsersResponseObject interface {
+	VisitListGroupUsersResponse(w http.ResponseWriter) error
+}
+
+type ListGroupUsers200JSONResponse struct{ GroupUsersResponseJSONResponse }
+
+func (response ListGroupUsers200JSONResponse) VisitListGroupUsersResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListGroupUsers403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+
+func (response ListGroupUsers403JSONResponse) VisitListGroupUsersResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListGroupUsers404JSONResponse struct{ NotFoundErrorJSONResponse }
+
+func (response ListGroupUsers404JSONResponse) VisitListGroupUsersResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListGroupUsers404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response ListGroupUsers404TexthtmlResponse) VisitListGroupUsersResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type ListGroupUsers500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response ListGroupUsers500JSONResponse) VisitListGroupUsersResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListGroupUsers500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response ListGroupUsers500TexthtmlResponse) VisitListGroupUsersResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type AttachGroupToUserRequestObject struct {
+	GroupID GroupID `json:"group_id"`
+	Body    *AttachGroupToUserJSONRequestBody
+}
+
+type AttachGroupToUserResponseObject interface {
+	VisitAttachGroupToUserResponse(w http.ResponseWriter) error
+}
+
+type AttachGroupToUser200JSONResponse struct{ SuccessMessageJSONResponse }
+
+func (response AttachGroupToUser200JSONResponse) VisitAttachGroupToUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AttachGroupToUser403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+
+func (response AttachGroupToUser403JSONResponse) VisitAttachGroupToUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AttachGroupToUser404JSONResponse struct{ NotFoundErrorJSONResponse }
+
+func (response AttachGroupToUser404JSONResponse) VisitAttachGroupToUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AttachGroupToUser404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response AttachGroupToUser404TexthtmlResponse) VisitAttachGroupToUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type AttachGroupToUser412JSONResponse struct {
+	AlreadyAttachedErrorJSONResponse
+}
+
+func (response AttachGroupToUser412JSONResponse) VisitAttachGroupToUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(412)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AttachGroupToUser422JSONResponse struct{ ValidationErrorJSONResponse }
+
+func (response AttachGroupToUser422JSONResponse) VisitAttachGroupToUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(422)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AttachGroupToUser500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response AttachGroupToUser500JSONResponse) VisitAttachGroupToUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AttachGroupToUser500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response AttachGroupToUser500TexthtmlResponse) VisitAttachGroupToUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type PermitGroupUserRequestObject struct {
+	GroupID GroupID `json:"group_id"`
+	Body    *PermitGroupUserJSONRequestBody
+}
+
+type PermitGroupUserResponseObject interface {
+	VisitPermitGroupUserResponse(w http.ResponseWriter) error
+}
+
+type PermitGroupUser200JSONResponse struct{ SuccessMessageJSONResponse }
+
+func (response PermitGroupUser200JSONResponse) VisitPermitGroupUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PermitGroupUser403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+
+func (response PermitGroupUser403JSONResponse) VisitPermitGroupUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PermitGroupUser404JSONResponse struct{ NotFoundErrorJSONResponse }
+
+func (response PermitGroupUser404JSONResponse) VisitPermitGroupUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PermitGroupUser404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response PermitGroupUser404TexthtmlResponse) VisitPermitGroupUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type PermitGroupUser412JSONResponse struct{ NotAttachedErrorJSONResponse }
+
+func (response PermitGroupUser412JSONResponse) VisitPermitGroupUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(412)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PermitGroupUser422JSONResponse struct{ ValidationErrorJSONResponse }
+
+func (response PermitGroupUser422JSONResponse) VisitPermitGroupUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(422)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PermitGroupUser500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response PermitGroupUser500JSONResponse) VisitPermitGroupUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PermitGroupUser500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response PermitGroupUser500TexthtmlResponse) VisitPermitGroupUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
 }
 
 type ShowProfileRequestObject struct {
@@ -8641,6 +10397,24 @@ func (response ShowProfile500JSONResponse) VisitShowProfileResponse(w http.Respo
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
+}
+
+type ShowProfile500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response ShowProfile500TexthtmlResponse) VisitShowProfileResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
 }
 
 type UpdateProfileRequestObject struct {
@@ -8689,6 +10463,24 @@ func (response UpdateProfile500JSONResponse) VisitUpdateProfileResponse(w http.R
 	return json.NewEncoder(w).Encode(response)
 }
 
+type UpdateProfile500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response UpdateProfile500TexthtmlResponse) VisitUpdateProfileResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type TokenProfileRequestObject struct {
 }
 
@@ -8723,6 +10515,24 @@ func (response TokenProfile500JSONResponse) VisitTokenProfileResponse(w http.Res
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
+}
+
+type TokenProfile500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response TokenProfile500TexthtmlResponse) VisitTokenProfileResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
 }
 
 type ListProjectsRequestObject struct {
@@ -8760,6 +10570,24 @@ func (response ListProjects500JSONResponse) VisitListProjectsResponse(w http.Res
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
+}
+
+type ListProjects500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response ListProjects500TexthtmlResponse) VisitListProjectsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
 }
 
 type CreateProjectRequestObject struct {
@@ -8808,8 +10636,26 @@ func (response CreateProject500JSONResponse) VisitCreateProjectResponse(w http.R
 	return json.NewEncoder(w).Encode(response)
 }
 
+type CreateProject500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response CreateProject500TexthtmlResponse) VisitCreateProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type DeleteProjectRequestObject struct {
-	ProjectId ProjectParam `json:"project_id"`
+	ProjectID ProjectID `json:"project_id"`
 }
 
 type DeleteProjectResponseObject interface {
@@ -8852,6 +10698,22 @@ func (response DeleteProject404JSONResponse) VisitDeleteProjectResponse(w http.R
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteProject404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response DeleteProject404TexthtmlResponse) VisitDeleteProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type DeleteProject500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -8863,8 +10725,26 @@ func (response DeleteProject500JSONResponse) VisitDeleteProjectResponse(w http.R
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteProject500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response DeleteProject500TexthtmlResponse) VisitDeleteProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ShowProjectRequestObject struct {
-	ProjectId ProjectParam `json:"project_id"`
+	ProjectID ProjectID `json:"project_id"`
 }
 
 type ShowProjectResponseObject interface {
@@ -8898,6 +10778,22 @@ func (response ShowProject404JSONResponse) VisitShowProjectResponse(w http.Respo
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ShowProject404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response ShowProject404TexthtmlResponse) VisitShowProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ShowProject500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -8909,8 +10805,26 @@ func (response ShowProject500JSONResponse) VisitShowProjectResponse(w http.Respo
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ShowProject500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response ShowProject500TexthtmlResponse) VisitShowProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type UpdateProjectRequestObject struct {
-	ProjectId ProjectParam `json:"project_id"`
+	ProjectID ProjectID `json:"project_id"`
 	Body      *UpdateProjectJSONRequestBody
 }
 
@@ -8945,6 +10859,22 @@ func (response UpdateProject404JSONResponse) VisitUpdateProjectResponse(w http.R
 	return json.NewEncoder(w).Encode(response)
 }
 
+type UpdateProject404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response UpdateProject404TexthtmlResponse) VisitUpdateProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type UpdateProject422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response UpdateProject422JSONResponse) VisitUpdateProjectResponse(w http.ResponseWriter) error {
@@ -8965,8 +10895,26 @@ func (response UpdateProject500JSONResponse) VisitUpdateProjectResponse(w http.R
 	return json.NewEncoder(w).Encode(response)
 }
 
+type UpdateProject500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response UpdateProject500TexthtmlResponse) VisitUpdateProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ListProjectCredentialsRequestObject struct {
-	ProjectId ProjectParam `json:"project_id"`
+	ProjectID ProjectID `json:"project_id"`
 	Params    ListProjectCredentialsParams
 }
 
@@ -9003,6 +10951,22 @@ func (response ListProjectCredentials404JSONResponse) VisitListProjectCredential
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ListProjectCredentials404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response ListProjectCredentials404TexthtmlResponse) VisitListProjectCredentialsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ListProjectCredentials500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -9014,8 +10978,26 @@ func (response ListProjectCredentials500JSONResponse) VisitListProjectCredential
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ListProjectCredentials500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response ListProjectCredentials500TexthtmlResponse) VisitListProjectCredentialsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type CreateProjectCredentialRequestObject struct {
-	ProjectId ProjectParam `json:"project_id"`
+	ProjectID ProjectID `json:"project_id"`
 	Body      *CreateProjectCredentialJSONRequestBody
 }
 
@@ -9052,6 +11034,22 @@ func (response CreateProjectCredential404JSONResponse) VisitCreateProjectCredent
 	return json.NewEncoder(w).Encode(response)
 }
 
+type CreateProjectCredential404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response CreateProjectCredential404TexthtmlResponse) VisitCreateProjectCredentialResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type CreateProjectCredential422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response CreateProjectCredential422JSONResponse) VisitCreateProjectCredentialResponse(w http.ResponseWriter) error {
@@ -9072,9 +11070,27 @@ func (response CreateProjectCredential500JSONResponse) VisitCreateProjectCredent
 	return json.NewEncoder(w).Encode(response)
 }
 
+type CreateProjectCredential500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response CreateProjectCredential500TexthtmlResponse) VisitCreateProjectCredentialResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type DeleteProjectCredentialRequestObject struct {
-	ProjectId    ProjectParam    `json:"project_id"`
-	CredentialId CredentialParam `json:"credential_id"`
+	ProjectID    ProjectID    `json:"project_id"`
+	CredentialID CredentialID `json:"credential_id"`
 }
 
 type DeleteProjectCredentialResponseObject interface {
@@ -9117,6 +11133,22 @@ func (response DeleteProjectCredential404JSONResponse) VisitDeleteProjectCredent
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteProjectCredential404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response DeleteProjectCredential404TexthtmlResponse) VisitDeleteProjectCredentialResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type DeleteProjectCredential500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -9128,9 +11160,27 @@ func (response DeleteProjectCredential500JSONResponse) VisitDeleteProjectCredent
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteProjectCredential500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response DeleteProjectCredential500TexthtmlResponse) VisitDeleteProjectCredentialResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ShowProjectCredentialRequestObject struct {
-	ProjectId    ProjectParam    `json:"project_id"`
-	CredentialId CredentialParam `json:"credential_id"`
+	ProjectID    ProjectID    `json:"project_id"`
+	CredentialID CredentialID `json:"credential_id"`
 }
 
 type ShowProjectCredentialResponseObject interface {
@@ -9166,6 +11216,22 @@ func (response ShowProjectCredential404JSONResponse) VisitShowProjectCredentialR
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ShowProjectCredential404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response ShowProjectCredential404TexthtmlResponse) VisitShowProjectCredentialResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ShowProjectCredential500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -9177,9 +11243,27 @@ func (response ShowProjectCredential500JSONResponse) VisitShowProjectCredentialR
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ShowProjectCredential500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response ShowProjectCredential500TexthtmlResponse) VisitShowProjectCredentialResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type UpdateProjectCredentialRequestObject struct {
-	ProjectId    ProjectParam    `json:"project_id"`
-	CredentialId CredentialParam `json:"credential_id"`
+	ProjectID    ProjectID    `json:"project_id"`
+	CredentialID CredentialID `json:"credential_id"`
 	Body         *UpdateProjectCredentialJSONRequestBody
 }
 
@@ -9216,6 +11300,22 @@ func (response UpdateProjectCredential404JSONResponse) VisitUpdateProjectCredent
 	return json.NewEncoder(w).Encode(response)
 }
 
+type UpdateProjectCredential404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response UpdateProjectCredential404TexthtmlResponse) VisitUpdateProjectCredentialResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type UpdateProjectCredential422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response UpdateProjectCredential422JSONResponse) VisitUpdateProjectCredentialResponse(w http.ResponseWriter) error {
@@ -9236,8 +11336,26 @@ func (response UpdateProjectCredential500JSONResponse) VisitUpdateProjectCredent
 	return json.NewEncoder(w).Encode(response)
 }
 
+type UpdateProjectCredential500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response UpdateProjectCredential500TexthtmlResponse) VisitUpdateProjectCredentialResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ListProjectEnvironmentsRequestObject struct {
-	ProjectId ProjectParam `json:"project_id"`
+	ProjectID ProjectID `json:"project_id"`
 	Params    ListProjectEnvironmentsParams
 }
 
@@ -9274,6 +11392,22 @@ func (response ListProjectEnvironments404JSONResponse) VisitListProjectEnvironme
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ListProjectEnvironments404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response ListProjectEnvironments404TexthtmlResponse) VisitListProjectEnvironmentsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ListProjectEnvironments500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -9285,8 +11419,26 @@ func (response ListProjectEnvironments500JSONResponse) VisitListProjectEnvironme
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ListProjectEnvironments500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response ListProjectEnvironments500TexthtmlResponse) VisitListProjectEnvironmentsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type CreateProjectEnvironmentRequestObject struct {
-	ProjectId ProjectParam `json:"project_id"`
+	ProjectID ProjectID `json:"project_id"`
 	Body      *CreateProjectEnvironmentJSONRequestBody
 }
 
@@ -9323,6 +11475,22 @@ func (response CreateProjectEnvironment404JSONResponse) VisitCreateProjectEnviro
 	return json.NewEncoder(w).Encode(response)
 }
 
+type CreateProjectEnvironment404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response CreateProjectEnvironment404TexthtmlResponse) VisitCreateProjectEnvironmentResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type CreateProjectEnvironment422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response CreateProjectEnvironment422JSONResponse) VisitCreateProjectEnvironmentResponse(w http.ResponseWriter) error {
@@ -9343,9 +11511,27 @@ func (response CreateProjectEnvironment500JSONResponse) VisitCreateProjectEnviro
 	return json.NewEncoder(w).Encode(response)
 }
 
+type CreateProjectEnvironment500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response CreateProjectEnvironment500TexthtmlResponse) VisitCreateProjectEnvironmentResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type DeleteProjectEnvironmentRequestObject struct {
-	ProjectId     ProjectParam     `json:"project_id"`
-	EnvironmentId EnvironmentParam `json:"environment_id"`
+	ProjectID     ProjectID     `json:"project_id"`
+	EnvironmentID EnvironmentID `json:"environment_id"`
 }
 
 type DeleteProjectEnvironmentResponseObject interface {
@@ -9388,6 +11574,22 @@ func (response DeleteProjectEnvironment404JSONResponse) VisitDeleteProjectEnviro
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteProjectEnvironment404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response DeleteProjectEnvironment404TexthtmlResponse) VisitDeleteProjectEnvironmentResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type DeleteProjectEnvironment500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -9399,9 +11601,27 @@ func (response DeleteProjectEnvironment500JSONResponse) VisitDeleteProjectEnviro
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteProjectEnvironment500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response DeleteProjectEnvironment500TexthtmlResponse) VisitDeleteProjectEnvironmentResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ShowProjectEnvironmentRequestObject struct {
-	ProjectId     ProjectParam     `json:"project_id"`
-	EnvironmentId EnvironmentParam `json:"environment_id"`
+	ProjectID     ProjectID     `json:"project_id"`
+	EnvironmentID EnvironmentID `json:"environment_id"`
 }
 
 type ShowProjectEnvironmentResponseObject interface {
@@ -9437,6 +11657,22 @@ func (response ShowProjectEnvironment404JSONResponse) VisitShowProjectEnvironmen
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ShowProjectEnvironment404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response ShowProjectEnvironment404TexthtmlResponse) VisitShowProjectEnvironmentResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ShowProjectEnvironment500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -9448,9 +11684,27 @@ func (response ShowProjectEnvironment500JSONResponse) VisitShowProjectEnvironmen
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ShowProjectEnvironment500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response ShowProjectEnvironment500TexthtmlResponse) VisitShowProjectEnvironmentResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type UpdateProjectEnvironmentRequestObject struct {
-	ProjectId     ProjectParam     `json:"project_id"`
-	EnvironmentId EnvironmentParam `json:"environment_id"`
+	ProjectID     ProjectID     `json:"project_id"`
+	EnvironmentID EnvironmentID `json:"environment_id"`
 	Body          *UpdateProjectEnvironmentJSONRequestBody
 }
 
@@ -9487,6 +11741,22 @@ func (response UpdateProjectEnvironment404JSONResponse) VisitUpdateProjectEnviro
 	return json.NewEncoder(w).Encode(response)
 }
 
+type UpdateProjectEnvironment404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response UpdateProjectEnvironment404TexthtmlResponse) VisitUpdateProjectEnvironmentResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type UpdateProjectEnvironment422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response UpdateProjectEnvironment422JSONResponse) VisitUpdateProjectEnvironmentResponse(w http.ResponseWriter) error {
@@ -9507,9 +11777,27 @@ func (response UpdateProjectEnvironment500JSONResponse) VisitUpdateProjectEnviro
 	return json.NewEncoder(w).Encode(response)
 }
 
+type UpdateProjectEnvironment500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response UpdateProjectEnvironment500TexthtmlResponse) VisitUpdateProjectEnvironmentResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type CreateProjectEnvironmentSecretRequestObject struct {
-	ProjectId     ProjectParam     `json:"project_id"`
-	EnvironmentId EnvironmentParam `json:"environment_id"`
+	ProjectID     ProjectID     `json:"project_id"`
+	EnvironmentID EnvironmentID `json:"environment_id"`
 	Body          *CreateProjectEnvironmentSecretJSONRequestBody
 }
 
@@ -9546,6 +11834,22 @@ func (response CreateProjectEnvironmentSecret404JSONResponse) VisitCreateProject
 	return json.NewEncoder(w).Encode(response)
 }
 
+type CreateProjectEnvironmentSecret404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response CreateProjectEnvironmentSecret404TexthtmlResponse) VisitCreateProjectEnvironmentSecretResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type CreateProjectEnvironmentSecret422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response CreateProjectEnvironmentSecret422JSONResponse) VisitCreateProjectEnvironmentSecretResponse(w http.ResponseWriter) error {
@@ -9566,10 +11870,28 @@ func (response CreateProjectEnvironmentSecret500JSONResponse) VisitCreateProject
 	return json.NewEncoder(w).Encode(response)
 }
 
+type CreateProjectEnvironmentSecret500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response CreateProjectEnvironmentSecret500TexthtmlResponse) VisitCreateProjectEnvironmentSecretResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type DeleteProjectEnvironmentSecretRequestObject struct {
-	ProjectId     ProjectParam     `json:"project_id"`
-	EnvironmentId EnvironmentParam `json:"environment_id"`
-	SecretId      SecretParam      `json:"secret_id"`
+	ProjectID     ProjectID     `json:"project_id"`
+	EnvironmentID EnvironmentID `json:"environment_id"`
+	SecretID      SecretID      `json:"secret_id"`
 }
 
 type DeleteProjectEnvironmentSecretResponseObject interface {
@@ -9612,6 +11934,22 @@ func (response DeleteProjectEnvironmentSecret404JSONResponse) VisitDeleteProject
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteProjectEnvironmentSecret404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response DeleteProjectEnvironmentSecret404TexthtmlResponse) VisitDeleteProjectEnvironmentSecretResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type DeleteProjectEnvironmentSecret500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -9623,10 +11961,28 @@ func (response DeleteProjectEnvironmentSecret500JSONResponse) VisitDeleteProject
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteProjectEnvironmentSecret500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response DeleteProjectEnvironmentSecret500TexthtmlResponse) VisitDeleteProjectEnvironmentSecretResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type UpdateProjectEnvironmentSecretRequestObject struct {
-	ProjectId     ProjectParam     `json:"project_id"`
-	EnvironmentId EnvironmentParam `json:"environment_id"`
-	SecretId      SecretParam      `json:"secret_id"`
+	ProjectID     ProjectID     `json:"project_id"`
+	EnvironmentID EnvironmentID `json:"environment_id"`
+	SecretID      SecretID      `json:"secret_id"`
 	Body          *UpdateProjectEnvironmentSecretJSONRequestBody
 }
 
@@ -9663,6 +12019,22 @@ func (response UpdateProjectEnvironmentSecret404JSONResponse) VisitUpdateProject
 	return json.NewEncoder(w).Encode(response)
 }
 
+type UpdateProjectEnvironmentSecret404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response UpdateProjectEnvironmentSecret404TexthtmlResponse) VisitUpdateProjectEnvironmentSecretResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type UpdateProjectEnvironmentSecret422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response UpdateProjectEnvironmentSecret422JSONResponse) VisitUpdateProjectEnvironmentSecretResponse(w http.ResponseWriter) error {
@@ -9683,9 +12055,27 @@ func (response UpdateProjectEnvironmentSecret500JSONResponse) VisitUpdateProject
 	return json.NewEncoder(w).Encode(response)
 }
 
+type UpdateProjectEnvironmentSecret500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response UpdateProjectEnvironmentSecret500TexthtmlResponse) VisitUpdateProjectEnvironmentSecretResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type CreateProjectEnvironmentValueRequestObject struct {
-	ProjectId     ProjectParam     `json:"project_id"`
-	EnvironmentId EnvironmentParam `json:"environment_id"`
+	ProjectID     ProjectID     `json:"project_id"`
+	EnvironmentID EnvironmentID `json:"environment_id"`
 	Body          *CreateProjectEnvironmentValueJSONRequestBody
 }
 
@@ -9722,6 +12112,22 @@ func (response CreateProjectEnvironmentValue404JSONResponse) VisitCreateProjectE
 	return json.NewEncoder(w).Encode(response)
 }
 
+type CreateProjectEnvironmentValue404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response CreateProjectEnvironmentValue404TexthtmlResponse) VisitCreateProjectEnvironmentValueResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type CreateProjectEnvironmentValue422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response CreateProjectEnvironmentValue422JSONResponse) VisitCreateProjectEnvironmentValueResponse(w http.ResponseWriter) error {
@@ -9742,10 +12148,28 @@ func (response CreateProjectEnvironmentValue500JSONResponse) VisitCreateProjectE
 	return json.NewEncoder(w).Encode(response)
 }
 
+type CreateProjectEnvironmentValue500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response CreateProjectEnvironmentValue500TexthtmlResponse) VisitCreateProjectEnvironmentValueResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type DeleteProjectEnvironmentValueRequestObject struct {
-	ProjectId     ProjectParam     `json:"project_id"`
-	EnvironmentId EnvironmentParam `json:"environment_id"`
-	ValueId       ValueParam       `json:"value_id"`
+	ProjectID     ProjectID     `json:"project_id"`
+	EnvironmentID EnvironmentID `json:"environment_id"`
+	ValueID       ValueID       `json:"value_id"`
 }
 
 type DeleteProjectEnvironmentValueResponseObject interface {
@@ -9788,6 +12212,22 @@ func (response DeleteProjectEnvironmentValue404JSONResponse) VisitDeleteProjectE
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteProjectEnvironmentValue404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response DeleteProjectEnvironmentValue404TexthtmlResponse) VisitDeleteProjectEnvironmentValueResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type DeleteProjectEnvironmentValue500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -9799,10 +12239,28 @@ func (response DeleteProjectEnvironmentValue500JSONResponse) VisitDeleteProjectE
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteProjectEnvironmentValue500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response DeleteProjectEnvironmentValue500TexthtmlResponse) VisitDeleteProjectEnvironmentValueResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type UpdateProjectEnvironmentValueRequestObject struct {
-	ProjectId     ProjectParam     `json:"project_id"`
-	EnvironmentId EnvironmentParam `json:"environment_id"`
-	ValueId       ValueParam       `json:"value_id"`
+	ProjectID     ProjectID     `json:"project_id"`
+	EnvironmentID EnvironmentID `json:"environment_id"`
+	ValueID       ValueID       `json:"value_id"`
 	Body          *UpdateProjectEnvironmentValueJSONRequestBody
 }
 
@@ -9839,6 +12297,22 @@ func (response UpdateProjectEnvironmentValue404JSONResponse) VisitUpdateProjectE
 	return json.NewEncoder(w).Encode(response)
 }
 
+type UpdateProjectEnvironmentValue404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response UpdateProjectEnvironmentValue404TexthtmlResponse) VisitUpdateProjectEnvironmentValueResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type UpdateProjectEnvironmentValue422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response UpdateProjectEnvironmentValue422JSONResponse) VisitUpdateProjectEnvironmentValueResponse(w http.ResponseWriter) error {
@@ -9859,8 +12333,109 @@ func (response UpdateProjectEnvironmentValue500JSONResponse) VisitUpdateProjectE
 	return json.NewEncoder(w).Encode(response)
 }
 
+type UpdateProjectEnvironmentValue500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response UpdateProjectEnvironmentValue500TexthtmlResponse) VisitUpdateProjectEnvironmentValueResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type ListProjectEventsRequestObject struct {
+	ProjectID ProjectID `json:"project_id"`
+	Params    ListProjectEventsParams
+}
+
+type ListProjectEventsResponseObject interface {
+	VisitListProjectEventsResponse(w http.ResponseWriter) error
+}
+
+type ListProjectEvents200JSONResponse struct {
+	ProjectEventsResponseJSONResponse
+}
+
+func (response ListProjectEvents200JSONResponse) VisitListProjectEventsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListProjectEvents403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+
+func (response ListProjectEvents403JSONResponse) VisitListProjectEventsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListProjectEvents404JSONResponse struct{ NotFoundErrorJSONResponse }
+
+func (response ListProjectEvents404JSONResponse) VisitListProjectEventsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListProjectEvents404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response ListProjectEvents404TexthtmlResponse) VisitListProjectEventsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type ListProjectEvents500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response ListProjectEvents500JSONResponse) VisitListProjectEventsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListProjectEvents500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response ListProjectEvents500TexthtmlResponse) VisitListProjectEventsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ListProjectExecutionsRequestObject struct {
-	ProjectId ProjectParam `json:"project_id"`
+	ProjectID ProjectID `json:"project_id"`
 	Params    ListProjectExecutionsParams
 }
 
@@ -9897,6 +12472,22 @@ func (response ListProjectExecutions404JSONResponse) VisitListProjectExecutionsR
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ListProjectExecutions404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response ListProjectExecutions404TexthtmlResponse) VisitListProjectExecutionsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ListProjectExecutions500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -9908,8 +12499,26 @@ func (response ListProjectExecutions500JSONResponse) VisitListProjectExecutionsR
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ListProjectExecutions500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response ListProjectExecutions500TexthtmlResponse) VisitListProjectExecutionsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type CreateProjectExecutionRequestObject struct {
-	ProjectId ProjectParam `json:"project_id"`
+	ProjectID ProjectID `json:"project_id"`
 	Body      *CreateProjectExecutionJSONRequestBody
 }
 
@@ -9946,6 +12555,22 @@ func (response CreateProjectExecution404JSONResponse) VisitCreateProjectExecutio
 	return json.NewEncoder(w).Encode(response)
 }
 
+type CreateProjectExecution404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response CreateProjectExecution404TexthtmlResponse) VisitCreateProjectExecutionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type CreateProjectExecution422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response CreateProjectExecution422JSONResponse) VisitCreateProjectExecutionResponse(w http.ResponseWriter) error {
@@ -9966,9 +12591,27 @@ func (response CreateProjectExecution500JSONResponse) VisitCreateProjectExecutio
 	return json.NewEncoder(w).Encode(response)
 }
 
+type CreateProjectExecution500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response CreateProjectExecution500TexthtmlResponse) VisitCreateProjectExecutionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type DeleteProjectExecutionRequestObject struct {
-	ProjectId   ProjectParam   `json:"project_id"`
-	ExecutionId ExecutionParam `json:"execution_id"`
+	ProjectID   ProjectID   `json:"project_id"`
+	ExecutionID ExecutionID `json:"execution_id"`
 }
 
 type DeleteProjectExecutionResponseObject interface {
@@ -10011,6 +12654,22 @@ func (response DeleteProjectExecution404JSONResponse) VisitDeleteProjectExecutio
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteProjectExecution404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response DeleteProjectExecution404TexthtmlResponse) VisitDeleteProjectExecutionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type DeleteProjectExecution500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -10022,9 +12681,27 @@ func (response DeleteProjectExecution500JSONResponse) VisitDeleteProjectExecutio
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteProjectExecution500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response DeleteProjectExecution500TexthtmlResponse) VisitDeleteProjectExecutionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ShowProjectExecutionRequestObject struct {
-	ProjectId   ProjectParam   `json:"project_id"`
-	ExecutionId ExecutionParam `json:"execution_id"`
+	ProjectID   ProjectID   `json:"project_id"`
+	ExecutionID ExecutionID `json:"execution_id"`
 }
 
 type ShowProjectExecutionResponseObject interface {
@@ -10060,6 +12737,22 @@ func (response ShowProjectExecution404JSONResponse) VisitShowProjectExecutionRes
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ShowProjectExecution404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response ShowProjectExecution404TexthtmlResponse) VisitShowProjectExecutionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ShowProjectExecution500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -10071,9 +12764,27 @@ func (response ShowProjectExecution500JSONResponse) VisitShowProjectExecutionRes
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ShowProjectExecution500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response ShowProjectExecution500TexthtmlResponse) VisitShowProjectExecutionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type OutputProjectExecutionRequestObject struct {
-	ProjectId   ProjectParam   `json:"project_id"`
-	ExecutionId ExecutionParam `json:"execution_id"`
+	ProjectID   ProjectID   `json:"project_id"`
+	ExecutionID ExecutionID `json:"execution_id"`
 }
 
 type OutputProjectExecutionResponseObject interface {
@@ -10081,7 +12792,7 @@ type OutputProjectExecutionResponseObject interface {
 }
 
 type OutputProjectExecution200JSONResponse struct {
-	ProjectLoggingResponseJSONResponse
+	ProjectOutputResponseJSONResponse
 }
 
 func (response OutputProjectExecution200JSONResponse) VisitOutputProjectExecutionResponse(w http.ResponseWriter) error {
@@ -10109,6 +12820,22 @@ func (response OutputProjectExecution404JSONResponse) VisitOutputProjectExecutio
 	return json.NewEncoder(w).Encode(response)
 }
 
+type OutputProjectExecution404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response OutputProjectExecution404TexthtmlResponse) VisitOutputProjectExecutionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type OutputProjectExecution500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -10120,9 +12847,27 @@ func (response OutputProjectExecution500JSONResponse) VisitOutputProjectExecutio
 	return json.NewEncoder(w).Encode(response)
 }
 
+type OutputProjectExecution500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response OutputProjectExecution500TexthtmlResponse) VisitOutputProjectExecutionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type PurgeProjectExecutionRequestObject struct {
-	ProjectId   ProjectParam   `json:"project_id"`
-	ExecutionId ExecutionParam `json:"execution_id"`
+	ProjectID   ProjectID   `json:"project_id"`
+	ExecutionID ExecutionID `json:"execution_id"`
 }
 
 type PurgeProjectExecutionResponseObject interface {
@@ -10165,6 +12910,22 @@ func (response PurgeProjectExecution404JSONResponse) VisitPurgeProjectExecutionR
 	return json.NewEncoder(w).Encode(response)
 }
 
+type PurgeProjectExecution404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response PurgeProjectExecution404TexthtmlResponse) VisitPurgeProjectExecutionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type PurgeProjectExecution500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -10176,64 +12937,399 @@ func (response PurgeProjectExecution500JSONResponse) VisitPurgeProjectExecutionR
 	return json.NewEncoder(w).Encode(response)
 }
 
-type StopProjectExecutionRequestObject struct {
-	ProjectId   ProjectParam   `json:"project_id"`
-	ExecutionId ExecutionParam `json:"execution_id"`
+type PurgeProjectExecution500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
 }
 
-type StopProjectExecutionResponseObject interface {
-	VisitStopProjectExecutionResponse(w http.ResponseWriter) error
+func (response PurgeProjectExecution500TexthtmlResponse) VisitPurgeProjectExecutionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
 }
 
-type StopProjectExecution200JSONResponse struct{ SuccessMessageJSONResponse }
+type DeleteProjectFromGroupRequestObject struct {
+	ProjectID ProjectID `json:"project_id"`
+	Body      *DeleteProjectFromGroupJSONRequestBody
+}
 
-func (response StopProjectExecution200JSONResponse) VisitStopProjectExecutionResponse(w http.ResponseWriter) error {
+type DeleteProjectFromGroupResponseObject interface {
+	VisitDeleteProjectFromGroupResponse(w http.ResponseWriter) error
+}
+
+type DeleteProjectFromGroup200JSONResponse struct{ SuccessMessageJSONResponse }
+
+func (response DeleteProjectFromGroup200JSONResponse) VisitDeleteProjectFromGroupResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type StopProjectExecution400JSONResponse struct{ ActionFailedErrorJSONResponse }
+type DeleteProjectFromGroup403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
 
-func (response StopProjectExecution400JSONResponse) VisitStopProjectExecutionResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(400)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type StopProjectExecution403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
-
-func (response StopProjectExecution403JSONResponse) VisitStopProjectExecutionResponse(w http.ResponseWriter) error {
+func (response DeleteProjectFromGroup403JSONResponse) VisitDeleteProjectFromGroupResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(403)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type StopProjectExecution404JSONResponse struct{ NotFoundErrorJSONResponse }
+type DeleteProjectFromGroup404JSONResponse struct{ NotFoundErrorJSONResponse }
 
-func (response StopProjectExecution404JSONResponse) VisitStopProjectExecutionResponse(w http.ResponseWriter) error {
+func (response DeleteProjectFromGroup404JSONResponse) VisitDeleteProjectFromGroupResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(404)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type StopProjectExecution500JSONResponse struct {
+type DeleteProjectFromGroup404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response DeleteProjectFromGroup404TexthtmlResponse) VisitDeleteProjectFromGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type DeleteProjectFromGroup412JSONResponse struct{ NotAttachedErrorJSONResponse }
+
+func (response DeleteProjectFromGroup412JSONResponse) VisitDeleteProjectFromGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(412)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteProjectFromGroup500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
 
-func (response StopProjectExecution500JSONResponse) VisitStopProjectExecutionResponse(w http.ResponseWriter) error {
+func (response DeleteProjectFromGroup500JSONResponse) VisitDeleteProjectFromGroupResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteProjectFromGroup500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response DeleteProjectFromGroup500TexthtmlResponse) VisitDeleteProjectFromGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type ListProjectGroupsRequestObject struct {
+	ProjectID ProjectID `json:"project_id"`
+	Params    ListProjectGroupsParams
+}
+
+type ListProjectGroupsResponseObject interface {
+	VisitListProjectGroupsResponse(w http.ResponseWriter) error
+}
+
+type ListProjectGroups200JSONResponse struct {
+	ProjectGroupsResponseJSONResponse
+}
+
+func (response ListProjectGroups200JSONResponse) VisitListProjectGroupsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListProjectGroups403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+
+func (response ListProjectGroups403JSONResponse) VisitListProjectGroupsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListProjectGroups404JSONResponse struct{ NotFoundErrorJSONResponse }
+
+func (response ListProjectGroups404JSONResponse) VisitListProjectGroupsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListProjectGroups404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response ListProjectGroups404TexthtmlResponse) VisitListProjectGroupsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type ListProjectGroups500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response ListProjectGroups500JSONResponse) VisitListProjectGroupsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListProjectGroups500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response ListProjectGroups500TexthtmlResponse) VisitListProjectGroupsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type AttachProjectToGroupRequestObject struct {
+	ProjectID ProjectID `json:"project_id"`
+	Body      *AttachProjectToGroupJSONRequestBody
+}
+
+type AttachProjectToGroupResponseObject interface {
+	VisitAttachProjectToGroupResponse(w http.ResponseWriter) error
+}
+
+type AttachProjectToGroup200JSONResponse struct{ SuccessMessageJSONResponse }
+
+func (response AttachProjectToGroup200JSONResponse) VisitAttachProjectToGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AttachProjectToGroup403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+
+func (response AttachProjectToGroup403JSONResponse) VisitAttachProjectToGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AttachProjectToGroup404JSONResponse struct{ NotFoundErrorJSONResponse }
+
+func (response AttachProjectToGroup404JSONResponse) VisitAttachProjectToGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AttachProjectToGroup404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response AttachProjectToGroup404TexthtmlResponse) VisitAttachProjectToGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type AttachProjectToGroup412JSONResponse struct {
+	AlreadyAttachedErrorJSONResponse
+}
+
+func (response AttachProjectToGroup412JSONResponse) VisitAttachProjectToGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(412)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AttachProjectToGroup422JSONResponse struct{ ValidationErrorJSONResponse }
+
+func (response AttachProjectToGroup422JSONResponse) VisitAttachProjectToGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(422)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AttachProjectToGroup500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response AttachProjectToGroup500JSONResponse) VisitAttachProjectToGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AttachProjectToGroup500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response AttachProjectToGroup500TexthtmlResponse) VisitAttachProjectToGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type PermitProjectGroupRequestObject struct {
+	ProjectID ProjectID `json:"project_id"`
+	Body      *PermitProjectGroupJSONRequestBody
+}
+
+type PermitProjectGroupResponseObject interface {
+	VisitPermitProjectGroupResponse(w http.ResponseWriter) error
+}
+
+type PermitProjectGroup200JSONResponse struct{ SuccessMessageJSONResponse }
+
+func (response PermitProjectGroup200JSONResponse) VisitPermitProjectGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PermitProjectGroup403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+
+func (response PermitProjectGroup403JSONResponse) VisitPermitProjectGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PermitProjectGroup404JSONResponse struct{ NotFoundErrorJSONResponse }
+
+func (response PermitProjectGroup404JSONResponse) VisitPermitProjectGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PermitProjectGroup404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response PermitProjectGroup404TexthtmlResponse) VisitPermitProjectGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type PermitProjectGroup412JSONResponse struct{ NotAttachedErrorJSONResponse }
+
+func (response PermitProjectGroup412JSONResponse) VisitPermitProjectGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(412)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PermitProjectGroup422JSONResponse struct{ ValidationErrorJSONResponse }
+
+func (response PermitProjectGroup422JSONResponse) VisitPermitProjectGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(422)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PermitProjectGroup500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response PermitProjectGroup500JSONResponse) VisitPermitProjectGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PermitProjectGroup500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response PermitProjectGroup500TexthtmlResponse) VisitPermitProjectGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ListProjectInventoriesRequestObject struct {
-	ProjectId ProjectParam `json:"project_id"`
+	ProjectID ProjectID `json:"project_id"`
 	Params    ListProjectInventoriesParams
 }
 
@@ -10270,6 +13366,22 @@ func (response ListProjectInventories404JSONResponse) VisitListProjectInventorie
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ListProjectInventories404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response ListProjectInventories404TexthtmlResponse) VisitListProjectInventoriesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ListProjectInventories500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -10281,8 +13393,26 @@ func (response ListProjectInventories500JSONResponse) VisitListProjectInventorie
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ListProjectInventories500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response ListProjectInventories500TexthtmlResponse) VisitListProjectInventoriesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type CreateProjectInventoryRequestObject struct {
-	ProjectId ProjectParam `json:"project_id"`
+	ProjectID ProjectID `json:"project_id"`
 	Body      *CreateProjectInventoryJSONRequestBody
 }
 
@@ -10319,6 +13449,22 @@ func (response CreateProjectInventory404JSONResponse) VisitCreateProjectInventor
 	return json.NewEncoder(w).Encode(response)
 }
 
+type CreateProjectInventory404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response CreateProjectInventory404TexthtmlResponse) VisitCreateProjectInventoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type CreateProjectInventory422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response CreateProjectInventory422JSONResponse) VisitCreateProjectInventoryResponse(w http.ResponseWriter) error {
@@ -10339,9 +13485,27 @@ func (response CreateProjectInventory500JSONResponse) VisitCreateProjectInventor
 	return json.NewEncoder(w).Encode(response)
 }
 
+type CreateProjectInventory500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response CreateProjectInventory500TexthtmlResponse) VisitCreateProjectInventoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type DeleteProjectInventoryRequestObject struct {
-	ProjectId   ProjectParam   `json:"project_id"`
-	InventoryId InventoryParam `json:"inventory_id"`
+	ProjectID   ProjectID   `json:"project_id"`
+	InventoryID InventoryID `json:"inventory_id"`
 }
 
 type DeleteProjectInventoryResponseObject interface {
@@ -10384,6 +13548,22 @@ func (response DeleteProjectInventory404JSONResponse) VisitDeleteProjectInventor
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteProjectInventory404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response DeleteProjectInventory404TexthtmlResponse) VisitDeleteProjectInventoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type DeleteProjectInventory500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -10395,9 +13575,27 @@ func (response DeleteProjectInventory500JSONResponse) VisitDeleteProjectInventor
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteProjectInventory500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response DeleteProjectInventory500TexthtmlResponse) VisitDeleteProjectInventoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ShowProjectInventoryRequestObject struct {
-	ProjectId   ProjectParam   `json:"project_id"`
-	InventoryId InventoryParam `json:"inventory_id"`
+	ProjectID   ProjectID   `json:"project_id"`
+	InventoryID InventoryID `json:"inventory_id"`
 }
 
 type ShowProjectInventoryResponseObject interface {
@@ -10433,6 +13631,22 @@ func (response ShowProjectInventory404JSONResponse) VisitShowProjectInventoryRes
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ShowProjectInventory404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response ShowProjectInventory404TexthtmlResponse) VisitShowProjectInventoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ShowProjectInventory500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -10444,9 +13658,27 @@ func (response ShowProjectInventory500JSONResponse) VisitShowProjectInventoryRes
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ShowProjectInventory500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response ShowProjectInventory500TexthtmlResponse) VisitShowProjectInventoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type UpdateProjectInventoryRequestObject struct {
-	ProjectId   ProjectParam   `json:"project_id"`
-	InventoryId InventoryParam `json:"inventory_id"`
+	ProjectID   ProjectID   `json:"project_id"`
+	InventoryID InventoryID `json:"inventory_id"`
 	Body        *UpdateProjectInventoryJSONRequestBody
 }
 
@@ -10483,6 +13715,22 @@ func (response UpdateProjectInventory404JSONResponse) VisitUpdateProjectInventor
 	return json.NewEncoder(w).Encode(response)
 }
 
+type UpdateProjectInventory404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response UpdateProjectInventory404TexthtmlResponse) VisitUpdateProjectInventoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type UpdateProjectInventory422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response UpdateProjectInventory422JSONResponse) VisitUpdateProjectInventoryResponse(w http.ResponseWriter) error {
@@ -10503,8 +13751,26 @@ func (response UpdateProjectInventory500JSONResponse) VisitUpdateProjectInventor
 	return json.NewEncoder(w).Encode(response)
 }
 
+type UpdateProjectInventory500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response UpdateProjectInventory500TexthtmlResponse) VisitUpdateProjectInventoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ListProjectRepositoriesRequestObject struct {
-	ProjectId ProjectParam `json:"project_id"`
+	ProjectID ProjectID `json:"project_id"`
 	Params    ListProjectRepositoriesParams
 }
 
@@ -10541,6 +13807,22 @@ func (response ListProjectRepositories404JSONResponse) VisitListProjectRepositor
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ListProjectRepositories404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response ListProjectRepositories404TexthtmlResponse) VisitListProjectRepositoriesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ListProjectRepositories500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -10552,8 +13834,26 @@ func (response ListProjectRepositories500JSONResponse) VisitListProjectRepositor
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ListProjectRepositories500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response ListProjectRepositories500TexthtmlResponse) VisitListProjectRepositoriesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type CreateProjectRepositoryRequestObject struct {
-	ProjectId ProjectParam `json:"project_id"`
+	ProjectID ProjectID `json:"project_id"`
 	Body      *CreateProjectRepositoryJSONRequestBody
 }
 
@@ -10590,6 +13890,22 @@ func (response CreateProjectRepository404JSONResponse) VisitCreateProjectReposit
 	return json.NewEncoder(w).Encode(response)
 }
 
+type CreateProjectRepository404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response CreateProjectRepository404TexthtmlResponse) VisitCreateProjectRepositoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type CreateProjectRepository422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response CreateProjectRepository422JSONResponse) VisitCreateProjectRepositoryResponse(w http.ResponseWriter) error {
@@ -10610,9 +13926,27 @@ func (response CreateProjectRepository500JSONResponse) VisitCreateProjectReposit
 	return json.NewEncoder(w).Encode(response)
 }
 
+type CreateProjectRepository500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response CreateProjectRepository500TexthtmlResponse) VisitCreateProjectRepositoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type DeleteProjectRepositoryRequestObject struct {
-	ProjectId    ProjectParam    `json:"project_id"`
-	RepositoryId RepositoryParam `json:"repository_id"`
+	ProjectID    ProjectID    `json:"project_id"`
+	RepositoryID RepositoryID `json:"repository_id"`
 }
 
 type DeleteProjectRepositoryResponseObject interface {
@@ -10655,6 +13989,22 @@ func (response DeleteProjectRepository404JSONResponse) VisitDeleteProjectReposit
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteProjectRepository404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response DeleteProjectRepository404TexthtmlResponse) VisitDeleteProjectRepositoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type DeleteProjectRepository500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -10666,9 +14016,27 @@ func (response DeleteProjectRepository500JSONResponse) VisitDeleteProjectReposit
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteProjectRepository500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response DeleteProjectRepository500TexthtmlResponse) VisitDeleteProjectRepositoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ShowProjectRepositoryRequestObject struct {
-	ProjectId    ProjectParam    `json:"project_id"`
-	RepositoryId RepositoryParam `json:"repository_id"`
+	ProjectID    ProjectID    `json:"project_id"`
+	RepositoryID RepositoryID `json:"repository_id"`
 }
 
 type ShowProjectRepositoryResponseObject interface {
@@ -10704,6 +14072,22 @@ func (response ShowProjectRepository404JSONResponse) VisitShowProjectRepositoryR
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ShowProjectRepository404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response ShowProjectRepository404TexthtmlResponse) VisitShowProjectRepositoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ShowProjectRepository500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -10715,9 +14099,27 @@ func (response ShowProjectRepository500JSONResponse) VisitShowProjectRepositoryR
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ShowProjectRepository500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response ShowProjectRepository500TexthtmlResponse) VisitShowProjectRepositoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type UpdateProjectRepositoryRequestObject struct {
-	ProjectId    ProjectParam    `json:"project_id"`
-	RepositoryId RepositoryParam `json:"repository_id"`
+	ProjectID    ProjectID    `json:"project_id"`
+	RepositoryID RepositoryID `json:"repository_id"`
 	Body         *UpdateProjectRepositoryJSONRequestBody
 }
 
@@ -10754,6 +14156,22 @@ func (response UpdateProjectRepository404JSONResponse) VisitUpdateProjectReposit
 	return json.NewEncoder(w).Encode(response)
 }
 
+type UpdateProjectRepository404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response UpdateProjectRepository404TexthtmlResponse) VisitUpdateProjectRepositoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type UpdateProjectRepository422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response UpdateProjectRepository422JSONResponse) VisitUpdateProjectRepositoryResponse(w http.ResponseWriter) error {
@@ -10774,8 +14192,467 @@ func (response UpdateProjectRepository500JSONResponse) VisitUpdateProjectReposit
 	return json.NewEncoder(w).Encode(response)
 }
 
+type UpdateProjectRepository500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response UpdateProjectRepository500TexthtmlResponse) VisitUpdateProjectRepositoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type ListProjectRunnersRequestObject struct {
+	ProjectID ProjectID `json:"project_id"`
+	Params    ListProjectRunnersParams
+}
+
+type ListProjectRunnersResponseObject interface {
+	VisitListProjectRunnersResponse(w http.ResponseWriter) error
+}
+
+type ListProjectRunners200JSONResponse struct {
+	ProjectRunnersResponseJSONResponse
+}
+
+func (response ListProjectRunners200JSONResponse) VisitListProjectRunnersResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListProjectRunners403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+
+func (response ListProjectRunners403JSONResponse) VisitListProjectRunnersResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListProjectRunners404JSONResponse struct{ NotFoundErrorJSONResponse }
+
+func (response ListProjectRunners404JSONResponse) VisitListProjectRunnersResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListProjectRunners404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response ListProjectRunners404TexthtmlResponse) VisitListProjectRunnersResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type ListProjectRunners500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response ListProjectRunners500JSONResponse) VisitListProjectRunnersResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListProjectRunners500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response ListProjectRunners500TexthtmlResponse) VisitListProjectRunnersResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type CreateProjectRunnerRequestObject struct {
+	ProjectID ProjectID `json:"project_id"`
+	Body      *CreateProjectRunnerJSONRequestBody
+}
+
+type CreateProjectRunnerResponseObject interface {
+	VisitCreateProjectRunnerResponse(w http.ResponseWriter) error
+}
+
+type CreateProjectRunner200JSONResponse struct {
+	ProjectRunnerResponseJSONResponse
+}
+
+func (response CreateProjectRunner200JSONResponse) VisitCreateProjectRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateProjectRunner403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+
+func (response CreateProjectRunner403JSONResponse) VisitCreateProjectRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateProjectRunner404JSONResponse struct{ NotFoundErrorJSONResponse }
+
+func (response CreateProjectRunner404JSONResponse) VisitCreateProjectRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateProjectRunner404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response CreateProjectRunner404TexthtmlResponse) VisitCreateProjectRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type CreateProjectRunner422JSONResponse struct{ ValidationErrorJSONResponse }
+
+func (response CreateProjectRunner422JSONResponse) VisitCreateProjectRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(422)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateProjectRunner500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response CreateProjectRunner500JSONResponse) VisitCreateProjectRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateProjectRunner500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response CreateProjectRunner500TexthtmlResponse) VisitCreateProjectRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type DeleteProjectRunnerRequestObject struct {
+	ProjectID ProjectID `json:"project_id"`
+	RunnerID  RunnerID  `json:"runner_id"`
+}
+
+type DeleteProjectRunnerResponseObject interface {
+	VisitDeleteProjectRunnerResponse(w http.ResponseWriter) error
+}
+
+type DeleteProjectRunner200JSONResponse struct{ SuccessMessageJSONResponse }
+
+func (response DeleteProjectRunner200JSONResponse) VisitDeleteProjectRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteProjectRunner400JSONResponse struct{ ActionFailedErrorJSONResponse }
+
+func (response DeleteProjectRunner400JSONResponse) VisitDeleteProjectRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteProjectRunner403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+
+func (response DeleteProjectRunner403JSONResponse) VisitDeleteProjectRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteProjectRunner404JSONResponse struct{ NotFoundErrorJSONResponse }
+
+func (response DeleteProjectRunner404JSONResponse) VisitDeleteProjectRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteProjectRunner404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response DeleteProjectRunner404TexthtmlResponse) VisitDeleteProjectRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type DeleteProjectRunner500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response DeleteProjectRunner500JSONResponse) VisitDeleteProjectRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteProjectRunner500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response DeleteProjectRunner500TexthtmlResponse) VisitDeleteProjectRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type ShowProjectRunnerRequestObject struct {
+	ProjectID ProjectID `json:"project_id"`
+	RunnerID  RunnerID  `json:"runner_id"`
+}
+
+type ShowProjectRunnerResponseObject interface {
+	VisitShowProjectRunnerResponse(w http.ResponseWriter) error
+}
+
+type ShowProjectRunner200JSONResponse struct {
+	ProjectRunnerResponseJSONResponse
+}
+
+func (response ShowProjectRunner200JSONResponse) VisitShowProjectRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ShowProjectRunner403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+
+func (response ShowProjectRunner403JSONResponse) VisitShowProjectRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ShowProjectRunner404JSONResponse struct{ NotFoundErrorJSONResponse }
+
+func (response ShowProjectRunner404JSONResponse) VisitShowProjectRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ShowProjectRunner404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response ShowProjectRunner404TexthtmlResponse) VisitShowProjectRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type ShowProjectRunner500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response ShowProjectRunner500JSONResponse) VisitShowProjectRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ShowProjectRunner500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response ShowProjectRunner500TexthtmlResponse) VisitShowProjectRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type UpdateProjectRunnerRequestObject struct {
+	ProjectID ProjectID `json:"project_id"`
+	RunnerID  RunnerID  `json:"runner_id"`
+	Body      *UpdateProjectRunnerJSONRequestBody
+}
+
+type UpdateProjectRunnerResponseObject interface {
+	VisitUpdateProjectRunnerResponse(w http.ResponseWriter) error
+}
+
+type UpdateProjectRunner200JSONResponse struct {
+	ProjectRunnerResponseJSONResponse
+}
+
+func (response UpdateProjectRunner200JSONResponse) VisitUpdateProjectRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateProjectRunner403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+
+func (response UpdateProjectRunner403JSONResponse) VisitUpdateProjectRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateProjectRunner404JSONResponse struct{ NotFoundErrorJSONResponse }
+
+func (response UpdateProjectRunner404JSONResponse) VisitUpdateProjectRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateProjectRunner404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response UpdateProjectRunner404TexthtmlResponse) VisitUpdateProjectRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type UpdateProjectRunner422JSONResponse struct{ ValidationErrorJSONResponse }
+
+func (response UpdateProjectRunner422JSONResponse) VisitUpdateProjectRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(422)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateProjectRunner500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response UpdateProjectRunner500JSONResponse) VisitUpdateProjectRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateProjectRunner500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response UpdateProjectRunner500TexthtmlResponse) VisitUpdateProjectRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ListProjectSchedulesRequestObject struct {
-	ProjectId ProjectParam `json:"project_id"`
+	ProjectID ProjectID `json:"project_id"`
 	Params    ListProjectSchedulesParams
 }
 
@@ -10812,6 +14689,22 @@ func (response ListProjectSchedules404JSONResponse) VisitListProjectSchedulesRes
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ListProjectSchedules404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response ListProjectSchedules404TexthtmlResponse) VisitListProjectSchedulesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ListProjectSchedules500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -10823,8 +14716,26 @@ func (response ListProjectSchedules500JSONResponse) VisitListProjectSchedulesRes
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ListProjectSchedules500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response ListProjectSchedules500TexthtmlResponse) VisitListProjectSchedulesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type CreateProjectScheduleRequestObject struct {
-	ProjectId ProjectParam `json:"project_id"`
+	ProjectID ProjectID `json:"project_id"`
 	Body      *CreateProjectScheduleJSONRequestBody
 }
 
@@ -10861,6 +14772,22 @@ func (response CreateProjectSchedule404JSONResponse) VisitCreateProjectScheduleR
 	return json.NewEncoder(w).Encode(response)
 }
 
+type CreateProjectSchedule404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response CreateProjectSchedule404TexthtmlResponse) VisitCreateProjectScheduleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type CreateProjectSchedule422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response CreateProjectSchedule422JSONResponse) VisitCreateProjectScheduleResponse(w http.ResponseWriter) error {
@@ -10881,9 +14808,27 @@ func (response CreateProjectSchedule500JSONResponse) VisitCreateProjectScheduleR
 	return json.NewEncoder(w).Encode(response)
 }
 
+type CreateProjectSchedule500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response CreateProjectSchedule500TexthtmlResponse) VisitCreateProjectScheduleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type DeleteProjectScheduleRequestObject struct {
-	ProjectId  ProjectParam  `json:"project_id"`
-	ScheduleId ScheduleParam `json:"schedule_id"`
+	ProjectID  ProjectID  `json:"project_id"`
+	ScheduleID ScheduleID `json:"schedule_id"`
 }
 
 type DeleteProjectScheduleResponseObject interface {
@@ -10926,6 +14871,22 @@ func (response DeleteProjectSchedule404JSONResponse) VisitDeleteProjectScheduleR
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteProjectSchedule404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response DeleteProjectSchedule404TexthtmlResponse) VisitDeleteProjectScheduleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type DeleteProjectSchedule500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -10937,9 +14898,27 @@ func (response DeleteProjectSchedule500JSONResponse) VisitDeleteProjectScheduleR
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteProjectSchedule500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response DeleteProjectSchedule500TexthtmlResponse) VisitDeleteProjectScheduleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ShowProjectScheduleRequestObject struct {
-	ProjectId  ProjectParam  `json:"project_id"`
-	ScheduleId ScheduleParam `json:"schedule_id"`
+	ProjectID  ProjectID  `json:"project_id"`
+	ScheduleID ScheduleID `json:"schedule_id"`
 }
 
 type ShowProjectScheduleResponseObject interface {
@@ -10975,6 +14954,22 @@ func (response ShowProjectSchedule404JSONResponse) VisitShowProjectScheduleRespo
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ShowProjectSchedule404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response ShowProjectSchedule404TexthtmlResponse) VisitShowProjectScheduleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ShowProjectSchedule500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -10986,9 +14981,27 @@ func (response ShowProjectSchedule500JSONResponse) VisitShowProjectScheduleRespo
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ShowProjectSchedule500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response ShowProjectSchedule500TexthtmlResponse) VisitShowProjectScheduleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type UpdateProjectScheduleRequestObject struct {
-	ProjectId  ProjectParam  `json:"project_id"`
-	ScheduleId ScheduleParam `json:"schedule_id"`
+	ProjectID  ProjectID  `json:"project_id"`
+	ScheduleID ScheduleID `json:"schedule_id"`
 	Body       *UpdateProjectScheduleJSONRequestBody
 }
 
@@ -11025,6 +15038,22 @@ func (response UpdateProjectSchedule404JSONResponse) VisitUpdateProjectScheduleR
 	return json.NewEncoder(w).Encode(response)
 }
 
+type UpdateProjectSchedule404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response UpdateProjectSchedule404TexthtmlResponse) VisitUpdateProjectScheduleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type UpdateProjectSchedule422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response UpdateProjectSchedule422JSONResponse) VisitUpdateProjectScheduleResponse(w http.ResponseWriter) error {
@@ -11045,245 +15074,26 @@ func (response UpdateProjectSchedule500JSONResponse) VisitUpdateProjectScheduleR
 	return json.NewEncoder(w).Encode(response)
 }
 
-type DeleteProjectFromTeamRequestObject struct {
-	ProjectId ProjectParam `json:"project_id"`
-	Body      *DeleteProjectFromTeamJSONRequestBody
+type UpdateProjectSchedule500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
 }
 
-type DeleteProjectFromTeamResponseObject interface {
-	VisitDeleteProjectFromTeamResponse(w http.ResponseWriter) error
-}
-
-type DeleteProjectFromTeam200JSONResponse struct{ SuccessMessageJSONResponse }
-
-func (response DeleteProjectFromTeam200JSONResponse) VisitDeleteProjectFromTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteProjectFromTeam403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
-
-func (response DeleteProjectFromTeam403JSONResponse) VisitDeleteProjectFromTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(403)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteProjectFromTeam404JSONResponse struct{ NotFoundErrorJSONResponse }
-
-func (response DeleteProjectFromTeam404JSONResponse) VisitDeleteProjectFromTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteProjectFromTeam412JSONResponse struct{ NotAttachedErrorJSONResponse }
-
-func (response DeleteProjectFromTeam412JSONResponse) VisitDeleteProjectFromTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(412)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteProjectFromTeam500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response DeleteProjectFromTeam500JSONResponse) VisitDeleteProjectFromTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
+func (response UpdateProjectSchedule500TexthtmlResponse) VisitUpdateProjectScheduleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
 	w.WriteHeader(500)
 
-	return json.NewEncoder(w).Encode(response)
-}
-
-type ListProjectTeamsRequestObject struct {
-	ProjectId ProjectParam `json:"project_id"`
-	Params    ListProjectTeamsParams
-}
-
-type ListProjectTeamsResponseObject interface {
-	VisitListProjectTeamsResponse(w http.ResponseWriter) error
-}
-
-type ListProjectTeams200JSONResponse struct {
-	ProjectTeamsResponseJSONResponse
-}
-
-func (response ListProjectTeams200JSONResponse) VisitListProjectTeamsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type ListProjectTeams403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
-
-func (response ListProjectTeams403JSONResponse) VisitListProjectTeamsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(403)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type ListProjectTeams404JSONResponse struct{ NotFoundErrorJSONResponse }
-
-func (response ListProjectTeams404JSONResponse) VisitListProjectTeamsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type ListProjectTeams500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response ListProjectTeams500JSONResponse) VisitListProjectTeamsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AttachProjectToTeamRequestObject struct {
-	ProjectId ProjectParam `json:"project_id"`
-	Body      *AttachProjectToTeamJSONRequestBody
-}
-
-type AttachProjectToTeamResponseObject interface {
-	VisitAttachProjectToTeamResponse(w http.ResponseWriter) error
-}
-
-type AttachProjectToTeam200JSONResponse struct{ SuccessMessageJSONResponse }
-
-func (response AttachProjectToTeam200JSONResponse) VisitAttachProjectToTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AttachProjectToTeam403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
-
-func (response AttachProjectToTeam403JSONResponse) VisitAttachProjectToTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(403)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AttachProjectToTeam404JSONResponse struct{ NotFoundErrorJSONResponse }
-
-func (response AttachProjectToTeam404JSONResponse) VisitAttachProjectToTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AttachProjectToTeam412JSONResponse struct {
-	AlreadyAttachedErrorJSONResponse
-}
-
-func (response AttachProjectToTeam412JSONResponse) VisitAttachProjectToTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(412)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AttachProjectToTeam422JSONResponse struct{ ValidationErrorJSONResponse }
-
-func (response AttachProjectToTeam422JSONResponse) VisitAttachProjectToTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(422)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AttachProjectToTeam500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response AttachProjectToTeam500JSONResponse) VisitAttachProjectToTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type PermitProjectTeamRequestObject struct {
-	ProjectId ProjectParam `json:"project_id"`
-	Body      *PermitProjectTeamJSONRequestBody
-}
-
-type PermitProjectTeamResponseObject interface {
-	VisitPermitProjectTeamResponse(w http.ResponseWriter) error
-}
-
-type PermitProjectTeam200JSONResponse struct{ SuccessMessageJSONResponse }
-
-func (response PermitProjectTeam200JSONResponse) VisitPermitProjectTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type PermitProjectTeam403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
-
-func (response PermitProjectTeam403JSONResponse) VisitPermitProjectTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(403)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type PermitProjectTeam404JSONResponse struct{ NotFoundErrorJSONResponse }
-
-func (response PermitProjectTeam404JSONResponse) VisitPermitProjectTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type PermitProjectTeam412JSONResponse struct{ NotAttachedErrorJSONResponse }
-
-func (response PermitProjectTeam412JSONResponse) VisitPermitProjectTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(412)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type PermitProjectTeam422JSONResponse struct{ ValidationErrorJSONResponse }
-
-func (response PermitProjectTeam422JSONResponse) VisitPermitProjectTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(422)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type PermitProjectTeam500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response PermitProjectTeam500JSONResponse) VisitPermitProjectTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
 }
 
 type ListProjectTemplatesRequestObject struct {
-	ProjectId ProjectParam `json:"project_id"`
+	ProjectID ProjectID `json:"project_id"`
 	Params    ListProjectTemplatesParams
 }
 
@@ -11320,6 +15130,22 @@ func (response ListProjectTemplates404JSONResponse) VisitListProjectTemplatesRes
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ListProjectTemplates404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response ListProjectTemplates404TexthtmlResponse) VisitListProjectTemplatesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ListProjectTemplates500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -11331,8 +15157,26 @@ func (response ListProjectTemplates500JSONResponse) VisitListProjectTemplatesRes
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ListProjectTemplates500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response ListProjectTemplates500TexthtmlResponse) VisitListProjectTemplatesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type CreateProjectTemplateRequestObject struct {
-	ProjectId ProjectParam `json:"project_id"`
+	ProjectID ProjectID `json:"project_id"`
 	Body      *CreateProjectTemplateJSONRequestBody
 }
 
@@ -11369,6 +15213,22 @@ func (response CreateProjectTemplate404JSONResponse) VisitCreateProjectTemplateR
 	return json.NewEncoder(w).Encode(response)
 }
 
+type CreateProjectTemplate404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response CreateProjectTemplate404TexthtmlResponse) VisitCreateProjectTemplateResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type CreateProjectTemplate422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response CreateProjectTemplate422JSONResponse) VisitCreateProjectTemplateResponse(w http.ResponseWriter) error {
@@ -11389,9 +15249,27 @@ func (response CreateProjectTemplate500JSONResponse) VisitCreateProjectTemplateR
 	return json.NewEncoder(w).Encode(response)
 }
 
+type CreateProjectTemplate500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response CreateProjectTemplate500TexthtmlResponse) VisitCreateProjectTemplateResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type DeleteProjectTemplateRequestObject struct {
-	ProjectId  ProjectParam  `json:"project_id"`
-	TemplateId TemplateParam `json:"template_id"`
+	ProjectID  ProjectID  `json:"project_id"`
+	TemplateID TemplateID `json:"template_id"`
 }
 
 type DeleteProjectTemplateResponseObject interface {
@@ -11434,6 +15312,22 @@ func (response DeleteProjectTemplate404JSONResponse) VisitDeleteProjectTemplateR
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteProjectTemplate404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response DeleteProjectTemplate404TexthtmlResponse) VisitDeleteProjectTemplateResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type DeleteProjectTemplate500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -11445,9 +15339,27 @@ func (response DeleteProjectTemplate500JSONResponse) VisitDeleteProjectTemplateR
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteProjectTemplate500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response DeleteProjectTemplate500TexthtmlResponse) VisitDeleteProjectTemplateResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ShowProjectTemplateRequestObject struct {
-	ProjectId  ProjectParam  `json:"project_id"`
-	TemplateId TemplateParam `json:"template_id"`
+	ProjectID  ProjectID  `json:"project_id"`
+	TemplateID TemplateID `json:"template_id"`
 }
 
 type ShowProjectTemplateResponseObject interface {
@@ -11483,6 +15395,22 @@ func (response ShowProjectTemplate404JSONResponse) VisitShowProjectTemplateRespo
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ShowProjectTemplate404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response ShowProjectTemplate404TexthtmlResponse) VisitShowProjectTemplateResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ShowProjectTemplate500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -11494,9 +15422,27 @@ func (response ShowProjectTemplate500JSONResponse) VisitShowProjectTemplateRespo
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ShowProjectTemplate500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response ShowProjectTemplate500TexthtmlResponse) VisitShowProjectTemplateResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type UpdateProjectTemplateRequestObject struct {
-	ProjectId  ProjectParam  `json:"project_id"`
-	TemplateId TemplateParam `json:"template_id"`
+	ProjectID  ProjectID  `json:"project_id"`
+	TemplateID TemplateID `json:"template_id"`
 	Body       *UpdateProjectTemplateJSONRequestBody
 }
 
@@ -11533,6 +15479,22 @@ func (response UpdateProjectTemplate404JSONResponse) VisitUpdateProjectTemplateR
 	return json.NewEncoder(w).Encode(response)
 }
 
+type UpdateProjectTemplate404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response UpdateProjectTemplate404TexthtmlResponse) VisitUpdateProjectTemplateResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type UpdateProjectTemplate422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response UpdateProjectTemplate422JSONResponse) VisitUpdateProjectTemplateResponse(w http.ResponseWriter) error {
@@ -11553,9 +15515,27 @@ func (response UpdateProjectTemplate500JSONResponse) VisitUpdateProjectTemplateR
 	return json.NewEncoder(w).Encode(response)
 }
 
+type UpdateProjectTemplate500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response UpdateProjectTemplate500TexthtmlResponse) VisitUpdateProjectTemplateResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type CreateProjectTemplateSurveyRequestObject struct {
-	ProjectId  ProjectParam  `json:"project_id"`
-	TemplateId TemplateParam `json:"template_id"`
+	ProjectID  ProjectID  `json:"project_id"`
+	TemplateID TemplateID `json:"template_id"`
 	Body       *CreateProjectTemplateSurveyJSONRequestBody
 }
 
@@ -11592,6 +15572,22 @@ func (response CreateProjectTemplateSurvey404JSONResponse) VisitCreateProjectTem
 	return json.NewEncoder(w).Encode(response)
 }
 
+type CreateProjectTemplateSurvey404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response CreateProjectTemplateSurvey404TexthtmlResponse) VisitCreateProjectTemplateSurveyResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type CreateProjectTemplateSurvey422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response CreateProjectTemplateSurvey422JSONResponse) VisitCreateProjectTemplateSurveyResponse(w http.ResponseWriter) error {
@@ -11612,10 +15608,28 @@ func (response CreateProjectTemplateSurvey500JSONResponse) VisitCreateProjectTem
 	return json.NewEncoder(w).Encode(response)
 }
 
+type CreateProjectTemplateSurvey500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response CreateProjectTemplateSurvey500TexthtmlResponse) VisitCreateProjectTemplateSurveyResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type DeleteProjectTemplateSurveyRequestObject struct {
-	ProjectId  ProjectParam  `json:"project_id"`
-	TemplateId TemplateParam `json:"template_id"`
-	SurveyId   SurveyParam   `json:"survey_id"`
+	ProjectID  ProjectID  `json:"project_id"`
+	TemplateID TemplateID `json:"template_id"`
+	SurveyID   SurveyID   `json:"survey_id"`
 }
 
 type DeleteProjectTemplateSurveyResponseObject interface {
@@ -11658,6 +15672,22 @@ func (response DeleteProjectTemplateSurvey404JSONResponse) VisitDeleteProjectTem
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteProjectTemplateSurvey404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response DeleteProjectTemplateSurvey404TexthtmlResponse) VisitDeleteProjectTemplateSurveyResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type DeleteProjectTemplateSurvey500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -11669,10 +15699,28 @@ func (response DeleteProjectTemplateSurvey500JSONResponse) VisitDeleteProjectTem
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteProjectTemplateSurvey500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response DeleteProjectTemplateSurvey500TexthtmlResponse) VisitDeleteProjectTemplateSurveyResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type UpdateProjectTemplateSurveyRequestObject struct {
-	ProjectId  ProjectParam  `json:"project_id"`
-	TemplateId TemplateParam `json:"template_id"`
-	SurveyId   SurveyParam   `json:"survey_id"`
+	ProjectID  ProjectID  `json:"project_id"`
+	TemplateID TemplateID `json:"template_id"`
+	SurveyID   SurveyID   `json:"survey_id"`
 	Body       *UpdateProjectTemplateSurveyJSONRequestBody
 }
 
@@ -11709,6 +15757,22 @@ func (response UpdateProjectTemplateSurvey404JSONResponse) VisitUpdateProjectTem
 	return json.NewEncoder(w).Encode(response)
 }
 
+type UpdateProjectTemplateSurvey404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response UpdateProjectTemplateSurvey404TexthtmlResponse) VisitUpdateProjectTemplateSurveyResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type UpdateProjectTemplateSurvey422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response UpdateProjectTemplateSurvey422JSONResponse) VisitUpdateProjectTemplateSurveyResponse(w http.ResponseWriter) error {
@@ -11729,9 +15793,27 @@ func (response UpdateProjectTemplateSurvey500JSONResponse) VisitUpdateProjectTem
 	return json.NewEncoder(w).Encode(response)
 }
 
+type UpdateProjectTemplateSurvey500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response UpdateProjectTemplateSurvey500TexthtmlResponse) VisitUpdateProjectTemplateSurveyResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type CreateProjectTemplateVaultRequestObject struct {
-	ProjectId  ProjectParam  `json:"project_id"`
-	TemplateId TemplateParam `json:"template_id"`
+	ProjectID  ProjectID  `json:"project_id"`
+	TemplateID TemplateID `json:"template_id"`
 	Body       *CreateProjectTemplateVaultJSONRequestBody
 }
 
@@ -11768,6 +15850,22 @@ func (response CreateProjectTemplateVault404JSONResponse) VisitCreateProjectTemp
 	return json.NewEncoder(w).Encode(response)
 }
 
+type CreateProjectTemplateVault404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response CreateProjectTemplateVault404TexthtmlResponse) VisitCreateProjectTemplateVaultResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type CreateProjectTemplateVault422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response CreateProjectTemplateVault422JSONResponse) VisitCreateProjectTemplateVaultResponse(w http.ResponseWriter) error {
@@ -11788,10 +15886,28 @@ func (response CreateProjectTemplateVault500JSONResponse) VisitCreateProjectTemp
 	return json.NewEncoder(w).Encode(response)
 }
 
+type CreateProjectTemplateVault500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response CreateProjectTemplateVault500TexthtmlResponse) VisitCreateProjectTemplateVaultResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type DeleteProjectTemplateVaultRequestObject struct {
-	ProjectId  ProjectParam  `json:"project_id"`
-	TemplateId TemplateParam `json:"template_id"`
-	VaultId    VaultParam    `json:"vault_id"`
+	ProjectID  ProjectID  `json:"project_id"`
+	TemplateID TemplateID `json:"template_id"`
+	VaultID    VaultID    `json:"vault_id"`
 }
 
 type DeleteProjectTemplateVaultResponseObject interface {
@@ -11834,6 +15950,22 @@ func (response DeleteProjectTemplateVault404JSONResponse) VisitDeleteProjectTemp
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteProjectTemplateVault404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response DeleteProjectTemplateVault404TexthtmlResponse) VisitDeleteProjectTemplateVaultResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type DeleteProjectTemplateVault500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -11845,10 +15977,28 @@ func (response DeleteProjectTemplateVault500JSONResponse) VisitDeleteProjectTemp
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteProjectTemplateVault500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response DeleteProjectTemplateVault500TexthtmlResponse) VisitDeleteProjectTemplateVaultResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type UpdateProjectTemplateVaultRequestObject struct {
-	ProjectId  ProjectParam  `json:"project_id"`
-	TemplateId TemplateParam `json:"template_id"`
-	VaultId    VaultParam    `json:"vault_id"`
+	ProjectID  ProjectID  `json:"project_id"`
+	TemplateID TemplateID `json:"template_id"`
+	VaultID    VaultID    `json:"vault_id"`
 	Body       *UpdateProjectTemplateVaultJSONRequestBody
 }
 
@@ -11885,6 +16035,22 @@ func (response UpdateProjectTemplateVault404JSONResponse) VisitUpdateProjectTemp
 	return json.NewEncoder(w).Encode(response)
 }
 
+type UpdateProjectTemplateVault404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response UpdateProjectTemplateVault404TexthtmlResponse) VisitUpdateProjectTemplateVaultResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type UpdateProjectTemplateVault422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response UpdateProjectTemplateVault422JSONResponse) VisitUpdateProjectTemplateVaultResponse(w http.ResponseWriter) error {
@@ -11905,8 +16071,26 @@ func (response UpdateProjectTemplateVault500JSONResponse) VisitUpdateProjectTemp
 	return json.NewEncoder(w).Encode(response)
 }
 
+type UpdateProjectTemplateVault500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response UpdateProjectTemplateVault500TexthtmlResponse) VisitUpdateProjectTemplateVaultResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type DeleteProjectFromUserRequestObject struct {
-	ProjectId ProjectParam `json:"project_id"`
+	ProjectID ProjectID `json:"project_id"`
 	Body      *DeleteProjectFromUserJSONRequestBody
 }
 
@@ -11941,6 +16125,22 @@ func (response DeleteProjectFromUser404JSONResponse) VisitDeleteProjectFromUserR
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteProjectFromUser404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response DeleteProjectFromUser404TexthtmlResponse) VisitDeleteProjectFromUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type DeleteProjectFromUser412JSONResponse struct{ NotAttachedErrorJSONResponse }
 
 func (response DeleteProjectFromUser412JSONResponse) VisitDeleteProjectFromUserResponse(w http.ResponseWriter) error {
@@ -11961,8 +16161,26 @@ func (response DeleteProjectFromUser500JSONResponse) VisitDeleteProjectFromUserR
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteProjectFromUser500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response DeleteProjectFromUser500TexthtmlResponse) VisitDeleteProjectFromUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ListProjectUsersRequestObject struct {
-	ProjectId ProjectParam `json:"project_id"`
+	ProjectID ProjectID `json:"project_id"`
 	Params    ListProjectUsersParams
 }
 
@@ -11999,6 +16217,22 @@ func (response ListProjectUsers404JSONResponse) VisitListProjectUsersResponse(w 
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ListProjectUsers404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response ListProjectUsers404TexthtmlResponse) VisitListProjectUsersResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ListProjectUsers500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -12010,8 +16244,26 @@ func (response ListProjectUsers500JSONResponse) VisitListProjectUsersResponse(w 
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ListProjectUsers500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response ListProjectUsers500TexthtmlResponse) VisitListProjectUsersResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type AttachProjectToUserRequestObject struct {
-	ProjectId ProjectParam `json:"project_id"`
+	ProjectID ProjectID `json:"project_id"`
 	Body      *AttachProjectToUserJSONRequestBody
 }
 
@@ -12046,6 +16298,22 @@ func (response AttachProjectToUser404JSONResponse) VisitAttachProjectToUserRespo
 	return json.NewEncoder(w).Encode(response)
 }
 
+type AttachProjectToUser404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response AttachProjectToUser404TexthtmlResponse) VisitAttachProjectToUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type AttachProjectToUser412JSONResponse struct {
 	AlreadyAttachedErrorJSONResponse
 }
@@ -12077,8 +16345,26 @@ func (response AttachProjectToUser500JSONResponse) VisitAttachProjectToUserRespo
 	return json.NewEncoder(w).Encode(response)
 }
 
+type AttachProjectToUser500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response AttachProjectToUser500TexthtmlResponse) VisitAttachProjectToUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type PermitProjectUserRequestObject struct {
-	ProjectId ProjectParam `json:"project_id"`
+	ProjectID ProjectID `json:"project_id"`
 	Body      *PermitProjectUserJSONRequestBody
 }
 
@@ -12113,6 +16399,22 @@ func (response PermitProjectUser404JSONResponse) VisitPermitProjectUserResponse(
 	return json.NewEncoder(w).Encode(response)
 }
 
+type PermitProjectUser404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response PermitProjectUser404TexthtmlResponse) VisitPermitProjectUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type PermitProjectUser412JSONResponse struct{ NotAttachedErrorJSONResponse }
 
 func (response PermitProjectUser412JSONResponse) VisitPermitProjectUserResponse(w http.ResponseWriter) error {
@@ -12142,956 +16444,408 @@ func (response PermitProjectUser500JSONResponse) VisitPermitProjectUserResponse(
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ListRunnersRequestObject struct {
-	Params ListRunnersParams
+type PermitProjectUser500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
 }
 
-type ListRunnersResponseObject interface {
-	VisitListRunnersResponse(w http.ResponseWriter) error
+func (response PermitProjectUser500TexthtmlResponse) VisitPermitProjectUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
 }
 
-type ListRunners200JSONResponse struct{ RunnersResponseJSONResponse }
+type ListGlobalRunnersRequestObject struct {
+	Params ListGlobalRunnersParams
+}
 
-func (response ListRunners200JSONResponse) VisitListRunnersResponse(w http.ResponseWriter) error {
+type ListGlobalRunnersResponseObject interface {
+	VisitListGlobalRunnersResponse(w http.ResponseWriter) error
+}
+
+type ListGlobalRunners200JSONResponse struct {
+	GlobalRunnersResponseJSONResponse
+}
+
+func (response ListGlobalRunners200JSONResponse) VisitListGlobalRunnersResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ListRunners403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+type ListGlobalRunners403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
 
-func (response ListRunners403JSONResponse) VisitListRunnersResponse(w http.ResponseWriter) error {
+func (response ListGlobalRunners403JSONResponse) VisitListGlobalRunnersResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(403)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ListRunners500JSONResponse struct {
+type ListGlobalRunners500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
 
-func (response ListRunners500JSONResponse) VisitListRunnersResponse(w http.ResponseWriter) error {
+func (response ListGlobalRunners500JSONResponse) VisitListGlobalRunnersResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type CreateRunnerRequestObject struct {
-	Body *CreateRunnerJSONRequestBody
+type ListGlobalRunners500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
 }
 
-type CreateRunnerResponseObject interface {
-	VisitCreateRunnerResponse(w http.ResponseWriter) error
+func (response ListGlobalRunners500TexthtmlResponse) VisitListGlobalRunnersResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
 }
 
-type CreateRunner200JSONResponse struct{ RunnerResponseJSONResponse }
+type CreateGlobalRunnerRequestObject struct {
+	Body *CreateGlobalRunnerJSONRequestBody
+}
 
-func (response CreateRunner200JSONResponse) VisitCreateRunnerResponse(w http.ResponseWriter) error {
+type CreateGlobalRunnerResponseObject interface {
+	VisitCreateGlobalRunnerResponse(w http.ResponseWriter) error
+}
+
+type CreateGlobalRunner200JSONResponse struct {
+	GlobalRunnerResponseJSONResponse
+}
+
+func (response CreateGlobalRunner200JSONResponse) VisitCreateGlobalRunnerResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type CreateRunner403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+type CreateGlobalRunner403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
 
-func (response CreateRunner403JSONResponse) VisitCreateRunnerResponse(w http.ResponseWriter) error {
+func (response CreateGlobalRunner403JSONResponse) VisitCreateGlobalRunnerResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(403)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type CreateRunner422JSONResponse struct{ ValidationErrorJSONResponse }
+type CreateGlobalRunner422JSONResponse struct{ ValidationErrorJSONResponse }
 
-func (response CreateRunner422JSONResponse) VisitCreateRunnerResponse(w http.ResponseWriter) error {
+func (response CreateGlobalRunner422JSONResponse) VisitCreateGlobalRunnerResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(422)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type CreateRunner500JSONResponse struct {
+type CreateGlobalRunner500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
 
-func (response CreateRunner500JSONResponse) VisitCreateRunnerResponse(w http.ResponseWriter) error {
+func (response CreateGlobalRunner500JSONResponse) VisitCreateGlobalRunnerResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type DeleteRunnerRequestObject struct {
-	RunnerId RunnerParam `json:"runner_id"`
+type CreateGlobalRunner500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
 }
 
-type DeleteRunnerResponseObject interface {
-	VisitDeleteRunnerResponse(w http.ResponseWriter) error
+func (response CreateGlobalRunner500TexthtmlResponse) VisitCreateGlobalRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
 }
 
-type DeleteRunner200JSONResponse struct{ SuccessMessageJSONResponse }
+type DeleteGlobalRunnerRequestObject struct {
+	RunnerID RunnerID `json:"runner_id"`
+}
 
-func (response DeleteRunner200JSONResponse) VisitDeleteRunnerResponse(w http.ResponseWriter) error {
+type DeleteGlobalRunnerResponseObject interface {
+	VisitDeleteGlobalRunnerResponse(w http.ResponseWriter) error
+}
+
+type DeleteGlobalRunner200JSONResponse struct{ SuccessMessageJSONResponse }
+
+func (response DeleteGlobalRunner200JSONResponse) VisitDeleteGlobalRunnerResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type DeleteRunner400JSONResponse struct{ ActionFailedErrorJSONResponse }
+type DeleteGlobalRunner400JSONResponse struct{ ActionFailedErrorJSONResponse }
 
-func (response DeleteRunner400JSONResponse) VisitDeleteRunnerResponse(w http.ResponseWriter) error {
+func (response DeleteGlobalRunner400JSONResponse) VisitDeleteGlobalRunnerResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(400)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type DeleteRunner403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+type DeleteGlobalRunner403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
 
-func (response DeleteRunner403JSONResponse) VisitDeleteRunnerResponse(w http.ResponseWriter) error {
+func (response DeleteGlobalRunner403JSONResponse) VisitDeleteGlobalRunnerResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(403)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type DeleteRunner404JSONResponse struct{ NotFoundErrorJSONResponse }
+type DeleteGlobalRunner404JSONResponse struct{ NotFoundErrorJSONResponse }
 
-func (response DeleteRunner404JSONResponse) VisitDeleteRunnerResponse(w http.ResponseWriter) error {
+func (response DeleteGlobalRunner404JSONResponse) VisitDeleteGlobalRunnerResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(404)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type DeleteRunner500JSONResponse struct {
+type DeleteGlobalRunner404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response DeleteGlobalRunner404TexthtmlResponse) VisitDeleteGlobalRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type DeleteGlobalRunner500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
 
-func (response DeleteRunner500JSONResponse) VisitDeleteRunnerResponse(w http.ResponseWriter) error {
+func (response DeleteGlobalRunner500JSONResponse) VisitDeleteGlobalRunnerResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ShowRunnerRequestObject struct {
-	RunnerId RunnerParam `json:"runner_id"`
+type DeleteGlobalRunner500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
 }
 
-type ShowRunnerResponseObject interface {
-	VisitShowRunnerResponse(w http.ResponseWriter) error
+func (response DeleteGlobalRunner500TexthtmlResponse) VisitDeleteGlobalRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
 }
 
-type ShowRunner200JSONResponse struct{ RunnerResponseJSONResponse }
+type ShowGlobalRunnerRequestObject struct {
+	RunnerID RunnerID `json:"runner_id"`
+}
 
-func (response ShowRunner200JSONResponse) VisitShowRunnerResponse(w http.ResponseWriter) error {
+type ShowGlobalRunnerResponseObject interface {
+	VisitShowGlobalRunnerResponse(w http.ResponseWriter) error
+}
+
+type ShowGlobalRunner200JSONResponse struct {
+	GlobalRunnerResponseJSONResponse
+}
+
+func (response ShowGlobalRunner200JSONResponse) VisitShowGlobalRunnerResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ShowRunner403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+type ShowGlobalRunner403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
 
-func (response ShowRunner403JSONResponse) VisitShowRunnerResponse(w http.ResponseWriter) error {
+func (response ShowGlobalRunner403JSONResponse) VisitShowGlobalRunnerResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(403)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ShowRunner404JSONResponse struct{ NotFoundErrorJSONResponse }
+type ShowGlobalRunner404JSONResponse struct{ NotFoundErrorJSONResponse }
 
-func (response ShowRunner404JSONResponse) VisitShowRunnerResponse(w http.ResponseWriter) error {
+func (response ShowGlobalRunner404JSONResponse) VisitShowGlobalRunnerResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(404)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ShowRunner500JSONResponse struct {
+type ShowGlobalRunner404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response ShowGlobalRunner404TexthtmlResponse) VisitShowGlobalRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type ShowGlobalRunner500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
 
-func (response ShowRunner500JSONResponse) VisitShowRunnerResponse(w http.ResponseWriter) error {
+func (response ShowGlobalRunner500JSONResponse) VisitShowGlobalRunnerResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type UpdateRunnerRequestObject struct {
-	RunnerId RunnerParam `json:"runner_id"`
-	Body     *UpdateRunnerJSONRequestBody
+type ShowGlobalRunner500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
 }
 
-type UpdateRunnerResponseObject interface {
-	VisitUpdateRunnerResponse(w http.ResponseWriter) error
+func (response ShowGlobalRunner500TexthtmlResponse) VisitShowGlobalRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
 }
 
-type UpdateRunner200JSONResponse struct{ RunnerResponseJSONResponse }
+type UpdateGlobalRunnerRequestObject struct {
+	RunnerID RunnerID `json:"runner_id"`
+	Body     *UpdateGlobalRunnerJSONRequestBody
+}
 
-func (response UpdateRunner200JSONResponse) VisitUpdateRunnerResponse(w http.ResponseWriter) error {
+type UpdateGlobalRunnerResponseObject interface {
+	VisitUpdateGlobalRunnerResponse(w http.ResponseWriter) error
+}
+
+type UpdateGlobalRunner200JSONResponse struct {
+	GlobalRunnerResponseJSONResponse
+}
+
+func (response UpdateGlobalRunner200JSONResponse) VisitUpdateGlobalRunnerResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type UpdateRunner403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+type UpdateGlobalRunner403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
 
-func (response UpdateRunner403JSONResponse) VisitUpdateRunnerResponse(w http.ResponseWriter) error {
+func (response UpdateGlobalRunner403JSONResponse) VisitUpdateGlobalRunnerResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(403)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type UpdateRunner404JSONResponse struct{ NotFoundErrorJSONResponse }
+type UpdateGlobalRunner404JSONResponse struct{ NotFoundErrorJSONResponse }
 
-func (response UpdateRunner404JSONResponse) VisitUpdateRunnerResponse(w http.ResponseWriter) error {
+func (response UpdateGlobalRunner404JSONResponse) VisitUpdateGlobalRunnerResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(404)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type UpdateRunner422JSONResponse struct{ ValidationErrorJSONResponse }
+type UpdateGlobalRunner404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
 
-func (response UpdateRunner422JSONResponse) VisitUpdateRunnerResponse(w http.ResponseWriter) error {
+func (response UpdateGlobalRunner404TexthtmlResponse) VisitUpdateGlobalRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type UpdateGlobalRunner422JSONResponse struct{ ValidationErrorJSONResponse }
+
+func (response UpdateGlobalRunner422JSONResponse) VisitUpdateGlobalRunnerResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(422)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type UpdateRunner500JSONResponse struct {
+type UpdateGlobalRunner500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
 
-func (response UpdateRunner500JSONResponse) VisitUpdateRunnerResponse(w http.ResponseWriter) error {
+func (response UpdateGlobalRunner500JSONResponse) VisitUpdateGlobalRunnerResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ListTeamsRequestObject struct {
-	Params ListTeamsParams
+type UpdateGlobalRunner500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
 }
 
-type ListTeamsResponseObject interface {
-	VisitListTeamsResponse(w http.ResponseWriter) error
-}
-
-type ListTeams200JSONResponse struct{ TeamsResponseJSONResponse }
-
-func (response ListTeams200JSONResponse) VisitListTeamsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type ListTeams403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
-
-func (response ListTeams403JSONResponse) VisitListTeamsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(403)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type ListTeams500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response ListTeams500JSONResponse) VisitListTeamsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
+func (response UpdateGlobalRunner500TexthtmlResponse) VisitUpdateGlobalRunnerResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
 	w.WriteHeader(500)
 
-	return json.NewEncoder(w).Encode(response)
-}
-
-type CreateTeamRequestObject struct {
-	Body *CreateTeamJSONRequestBody
-}
-
-type CreateTeamResponseObject interface {
-	VisitCreateTeamResponse(w http.ResponseWriter) error
-}
-
-type CreateTeam200JSONResponse struct{ TeamResponseJSONResponse }
-
-func (response CreateTeam200JSONResponse) VisitCreateTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type CreateTeam403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
-
-func (response CreateTeam403JSONResponse) VisitCreateTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(403)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type CreateTeam422JSONResponse struct{ ValidationErrorJSONResponse }
-
-func (response CreateTeam422JSONResponse) VisitCreateTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(422)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type CreateTeam500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response CreateTeam500JSONResponse) VisitCreateTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteTeamRequestObject struct {
-	TeamId TeamParam `json:"team_id"`
-}
-
-type DeleteTeamResponseObject interface {
-	VisitDeleteTeamResponse(w http.ResponseWriter) error
-}
-
-type DeleteTeam200JSONResponse struct{ SuccessMessageJSONResponse }
-
-func (response DeleteTeam200JSONResponse) VisitDeleteTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteTeam400JSONResponse struct{ ActionFailedErrorJSONResponse }
-
-func (response DeleteTeam400JSONResponse) VisitDeleteTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(400)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteTeam403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
-
-func (response DeleteTeam403JSONResponse) VisitDeleteTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(403)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteTeam404JSONResponse struct{ NotFoundErrorJSONResponse }
-
-func (response DeleteTeam404JSONResponse) VisitDeleteTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteTeam500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response DeleteTeam500JSONResponse) VisitDeleteTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type ShowTeamRequestObject struct {
-	TeamId TeamParam `json:"team_id"`
-}
-
-type ShowTeamResponseObject interface {
-	VisitShowTeamResponse(w http.ResponseWriter) error
-}
-
-type ShowTeam200JSONResponse struct{ TeamResponseJSONResponse }
-
-func (response ShowTeam200JSONResponse) VisitShowTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type ShowTeam403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
-
-func (response ShowTeam403JSONResponse) VisitShowTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(403)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type ShowTeam404JSONResponse struct{ NotFoundErrorJSONResponse }
-
-func (response ShowTeam404JSONResponse) VisitShowTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type ShowTeam500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response ShowTeam500JSONResponse) VisitShowTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateTeamRequestObject struct {
-	TeamId TeamParam `json:"team_id"`
-	Body   *UpdateTeamJSONRequestBody
-}
-
-type UpdateTeamResponseObject interface {
-	VisitUpdateTeamResponse(w http.ResponseWriter) error
-}
-
-type UpdateTeam200JSONResponse struct{ TeamResponseJSONResponse }
-
-func (response UpdateTeam200JSONResponse) VisitUpdateTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateTeam403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
-
-func (response UpdateTeam403JSONResponse) VisitUpdateTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(403)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateTeam404JSONResponse struct{ NotFoundErrorJSONResponse }
-
-func (response UpdateTeam404JSONResponse) VisitUpdateTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateTeam422JSONResponse struct{ ValidationErrorJSONResponse }
-
-func (response UpdateTeam422JSONResponse) VisitUpdateTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(422)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateTeam500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response UpdateTeam500JSONResponse) VisitUpdateTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteTeamFromProjectRequestObject struct {
-	TeamId TeamParam `json:"team_id"`
-	Body   *DeleteTeamFromProjectJSONRequestBody
-}
-
-type DeleteTeamFromProjectResponseObject interface {
-	VisitDeleteTeamFromProjectResponse(w http.ResponseWriter) error
-}
-
-type DeleteTeamFromProject200JSONResponse struct{ SuccessMessageJSONResponse }
-
-func (response DeleteTeamFromProject200JSONResponse) VisitDeleteTeamFromProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteTeamFromProject403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
-
-func (response DeleteTeamFromProject403JSONResponse) VisitDeleteTeamFromProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(403)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteTeamFromProject404JSONResponse struct{ NotFoundErrorJSONResponse }
-
-func (response DeleteTeamFromProject404JSONResponse) VisitDeleteTeamFromProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteTeamFromProject412JSONResponse struct{ NotAttachedErrorJSONResponse }
-
-func (response DeleteTeamFromProject412JSONResponse) VisitDeleteTeamFromProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(412)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteTeamFromProject500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response DeleteTeamFromProject500JSONResponse) VisitDeleteTeamFromProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type ListTeamProjectsRequestObject struct {
-	TeamId TeamParam `json:"team_id"`
-	Params ListTeamProjectsParams
-}
-
-type ListTeamProjectsResponseObject interface {
-	VisitListTeamProjectsResponse(w http.ResponseWriter) error
-}
-
-type ListTeamProjects200JSONResponse struct {
-	TeamProjectsResponseJSONResponse
-}
-
-func (response ListTeamProjects200JSONResponse) VisitListTeamProjectsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type ListTeamProjects403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
-
-func (response ListTeamProjects403JSONResponse) VisitListTeamProjectsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(403)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type ListTeamProjects404JSONResponse struct{ NotFoundErrorJSONResponse }
-
-func (response ListTeamProjects404JSONResponse) VisitListTeamProjectsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type ListTeamProjects500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response ListTeamProjects500JSONResponse) VisitListTeamProjectsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AttachTeamToProjectRequestObject struct {
-	TeamId TeamParam `json:"team_id"`
-	Body   *AttachTeamToProjectJSONRequestBody
-}
-
-type AttachTeamToProjectResponseObject interface {
-	VisitAttachTeamToProjectResponse(w http.ResponseWriter) error
-}
-
-type AttachTeamToProject200JSONResponse struct{ SuccessMessageJSONResponse }
-
-func (response AttachTeamToProject200JSONResponse) VisitAttachTeamToProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AttachTeamToProject403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
-
-func (response AttachTeamToProject403JSONResponse) VisitAttachTeamToProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(403)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AttachTeamToProject404JSONResponse struct{ NotFoundErrorJSONResponse }
-
-func (response AttachTeamToProject404JSONResponse) VisitAttachTeamToProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AttachTeamToProject412JSONResponse struct {
-	AlreadyAttachedErrorJSONResponse
-}
-
-func (response AttachTeamToProject412JSONResponse) VisitAttachTeamToProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(412)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AttachTeamToProject422JSONResponse struct{ ValidationErrorJSONResponse }
-
-func (response AttachTeamToProject422JSONResponse) VisitAttachTeamToProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(422)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AttachTeamToProject500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response AttachTeamToProject500JSONResponse) VisitAttachTeamToProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type PermitTeamProjectRequestObject struct {
-	TeamId TeamParam `json:"team_id"`
-	Body   *PermitTeamProjectJSONRequestBody
-}
-
-type PermitTeamProjectResponseObject interface {
-	VisitPermitTeamProjectResponse(w http.ResponseWriter) error
-}
-
-type PermitTeamProject200JSONResponse struct{ SuccessMessageJSONResponse }
-
-func (response PermitTeamProject200JSONResponse) VisitPermitTeamProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type PermitTeamProject403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
-
-func (response PermitTeamProject403JSONResponse) VisitPermitTeamProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(403)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type PermitTeamProject404JSONResponse struct{ NotFoundErrorJSONResponse }
-
-func (response PermitTeamProject404JSONResponse) VisitPermitTeamProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type PermitTeamProject412JSONResponse struct{ NotAttachedErrorJSONResponse }
-
-func (response PermitTeamProject412JSONResponse) VisitPermitTeamProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(412)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type PermitTeamProject422JSONResponse struct{ ValidationErrorJSONResponse }
-
-func (response PermitTeamProject422JSONResponse) VisitPermitTeamProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(422)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type PermitTeamProject500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response PermitTeamProject500JSONResponse) VisitPermitTeamProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteTeamFromUserRequestObject struct {
-	TeamId TeamParam `json:"team_id"`
-	Body   *DeleteTeamFromUserJSONRequestBody
-}
-
-type DeleteTeamFromUserResponseObject interface {
-	VisitDeleteTeamFromUserResponse(w http.ResponseWriter) error
-}
-
-type DeleteTeamFromUser200JSONResponse struct{ SuccessMessageJSONResponse }
-
-func (response DeleteTeamFromUser200JSONResponse) VisitDeleteTeamFromUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteTeamFromUser403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
-
-func (response DeleteTeamFromUser403JSONResponse) VisitDeleteTeamFromUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(403)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteTeamFromUser404JSONResponse struct{ NotFoundErrorJSONResponse }
-
-func (response DeleteTeamFromUser404JSONResponse) VisitDeleteTeamFromUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteTeamFromUser412JSONResponse struct{ NotAttachedErrorJSONResponse }
-
-func (response DeleteTeamFromUser412JSONResponse) VisitDeleteTeamFromUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(412)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteTeamFromUser500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response DeleteTeamFromUser500JSONResponse) VisitDeleteTeamFromUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type ListTeamUsersRequestObject struct {
-	TeamId TeamParam `json:"team_id"`
-	Params ListTeamUsersParams
-}
-
-type ListTeamUsersResponseObject interface {
-	VisitListTeamUsersResponse(w http.ResponseWriter) error
-}
-
-type ListTeamUsers200JSONResponse struct{ TeamUsersResponseJSONResponse }
-
-func (response ListTeamUsers200JSONResponse) VisitListTeamUsersResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type ListTeamUsers403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
-
-func (response ListTeamUsers403JSONResponse) VisitListTeamUsersResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(403)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type ListTeamUsers404JSONResponse struct{ NotFoundErrorJSONResponse }
-
-func (response ListTeamUsers404JSONResponse) VisitListTeamUsersResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type ListTeamUsers500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response ListTeamUsers500JSONResponse) VisitListTeamUsersResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AttachTeamToUserRequestObject struct {
-	TeamId TeamParam `json:"team_id"`
-	Body   *AttachTeamToUserJSONRequestBody
-}
-
-type AttachTeamToUserResponseObject interface {
-	VisitAttachTeamToUserResponse(w http.ResponseWriter) error
-}
-
-type AttachTeamToUser200JSONResponse struct{ SuccessMessageJSONResponse }
-
-func (response AttachTeamToUser200JSONResponse) VisitAttachTeamToUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AttachTeamToUser403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
-
-func (response AttachTeamToUser403JSONResponse) VisitAttachTeamToUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(403)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AttachTeamToUser404JSONResponse struct{ NotFoundErrorJSONResponse }
-
-func (response AttachTeamToUser404JSONResponse) VisitAttachTeamToUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AttachTeamToUser412JSONResponse struct {
-	AlreadyAttachedErrorJSONResponse
-}
-
-func (response AttachTeamToUser412JSONResponse) VisitAttachTeamToUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(412)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AttachTeamToUser422JSONResponse struct{ ValidationErrorJSONResponse }
-
-func (response AttachTeamToUser422JSONResponse) VisitAttachTeamToUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(422)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AttachTeamToUser500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response AttachTeamToUser500JSONResponse) VisitAttachTeamToUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type PermitTeamUserRequestObject struct {
-	TeamId TeamParam `json:"team_id"`
-	Body   *PermitTeamUserJSONRequestBody
-}
-
-type PermitTeamUserResponseObject interface {
-	VisitPermitTeamUserResponse(w http.ResponseWriter) error
-}
-
-type PermitTeamUser200JSONResponse struct{ SuccessMessageJSONResponse }
-
-func (response PermitTeamUser200JSONResponse) VisitPermitTeamUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type PermitTeamUser403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
-
-func (response PermitTeamUser403JSONResponse) VisitPermitTeamUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(403)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type PermitTeamUser404JSONResponse struct{ NotFoundErrorJSONResponse }
-
-func (response PermitTeamUser404JSONResponse) VisitPermitTeamUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type PermitTeamUser412JSONResponse struct{ NotAttachedErrorJSONResponse }
-
-func (response PermitTeamUser412JSONResponse) VisitPermitTeamUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(412)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type PermitTeamUser422JSONResponse struct{ ValidationErrorJSONResponse }
-
-func (response PermitTeamUser422JSONResponse) VisitPermitTeamUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(422)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type PermitTeamUser500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response PermitTeamUser500JSONResponse) VisitPermitTeamUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
 }
 
 type ListUsersRequestObject struct {
@@ -13129,6 +16883,24 @@ func (response ListUsers500JSONResponse) VisitListUsersResponse(w http.ResponseW
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
+}
+
+type ListUsers500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response ListUsers500TexthtmlResponse) VisitListUsersResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
 }
 
 type CreateUserRequestObject struct {
@@ -13177,8 +16949,26 @@ func (response CreateUser500JSONResponse) VisitCreateUserResponse(w http.Respons
 	return json.NewEncoder(w).Encode(response)
 }
 
+type CreateUser500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response CreateUser500TexthtmlResponse) VisitCreateUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type DeleteUserRequestObject struct {
-	UserId UserParam `json:"user_id"`
+	UserID UserID `json:"user_id"`
 }
 
 type DeleteUserResponseObject interface {
@@ -13221,6 +17011,22 @@ func (response DeleteUser404JSONResponse) VisitDeleteUserResponse(w http.Respons
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteUser404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response DeleteUser404TexthtmlResponse) VisitDeleteUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type DeleteUser500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -13232,8 +17038,26 @@ func (response DeleteUser500JSONResponse) VisitDeleteUserResponse(w http.Respons
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteUser500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response DeleteUser500TexthtmlResponse) VisitDeleteUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ShowUserRequestObject struct {
-	UserId UserParam `json:"user_id"`
+	UserID UserID `json:"user_id"`
 }
 
 type ShowUserResponseObject interface {
@@ -13267,6 +17091,22 @@ func (response ShowUser404JSONResponse) VisitShowUserResponse(w http.ResponseWri
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ShowUser404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response ShowUser404TexthtmlResponse) VisitShowUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ShowUser500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -13278,8 +17118,26 @@ func (response ShowUser500JSONResponse) VisitShowUserResponse(w http.ResponseWri
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ShowUser500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response ShowUser500TexthtmlResponse) VisitShowUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type UpdateUserRequestObject struct {
-	UserId UserParam `json:"user_id"`
+	UserID UserID `json:"user_id"`
 	Body   *UpdateUserJSONRequestBody
 }
 
@@ -13314,6 +17172,22 @@ func (response UpdateUser404JSONResponse) VisitUpdateUserResponse(w http.Respons
 	return json.NewEncoder(w).Encode(response)
 }
 
+type UpdateUser404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response UpdateUser404TexthtmlResponse) VisitUpdateUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type UpdateUser422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response UpdateUser422JSONResponse) VisitUpdateUserResponse(w http.ResponseWriter) error {
@@ -13334,8 +17208,397 @@ func (response UpdateUser500JSONResponse) VisitUpdateUserResponse(w http.Respons
 	return json.NewEncoder(w).Encode(response)
 }
 
+type UpdateUser500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response UpdateUser500TexthtmlResponse) VisitUpdateUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type DeleteUserFromGroupRequestObject struct {
+	UserID UserID `json:"user_id"`
+	Body   *DeleteUserFromGroupJSONRequestBody
+}
+
+type DeleteUserFromGroupResponseObject interface {
+	VisitDeleteUserFromGroupResponse(w http.ResponseWriter) error
+}
+
+type DeleteUserFromGroup200JSONResponse struct{ SuccessMessageJSONResponse }
+
+func (response DeleteUserFromGroup200JSONResponse) VisitDeleteUserFromGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteUserFromGroup403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+
+func (response DeleteUserFromGroup403JSONResponse) VisitDeleteUserFromGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteUserFromGroup404JSONResponse struct{ NotFoundErrorJSONResponse }
+
+func (response DeleteUserFromGroup404JSONResponse) VisitDeleteUserFromGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteUserFromGroup404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response DeleteUserFromGroup404TexthtmlResponse) VisitDeleteUserFromGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type DeleteUserFromGroup412JSONResponse struct{ NotAttachedErrorJSONResponse }
+
+func (response DeleteUserFromGroup412JSONResponse) VisitDeleteUserFromGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(412)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteUserFromGroup500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response DeleteUserFromGroup500JSONResponse) VisitDeleteUserFromGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteUserFromGroup500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response DeleteUserFromGroup500TexthtmlResponse) VisitDeleteUserFromGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type ListUserGroupsRequestObject struct {
+	UserID UserID `json:"user_id"`
+	Params ListUserGroupsParams
+}
+
+type ListUserGroupsResponseObject interface {
+	VisitListUserGroupsResponse(w http.ResponseWriter) error
+}
+
+type ListUserGroups200JSONResponse struct{ UserGroupsResponseJSONResponse }
+
+func (response ListUserGroups200JSONResponse) VisitListUserGroupsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListUserGroups403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+
+func (response ListUserGroups403JSONResponse) VisitListUserGroupsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListUserGroups404JSONResponse struct{ NotFoundErrorJSONResponse }
+
+func (response ListUserGroups404JSONResponse) VisitListUserGroupsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListUserGroups404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response ListUserGroups404TexthtmlResponse) VisitListUserGroupsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type ListUserGroups500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response ListUserGroups500JSONResponse) VisitListUserGroupsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListUserGroups500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response ListUserGroups500TexthtmlResponse) VisitListUserGroupsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type AttachUserToGroupRequestObject struct {
+	UserID UserID `json:"user_id"`
+	Body   *AttachUserToGroupJSONRequestBody
+}
+
+type AttachUserToGroupResponseObject interface {
+	VisitAttachUserToGroupResponse(w http.ResponseWriter) error
+}
+
+type AttachUserToGroup200JSONResponse struct{ SuccessMessageJSONResponse }
+
+func (response AttachUserToGroup200JSONResponse) VisitAttachUserToGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AttachUserToGroup403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+
+func (response AttachUserToGroup403JSONResponse) VisitAttachUserToGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AttachUserToGroup404JSONResponse struct{ NotFoundErrorJSONResponse }
+
+func (response AttachUserToGroup404JSONResponse) VisitAttachUserToGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AttachUserToGroup404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response AttachUserToGroup404TexthtmlResponse) VisitAttachUserToGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type AttachUserToGroup412JSONResponse struct {
+	AlreadyAttachedErrorJSONResponse
+}
+
+func (response AttachUserToGroup412JSONResponse) VisitAttachUserToGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(412)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AttachUserToGroup422JSONResponse struct{ ValidationErrorJSONResponse }
+
+func (response AttachUserToGroup422JSONResponse) VisitAttachUserToGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(422)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AttachUserToGroup500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response AttachUserToGroup500JSONResponse) VisitAttachUserToGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AttachUserToGroup500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response AttachUserToGroup500TexthtmlResponse) VisitAttachUserToGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type PermitUserGroupRequestObject struct {
+	UserID UserID `json:"user_id"`
+	Body   *PermitUserGroupJSONRequestBody
+}
+
+type PermitUserGroupResponseObject interface {
+	VisitPermitUserGroupResponse(w http.ResponseWriter) error
+}
+
+type PermitUserGroup200JSONResponse struct{ SuccessMessageJSONResponse }
+
+func (response PermitUserGroup200JSONResponse) VisitPermitUserGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PermitUserGroup403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
+
+func (response PermitUserGroup403JSONResponse) VisitPermitUserGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PermitUserGroup404JSONResponse struct{ NotFoundErrorJSONResponse }
+
+func (response PermitUserGroup404JSONResponse) VisitPermitUserGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PermitUserGroup404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response PermitUserGroup404TexthtmlResponse) VisitPermitUserGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type PermitUserGroup412JSONResponse struct{ NotAttachedErrorJSONResponse }
+
+func (response PermitUserGroup412JSONResponse) VisitPermitUserGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(412)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PermitUserGroup422JSONResponse struct{ ValidationErrorJSONResponse }
+
+func (response PermitUserGroup422JSONResponse) VisitPermitUserGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(422)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PermitUserGroup500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response PermitUserGroup500JSONResponse) VisitPermitUserGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PermitUserGroup500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response PermitUserGroup500TexthtmlResponse) VisitPermitUserGroupResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type DeleteUserFromProjectRequestObject struct {
-	UserId UserParam `json:"user_id"`
+	UserID UserID `json:"user_id"`
 	Body   *DeleteUserFromProjectJSONRequestBody
 }
 
@@ -13370,6 +17633,22 @@ func (response DeleteUserFromProject404JSONResponse) VisitDeleteUserFromProjectR
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteUserFromProject404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response DeleteUserFromProject404TexthtmlResponse) VisitDeleteUserFromProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type DeleteUserFromProject412JSONResponse struct{ NotAttachedErrorJSONResponse }
 
 func (response DeleteUserFromProject412JSONResponse) VisitDeleteUserFromProjectResponse(w http.ResponseWriter) error {
@@ -13390,8 +17669,26 @@ func (response DeleteUserFromProject500JSONResponse) VisitDeleteUserFromProjectR
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteUserFromProject500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response DeleteUserFromProject500TexthtmlResponse) VisitDeleteUserFromProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ListUserProjectsRequestObject struct {
-	UserId UserParam `json:"user_id"`
+	UserID UserID `json:"user_id"`
 	Params ListUserProjectsParams
 }
 
@@ -13428,6 +17725,22 @@ func (response ListUserProjects404JSONResponse) VisitListUserProjectsResponse(w 
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ListUserProjects404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response ListUserProjects404TexthtmlResponse) VisitListUserProjectsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type ListUserProjects500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -13439,8 +17752,26 @@ func (response ListUserProjects500JSONResponse) VisitListUserProjectsResponse(w 
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ListUserProjects500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response ListUserProjects500TexthtmlResponse) VisitListUserProjectsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type AttachUserToProjectRequestObject struct {
-	UserId UserParam `json:"user_id"`
+	UserID UserID `json:"user_id"`
 	Body   *AttachUserToProjectJSONRequestBody
 }
 
@@ -13475,6 +17806,22 @@ func (response AttachUserToProject404JSONResponse) VisitAttachUserToProjectRespo
 	return json.NewEncoder(w).Encode(response)
 }
 
+type AttachUserToProject404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response AttachUserToProject404TexthtmlResponse) VisitAttachUserToProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type AttachUserToProject412JSONResponse struct {
 	AlreadyAttachedErrorJSONResponse
 }
@@ -13506,8 +17853,26 @@ func (response AttachUserToProject500JSONResponse) VisitAttachUserToProjectRespo
 	return json.NewEncoder(w).Encode(response)
 }
 
+type AttachUserToProject500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
+}
+
+func (response AttachUserToProject500TexthtmlResponse) VisitAttachUserToProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type PermitUserProjectRequestObject struct {
-	UserId UserParam `json:"user_id"`
+	UserID UserID `json:"user_id"`
 	Body   *PermitUserProjectJSONRequestBody
 }
 
@@ -13542,6 +17907,22 @@ func (response PermitUserProject404JSONResponse) VisitPermitUserProjectResponse(
 	return json.NewEncoder(w).Encode(response)
 }
 
+type PermitUserProject404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
+
+func (response PermitUserProject404TexthtmlResponse) VisitPermitUserProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type PermitUserProject412JSONResponse struct{ NotAttachedErrorJSONResponse }
 
 func (response PermitUserProject412JSONResponse) VisitPermitUserProjectResponse(w http.ResponseWriter) error {
@@ -13571,273 +17952,22 @@ func (response PermitUserProject500JSONResponse) VisitPermitUserProjectResponse(
 	return json.NewEncoder(w).Encode(response)
 }
 
-type DeleteUserFromTeamRequestObject struct {
-	UserId UserParam `json:"user_id"`
-	Body   *DeleteUserFromTeamJSONRequestBody
+type PermitUserProject500TexthtmlResponse struct {
+	InternalServerErrorTexthtmlResponse
 }
 
-type DeleteUserFromTeamResponseObject interface {
-	VisitDeleteUserFromTeamResponse(w http.ResponseWriter) error
-}
-
-type DeleteUserFromTeam200JSONResponse struct{ SuccessMessageJSONResponse }
-
-func (response DeleteUserFromTeam200JSONResponse) VisitDeleteUserFromTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteUserFromTeam403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
-
-func (response DeleteUserFromTeam403JSONResponse) VisitDeleteUserFromTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(403)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteUserFromTeam404JSONResponse struct{ NotFoundErrorJSONResponse }
-
-func (response DeleteUserFromTeam404JSONResponse) VisitDeleteUserFromTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteUserFromTeam412JSONResponse struct{ NotAttachedErrorJSONResponse }
-
-func (response DeleteUserFromTeam412JSONResponse) VisitDeleteUserFromTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(412)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteUserFromTeam500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response DeleteUserFromTeam500JSONResponse) VisitDeleteUserFromTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
+func (response PermitUserProject500TexthtmlResponse) VisitPermitUserProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
 	w.WriteHeader(500)
 
-	return json.NewEncoder(w).Encode(response)
-}
-
-type ListUserTeamsRequestObject struct {
-	UserId UserParam `json:"user_id"`
-	Params ListUserTeamsParams
-}
-
-type ListUserTeamsResponseObject interface {
-	VisitListUserTeamsResponse(w http.ResponseWriter) error
-}
-
-type ListUserTeams200JSONResponse struct{ UserTeamsResponseJSONResponse }
-
-func (response ListUserTeams200JSONResponse) VisitListUserTeamsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type ListUserTeams403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
-
-func (response ListUserTeams403JSONResponse) VisitListUserTeamsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(403)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type ListUserTeams404JSONResponse struct{ NotFoundErrorJSONResponse }
-
-func (response ListUserTeams404JSONResponse) VisitListUserTeamsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type ListUserTeams500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response ListUserTeams500JSONResponse) VisitListUserTeamsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AttachUserToTeamRequestObject struct {
-	UserId UserParam `json:"user_id"`
-	Body   *AttachUserToTeamJSONRequestBody
-}
-
-type AttachUserToTeamResponseObject interface {
-	VisitAttachUserToTeamResponse(w http.ResponseWriter) error
-}
-
-type AttachUserToTeam200JSONResponse struct{ SuccessMessageJSONResponse }
-
-func (response AttachUserToTeam200JSONResponse) VisitAttachUserToTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AttachUserToTeam403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
-
-func (response AttachUserToTeam403JSONResponse) VisitAttachUserToTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(403)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AttachUserToTeam404JSONResponse struct{ NotFoundErrorJSONResponse }
-
-func (response AttachUserToTeam404JSONResponse) VisitAttachUserToTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AttachUserToTeam412JSONResponse struct {
-	AlreadyAttachedErrorJSONResponse
-}
-
-func (response AttachUserToTeam412JSONResponse) VisitAttachUserToTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(412)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AttachUserToTeam422JSONResponse struct{ ValidationErrorJSONResponse }
-
-func (response AttachUserToTeam422JSONResponse) VisitAttachUserToTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(422)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AttachUserToTeam500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response AttachUserToTeam500JSONResponse) VisitAttachUserToTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type PermitUserTeamRequestObject struct {
-	UserId UserParam `json:"user_id"`
-	Body   *PermitUserTeamJSONRequestBody
-}
-
-type PermitUserTeamResponseObject interface {
-	VisitPermitUserTeamResponse(w http.ResponseWriter) error
-}
-
-type PermitUserTeam200JSONResponse struct{ SuccessMessageJSONResponse }
-
-func (response PermitUserTeam200JSONResponse) VisitPermitUserTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type PermitUserTeam403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
-
-func (response PermitUserTeam403JSONResponse) VisitPermitUserTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(403)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type PermitUserTeam404JSONResponse struct{ NotFoundErrorJSONResponse }
-
-func (response PermitUserTeam404JSONResponse) VisitPermitUserTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type PermitUserTeam412JSONResponse struct{ NotAttachedErrorJSONResponse }
-
-func (response PermitUserTeam412JSONResponse) VisitPermitUserTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(412)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type PermitUserTeam422JSONResponse struct{ ValidationErrorJSONResponse }
-
-func (response PermitUserTeam422JSONResponse) VisitPermitUserTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(422)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type PermitUserTeam500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response PermitUserTeam500JSONResponse) VisitPermitUserTeamResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type WebsocketsRequestObject struct {
-}
-
-type WebsocketsResponseObject interface {
-	VisitWebsocketsResponse(w http.ResponseWriter) error
-}
-
-type Websockets101Response = UpgradeConnectionResponse
-
-func (response Websockets101Response) VisitWebsocketsResponse(w http.ResponseWriter) error {
-	w.WriteHeader(101)
-	return nil
-}
-
-type Websockets403JSONResponse struct{ NotAuthorizedErrorJSONResponse }
-
-func (response Websockets403JSONResponse) VisitWebsocketsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(403)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type Websockets500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response Websockets500JSONResponse) VisitWebsocketsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
 }
 
 // StrictServerInterface represents all server handlers.
@@ -13847,19 +17977,61 @@ type StrictServerInterface interface {
 	LoginAuth(ctx context.Context, request LoginAuthRequestObject) (LoginAuthResponseObject, error)
 	// Fetch the available auth providers
 	// (GET /auth/providers)
-	ListProvider(ctx context.Context, request ListProviderRequestObject) (ListProviderResponseObject, error)
+	ListProviders(ctx context.Context, request ListProvidersRequestObject) (ListProvidersResponseObject, error)
 	// Refresh an auth token before it expires
 	// (GET /auth/refresh)
 	RefreshAuth(ctx context.Context, request RefreshAuthRequestObject) (RefreshAuthResponseObject, error)
 	// Verify validity for an authentication token
 	// (GET /auth/verify)
 	VerifyAuth(ctx context.Context, request VerifyAuthRequestObject) (VerifyAuthResponseObject, error)
-	// Callback for available auth providers
-	// (GET /auth/{provider})
+	// Callback to parse the defined provider
+	// (GET /auth/{provider}/callback)
 	CallbackProvider(ctx context.Context, request CallbackProviderRequestObject) (CallbackProviderResponseObject, error)
-	// Fetch all available events
+	// Request the redirect to defined provider
+	// (GET /auth/{provider}/request)
+	RequestProvider(ctx context.Context, request RequestProviderRequestObject) (RequestProviderResponseObject, error)
+	// Fetch all events
 	// (GET /events)
-	ListEvents(ctx context.Context, request ListEventsRequestObject) (ListEventsResponseObject, error)
+	ListGlobalEvents(ctx context.Context, request ListGlobalEventsRequestObject) (ListGlobalEventsResponseObject, error)
+	// Fetch all available groups
+	// (GET /groups)
+	ListGroups(ctx context.Context, request ListGroupsRequestObject) (ListGroupsResponseObject, error)
+	// Create a new group
+	// (POST /groups)
+	CreateGroup(ctx context.Context, request CreateGroupRequestObject) (CreateGroupResponseObject, error)
+	// Delete a specific group
+	// (DELETE /groups/{group_id})
+	DeleteGroup(ctx context.Context, request DeleteGroupRequestObject) (DeleteGroupResponseObject, error)
+	// Fetch a specific group
+	// (GET /groups/{group_id})
+	ShowGroup(ctx context.Context, request ShowGroupRequestObject) (ShowGroupResponseObject, error)
+	// Update a specific group
+	// (PUT /groups/{group_id})
+	UpdateGroup(ctx context.Context, request UpdateGroupRequestObject) (UpdateGroupResponseObject, error)
+	// Unlink a project from group
+	// (DELETE /groups/{group_id}/projects)
+	DeleteGroupFromProject(ctx context.Context, request DeleteGroupFromProjectRequestObject) (DeleteGroupFromProjectResponseObject, error)
+	// Fetch all projects attached to group
+	// (GET /groups/{group_id}/projects)
+	ListGroupProjects(ctx context.Context, request ListGroupProjectsRequestObject) (ListGroupProjectsResponseObject, error)
+	// Attach a project to group
+	// (POST /groups/{group_id}/projects)
+	AttachGroupToProject(ctx context.Context, request AttachGroupToProjectRequestObject) (AttachGroupToProjectResponseObject, error)
+	// Update project perms for group
+	// (PUT /groups/{group_id}/projects)
+	PermitGroupProject(ctx context.Context, request PermitGroupProjectRequestObject) (PermitGroupProjectResponseObject, error)
+	// Unlink a user from group
+	// (DELETE /groups/{group_id}/users)
+	DeleteGroupFromUser(ctx context.Context, request DeleteGroupFromUserRequestObject) (DeleteGroupFromUserResponseObject, error)
+	// Fetch all users attached to group
+	// (GET /groups/{group_id}/users)
+	ListGroupUsers(ctx context.Context, request ListGroupUsersRequestObject) (ListGroupUsersResponseObject, error)
+	// Attach a user to group
+	// (POST /groups/{group_id}/users)
+	AttachGroupToUser(ctx context.Context, request AttachGroupToUserRequestObject) (AttachGroupToUserResponseObject, error)
+	// Update user perms for group
+	// (PUT /groups/{group_id}/users)
+	PermitGroupUser(ctx context.Context, request PermitGroupUserRequestObject) (PermitGroupUserResponseObject, error)
 	// Fetch profile details of the personal account
 	// (GET /profile/self)
 	ShowProfile(ctx context.Context, request ShowProfileRequestObject) (ShowProfileResponseObject, error)
@@ -13932,6 +18104,9 @@ type StrictServerInterface interface {
 	// Update a value on an environment for a project
 	// (PUT /projects/{project_id}/environments/{environment_id}/values/{value_id})
 	UpdateProjectEnvironmentValue(ctx context.Context, request UpdateProjectEnvironmentValueRequestObject) (UpdateProjectEnvironmentValueResponseObject, error)
+	// Fetch all events for a project
+	// (GET /projects/{project_id}/events)
+	ListProjectEvents(ctx context.Context, request ListProjectEventsRequestObject) (ListProjectEventsResponseObject, error)
 	// Fetch all executions for a project
 	// (GET /projects/{project_id}/executions)
 	ListProjectExecutions(ctx context.Context, request ListProjectExecutionsRequestObject) (ListProjectExecutionsResponseObject, error)
@@ -13950,9 +18125,18 @@ type StrictServerInterface interface {
 	// Purge a specific execution for a project
 	// (GET /projects/{project_id}/executions/{execution_id}/purge)
 	PurgeProjectExecution(ctx context.Context, request PurgeProjectExecutionRequestObject) (PurgeProjectExecutionResponseObject, error)
-	// Stop a specific execution for a project
-	// (GET /projects/{project_id}/executions/{execution_id}/stop)
-	StopProjectExecution(ctx context.Context, request StopProjectExecutionRequestObject) (StopProjectExecutionResponseObject, error)
+	// Unlink a group from project
+	// (DELETE /projects/{project_id}/groups)
+	DeleteProjectFromGroup(ctx context.Context, request DeleteProjectFromGroupRequestObject) (DeleteProjectFromGroupResponseObject, error)
+	// Fetch all groups attached to project
+	// (GET /projects/{project_id}/groups)
+	ListProjectGroups(ctx context.Context, request ListProjectGroupsRequestObject) (ListProjectGroupsResponseObject, error)
+	// Attach a group to project
+	// (POST /projects/{project_id}/groups)
+	AttachProjectToGroup(ctx context.Context, request AttachProjectToGroupRequestObject) (AttachProjectToGroupResponseObject, error)
+	// Update group perms for project
+	// (PUT /projects/{project_id}/groups)
+	PermitProjectGroup(ctx context.Context, request PermitProjectGroupRequestObject) (PermitProjectGroupResponseObject, error)
 	// Fetch all inventories for a project
 	// (GET /projects/{project_id}/inventories)
 	ListProjectInventories(ctx context.Context, request ListProjectInventoriesRequestObject) (ListProjectInventoriesResponseObject, error)
@@ -13983,6 +18167,21 @@ type StrictServerInterface interface {
 	// Update a specific repository for a project
 	// (PUT /projects/{project_id}/repositories/{repository_id})
 	UpdateProjectRepository(ctx context.Context, request UpdateProjectRepositoryRequestObject) (UpdateProjectRepositoryResponseObject, error)
+	// Fetch all runners for a project
+	// (GET /projects/{project_id}/runners)
+	ListProjectRunners(ctx context.Context, request ListProjectRunnersRequestObject) (ListProjectRunnersResponseObject, error)
+	// Create a new runner
+	// (POST /projects/{project_id}/runners)
+	CreateProjectRunner(ctx context.Context, request CreateProjectRunnerRequestObject) (CreateProjectRunnerResponseObject, error)
+	// Delete a specific runner for a project
+	// (DELETE /projects/{project_id}/runners/{runner_id})
+	DeleteProjectRunner(ctx context.Context, request DeleteProjectRunnerRequestObject) (DeleteProjectRunnerResponseObject, error)
+	// Fetch a specific runner for a project
+	// (GET /projects/{project_id}/runners/{runner_id})
+	ShowProjectRunner(ctx context.Context, request ShowProjectRunnerRequestObject) (ShowProjectRunnerResponseObject, error)
+	// Update a specific runner for a project
+	// (PUT /projects/{project_id}/runners/{runner_id})
+	UpdateProjectRunner(ctx context.Context, request UpdateProjectRunnerRequestObject) (UpdateProjectRunnerResponseObject, error)
 	// Fetch all schedules for a project
 	// (GET /projects/{project_id}/schedules)
 	ListProjectSchedules(ctx context.Context, request ListProjectSchedulesRequestObject) (ListProjectSchedulesResponseObject, error)
@@ -13998,18 +18197,6 @@ type StrictServerInterface interface {
 	// Update a specific schedule for a project
 	// (PUT /projects/{project_id}/schedules/{schedule_id})
 	UpdateProjectSchedule(ctx context.Context, request UpdateProjectScheduleRequestObject) (UpdateProjectScheduleResponseObject, error)
-	// Unlink a team from project
-	// (DELETE /projects/{project_id}/teams)
-	DeleteProjectFromTeam(ctx context.Context, request DeleteProjectFromTeamRequestObject) (DeleteProjectFromTeamResponseObject, error)
-	// Fetch all teams attached to project
-	// (GET /projects/{project_id}/teams)
-	ListProjectTeams(ctx context.Context, request ListProjectTeamsRequestObject) (ListProjectTeamsResponseObject, error)
-	// Attach a team to project
-	// (POST /projects/{project_id}/teams)
-	AttachProjectToTeam(ctx context.Context, request AttachProjectToTeamRequestObject) (AttachProjectToTeamResponseObject, error)
-	// Update team perms for project
-	// (PUT /projects/{project_id}/teams)
-	PermitProjectTeam(ctx context.Context, request PermitProjectTeamRequestObject) (PermitProjectTeamResponseObject, error)
 	// Fetch all templates for a project
 	// (GET /projects/{project_id}/templates)
 	ListProjectTemplates(ctx context.Context, request ListProjectTemplatesRequestObject) (ListProjectTemplatesResponseObject, error)
@@ -14055,60 +18242,21 @@ type StrictServerInterface interface {
 	// Update user perms for project
 	// (PUT /projects/{project_id}/users)
 	PermitProjectUser(ctx context.Context, request PermitProjectUserRequestObject) (PermitProjectUserResponseObject, error)
-	// Fetch all available runners
+	// Fetch all runners
 	// (GET /runners)
-	ListRunners(ctx context.Context, request ListRunnersRequestObject) (ListRunnersResponseObject, error)
-	// Create a new runner
+	ListGlobalRunners(ctx context.Context, request ListGlobalRunnersRequestObject) (ListGlobalRunnersResponseObject, error)
+	// Create a new global runner
 	// (POST /runners)
-	CreateRunner(ctx context.Context, request CreateRunnerRequestObject) (CreateRunnerResponseObject, error)
+	CreateGlobalRunner(ctx context.Context, request CreateGlobalRunnerRequestObject) (CreateGlobalRunnerResponseObject, error)
 	// Delete a specific runner
 	// (DELETE /runners/{runner_id})
-	DeleteRunner(ctx context.Context, request DeleteRunnerRequestObject) (DeleteRunnerResponseObject, error)
+	DeleteGlobalRunner(ctx context.Context, request DeleteGlobalRunnerRequestObject) (DeleteGlobalRunnerResponseObject, error)
 	// Fetch a specific runner
 	// (GET /runners/{runner_id})
-	ShowRunner(ctx context.Context, request ShowRunnerRequestObject) (ShowRunnerResponseObject, error)
+	ShowGlobalRunner(ctx context.Context, request ShowGlobalRunnerRequestObject) (ShowGlobalRunnerResponseObject, error)
 	// Update a specific runner
 	// (PUT /runners/{runner_id})
-	UpdateRunner(ctx context.Context, request UpdateRunnerRequestObject) (UpdateRunnerResponseObject, error)
-	// Fetch all available teams
-	// (GET /teams)
-	ListTeams(ctx context.Context, request ListTeamsRequestObject) (ListTeamsResponseObject, error)
-	// Create a new team
-	// (POST /teams)
-	CreateTeam(ctx context.Context, request CreateTeamRequestObject) (CreateTeamResponseObject, error)
-	// Delete a specific team
-	// (DELETE /teams/{team_id})
-	DeleteTeam(ctx context.Context, request DeleteTeamRequestObject) (DeleteTeamResponseObject, error)
-	// Fetch a specific team
-	// (GET /teams/{team_id})
-	ShowTeam(ctx context.Context, request ShowTeamRequestObject) (ShowTeamResponseObject, error)
-	// Update a specific team
-	// (PUT /teams/{team_id})
-	UpdateTeam(ctx context.Context, request UpdateTeamRequestObject) (UpdateTeamResponseObject, error)
-	// Unlink a project from team
-	// (DELETE /teams/{team_id}/projects)
-	DeleteTeamFromProject(ctx context.Context, request DeleteTeamFromProjectRequestObject) (DeleteTeamFromProjectResponseObject, error)
-	// Fetch all projects attached to team
-	// (GET /teams/{team_id}/projects)
-	ListTeamProjects(ctx context.Context, request ListTeamProjectsRequestObject) (ListTeamProjectsResponseObject, error)
-	// Attach a project to team
-	// (POST /teams/{team_id}/projects)
-	AttachTeamToProject(ctx context.Context, request AttachTeamToProjectRequestObject) (AttachTeamToProjectResponseObject, error)
-	// Update project perms for team
-	// (PUT /teams/{team_id}/projects)
-	PermitTeamProject(ctx context.Context, request PermitTeamProjectRequestObject) (PermitTeamProjectResponseObject, error)
-	// Unlink a user from team
-	// (DELETE /teams/{team_id}/users)
-	DeleteTeamFromUser(ctx context.Context, request DeleteTeamFromUserRequestObject) (DeleteTeamFromUserResponseObject, error)
-	// Fetch all users attached to team
-	// (GET /teams/{team_id}/users)
-	ListTeamUsers(ctx context.Context, request ListTeamUsersRequestObject) (ListTeamUsersResponseObject, error)
-	// Attach a user to team
-	// (POST /teams/{team_id}/users)
-	AttachTeamToUser(ctx context.Context, request AttachTeamToUserRequestObject) (AttachTeamToUserResponseObject, error)
-	// Update user perms for team
-	// (PUT /teams/{team_id}/users)
-	PermitTeamUser(ctx context.Context, request PermitTeamUserRequestObject) (PermitTeamUserResponseObject, error)
+	UpdateGlobalRunner(ctx context.Context, request UpdateGlobalRunnerRequestObject) (UpdateGlobalRunnerResponseObject, error)
 	// Fetch all available users
 	// (GET /users)
 	ListUsers(ctx context.Context, request ListUsersRequestObject) (ListUsersResponseObject, error)
@@ -14124,6 +18272,18 @@ type StrictServerInterface interface {
 	// Update a specific user
 	// (PUT /users/{user_id})
 	UpdateUser(ctx context.Context, request UpdateUserRequestObject) (UpdateUserResponseObject, error)
+	// Unlink a group from user
+	// (DELETE /users/{user_id}/groups)
+	DeleteUserFromGroup(ctx context.Context, request DeleteUserFromGroupRequestObject) (DeleteUserFromGroupResponseObject, error)
+	// Fetch all groups attached to user
+	// (GET /users/{user_id}/groups)
+	ListUserGroups(ctx context.Context, request ListUserGroupsRequestObject) (ListUserGroupsResponseObject, error)
+	// Attach a group to user
+	// (POST /users/{user_id}/groups)
+	AttachUserToGroup(ctx context.Context, request AttachUserToGroupRequestObject) (AttachUserToGroupResponseObject, error)
+	// Update group perms for user
+	// (PUT /users/{user_id}/groups)
+	PermitUserGroup(ctx context.Context, request PermitUserGroupRequestObject) (PermitUserGroupResponseObject, error)
 	// Unlink a project from user
 	// (DELETE /users/{user_id}/projects)
 	DeleteUserFromProject(ctx context.Context, request DeleteUserFromProjectRequestObject) (DeleteUserFromProjectResponseObject, error)
@@ -14136,21 +18296,6 @@ type StrictServerInterface interface {
 	// Update project perms for user
 	// (PUT /users/{user_id}/projects)
 	PermitUserProject(ctx context.Context, request PermitUserProjectRequestObject) (PermitUserProjectResponseObject, error)
-	// Unlink a team from user
-	// (DELETE /users/{user_id}/teams)
-	DeleteUserFromTeam(ctx context.Context, request DeleteUserFromTeamRequestObject) (DeleteUserFromTeamResponseObject, error)
-	// Fetch all teams attached to user
-	// (GET /users/{user_id}/teams)
-	ListUserTeams(ctx context.Context, request ListUserTeamsRequestObject) (ListUserTeamsResponseObject, error)
-	// Attach a team to user
-	// (POST /users/{user_id}/teams)
-	AttachUserToTeam(ctx context.Context, request AttachUserToTeamRequestObject) (AttachUserToTeamResponseObject, error)
-	// Update team perms for user
-	// (PUT /users/{user_id}/teams)
-	PermitUserTeam(ctx context.Context, request PermitUserTeamRequestObject) (PermitUserTeamResponseObject, error)
-	// Handler for websocket connection
-	// (GET /ws)
-	Websockets(ctx context.Context, request WebsocketsRequestObject) (WebsocketsResponseObject, error)
 }
 
 type StrictHandlerFunc = strictnethttp.StrictHTTPHandlerFunc
@@ -14213,23 +18358,23 @@ func (sh *strictHandler) LoginAuth(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// ListProvider operation middleware
-func (sh *strictHandler) ListProvider(w http.ResponseWriter, r *http.Request) {
-	var request ListProviderRequestObject
+// ListProviders operation middleware
+func (sh *strictHandler) ListProviders(w http.ResponseWriter, r *http.Request) {
+	var request ListProvidersRequestObject
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.ListProvider(ctx, request.(ListProviderRequestObject))
+		return sh.ssi.ListProviders(ctx, request.(ListProvidersRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "ListProvider")
+		handler = middleware(handler, "ListProviders")
 	}
 
 	response, err := handler(r.Context(), w, r, request)
 
 	if err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(ListProviderResponseObject); ok {
-		if err := validResponse.VisitListProviderResponse(w); err != nil {
+	} else if validResponse, ok := response.(ListProvidersResponseObject); ok {
+		if err := validResponse.VisitListProvidersResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -14312,25 +18457,445 @@ func (sh *strictHandler) CallbackProvider(w http.ResponseWriter, r *http.Request
 	}
 }
 
-// ListEvents operation middleware
-func (sh *strictHandler) ListEvents(w http.ResponseWriter, r *http.Request, params ListEventsParams) {
-	var request ListEventsRequestObject
+// RequestProvider operation middleware
+func (sh *strictHandler) RequestProvider(w http.ResponseWriter, r *http.Request, provider AuthProviderParam) {
+	var request RequestProviderRequestObject
 
-	request.Params = params
+	request.Provider = provider
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.ListEvents(ctx, request.(ListEventsRequestObject))
+		return sh.ssi.RequestProvider(ctx, request.(RequestProviderRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "ListEvents")
+		handler = middleware(handler, "RequestProvider")
 	}
 
 	response, err := handler(r.Context(), w, r, request)
 
 	if err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(ListEventsResponseObject); ok {
-		if err := validResponse.VisitListEventsResponse(w); err != nil {
+	} else if validResponse, ok := response.(RequestProviderResponseObject); ok {
+		if err := validResponse.VisitRequestProviderResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListGlobalEvents operation middleware
+func (sh *strictHandler) ListGlobalEvents(w http.ResponseWriter, r *http.Request, params ListGlobalEventsParams) {
+	var request ListGlobalEventsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListGlobalEvents(ctx, request.(ListGlobalEventsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListGlobalEvents")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListGlobalEventsResponseObject); ok {
+		if err := validResponse.VisitListGlobalEventsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListGroups operation middleware
+func (sh *strictHandler) ListGroups(w http.ResponseWriter, r *http.Request, params ListGroupsParams) {
+	var request ListGroupsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListGroups(ctx, request.(ListGroupsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListGroups")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListGroupsResponseObject); ok {
+		if err := validResponse.VisitListGroupsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateGroup operation middleware
+func (sh *strictHandler) CreateGroup(w http.ResponseWriter, r *http.Request) {
+	var request CreateGroupRequestObject
+
+	var body CreateGroupJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateGroup(ctx, request.(CreateGroupRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateGroup")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateGroupResponseObject); ok {
+		if err := validResponse.VisitCreateGroupResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteGroup operation middleware
+func (sh *strictHandler) DeleteGroup(w http.ResponseWriter, r *http.Request, groupID GroupID) {
+	var request DeleteGroupRequestObject
+
+	request.GroupID = groupID
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteGroup(ctx, request.(DeleteGroupRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteGroup")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteGroupResponseObject); ok {
+		if err := validResponse.VisitDeleteGroupResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ShowGroup operation middleware
+func (sh *strictHandler) ShowGroup(w http.ResponseWriter, r *http.Request, groupID GroupID) {
+	var request ShowGroupRequestObject
+
+	request.GroupID = groupID
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ShowGroup(ctx, request.(ShowGroupRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ShowGroup")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ShowGroupResponseObject); ok {
+		if err := validResponse.VisitShowGroupResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateGroup operation middleware
+func (sh *strictHandler) UpdateGroup(w http.ResponseWriter, r *http.Request, groupID GroupID) {
+	var request UpdateGroupRequestObject
+
+	request.GroupID = groupID
+
+	var body UpdateGroupJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateGroup(ctx, request.(UpdateGroupRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateGroup")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateGroupResponseObject); ok {
+		if err := validResponse.VisitUpdateGroupResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteGroupFromProject operation middleware
+func (sh *strictHandler) DeleteGroupFromProject(w http.ResponseWriter, r *http.Request, groupID GroupID) {
+	var request DeleteGroupFromProjectRequestObject
+
+	request.GroupID = groupID
+
+	var body DeleteGroupFromProjectJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteGroupFromProject(ctx, request.(DeleteGroupFromProjectRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteGroupFromProject")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteGroupFromProjectResponseObject); ok {
+		if err := validResponse.VisitDeleteGroupFromProjectResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListGroupProjects operation middleware
+func (sh *strictHandler) ListGroupProjects(w http.ResponseWriter, r *http.Request, groupID GroupID, params ListGroupProjectsParams) {
+	var request ListGroupProjectsRequestObject
+
+	request.GroupID = groupID
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListGroupProjects(ctx, request.(ListGroupProjectsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListGroupProjects")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListGroupProjectsResponseObject); ok {
+		if err := validResponse.VisitListGroupProjectsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AttachGroupToProject operation middleware
+func (sh *strictHandler) AttachGroupToProject(w http.ResponseWriter, r *http.Request, groupID GroupID) {
+	var request AttachGroupToProjectRequestObject
+
+	request.GroupID = groupID
+
+	var body AttachGroupToProjectJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AttachGroupToProject(ctx, request.(AttachGroupToProjectRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AttachGroupToProject")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AttachGroupToProjectResponseObject); ok {
+		if err := validResponse.VisitAttachGroupToProjectResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PermitGroupProject operation middleware
+func (sh *strictHandler) PermitGroupProject(w http.ResponseWriter, r *http.Request, groupID GroupID) {
+	var request PermitGroupProjectRequestObject
+
+	request.GroupID = groupID
+
+	var body PermitGroupProjectJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PermitGroupProject(ctx, request.(PermitGroupProjectRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PermitGroupProject")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PermitGroupProjectResponseObject); ok {
+		if err := validResponse.VisitPermitGroupProjectResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteGroupFromUser operation middleware
+func (sh *strictHandler) DeleteGroupFromUser(w http.ResponseWriter, r *http.Request, groupID GroupID) {
+	var request DeleteGroupFromUserRequestObject
+
+	request.GroupID = groupID
+
+	var body DeleteGroupFromUserJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteGroupFromUser(ctx, request.(DeleteGroupFromUserRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteGroupFromUser")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteGroupFromUserResponseObject); ok {
+		if err := validResponse.VisitDeleteGroupFromUserResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListGroupUsers operation middleware
+func (sh *strictHandler) ListGroupUsers(w http.ResponseWriter, r *http.Request, groupID GroupID, params ListGroupUsersParams) {
+	var request ListGroupUsersRequestObject
+
+	request.GroupID = groupID
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListGroupUsers(ctx, request.(ListGroupUsersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListGroupUsers")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListGroupUsersResponseObject); ok {
+		if err := validResponse.VisitListGroupUsersResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AttachGroupToUser operation middleware
+func (sh *strictHandler) AttachGroupToUser(w http.ResponseWriter, r *http.Request, groupID GroupID) {
+	var request AttachGroupToUserRequestObject
+
+	request.GroupID = groupID
+
+	var body AttachGroupToUserJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AttachGroupToUser(ctx, request.(AttachGroupToUserRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AttachGroupToUser")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AttachGroupToUserResponseObject); ok {
+		if err := validResponse.VisitAttachGroupToUserResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PermitGroupUser operation middleware
+func (sh *strictHandler) PermitGroupUser(w http.ResponseWriter, r *http.Request, groupID GroupID) {
+	var request PermitGroupUserRequestObject
+
+	request.GroupID = groupID
+
+	var body PermitGroupUserJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PermitGroupUser(ctx, request.(PermitGroupUserRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PermitGroupUser")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PermitGroupUserResponseObject); ok {
+		if err := validResponse.VisitPermitGroupUserResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -14475,10 +19040,10 @@ func (sh *strictHandler) CreateProject(w http.ResponseWriter, r *http.Request) {
 }
 
 // DeleteProject operation middleware
-func (sh *strictHandler) DeleteProject(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
+func (sh *strictHandler) DeleteProject(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
 	var request DeleteProjectRequestObject
 
-	request.ProjectId = projectId
+	request.ProjectID = projectID
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.DeleteProject(ctx, request.(DeleteProjectRequestObject))
@@ -14501,10 +19066,10 @@ func (sh *strictHandler) DeleteProject(w http.ResponseWriter, r *http.Request, p
 }
 
 // ShowProject operation middleware
-func (sh *strictHandler) ShowProject(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
+func (sh *strictHandler) ShowProject(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
 	var request ShowProjectRequestObject
 
-	request.ProjectId = projectId
+	request.ProjectID = projectID
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.ShowProject(ctx, request.(ShowProjectRequestObject))
@@ -14527,10 +19092,10 @@ func (sh *strictHandler) ShowProject(w http.ResponseWriter, r *http.Request, pro
 }
 
 // UpdateProject operation middleware
-func (sh *strictHandler) UpdateProject(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
+func (sh *strictHandler) UpdateProject(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
 	var request UpdateProjectRequestObject
 
-	request.ProjectId = projectId
+	request.ProjectID = projectID
 
 	var body UpdateProjectJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -14560,10 +19125,10 @@ func (sh *strictHandler) UpdateProject(w http.ResponseWriter, r *http.Request, p
 }
 
 // ListProjectCredentials operation middleware
-func (sh *strictHandler) ListProjectCredentials(w http.ResponseWriter, r *http.Request, projectId ProjectParam, params ListProjectCredentialsParams) {
+func (sh *strictHandler) ListProjectCredentials(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectCredentialsParams) {
 	var request ListProjectCredentialsRequestObject
 
-	request.ProjectId = projectId
+	request.ProjectID = projectID
 	request.Params = params
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
@@ -14587,10 +19152,10 @@ func (sh *strictHandler) ListProjectCredentials(w http.ResponseWriter, r *http.R
 }
 
 // CreateProjectCredential operation middleware
-func (sh *strictHandler) CreateProjectCredential(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
+func (sh *strictHandler) CreateProjectCredential(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
 	var request CreateProjectCredentialRequestObject
 
-	request.ProjectId = projectId
+	request.ProjectID = projectID
 
 	var body CreateProjectCredentialJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -14620,11 +19185,11 @@ func (sh *strictHandler) CreateProjectCredential(w http.ResponseWriter, r *http.
 }
 
 // DeleteProjectCredential operation middleware
-func (sh *strictHandler) DeleteProjectCredential(w http.ResponseWriter, r *http.Request, projectId ProjectParam, credentialId CredentialParam) {
+func (sh *strictHandler) DeleteProjectCredential(w http.ResponseWriter, r *http.Request, projectID ProjectID, credentialID CredentialID) {
 	var request DeleteProjectCredentialRequestObject
 
-	request.ProjectId = projectId
-	request.CredentialId = credentialId
+	request.ProjectID = projectID
+	request.CredentialID = credentialID
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.DeleteProjectCredential(ctx, request.(DeleteProjectCredentialRequestObject))
@@ -14647,11 +19212,11 @@ func (sh *strictHandler) DeleteProjectCredential(w http.ResponseWriter, r *http.
 }
 
 // ShowProjectCredential operation middleware
-func (sh *strictHandler) ShowProjectCredential(w http.ResponseWriter, r *http.Request, projectId ProjectParam, credentialId CredentialParam) {
+func (sh *strictHandler) ShowProjectCredential(w http.ResponseWriter, r *http.Request, projectID ProjectID, credentialID CredentialID) {
 	var request ShowProjectCredentialRequestObject
 
-	request.ProjectId = projectId
-	request.CredentialId = credentialId
+	request.ProjectID = projectID
+	request.CredentialID = credentialID
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.ShowProjectCredential(ctx, request.(ShowProjectCredentialRequestObject))
@@ -14674,11 +19239,11 @@ func (sh *strictHandler) ShowProjectCredential(w http.ResponseWriter, r *http.Re
 }
 
 // UpdateProjectCredential operation middleware
-func (sh *strictHandler) UpdateProjectCredential(w http.ResponseWriter, r *http.Request, projectId ProjectParam, credentialId CredentialParam) {
+func (sh *strictHandler) UpdateProjectCredential(w http.ResponseWriter, r *http.Request, projectID ProjectID, credentialID CredentialID) {
 	var request UpdateProjectCredentialRequestObject
 
-	request.ProjectId = projectId
-	request.CredentialId = credentialId
+	request.ProjectID = projectID
+	request.CredentialID = credentialID
 
 	var body UpdateProjectCredentialJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -14708,10 +19273,10 @@ func (sh *strictHandler) UpdateProjectCredential(w http.ResponseWriter, r *http.
 }
 
 // ListProjectEnvironments operation middleware
-func (sh *strictHandler) ListProjectEnvironments(w http.ResponseWriter, r *http.Request, projectId ProjectParam, params ListProjectEnvironmentsParams) {
+func (sh *strictHandler) ListProjectEnvironments(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectEnvironmentsParams) {
 	var request ListProjectEnvironmentsRequestObject
 
-	request.ProjectId = projectId
+	request.ProjectID = projectID
 	request.Params = params
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
@@ -14735,10 +19300,10 @@ func (sh *strictHandler) ListProjectEnvironments(w http.ResponseWriter, r *http.
 }
 
 // CreateProjectEnvironment operation middleware
-func (sh *strictHandler) CreateProjectEnvironment(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
+func (sh *strictHandler) CreateProjectEnvironment(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
 	var request CreateProjectEnvironmentRequestObject
 
-	request.ProjectId = projectId
+	request.ProjectID = projectID
 
 	var body CreateProjectEnvironmentJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -14768,11 +19333,11 @@ func (sh *strictHandler) CreateProjectEnvironment(w http.ResponseWriter, r *http
 }
 
 // DeleteProjectEnvironment operation middleware
-func (sh *strictHandler) DeleteProjectEnvironment(w http.ResponseWriter, r *http.Request, projectId ProjectParam, environmentId EnvironmentParam) {
+func (sh *strictHandler) DeleteProjectEnvironment(w http.ResponseWriter, r *http.Request, projectID ProjectID, environmentID EnvironmentID) {
 	var request DeleteProjectEnvironmentRequestObject
 
-	request.ProjectId = projectId
-	request.EnvironmentId = environmentId
+	request.ProjectID = projectID
+	request.EnvironmentID = environmentID
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.DeleteProjectEnvironment(ctx, request.(DeleteProjectEnvironmentRequestObject))
@@ -14795,11 +19360,11 @@ func (sh *strictHandler) DeleteProjectEnvironment(w http.ResponseWriter, r *http
 }
 
 // ShowProjectEnvironment operation middleware
-func (sh *strictHandler) ShowProjectEnvironment(w http.ResponseWriter, r *http.Request, projectId ProjectParam, environmentId EnvironmentParam) {
+func (sh *strictHandler) ShowProjectEnvironment(w http.ResponseWriter, r *http.Request, projectID ProjectID, environmentID EnvironmentID) {
 	var request ShowProjectEnvironmentRequestObject
 
-	request.ProjectId = projectId
-	request.EnvironmentId = environmentId
+	request.ProjectID = projectID
+	request.EnvironmentID = environmentID
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.ShowProjectEnvironment(ctx, request.(ShowProjectEnvironmentRequestObject))
@@ -14822,11 +19387,11 @@ func (sh *strictHandler) ShowProjectEnvironment(w http.ResponseWriter, r *http.R
 }
 
 // UpdateProjectEnvironment operation middleware
-func (sh *strictHandler) UpdateProjectEnvironment(w http.ResponseWriter, r *http.Request, projectId ProjectParam, environmentId EnvironmentParam) {
+func (sh *strictHandler) UpdateProjectEnvironment(w http.ResponseWriter, r *http.Request, projectID ProjectID, environmentID EnvironmentID) {
 	var request UpdateProjectEnvironmentRequestObject
 
-	request.ProjectId = projectId
-	request.EnvironmentId = environmentId
+	request.ProjectID = projectID
+	request.EnvironmentID = environmentID
 
 	var body UpdateProjectEnvironmentJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -14856,11 +19421,11 @@ func (sh *strictHandler) UpdateProjectEnvironment(w http.ResponseWriter, r *http
 }
 
 // CreateProjectEnvironmentSecret operation middleware
-func (sh *strictHandler) CreateProjectEnvironmentSecret(w http.ResponseWriter, r *http.Request, projectId ProjectParam, environmentId EnvironmentParam) {
+func (sh *strictHandler) CreateProjectEnvironmentSecret(w http.ResponseWriter, r *http.Request, projectID ProjectID, environmentID EnvironmentID) {
 	var request CreateProjectEnvironmentSecretRequestObject
 
-	request.ProjectId = projectId
-	request.EnvironmentId = environmentId
+	request.ProjectID = projectID
+	request.EnvironmentID = environmentID
 
 	var body CreateProjectEnvironmentSecretJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -14890,12 +19455,12 @@ func (sh *strictHandler) CreateProjectEnvironmentSecret(w http.ResponseWriter, r
 }
 
 // DeleteProjectEnvironmentSecret operation middleware
-func (sh *strictHandler) DeleteProjectEnvironmentSecret(w http.ResponseWriter, r *http.Request, projectId ProjectParam, environmentId EnvironmentParam, secretId SecretParam) {
+func (sh *strictHandler) DeleteProjectEnvironmentSecret(w http.ResponseWriter, r *http.Request, projectID ProjectID, environmentID EnvironmentID, secretID SecretID) {
 	var request DeleteProjectEnvironmentSecretRequestObject
 
-	request.ProjectId = projectId
-	request.EnvironmentId = environmentId
-	request.SecretId = secretId
+	request.ProjectID = projectID
+	request.EnvironmentID = environmentID
+	request.SecretID = secretID
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.DeleteProjectEnvironmentSecret(ctx, request.(DeleteProjectEnvironmentSecretRequestObject))
@@ -14918,12 +19483,12 @@ func (sh *strictHandler) DeleteProjectEnvironmentSecret(w http.ResponseWriter, r
 }
 
 // UpdateProjectEnvironmentSecret operation middleware
-func (sh *strictHandler) UpdateProjectEnvironmentSecret(w http.ResponseWriter, r *http.Request, projectId ProjectParam, environmentId EnvironmentParam, secretId SecretParam) {
+func (sh *strictHandler) UpdateProjectEnvironmentSecret(w http.ResponseWriter, r *http.Request, projectID ProjectID, environmentID EnvironmentID, secretID SecretID) {
 	var request UpdateProjectEnvironmentSecretRequestObject
 
-	request.ProjectId = projectId
-	request.EnvironmentId = environmentId
-	request.SecretId = secretId
+	request.ProjectID = projectID
+	request.EnvironmentID = environmentID
+	request.SecretID = secretID
 
 	var body UpdateProjectEnvironmentSecretJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -14953,11 +19518,11 @@ func (sh *strictHandler) UpdateProjectEnvironmentSecret(w http.ResponseWriter, r
 }
 
 // CreateProjectEnvironmentValue operation middleware
-func (sh *strictHandler) CreateProjectEnvironmentValue(w http.ResponseWriter, r *http.Request, projectId ProjectParam, environmentId EnvironmentParam) {
+func (sh *strictHandler) CreateProjectEnvironmentValue(w http.ResponseWriter, r *http.Request, projectID ProjectID, environmentID EnvironmentID) {
 	var request CreateProjectEnvironmentValueRequestObject
 
-	request.ProjectId = projectId
-	request.EnvironmentId = environmentId
+	request.ProjectID = projectID
+	request.EnvironmentID = environmentID
 
 	var body CreateProjectEnvironmentValueJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -14987,12 +19552,12 @@ func (sh *strictHandler) CreateProjectEnvironmentValue(w http.ResponseWriter, r 
 }
 
 // DeleteProjectEnvironmentValue operation middleware
-func (sh *strictHandler) DeleteProjectEnvironmentValue(w http.ResponseWriter, r *http.Request, projectId ProjectParam, environmentId EnvironmentParam, valueId ValueParam) {
+func (sh *strictHandler) DeleteProjectEnvironmentValue(w http.ResponseWriter, r *http.Request, projectID ProjectID, environmentID EnvironmentID, valueID ValueID) {
 	var request DeleteProjectEnvironmentValueRequestObject
 
-	request.ProjectId = projectId
-	request.EnvironmentId = environmentId
-	request.ValueId = valueId
+	request.ProjectID = projectID
+	request.EnvironmentID = environmentID
+	request.ValueID = valueID
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.DeleteProjectEnvironmentValue(ctx, request.(DeleteProjectEnvironmentValueRequestObject))
@@ -15015,12 +19580,12 @@ func (sh *strictHandler) DeleteProjectEnvironmentValue(w http.ResponseWriter, r 
 }
 
 // UpdateProjectEnvironmentValue operation middleware
-func (sh *strictHandler) UpdateProjectEnvironmentValue(w http.ResponseWriter, r *http.Request, projectId ProjectParam, environmentId EnvironmentParam, valueId ValueParam) {
+func (sh *strictHandler) UpdateProjectEnvironmentValue(w http.ResponseWriter, r *http.Request, projectID ProjectID, environmentID EnvironmentID, valueID ValueID) {
 	var request UpdateProjectEnvironmentValueRequestObject
 
-	request.ProjectId = projectId
-	request.EnvironmentId = environmentId
-	request.ValueId = valueId
+	request.ProjectID = projectID
+	request.EnvironmentID = environmentID
+	request.ValueID = valueID
 
 	var body UpdateProjectEnvironmentValueJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -15049,11 +19614,38 @@ func (sh *strictHandler) UpdateProjectEnvironmentValue(w http.ResponseWriter, r 
 	}
 }
 
+// ListProjectEvents operation middleware
+func (sh *strictHandler) ListProjectEvents(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectEventsParams) {
+	var request ListProjectEventsRequestObject
+
+	request.ProjectID = projectID
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListProjectEvents(ctx, request.(ListProjectEventsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListProjectEvents")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListProjectEventsResponseObject); ok {
+		if err := validResponse.VisitListProjectEventsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListProjectExecutions operation middleware
-func (sh *strictHandler) ListProjectExecutions(w http.ResponseWriter, r *http.Request, projectId ProjectParam, params ListProjectExecutionsParams) {
+func (sh *strictHandler) ListProjectExecutions(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectExecutionsParams) {
 	var request ListProjectExecutionsRequestObject
 
-	request.ProjectId = projectId
+	request.ProjectID = projectID
 	request.Params = params
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
@@ -15077,10 +19669,10 @@ func (sh *strictHandler) ListProjectExecutions(w http.ResponseWriter, r *http.Re
 }
 
 // CreateProjectExecution operation middleware
-func (sh *strictHandler) CreateProjectExecution(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
+func (sh *strictHandler) CreateProjectExecution(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
 	var request CreateProjectExecutionRequestObject
 
-	request.ProjectId = projectId
+	request.ProjectID = projectID
 
 	var body CreateProjectExecutionJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -15110,11 +19702,11 @@ func (sh *strictHandler) CreateProjectExecution(w http.ResponseWriter, r *http.R
 }
 
 // DeleteProjectExecution operation middleware
-func (sh *strictHandler) DeleteProjectExecution(w http.ResponseWriter, r *http.Request, projectId ProjectParam, executionId ExecutionParam) {
+func (sh *strictHandler) DeleteProjectExecution(w http.ResponseWriter, r *http.Request, projectID ProjectID, executionID ExecutionID) {
 	var request DeleteProjectExecutionRequestObject
 
-	request.ProjectId = projectId
-	request.ExecutionId = executionId
+	request.ProjectID = projectID
+	request.ExecutionID = executionID
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.DeleteProjectExecution(ctx, request.(DeleteProjectExecutionRequestObject))
@@ -15137,11 +19729,11 @@ func (sh *strictHandler) DeleteProjectExecution(w http.ResponseWriter, r *http.R
 }
 
 // ShowProjectExecution operation middleware
-func (sh *strictHandler) ShowProjectExecution(w http.ResponseWriter, r *http.Request, projectId ProjectParam, executionId ExecutionParam) {
+func (sh *strictHandler) ShowProjectExecution(w http.ResponseWriter, r *http.Request, projectID ProjectID, executionID ExecutionID) {
 	var request ShowProjectExecutionRequestObject
 
-	request.ProjectId = projectId
-	request.ExecutionId = executionId
+	request.ProjectID = projectID
+	request.ExecutionID = executionID
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.ShowProjectExecution(ctx, request.(ShowProjectExecutionRequestObject))
@@ -15164,11 +19756,11 @@ func (sh *strictHandler) ShowProjectExecution(w http.ResponseWriter, r *http.Req
 }
 
 // OutputProjectExecution operation middleware
-func (sh *strictHandler) OutputProjectExecution(w http.ResponseWriter, r *http.Request, projectId ProjectParam, executionId ExecutionParam) {
+func (sh *strictHandler) OutputProjectExecution(w http.ResponseWriter, r *http.Request, projectID ProjectID, executionID ExecutionID) {
 	var request OutputProjectExecutionRequestObject
 
-	request.ProjectId = projectId
-	request.ExecutionId = executionId
+	request.ProjectID = projectID
+	request.ExecutionID = executionID
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.OutputProjectExecution(ctx, request.(OutputProjectExecutionRequestObject))
@@ -15191,11 +19783,11 @@ func (sh *strictHandler) OutputProjectExecution(w http.ResponseWriter, r *http.R
 }
 
 // PurgeProjectExecution operation middleware
-func (sh *strictHandler) PurgeProjectExecution(w http.ResponseWriter, r *http.Request, projectId ProjectParam, executionId ExecutionParam) {
+func (sh *strictHandler) PurgeProjectExecution(w http.ResponseWriter, r *http.Request, projectID ProjectID, executionID ExecutionID) {
 	var request PurgeProjectExecutionRequestObject
 
-	request.ProjectId = projectId
-	request.ExecutionId = executionId
+	request.ProjectID = projectID
+	request.ExecutionID = executionID
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.PurgeProjectExecution(ctx, request.(PurgeProjectExecutionRequestObject))
@@ -15217,26 +19809,125 @@ func (sh *strictHandler) PurgeProjectExecution(w http.ResponseWriter, r *http.Re
 	}
 }
 
-// StopProjectExecution operation middleware
-func (sh *strictHandler) StopProjectExecution(w http.ResponseWriter, r *http.Request, projectId ProjectParam, executionId ExecutionParam) {
-	var request StopProjectExecutionRequestObject
+// DeleteProjectFromGroup operation middleware
+func (sh *strictHandler) DeleteProjectFromGroup(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
+	var request DeleteProjectFromGroupRequestObject
 
-	request.ProjectId = projectId
-	request.ExecutionId = executionId
+	request.ProjectID = projectID
+
+	var body DeleteProjectFromGroupJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.StopProjectExecution(ctx, request.(StopProjectExecutionRequestObject))
+		return sh.ssi.DeleteProjectFromGroup(ctx, request.(DeleteProjectFromGroupRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "StopProjectExecution")
+		handler = middleware(handler, "DeleteProjectFromGroup")
 	}
 
 	response, err := handler(r.Context(), w, r, request)
 
 	if err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(StopProjectExecutionResponseObject); ok {
-		if err := validResponse.VisitStopProjectExecutionResponse(w); err != nil {
+	} else if validResponse, ok := response.(DeleteProjectFromGroupResponseObject); ok {
+		if err := validResponse.VisitDeleteProjectFromGroupResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListProjectGroups operation middleware
+func (sh *strictHandler) ListProjectGroups(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectGroupsParams) {
+	var request ListProjectGroupsRequestObject
+
+	request.ProjectID = projectID
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListProjectGroups(ctx, request.(ListProjectGroupsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListProjectGroups")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListProjectGroupsResponseObject); ok {
+		if err := validResponse.VisitListProjectGroupsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AttachProjectToGroup operation middleware
+func (sh *strictHandler) AttachProjectToGroup(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
+	var request AttachProjectToGroupRequestObject
+
+	request.ProjectID = projectID
+
+	var body AttachProjectToGroupJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AttachProjectToGroup(ctx, request.(AttachProjectToGroupRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AttachProjectToGroup")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AttachProjectToGroupResponseObject); ok {
+		if err := validResponse.VisitAttachProjectToGroupResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PermitProjectGroup operation middleware
+func (sh *strictHandler) PermitProjectGroup(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
+	var request PermitProjectGroupRequestObject
+
+	request.ProjectID = projectID
+
+	var body PermitProjectGroupJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PermitProjectGroup(ctx, request.(PermitProjectGroupRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PermitProjectGroup")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PermitProjectGroupResponseObject); ok {
+		if err := validResponse.VisitPermitProjectGroupResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -15245,10 +19936,10 @@ func (sh *strictHandler) StopProjectExecution(w http.ResponseWriter, r *http.Req
 }
 
 // ListProjectInventories operation middleware
-func (sh *strictHandler) ListProjectInventories(w http.ResponseWriter, r *http.Request, projectId ProjectParam, params ListProjectInventoriesParams) {
+func (sh *strictHandler) ListProjectInventories(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectInventoriesParams) {
 	var request ListProjectInventoriesRequestObject
 
-	request.ProjectId = projectId
+	request.ProjectID = projectID
 	request.Params = params
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
@@ -15272,10 +19963,10 @@ func (sh *strictHandler) ListProjectInventories(w http.ResponseWriter, r *http.R
 }
 
 // CreateProjectInventory operation middleware
-func (sh *strictHandler) CreateProjectInventory(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
+func (sh *strictHandler) CreateProjectInventory(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
 	var request CreateProjectInventoryRequestObject
 
-	request.ProjectId = projectId
+	request.ProjectID = projectID
 
 	var body CreateProjectInventoryJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -15305,11 +19996,11 @@ func (sh *strictHandler) CreateProjectInventory(w http.ResponseWriter, r *http.R
 }
 
 // DeleteProjectInventory operation middleware
-func (sh *strictHandler) DeleteProjectInventory(w http.ResponseWriter, r *http.Request, projectId ProjectParam, inventoryId InventoryParam) {
+func (sh *strictHandler) DeleteProjectInventory(w http.ResponseWriter, r *http.Request, projectID ProjectID, inventoryID InventoryID) {
 	var request DeleteProjectInventoryRequestObject
 
-	request.ProjectId = projectId
-	request.InventoryId = inventoryId
+	request.ProjectID = projectID
+	request.InventoryID = inventoryID
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.DeleteProjectInventory(ctx, request.(DeleteProjectInventoryRequestObject))
@@ -15332,11 +20023,11 @@ func (sh *strictHandler) DeleteProjectInventory(w http.ResponseWriter, r *http.R
 }
 
 // ShowProjectInventory operation middleware
-func (sh *strictHandler) ShowProjectInventory(w http.ResponseWriter, r *http.Request, projectId ProjectParam, inventoryId InventoryParam) {
+func (sh *strictHandler) ShowProjectInventory(w http.ResponseWriter, r *http.Request, projectID ProjectID, inventoryID InventoryID) {
 	var request ShowProjectInventoryRequestObject
 
-	request.ProjectId = projectId
-	request.InventoryId = inventoryId
+	request.ProjectID = projectID
+	request.InventoryID = inventoryID
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.ShowProjectInventory(ctx, request.(ShowProjectInventoryRequestObject))
@@ -15359,11 +20050,11 @@ func (sh *strictHandler) ShowProjectInventory(w http.ResponseWriter, r *http.Req
 }
 
 // UpdateProjectInventory operation middleware
-func (sh *strictHandler) UpdateProjectInventory(w http.ResponseWriter, r *http.Request, projectId ProjectParam, inventoryId InventoryParam) {
+func (sh *strictHandler) UpdateProjectInventory(w http.ResponseWriter, r *http.Request, projectID ProjectID, inventoryID InventoryID) {
 	var request UpdateProjectInventoryRequestObject
 
-	request.ProjectId = projectId
-	request.InventoryId = inventoryId
+	request.ProjectID = projectID
+	request.InventoryID = inventoryID
 
 	var body UpdateProjectInventoryJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -15393,10 +20084,10 @@ func (sh *strictHandler) UpdateProjectInventory(w http.ResponseWriter, r *http.R
 }
 
 // ListProjectRepositories operation middleware
-func (sh *strictHandler) ListProjectRepositories(w http.ResponseWriter, r *http.Request, projectId ProjectParam, params ListProjectRepositoriesParams) {
+func (sh *strictHandler) ListProjectRepositories(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectRepositoriesParams) {
 	var request ListProjectRepositoriesRequestObject
 
-	request.ProjectId = projectId
+	request.ProjectID = projectID
 	request.Params = params
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
@@ -15420,10 +20111,10 @@ func (sh *strictHandler) ListProjectRepositories(w http.ResponseWriter, r *http.
 }
 
 // CreateProjectRepository operation middleware
-func (sh *strictHandler) CreateProjectRepository(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
+func (sh *strictHandler) CreateProjectRepository(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
 	var request CreateProjectRepositoryRequestObject
 
-	request.ProjectId = projectId
+	request.ProjectID = projectID
 
 	var body CreateProjectRepositoryJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -15453,11 +20144,11 @@ func (sh *strictHandler) CreateProjectRepository(w http.ResponseWriter, r *http.
 }
 
 // DeleteProjectRepository operation middleware
-func (sh *strictHandler) DeleteProjectRepository(w http.ResponseWriter, r *http.Request, projectId ProjectParam, repositoryId RepositoryParam) {
+func (sh *strictHandler) DeleteProjectRepository(w http.ResponseWriter, r *http.Request, projectID ProjectID, repositoryID RepositoryID) {
 	var request DeleteProjectRepositoryRequestObject
 
-	request.ProjectId = projectId
-	request.RepositoryId = repositoryId
+	request.ProjectID = projectID
+	request.RepositoryID = repositoryID
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.DeleteProjectRepository(ctx, request.(DeleteProjectRepositoryRequestObject))
@@ -15480,11 +20171,11 @@ func (sh *strictHandler) DeleteProjectRepository(w http.ResponseWriter, r *http.
 }
 
 // ShowProjectRepository operation middleware
-func (sh *strictHandler) ShowProjectRepository(w http.ResponseWriter, r *http.Request, projectId ProjectParam, repositoryId RepositoryParam) {
+func (sh *strictHandler) ShowProjectRepository(w http.ResponseWriter, r *http.Request, projectID ProjectID, repositoryID RepositoryID) {
 	var request ShowProjectRepositoryRequestObject
 
-	request.ProjectId = projectId
-	request.RepositoryId = repositoryId
+	request.ProjectID = projectID
+	request.RepositoryID = repositoryID
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.ShowProjectRepository(ctx, request.(ShowProjectRepositoryRequestObject))
@@ -15507,11 +20198,11 @@ func (sh *strictHandler) ShowProjectRepository(w http.ResponseWriter, r *http.Re
 }
 
 // UpdateProjectRepository operation middleware
-func (sh *strictHandler) UpdateProjectRepository(w http.ResponseWriter, r *http.Request, projectId ProjectParam, repositoryId RepositoryParam) {
+func (sh *strictHandler) UpdateProjectRepository(w http.ResponseWriter, r *http.Request, projectID ProjectID, repositoryID RepositoryID) {
 	var request UpdateProjectRepositoryRequestObject
 
-	request.ProjectId = projectId
-	request.RepositoryId = repositoryId
+	request.ProjectID = projectID
+	request.RepositoryID = repositoryID
 
 	var body UpdateProjectRepositoryJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -15540,11 +20231,159 @@ func (sh *strictHandler) UpdateProjectRepository(w http.ResponseWriter, r *http.
 	}
 }
 
+// ListProjectRunners operation middleware
+func (sh *strictHandler) ListProjectRunners(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectRunnersParams) {
+	var request ListProjectRunnersRequestObject
+
+	request.ProjectID = projectID
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListProjectRunners(ctx, request.(ListProjectRunnersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListProjectRunners")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListProjectRunnersResponseObject); ok {
+		if err := validResponse.VisitListProjectRunnersResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateProjectRunner operation middleware
+func (sh *strictHandler) CreateProjectRunner(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
+	var request CreateProjectRunnerRequestObject
+
+	request.ProjectID = projectID
+
+	var body CreateProjectRunnerJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateProjectRunner(ctx, request.(CreateProjectRunnerRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateProjectRunner")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateProjectRunnerResponseObject); ok {
+		if err := validResponse.VisitCreateProjectRunnerResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteProjectRunner operation middleware
+func (sh *strictHandler) DeleteProjectRunner(w http.ResponseWriter, r *http.Request, projectID ProjectID, runnerID RunnerID) {
+	var request DeleteProjectRunnerRequestObject
+
+	request.ProjectID = projectID
+	request.RunnerID = runnerID
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteProjectRunner(ctx, request.(DeleteProjectRunnerRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteProjectRunner")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteProjectRunnerResponseObject); ok {
+		if err := validResponse.VisitDeleteProjectRunnerResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ShowProjectRunner operation middleware
+func (sh *strictHandler) ShowProjectRunner(w http.ResponseWriter, r *http.Request, projectID ProjectID, runnerID RunnerID) {
+	var request ShowProjectRunnerRequestObject
+
+	request.ProjectID = projectID
+	request.RunnerID = runnerID
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ShowProjectRunner(ctx, request.(ShowProjectRunnerRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ShowProjectRunner")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ShowProjectRunnerResponseObject); ok {
+		if err := validResponse.VisitShowProjectRunnerResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateProjectRunner operation middleware
+func (sh *strictHandler) UpdateProjectRunner(w http.ResponseWriter, r *http.Request, projectID ProjectID, runnerID RunnerID) {
+	var request UpdateProjectRunnerRequestObject
+
+	request.ProjectID = projectID
+	request.RunnerID = runnerID
+
+	var body UpdateProjectRunnerJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateProjectRunner(ctx, request.(UpdateProjectRunnerRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateProjectRunner")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateProjectRunnerResponseObject); ok {
+		if err := validResponse.VisitUpdateProjectRunnerResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListProjectSchedules operation middleware
-func (sh *strictHandler) ListProjectSchedules(w http.ResponseWriter, r *http.Request, projectId ProjectParam, params ListProjectSchedulesParams) {
+func (sh *strictHandler) ListProjectSchedules(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectSchedulesParams) {
 	var request ListProjectSchedulesRequestObject
 
-	request.ProjectId = projectId
+	request.ProjectID = projectID
 	request.Params = params
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
@@ -15568,10 +20407,10 @@ func (sh *strictHandler) ListProjectSchedules(w http.ResponseWriter, r *http.Req
 }
 
 // CreateProjectSchedule operation middleware
-func (sh *strictHandler) CreateProjectSchedule(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
+func (sh *strictHandler) CreateProjectSchedule(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
 	var request CreateProjectScheduleRequestObject
 
-	request.ProjectId = projectId
+	request.ProjectID = projectID
 
 	var body CreateProjectScheduleJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -15601,11 +20440,11 @@ func (sh *strictHandler) CreateProjectSchedule(w http.ResponseWriter, r *http.Re
 }
 
 // DeleteProjectSchedule operation middleware
-func (sh *strictHandler) DeleteProjectSchedule(w http.ResponseWriter, r *http.Request, projectId ProjectParam, scheduleId ScheduleParam) {
+func (sh *strictHandler) DeleteProjectSchedule(w http.ResponseWriter, r *http.Request, projectID ProjectID, scheduleID ScheduleID) {
 	var request DeleteProjectScheduleRequestObject
 
-	request.ProjectId = projectId
-	request.ScheduleId = scheduleId
+	request.ProjectID = projectID
+	request.ScheduleID = scheduleID
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.DeleteProjectSchedule(ctx, request.(DeleteProjectScheduleRequestObject))
@@ -15628,11 +20467,11 @@ func (sh *strictHandler) DeleteProjectSchedule(w http.ResponseWriter, r *http.Re
 }
 
 // ShowProjectSchedule operation middleware
-func (sh *strictHandler) ShowProjectSchedule(w http.ResponseWriter, r *http.Request, projectId ProjectParam, scheduleId ScheduleParam) {
+func (sh *strictHandler) ShowProjectSchedule(w http.ResponseWriter, r *http.Request, projectID ProjectID, scheduleID ScheduleID) {
 	var request ShowProjectScheduleRequestObject
 
-	request.ProjectId = projectId
-	request.ScheduleId = scheduleId
+	request.ProjectID = projectID
+	request.ScheduleID = scheduleID
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.ShowProjectSchedule(ctx, request.(ShowProjectScheduleRequestObject))
@@ -15655,11 +20494,11 @@ func (sh *strictHandler) ShowProjectSchedule(w http.ResponseWriter, r *http.Requ
 }
 
 // UpdateProjectSchedule operation middleware
-func (sh *strictHandler) UpdateProjectSchedule(w http.ResponseWriter, r *http.Request, projectId ProjectParam, scheduleId ScheduleParam) {
+func (sh *strictHandler) UpdateProjectSchedule(w http.ResponseWriter, r *http.Request, projectID ProjectID, scheduleID ScheduleID) {
 	var request UpdateProjectScheduleRequestObject
 
-	request.ProjectId = projectId
-	request.ScheduleId = scheduleId
+	request.ProjectID = projectID
+	request.ScheduleID = scheduleID
 
 	var body UpdateProjectScheduleJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -15688,137 +20527,11 @@ func (sh *strictHandler) UpdateProjectSchedule(w http.ResponseWriter, r *http.Re
 	}
 }
 
-// DeleteProjectFromTeam operation middleware
-func (sh *strictHandler) DeleteProjectFromTeam(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
-	var request DeleteProjectFromTeamRequestObject
-
-	request.ProjectId = projectId
-
-	var body DeleteProjectFromTeamJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-		return
-	}
-	request.Body = &body
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.DeleteProjectFromTeam(ctx, request.(DeleteProjectFromTeamRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "DeleteProjectFromTeam")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(DeleteProjectFromTeamResponseObject); ok {
-		if err := validResponse.VisitDeleteProjectFromTeamResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// ListProjectTeams operation middleware
-func (sh *strictHandler) ListProjectTeams(w http.ResponseWriter, r *http.Request, projectId ProjectParam, params ListProjectTeamsParams) {
-	var request ListProjectTeamsRequestObject
-
-	request.ProjectId = projectId
-	request.Params = params
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.ListProjectTeams(ctx, request.(ListProjectTeamsRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "ListProjectTeams")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(ListProjectTeamsResponseObject); ok {
-		if err := validResponse.VisitListProjectTeamsResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// AttachProjectToTeam operation middleware
-func (sh *strictHandler) AttachProjectToTeam(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
-	var request AttachProjectToTeamRequestObject
-
-	request.ProjectId = projectId
-
-	var body AttachProjectToTeamJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-		return
-	}
-	request.Body = &body
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.AttachProjectToTeam(ctx, request.(AttachProjectToTeamRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "AttachProjectToTeam")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(AttachProjectToTeamResponseObject); ok {
-		if err := validResponse.VisitAttachProjectToTeamResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// PermitProjectTeam operation middleware
-func (sh *strictHandler) PermitProjectTeam(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
-	var request PermitProjectTeamRequestObject
-
-	request.ProjectId = projectId
-
-	var body PermitProjectTeamJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-		return
-	}
-	request.Body = &body
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.PermitProjectTeam(ctx, request.(PermitProjectTeamRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "PermitProjectTeam")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(PermitProjectTeamResponseObject); ok {
-		if err := validResponse.VisitPermitProjectTeamResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
 // ListProjectTemplates operation middleware
-func (sh *strictHandler) ListProjectTemplates(w http.ResponseWriter, r *http.Request, projectId ProjectParam, params ListProjectTemplatesParams) {
+func (sh *strictHandler) ListProjectTemplates(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectTemplatesParams) {
 	var request ListProjectTemplatesRequestObject
 
-	request.ProjectId = projectId
+	request.ProjectID = projectID
 	request.Params = params
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
@@ -15842,10 +20555,10 @@ func (sh *strictHandler) ListProjectTemplates(w http.ResponseWriter, r *http.Req
 }
 
 // CreateProjectTemplate operation middleware
-func (sh *strictHandler) CreateProjectTemplate(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
+func (sh *strictHandler) CreateProjectTemplate(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
 	var request CreateProjectTemplateRequestObject
 
-	request.ProjectId = projectId
+	request.ProjectID = projectID
 
 	var body CreateProjectTemplateJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -15875,11 +20588,11 @@ func (sh *strictHandler) CreateProjectTemplate(w http.ResponseWriter, r *http.Re
 }
 
 // DeleteProjectTemplate operation middleware
-func (sh *strictHandler) DeleteProjectTemplate(w http.ResponseWriter, r *http.Request, projectId ProjectParam, templateId TemplateParam) {
+func (sh *strictHandler) DeleteProjectTemplate(w http.ResponseWriter, r *http.Request, projectID ProjectID, templateID TemplateID) {
 	var request DeleteProjectTemplateRequestObject
 
-	request.ProjectId = projectId
-	request.TemplateId = templateId
+	request.ProjectID = projectID
+	request.TemplateID = templateID
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.DeleteProjectTemplate(ctx, request.(DeleteProjectTemplateRequestObject))
@@ -15902,11 +20615,11 @@ func (sh *strictHandler) DeleteProjectTemplate(w http.ResponseWriter, r *http.Re
 }
 
 // ShowProjectTemplate operation middleware
-func (sh *strictHandler) ShowProjectTemplate(w http.ResponseWriter, r *http.Request, projectId ProjectParam, templateId TemplateParam) {
+func (sh *strictHandler) ShowProjectTemplate(w http.ResponseWriter, r *http.Request, projectID ProjectID, templateID TemplateID) {
 	var request ShowProjectTemplateRequestObject
 
-	request.ProjectId = projectId
-	request.TemplateId = templateId
+	request.ProjectID = projectID
+	request.TemplateID = templateID
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.ShowProjectTemplate(ctx, request.(ShowProjectTemplateRequestObject))
@@ -15929,11 +20642,11 @@ func (sh *strictHandler) ShowProjectTemplate(w http.ResponseWriter, r *http.Requ
 }
 
 // UpdateProjectTemplate operation middleware
-func (sh *strictHandler) UpdateProjectTemplate(w http.ResponseWriter, r *http.Request, projectId ProjectParam, templateId TemplateParam) {
+func (sh *strictHandler) UpdateProjectTemplate(w http.ResponseWriter, r *http.Request, projectID ProjectID, templateID TemplateID) {
 	var request UpdateProjectTemplateRequestObject
 
-	request.ProjectId = projectId
-	request.TemplateId = templateId
+	request.ProjectID = projectID
+	request.TemplateID = templateID
 
 	var body UpdateProjectTemplateJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -15963,11 +20676,11 @@ func (sh *strictHandler) UpdateProjectTemplate(w http.ResponseWriter, r *http.Re
 }
 
 // CreateProjectTemplateSurvey operation middleware
-func (sh *strictHandler) CreateProjectTemplateSurvey(w http.ResponseWriter, r *http.Request, projectId ProjectParam, templateId TemplateParam) {
+func (sh *strictHandler) CreateProjectTemplateSurvey(w http.ResponseWriter, r *http.Request, projectID ProjectID, templateID TemplateID) {
 	var request CreateProjectTemplateSurveyRequestObject
 
-	request.ProjectId = projectId
-	request.TemplateId = templateId
+	request.ProjectID = projectID
+	request.TemplateID = templateID
 
 	var body CreateProjectTemplateSurveyJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -15997,12 +20710,12 @@ func (sh *strictHandler) CreateProjectTemplateSurvey(w http.ResponseWriter, r *h
 }
 
 // DeleteProjectTemplateSurvey operation middleware
-func (sh *strictHandler) DeleteProjectTemplateSurvey(w http.ResponseWriter, r *http.Request, projectId ProjectParam, templateId TemplateParam, surveyId SurveyParam) {
+func (sh *strictHandler) DeleteProjectTemplateSurvey(w http.ResponseWriter, r *http.Request, projectID ProjectID, templateID TemplateID, surveyID SurveyID) {
 	var request DeleteProjectTemplateSurveyRequestObject
 
-	request.ProjectId = projectId
-	request.TemplateId = templateId
-	request.SurveyId = surveyId
+	request.ProjectID = projectID
+	request.TemplateID = templateID
+	request.SurveyID = surveyID
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.DeleteProjectTemplateSurvey(ctx, request.(DeleteProjectTemplateSurveyRequestObject))
@@ -16025,12 +20738,12 @@ func (sh *strictHandler) DeleteProjectTemplateSurvey(w http.ResponseWriter, r *h
 }
 
 // UpdateProjectTemplateSurvey operation middleware
-func (sh *strictHandler) UpdateProjectTemplateSurvey(w http.ResponseWriter, r *http.Request, projectId ProjectParam, templateId TemplateParam, surveyId SurveyParam) {
+func (sh *strictHandler) UpdateProjectTemplateSurvey(w http.ResponseWriter, r *http.Request, projectID ProjectID, templateID TemplateID, surveyID SurveyID) {
 	var request UpdateProjectTemplateSurveyRequestObject
 
-	request.ProjectId = projectId
-	request.TemplateId = templateId
-	request.SurveyId = surveyId
+	request.ProjectID = projectID
+	request.TemplateID = templateID
+	request.SurveyID = surveyID
 
 	var body UpdateProjectTemplateSurveyJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -16060,11 +20773,11 @@ func (sh *strictHandler) UpdateProjectTemplateSurvey(w http.ResponseWriter, r *h
 }
 
 // CreateProjectTemplateVault operation middleware
-func (sh *strictHandler) CreateProjectTemplateVault(w http.ResponseWriter, r *http.Request, projectId ProjectParam, templateId TemplateParam) {
+func (sh *strictHandler) CreateProjectTemplateVault(w http.ResponseWriter, r *http.Request, projectID ProjectID, templateID TemplateID) {
 	var request CreateProjectTemplateVaultRequestObject
 
-	request.ProjectId = projectId
-	request.TemplateId = templateId
+	request.ProjectID = projectID
+	request.TemplateID = templateID
 
 	var body CreateProjectTemplateVaultJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -16094,12 +20807,12 @@ func (sh *strictHandler) CreateProjectTemplateVault(w http.ResponseWriter, r *ht
 }
 
 // DeleteProjectTemplateVault operation middleware
-func (sh *strictHandler) DeleteProjectTemplateVault(w http.ResponseWriter, r *http.Request, projectId ProjectParam, templateId TemplateParam, vaultId VaultParam) {
+func (sh *strictHandler) DeleteProjectTemplateVault(w http.ResponseWriter, r *http.Request, projectID ProjectID, templateID TemplateID, vaultID VaultID) {
 	var request DeleteProjectTemplateVaultRequestObject
 
-	request.ProjectId = projectId
-	request.TemplateId = templateId
-	request.VaultId = vaultId
+	request.ProjectID = projectID
+	request.TemplateID = templateID
+	request.VaultID = vaultID
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.DeleteProjectTemplateVault(ctx, request.(DeleteProjectTemplateVaultRequestObject))
@@ -16122,12 +20835,12 @@ func (sh *strictHandler) DeleteProjectTemplateVault(w http.ResponseWriter, r *ht
 }
 
 // UpdateProjectTemplateVault operation middleware
-func (sh *strictHandler) UpdateProjectTemplateVault(w http.ResponseWriter, r *http.Request, projectId ProjectParam, templateId TemplateParam, vaultId VaultParam) {
+func (sh *strictHandler) UpdateProjectTemplateVault(w http.ResponseWriter, r *http.Request, projectID ProjectID, templateID TemplateID, vaultID VaultID) {
 	var request UpdateProjectTemplateVaultRequestObject
 
-	request.ProjectId = projectId
-	request.TemplateId = templateId
-	request.VaultId = vaultId
+	request.ProjectID = projectID
+	request.TemplateID = templateID
+	request.VaultID = vaultID
 
 	var body UpdateProjectTemplateVaultJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -16157,10 +20870,10 @@ func (sh *strictHandler) UpdateProjectTemplateVault(w http.ResponseWriter, r *ht
 }
 
 // DeleteProjectFromUser operation middleware
-func (sh *strictHandler) DeleteProjectFromUser(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
+func (sh *strictHandler) DeleteProjectFromUser(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
 	var request DeleteProjectFromUserRequestObject
 
-	request.ProjectId = projectId
+	request.ProjectID = projectID
 
 	var body DeleteProjectFromUserJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -16190,10 +20903,10 @@ func (sh *strictHandler) DeleteProjectFromUser(w http.ResponseWriter, r *http.Re
 }
 
 // ListProjectUsers operation middleware
-func (sh *strictHandler) ListProjectUsers(w http.ResponseWriter, r *http.Request, projectId ProjectParam, params ListProjectUsersParams) {
+func (sh *strictHandler) ListProjectUsers(w http.ResponseWriter, r *http.Request, projectID ProjectID, params ListProjectUsersParams) {
 	var request ListProjectUsersRequestObject
 
-	request.ProjectId = projectId
+	request.ProjectID = projectID
 	request.Params = params
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
@@ -16217,10 +20930,10 @@ func (sh *strictHandler) ListProjectUsers(w http.ResponseWriter, r *http.Request
 }
 
 // AttachProjectToUser operation middleware
-func (sh *strictHandler) AttachProjectToUser(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
+func (sh *strictHandler) AttachProjectToUser(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
 	var request AttachProjectToUserRequestObject
 
-	request.ProjectId = projectId
+	request.ProjectID = projectID
 
 	var body AttachProjectToUserJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -16250,10 +20963,10 @@ func (sh *strictHandler) AttachProjectToUser(w http.ResponseWriter, r *http.Requ
 }
 
 // PermitProjectUser operation middleware
-func (sh *strictHandler) PermitProjectUser(w http.ResponseWriter, r *http.Request, projectId ProjectParam) {
+func (sh *strictHandler) PermitProjectUser(w http.ResponseWriter, r *http.Request, projectID ProjectID) {
 	var request PermitProjectUserRequestObject
 
-	request.ProjectId = projectId
+	request.ProjectID = projectID
 
 	var body PermitProjectUserJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -16282,25 +20995,25 @@ func (sh *strictHandler) PermitProjectUser(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-// ListRunners operation middleware
-func (sh *strictHandler) ListRunners(w http.ResponseWriter, r *http.Request, params ListRunnersParams) {
-	var request ListRunnersRequestObject
+// ListGlobalRunners operation middleware
+func (sh *strictHandler) ListGlobalRunners(w http.ResponseWriter, r *http.Request, params ListGlobalRunnersParams) {
+	var request ListGlobalRunnersRequestObject
 
 	request.Params = params
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.ListRunners(ctx, request.(ListRunnersRequestObject))
+		return sh.ssi.ListGlobalRunners(ctx, request.(ListGlobalRunnersRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "ListRunners")
+		handler = middleware(handler, "ListGlobalRunners")
 	}
 
 	response, err := handler(r.Context(), w, r, request)
 
 	if err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(ListRunnersResponseObject); ok {
-		if err := validResponse.VisitListRunnersResponse(w); err != nil {
+	} else if validResponse, ok := response.(ListGlobalRunnersResponseObject); ok {
+		if err := validResponse.VisitListGlobalRunnersResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -16308,11 +21021,11 @@ func (sh *strictHandler) ListRunners(w http.ResponseWriter, r *http.Request, par
 	}
 }
 
-// CreateRunner operation middleware
-func (sh *strictHandler) CreateRunner(w http.ResponseWriter, r *http.Request) {
-	var request CreateRunnerRequestObject
+// CreateGlobalRunner operation middleware
+func (sh *strictHandler) CreateGlobalRunner(w http.ResponseWriter, r *http.Request) {
+	var request CreateGlobalRunnerRequestObject
 
-	var body CreateRunnerJSONRequestBody
+	var body CreateGlobalRunnerJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
@@ -16320,18 +21033,18 @@ func (sh *strictHandler) CreateRunner(w http.ResponseWriter, r *http.Request) {
 	request.Body = &body
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.CreateRunner(ctx, request.(CreateRunnerRequestObject))
+		return sh.ssi.CreateGlobalRunner(ctx, request.(CreateGlobalRunnerRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "CreateRunner")
+		handler = middleware(handler, "CreateGlobalRunner")
 	}
 
 	response, err := handler(r.Context(), w, r, request)
 
 	if err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(CreateRunnerResponseObject); ok {
-		if err := validResponse.VisitCreateRunnerResponse(w); err != nil {
+	} else if validResponse, ok := response.(CreateGlobalRunnerResponseObject); ok {
+		if err := validResponse.VisitCreateGlobalRunnerResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -16339,25 +21052,25 @@ func (sh *strictHandler) CreateRunner(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// DeleteRunner operation middleware
-func (sh *strictHandler) DeleteRunner(w http.ResponseWriter, r *http.Request, runnerId RunnerParam) {
-	var request DeleteRunnerRequestObject
+// DeleteGlobalRunner operation middleware
+func (sh *strictHandler) DeleteGlobalRunner(w http.ResponseWriter, r *http.Request, runnerID RunnerID) {
+	var request DeleteGlobalRunnerRequestObject
 
-	request.RunnerId = runnerId
+	request.RunnerID = runnerID
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.DeleteRunner(ctx, request.(DeleteRunnerRequestObject))
+		return sh.ssi.DeleteGlobalRunner(ctx, request.(DeleteGlobalRunnerRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "DeleteRunner")
+		handler = middleware(handler, "DeleteGlobalRunner")
 	}
 
 	response, err := handler(r.Context(), w, r, request)
 
 	if err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(DeleteRunnerResponseObject); ok {
-		if err := validResponse.VisitDeleteRunnerResponse(w); err != nil {
+	} else if validResponse, ok := response.(DeleteGlobalRunnerResponseObject); ok {
+		if err := validResponse.VisitDeleteGlobalRunnerResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -16365,25 +21078,25 @@ func (sh *strictHandler) DeleteRunner(w http.ResponseWriter, r *http.Request, ru
 	}
 }
 
-// ShowRunner operation middleware
-func (sh *strictHandler) ShowRunner(w http.ResponseWriter, r *http.Request, runnerId RunnerParam) {
-	var request ShowRunnerRequestObject
+// ShowGlobalRunner operation middleware
+func (sh *strictHandler) ShowGlobalRunner(w http.ResponseWriter, r *http.Request, runnerID RunnerID) {
+	var request ShowGlobalRunnerRequestObject
 
-	request.RunnerId = runnerId
+	request.RunnerID = runnerID
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.ShowRunner(ctx, request.(ShowRunnerRequestObject))
+		return sh.ssi.ShowGlobalRunner(ctx, request.(ShowGlobalRunnerRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "ShowRunner")
+		handler = middleware(handler, "ShowGlobalRunner")
 	}
 
 	response, err := handler(r.Context(), w, r, request)
 
 	if err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(ShowRunnerResponseObject); ok {
-		if err := validResponse.VisitShowRunnerResponse(w); err != nil {
+	} else if validResponse, ok := response.(ShowGlobalRunnerResponseObject); ok {
+		if err := validResponse.VisitShowGlobalRunnerResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -16391,13 +21104,13 @@ func (sh *strictHandler) ShowRunner(w http.ResponseWriter, r *http.Request, runn
 	}
 }
 
-// UpdateRunner operation middleware
-func (sh *strictHandler) UpdateRunner(w http.ResponseWriter, r *http.Request, runnerId RunnerParam) {
-	var request UpdateRunnerRequestObject
+// UpdateGlobalRunner operation middleware
+func (sh *strictHandler) UpdateGlobalRunner(w http.ResponseWriter, r *http.Request, runnerID RunnerID) {
+	var request UpdateGlobalRunnerRequestObject
 
-	request.RunnerId = runnerId
+	request.RunnerID = runnerID
 
-	var body UpdateRunnerJSONRequestBody
+	var body UpdateGlobalRunnerJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
@@ -16405,412 +21118,18 @@ func (sh *strictHandler) UpdateRunner(w http.ResponseWriter, r *http.Request, ru
 	request.Body = &body
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.UpdateRunner(ctx, request.(UpdateRunnerRequestObject))
+		return sh.ssi.UpdateGlobalRunner(ctx, request.(UpdateGlobalRunnerRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "UpdateRunner")
+		handler = middleware(handler, "UpdateGlobalRunner")
 	}
 
 	response, err := handler(r.Context(), w, r, request)
 
 	if err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(UpdateRunnerResponseObject); ok {
-		if err := validResponse.VisitUpdateRunnerResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// ListTeams operation middleware
-func (sh *strictHandler) ListTeams(w http.ResponseWriter, r *http.Request, params ListTeamsParams) {
-	var request ListTeamsRequestObject
-
-	request.Params = params
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.ListTeams(ctx, request.(ListTeamsRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "ListTeams")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(ListTeamsResponseObject); ok {
-		if err := validResponse.VisitListTeamsResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// CreateTeam operation middleware
-func (sh *strictHandler) CreateTeam(w http.ResponseWriter, r *http.Request) {
-	var request CreateTeamRequestObject
-
-	var body CreateTeamJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-		return
-	}
-	request.Body = &body
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.CreateTeam(ctx, request.(CreateTeamRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "CreateTeam")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(CreateTeamResponseObject); ok {
-		if err := validResponse.VisitCreateTeamResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// DeleteTeam operation middleware
-func (sh *strictHandler) DeleteTeam(w http.ResponseWriter, r *http.Request, teamId TeamParam) {
-	var request DeleteTeamRequestObject
-
-	request.TeamId = teamId
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.DeleteTeam(ctx, request.(DeleteTeamRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "DeleteTeam")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(DeleteTeamResponseObject); ok {
-		if err := validResponse.VisitDeleteTeamResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// ShowTeam operation middleware
-func (sh *strictHandler) ShowTeam(w http.ResponseWriter, r *http.Request, teamId TeamParam) {
-	var request ShowTeamRequestObject
-
-	request.TeamId = teamId
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.ShowTeam(ctx, request.(ShowTeamRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "ShowTeam")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(ShowTeamResponseObject); ok {
-		if err := validResponse.VisitShowTeamResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// UpdateTeam operation middleware
-func (sh *strictHandler) UpdateTeam(w http.ResponseWriter, r *http.Request, teamId TeamParam) {
-	var request UpdateTeamRequestObject
-
-	request.TeamId = teamId
-
-	var body UpdateTeamJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-		return
-	}
-	request.Body = &body
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.UpdateTeam(ctx, request.(UpdateTeamRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "UpdateTeam")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(UpdateTeamResponseObject); ok {
-		if err := validResponse.VisitUpdateTeamResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// DeleteTeamFromProject operation middleware
-func (sh *strictHandler) DeleteTeamFromProject(w http.ResponseWriter, r *http.Request, teamId TeamParam) {
-	var request DeleteTeamFromProjectRequestObject
-
-	request.TeamId = teamId
-
-	var body DeleteTeamFromProjectJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-		return
-	}
-	request.Body = &body
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.DeleteTeamFromProject(ctx, request.(DeleteTeamFromProjectRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "DeleteTeamFromProject")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(DeleteTeamFromProjectResponseObject); ok {
-		if err := validResponse.VisitDeleteTeamFromProjectResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// ListTeamProjects operation middleware
-func (sh *strictHandler) ListTeamProjects(w http.ResponseWriter, r *http.Request, teamId TeamParam, params ListTeamProjectsParams) {
-	var request ListTeamProjectsRequestObject
-
-	request.TeamId = teamId
-	request.Params = params
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.ListTeamProjects(ctx, request.(ListTeamProjectsRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "ListTeamProjects")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(ListTeamProjectsResponseObject); ok {
-		if err := validResponse.VisitListTeamProjectsResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// AttachTeamToProject operation middleware
-func (sh *strictHandler) AttachTeamToProject(w http.ResponseWriter, r *http.Request, teamId TeamParam) {
-	var request AttachTeamToProjectRequestObject
-
-	request.TeamId = teamId
-
-	var body AttachTeamToProjectJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-		return
-	}
-	request.Body = &body
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.AttachTeamToProject(ctx, request.(AttachTeamToProjectRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "AttachTeamToProject")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(AttachTeamToProjectResponseObject); ok {
-		if err := validResponse.VisitAttachTeamToProjectResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// PermitTeamProject operation middleware
-func (sh *strictHandler) PermitTeamProject(w http.ResponseWriter, r *http.Request, teamId TeamParam) {
-	var request PermitTeamProjectRequestObject
-
-	request.TeamId = teamId
-
-	var body PermitTeamProjectJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-		return
-	}
-	request.Body = &body
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.PermitTeamProject(ctx, request.(PermitTeamProjectRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "PermitTeamProject")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(PermitTeamProjectResponseObject); ok {
-		if err := validResponse.VisitPermitTeamProjectResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// DeleteTeamFromUser operation middleware
-func (sh *strictHandler) DeleteTeamFromUser(w http.ResponseWriter, r *http.Request, teamId TeamParam) {
-	var request DeleteTeamFromUserRequestObject
-
-	request.TeamId = teamId
-
-	var body DeleteTeamFromUserJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-		return
-	}
-	request.Body = &body
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.DeleteTeamFromUser(ctx, request.(DeleteTeamFromUserRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "DeleteTeamFromUser")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(DeleteTeamFromUserResponseObject); ok {
-		if err := validResponse.VisitDeleteTeamFromUserResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// ListTeamUsers operation middleware
-func (sh *strictHandler) ListTeamUsers(w http.ResponseWriter, r *http.Request, teamId TeamParam, params ListTeamUsersParams) {
-	var request ListTeamUsersRequestObject
-
-	request.TeamId = teamId
-	request.Params = params
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.ListTeamUsers(ctx, request.(ListTeamUsersRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "ListTeamUsers")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(ListTeamUsersResponseObject); ok {
-		if err := validResponse.VisitListTeamUsersResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// AttachTeamToUser operation middleware
-func (sh *strictHandler) AttachTeamToUser(w http.ResponseWriter, r *http.Request, teamId TeamParam) {
-	var request AttachTeamToUserRequestObject
-
-	request.TeamId = teamId
-
-	var body AttachTeamToUserJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-		return
-	}
-	request.Body = &body
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.AttachTeamToUser(ctx, request.(AttachTeamToUserRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "AttachTeamToUser")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(AttachTeamToUserResponseObject); ok {
-		if err := validResponse.VisitAttachTeamToUserResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// PermitTeamUser operation middleware
-func (sh *strictHandler) PermitTeamUser(w http.ResponseWriter, r *http.Request, teamId TeamParam) {
-	var request PermitTeamUserRequestObject
-
-	request.TeamId = teamId
-
-	var body PermitTeamUserJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-		return
-	}
-	request.Body = &body
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.PermitTeamUser(ctx, request.(PermitTeamUserRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "PermitTeamUser")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(PermitTeamUserResponseObject); ok {
-		if err := validResponse.VisitPermitTeamUserResponse(w); err != nil {
+	} else if validResponse, ok := response.(UpdateGlobalRunnerResponseObject); ok {
+		if err := validResponse.VisitUpdateGlobalRunnerResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -16876,10 +21195,10 @@ func (sh *strictHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 // DeleteUser operation middleware
-func (sh *strictHandler) DeleteUser(w http.ResponseWriter, r *http.Request, userId UserParam) {
+func (sh *strictHandler) DeleteUser(w http.ResponseWriter, r *http.Request, userID UserID) {
 	var request DeleteUserRequestObject
 
-	request.UserId = userId
+	request.UserID = userID
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.DeleteUser(ctx, request.(DeleteUserRequestObject))
@@ -16902,10 +21221,10 @@ func (sh *strictHandler) DeleteUser(w http.ResponseWriter, r *http.Request, user
 }
 
 // ShowUser operation middleware
-func (sh *strictHandler) ShowUser(w http.ResponseWriter, r *http.Request, userId UserParam) {
+func (sh *strictHandler) ShowUser(w http.ResponseWriter, r *http.Request, userID UserID) {
 	var request ShowUserRequestObject
 
-	request.UserId = userId
+	request.UserID = userID
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.ShowUser(ctx, request.(ShowUserRequestObject))
@@ -16928,10 +21247,10 @@ func (sh *strictHandler) ShowUser(w http.ResponseWriter, r *http.Request, userId
 }
 
 // UpdateUser operation middleware
-func (sh *strictHandler) UpdateUser(w http.ResponseWriter, r *http.Request, userId UserParam) {
+func (sh *strictHandler) UpdateUser(w http.ResponseWriter, r *http.Request, userID UserID) {
 	var request UpdateUserRequestObject
 
-	request.UserId = userId
+	request.UserID = userID
 
 	var body UpdateUserJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -16960,11 +21279,137 @@ func (sh *strictHandler) UpdateUser(w http.ResponseWriter, r *http.Request, user
 	}
 }
 
+// DeleteUserFromGroup operation middleware
+func (sh *strictHandler) DeleteUserFromGroup(w http.ResponseWriter, r *http.Request, userID UserID) {
+	var request DeleteUserFromGroupRequestObject
+
+	request.UserID = userID
+
+	var body DeleteUserFromGroupJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteUserFromGroup(ctx, request.(DeleteUserFromGroupRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteUserFromGroup")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteUserFromGroupResponseObject); ok {
+		if err := validResponse.VisitDeleteUserFromGroupResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListUserGroups operation middleware
+func (sh *strictHandler) ListUserGroups(w http.ResponseWriter, r *http.Request, userID UserID, params ListUserGroupsParams) {
+	var request ListUserGroupsRequestObject
+
+	request.UserID = userID
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListUserGroups(ctx, request.(ListUserGroupsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListUserGroups")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListUserGroupsResponseObject); ok {
+		if err := validResponse.VisitListUserGroupsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AttachUserToGroup operation middleware
+func (sh *strictHandler) AttachUserToGroup(w http.ResponseWriter, r *http.Request, userID UserID) {
+	var request AttachUserToGroupRequestObject
+
+	request.UserID = userID
+
+	var body AttachUserToGroupJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AttachUserToGroup(ctx, request.(AttachUserToGroupRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AttachUserToGroup")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AttachUserToGroupResponseObject); ok {
+		if err := validResponse.VisitAttachUserToGroupResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PermitUserGroup operation middleware
+func (sh *strictHandler) PermitUserGroup(w http.ResponseWriter, r *http.Request, userID UserID) {
+	var request PermitUserGroupRequestObject
+
+	request.UserID = userID
+
+	var body PermitUserGroupJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PermitUserGroup(ctx, request.(PermitUserGroupRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PermitUserGroup")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PermitUserGroupResponseObject); ok {
+		if err := validResponse.VisitPermitUserGroupResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // DeleteUserFromProject operation middleware
-func (sh *strictHandler) DeleteUserFromProject(w http.ResponseWriter, r *http.Request, userId UserParam) {
+func (sh *strictHandler) DeleteUserFromProject(w http.ResponseWriter, r *http.Request, userID UserID) {
 	var request DeleteUserFromProjectRequestObject
 
-	request.UserId = userId
+	request.UserID = userID
 
 	var body DeleteUserFromProjectJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -16994,10 +21439,10 @@ func (sh *strictHandler) DeleteUserFromProject(w http.ResponseWriter, r *http.Re
 }
 
 // ListUserProjects operation middleware
-func (sh *strictHandler) ListUserProjects(w http.ResponseWriter, r *http.Request, userId UserParam, params ListUserProjectsParams) {
+func (sh *strictHandler) ListUserProjects(w http.ResponseWriter, r *http.Request, userID UserID, params ListUserProjectsParams) {
 	var request ListUserProjectsRequestObject
 
-	request.UserId = userId
+	request.UserID = userID
 	request.Params = params
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
@@ -17021,10 +21466,10 @@ func (sh *strictHandler) ListUserProjects(w http.ResponseWriter, r *http.Request
 }
 
 // AttachUserToProject operation middleware
-func (sh *strictHandler) AttachUserToProject(w http.ResponseWriter, r *http.Request, userId UserParam) {
+func (sh *strictHandler) AttachUserToProject(w http.ResponseWriter, r *http.Request, userID UserID) {
 	var request AttachUserToProjectRequestObject
 
-	request.UserId = userId
+	request.UserID = userID
 
 	var body AttachUserToProjectJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -17054,10 +21499,10 @@ func (sh *strictHandler) AttachUserToProject(w http.ResponseWriter, r *http.Requ
 }
 
 // PermitUserProject operation middleware
-func (sh *strictHandler) PermitUserProject(w http.ResponseWriter, r *http.Request, userId UserParam) {
+func (sh *strictHandler) PermitUserProject(w http.ResponseWriter, r *http.Request, userID UserID) {
 	var request PermitUserProjectRequestObject
 
-	request.UserId = userId
+	request.UserID = userID
 
 	var body PermitUserProjectJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -17086,279 +21531,137 @@ func (sh *strictHandler) PermitUserProject(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-// DeleteUserFromTeam operation middleware
-func (sh *strictHandler) DeleteUserFromTeam(w http.ResponseWriter, r *http.Request, userId UserParam) {
-	var request DeleteUserFromTeamRequestObject
-
-	request.UserId = userId
-
-	var body DeleteUserFromTeamJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-		return
-	}
-	request.Body = &body
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.DeleteUserFromTeam(ctx, request.(DeleteUserFromTeamRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "DeleteUserFromTeam")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(DeleteUserFromTeamResponseObject); ok {
-		if err := validResponse.VisitDeleteUserFromTeamResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// ListUserTeams operation middleware
-func (sh *strictHandler) ListUserTeams(w http.ResponseWriter, r *http.Request, userId UserParam, params ListUserTeamsParams) {
-	var request ListUserTeamsRequestObject
-
-	request.UserId = userId
-	request.Params = params
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.ListUserTeams(ctx, request.(ListUserTeamsRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "ListUserTeams")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(ListUserTeamsResponseObject); ok {
-		if err := validResponse.VisitListUserTeamsResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// AttachUserToTeam operation middleware
-func (sh *strictHandler) AttachUserToTeam(w http.ResponseWriter, r *http.Request, userId UserParam) {
-	var request AttachUserToTeamRequestObject
-
-	request.UserId = userId
-
-	var body AttachUserToTeamJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-		return
-	}
-	request.Body = &body
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.AttachUserToTeam(ctx, request.(AttachUserToTeamRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "AttachUserToTeam")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(AttachUserToTeamResponseObject); ok {
-		if err := validResponse.VisitAttachUserToTeamResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// PermitUserTeam operation middleware
-func (sh *strictHandler) PermitUserTeam(w http.ResponseWriter, r *http.Request, userId UserParam) {
-	var request PermitUserTeamRequestObject
-
-	request.UserId = userId
-
-	var body PermitUserTeamJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-		return
-	}
-	request.Body = &body
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.PermitUserTeam(ctx, request.(PermitUserTeamRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "PermitUserTeam")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(PermitUserTeamResponseObject); ok {
-		if err := validResponse.VisitPermitUserTeamResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// Websockets operation middleware
-func (sh *strictHandler) Websockets(w http.ResponseWriter, r *http.Request) {
-	var request WebsocketsRequestObject
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.Websockets(ctx, request.(WebsocketsRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "Websockets")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(WebsocketsResponseObject); ok {
-		if err := validResponse.VisitWebsocketsResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/+xd3XPbOJL/V1i8e1SiZHbuHvx0Hk9mJ7WZiTdO5q5qypWCKUjihCK5IChH6/L/foVP",
-	"guIXAIIiJfMpsYiPRvcPjUaj0Xjyg2SXJjGMceZfPfkpQGAHMUT0r+scb2+SFbwlv5IfVjALUJjiMIn9",
-	"K/rZC5IV9Bd+SH74Vw7RwV/4MdhB/8rnn7JgC3eAVMeHlPyeYRTGG//5eUGbuEXJPlxB1NRL7IUrGONw",
-	"HULkrRPk4S30AOk75TVF/ynA26J75SuC/8pDBFf+FUY5bCFp4X9/Bb+DXRqRXzch3uYPPqfzDgPcyoqM",
-	"FGjghfjWxowbBOlAQdTUixfIIipTEuRlUb6pZ0NR5Wu4sudF0cyrt+Tbu3gfoiTewRg3UguLMtrkKnV6",
-	"0au0wwn+DoOckNZMriihT6yo0Y9U0Qoj9H28hzFO0KGR0FCU0CZU1uhFqGyFEXoLNmG8+RDuwiYIsBJe",
-	"RIo0TAzxrSBhBdcgj7B/9fbNm4UgKIwx3EB0RNHbN28kHR/X6wx2EJLQMg2UyI81pHQRQslAyV8waJ4N",
-	"KfuuLTNevpfEeBtMXp9gmmRhK7KQLKJNZlGlF6VFM5zYPI6b1wQP0c/6RNLi/QikTTDi7oItXOVR42rg",
-	"ZbyANoGiQi8SRSOcSAhQsP0nAXkDnayEJ+ZB7bpFi3QsXHcwQLAZ+Bn9rM8KWrwfI2gTnA0JwjdJlO+a",
-	"FD8pQJRDQAs18SFBuIsLCcIfUbMhI/pJkGKyHOsg/q1GBfkgC/yFD+N851/9yf8iPfj3i3Zu0EKEwBzt",
-	"YfPcz+hnfTHR4v3ERJtgYvoMwa6RNAzBTpswUrgXWaQBQdQujVqsPg/zAgbEsQo9CWSNMCK/ZC16Ms8M",
-	"tCQp3Iuwv1YJJL/9AaK8mWl78lWbKFq6F1W0BcarP8hcaiEsj7ABYXmEexKWR1RLPbMmYIZ/SlYhpJuv",
-	"GwQJ8tgC/lOyOpAfgyTGMMbkvyBNozAAhPjlXxkZwZPSb4qSFCLM21rBXaJQ85AkEQRE1X1/FedRBB4I",
-	"OYz076+SXUgAhg/sp2cx4OPB6NamHLSs/SxVW/JA+OA/k5/Kcvu8hdK2WgEMPJyQfRLbb5UlwzZZBVuL",
-	"HVdPBn8L45U9h6JkE9Lm/xPBtX/l/8ey2JUvWZfZsqD1Ay3eWy7JHiIUrmAPYGRbGEX6hN/R4ieChLJV",
-	"NkSFsrXtCYueE4daMbQh8inrYrRCN7PI/IJXACFwOMmUXTB9a0U2XTcsqdbFheqUsAcGY3BPeCjV7Djd",
-	"T+30QacNt/k+wJ7pFB4zz014zmwtU5YLh1RPXj8gEAdbe2at4ENJD5kuTwojeizO1EFlXT2NwOEhSb71",
-	"XQZ61McA55l9fXXLMjRypQfWELHSZ9oXsTBIdn1GuuivYMoO+zPUU4sjn+Ckdw6FL90QcoU3dWQt2YGX",
-	"UfdvCz9H0dAiVJzWhjIUftyeEgQBDvd99lEBYh2MMVf7ifeEi4P0qRsKWTjx+go5ipLHrw42zQBt8p04",
-	"cLfjen/DSmGubSNHJ7X27dBFP0H2LZRON8cy9OpnoRMLcALL6YI76/W39WLasVMHa1cE9ZGa90odvQN7",
-	"EqTz31IhMc70du06mMrj2oqCV9YaFYc4gifzVxUQG95Z1RdidBr09Zic/36EsXVoA8VYWCzGYVwfcz/r",
-	"L/kG48HNexbqocvUzxDszpal+lADO22OfMl6g6zY4ch4BDYEWxt4tWMnXrK5NYgy+/bgDoSRvcjWeRT1",
-	"E3oKsuwxQVTDrRO0A5ieF/MfF7ab5wyiU3iMaZRAN5zoweN1jrc90WTGrFY+WBwHZmSQIMdb8mfQMFS5",
-	"joLdzyhJew6YTNd62ouO/2Sl7g1PvEuaII+jMP7WMZ5biPoqyBSiXe1ex2CgC9ZKr/GSFmj0aNN4iepz",
-	"ID+Cv+5h0VKm4ylNvU750VifAeVnMFBL+ZXG2yw/ClRWxYH8eOfdIxMF703W4ePgk2YpKqMaUorGwzWU",
-	"Ze2o22U53YlIB6M5C8VIznMKVkfaLLMv6YrtJtdhb/f4bJz1jW0jQijgSUXTKjQHIYPnF/OnyZc55u9F",
-	"xfxpomKO+XtpMX/mwJhj/gaM+Wti+hzzN1jMX4nlcwTVHEHlKoJKU7WeSwTVOcThjBNmpSnoOczqnMOs",
-	"NIU8h1lNO8xqwkFSp4ulnyOpziOSylDnzJFUcyTVwBCbI6nGjKTqEtYcSWURSdXF1JcXSdXFEaeRVH1D",
-	"p+ZQqdFDpVrwkkF0BvELdDT68QvKqM45fqF21C1n4RlE0w0Eo4PRjAITIznPELDqSJtkRjvL0iTOGLHX",
-	"AWnmFxBGcPUOIXbXSHvgbSbs7wkO17xqHd2sT0Iru+YEPUBpoYlMEcySHAXU9L2OEASrwzXGINiemspP",
-	"nBAvzDzACPEAp4QQ9xNYFSe62Wlp+xKDHG8TFP4brrzHEG+9R5TEGzWgk5B4A6LoAQTfPnG5O6PvOsfb",
-	"z9Q6qyHu7zCGCGAq4W8wZvTB72mIqO1KJftuT9qzousojmYv3Fl6Z6ykeGVXpfpw5Oobxvi/f/Trclzy",
-	"pJh6hXGCQaRV9lgb0IoLmQxUpuLkQ9bRENdekEQRZLMrWXu8Kk2oioltEN1BtIfotOi9S3bQCzkBXkYp",
-	"8CAlgaV6BVG4ovAaSy9tOIS9BHmUGvJ/th0RId/Tm1O/J3h8TRknuKQlCVFSVZ1YSdI0f5wkSQMn6pck",
-	"j8diEyFoTfr3WRDzOoygczjxdhujgnKEYIyLQDqIQchWjUpMmHPaiqabyOPkUIsAqCFMydoDwkytJdbF",
-	"oqIuo7orizqmEy4vyragAw2CY+4XJJVdNquSeg2FCbwqYCX6xTkclbb18KgGljQAshIiNSTVIspNg/a4",
-	"LhKpewzUGz3kELi723gELK6newBObE2lOZuovhenGEoMs7JXlQaaVYNIkOUen6JlPbUgowSa4CiacwJG",
-	"2Zg+FIvhvDQgFsyygaEQbDMGRaRgCF3INixa0xaujFV8ccJVuWUjXaV+p3wPznWMIjcdHVMEFjYomQ/J",
-	"ZhPGG+d08nabqIzYZ2EgyZyFDVTKMEc3E2ZC+EbKyLQnbxH1WTd73U+ZEpE2c0ZtoHHSFKNyjkaVYTrT",
-	"RonTbESk+w14m+O+TF+VHhEf6pwu0bAbm0a0dmGzWK742lO4YOspJnBB3zD2zGcIdhcmUkyGZBCGJW+l",
-	"n0aijDwbaapZILKSDFnAkHMNIhrW0yAybqlBg5TjFQcjVgSKGpHMn//poJyGwQ1GOI81NaKbPdrSQfbF",
-	"zW8+LONQy1NNcEGfzSSXtRtV9pcMoksTqbYQWKyTvuiVoJ2q9HUlyrrso7JZC4UMz0F++kw+6fopqesh",
-	"DyEK+kTu+zjEY50/h3GIQxCF/4bFe74KaVYo0RWZ7O1oUnQysfT8cMYe11wjmG1Pe1TOO209Kmeh0e53",
-	"pbRZzR0pLyuImfTUZ8Qa+DPk4E7gy+C0WbkxeF36EGQQwCz7DWYZ2MCTzfnbCISxl7HOvR3vvZwW67JW",
-	"ha6dFQ+V7GpigquImgIsEzIcYF9ABq+3HWBsEhm6Jo2jYeRuYxfKXk5sFMpUZBI7kxeY2ayfuiNFOlCo",
-	"bTFugF8MaVAkMVt4DPmXdIPACt4kccxIrr7WyosQC/IRPmRJ8A1iLygqlG8rXNay0rqjM1cZOt2daFlR",
-	"b2ZkQobO0ckHpBN/Q/mj3Jy4IDXVrP/HhpC9WpNXRCR4pi2wQRf3MRZ2uab/wULJw2S0wHYZzM6f1qZU",
-	"QRSuD4Msd6zpOpJ+gxjQG0tk3d1C5jzgEfbP4rFwdk9JLps1MVBkV599BWVskQG+wuGOXUIEq49xdDjK",
-	"zW97E7m9uSqWSLUqZBa+wpy66GNiCAw/KvV6qNnAZM26sSmR0BUL5bdkBSMCRARTBDMYYyX6ly2ULjnx",
-	"vPBZUoHOYiJ/AIzzHRkh45TI7ClSk97X1HSbtLQ9H2lhGDU9a+g2EykBCb3O20cGRQoNFRqtwPkgeGqA",
-	"Ho8JYtHyroLpGwoVqr0PvI8W2u+EBExoFzAzoD1F4R5g+PUbPLgZ2x2noTK2d+UngzvHpT4xPOKUbn58",
-	"rmMKOU83O+z8cp9oVgXIu5Iw27BxJ99kNkEIv4NQBUpTwksJgE4dvgeIBaHX6u3uuaGMzbsTVLZxgHHT",
-	"lAFUelMf/x+cyOrw99pqYV+nEEBQn1yKpaDsPTVaE1iRxZYO5OsqzNIIHNqKNDCdf2W/tyibxh60U4S0",
-	"aC0Ti68/JbSVfkkXBcL2TWpFXlXQQpYsvdDMguoMXfWP8Xe9s6+/iDXkFmxN/Ke7xNV/angZX4mwMYqr",
-	"aUvS6dq8fKfgoAKpItBeB1Iyzr4KKZrM2ew6aEsC6Lbczo5QGpQ2ZPpUdz+ibrm5IhgLA3/h0xvK9w5t",
-	"tyLO2yzkviMH5sk2SO8V2FUQLK5g6OCX38eooBeqilX7spis9VVT4kmO0xxrFaU86s+5D3LAFb6V3GMV",
-	"5tGTlzDwRHIc6uWm2SgyD8Qr4TKjl8cq3KTFtA3vwv9Xt0XYFaEH1WW1JhHcsaIWftGONbfEjRpuicQB",
-	"Oijj2QNqjbp9m19JWShl7jaNojnemrl7r3O8ZfO7tm2zZLEudPHomeY0J/AwCenSAlu9jGDrY0EnOLA/",
-	"UnLSvQuPgYvMgFyf3EodUKdKRMSvjioRaesm5zA6zdp/KzlQx0gWlqnDyVIcZoWfyu6ve3uDwj3rtJvF",
-	"QRIbMbkbouz1BiP+iSFXGPipZBd2slAxI0+8oxzdVrf2mg7p4Kx9yUOV/SdVYFXps3BULcmzomelhRry",
-	"JLvWT58Eayr8lXcfdTgsLh+2GI1Vy8/N1GrwAY41MybvT7krRFWR+Wcer9kpb5HVtCxrI0ue9DU5S74X",
-	"ak70AJJLMHxmcqwFAhWOLhiogTKIhk0VM6nGNbQefsYQZnjXbHy1nDIxidV48mH4xfMVr+CaXjK9Ek8o",
-	"C0dd8sg0Pv+ZbdXvF63ZqTVvhHUoTaNwcAh2g+rD4yTNpLPSCO6PENBiyn9WlL4GAnjhhemLUO2PPbW8",
-	"43Sic7ej4xGDDGpdbz9Jd2WC+qz2oXpcoJ14qf1BqdbznGbzosdBzwj+8JFecnITRzHKa1BSc8jJ3qg1",
-	"OJNMdAdPYlB1BHTMUM0gA2mSxPnuoVg85Bmj0elOy2tNzQ8xuX5jqU4m3p1gYqNo9IM/lDQNdZEfDYxv",
-	"ZNpedNxmlvAeG8M4ylg2HAWpsmjMoevUkWHm5u5Er+LR5q84GeG1/8tPVQExZlYE9CXT9GBwW21iL+zM",
-	"Rzcv/ehmYscWX7J6X5aEnu5cu+TtLE2h37SdVY/WtJn1QrezrsCve8WpMUSv7iZH23aWIqBlOytPN7UR",
-	"UOsPnJb4p+N8GFzqgvxjkTd5+5QQlvpIGhB5GUZ5gHNELyJn2+RRiaHhkTUVAKxDGNUzsTEsRlVUClnV",
-	"C3p0L5KjEB/uCMNYhz+BLAzkbTZq0tBfZPUtxil95wkCxERQlGQ/VYr+CgFX18RW8rfsT2E/+v/36vr2",
-	"/at/qNsIkIb/EFnpwnidiMhvwJQPNzn8DYzhdxj8zyN82IZpGsLXK1i0+3f21efnZJSc7Gq55LVew9yv",
-	"3lG8fe+t4JomGuIvb/FmFh5g79+EgZLHl1inBMC05HtwQ29IBpBfGOSEXKcg2MJXP7x+U6Llarl8fHx8",
-	"DejX1wnaLHnVbPnh/c273+/ekSqvt3gXKds8MSzvYwrj69v3/sLfQ5Qx8t++fvP6zSsQpVvwlsabpTAG",
-	"aehf+X8jXwi8ADc4l2R9XspbWmmSUdYS8FHAvF+x6LEw5gsdvxop3oKrm3hFkRDS1MisMq1y/M7aD2/e",
-	"NDfDyy3LTwo9L/wf37ztrlX3BNnzwv8vnR7rHoBSp4p/9ef9ws/y3Q6gA5Ftjreko4DsUvglcO/hUHpy",
-	"bOFjsMmIgqE20T1pj7G/SAt19eRvYJ0EwgwrJ/jmLKwkxxqKE79AHGzZpdU9CKnFeZz7qpkRiGWnamQD",
-	"z14loWjKheOUW7pQqr661Zt9kmGcJoKa4pqv9wDXCYJeiHlyrjau7eVV2VqmsZu01jw7ugA9BZYxkti6",
-	"GeKDyLwAiklIlDI7+G9m25NA5HMj68QTgcrUSwECO4jpZP2zfihFEXrNW1S+JT/7zwutSncYYGhU4yZZ",
-	"iQr3NnKuPIdIJf1jd8Xye2Gk1tsf9BVSkUhwKI0kBsZgYqSUivcTG7Uye6vRGBh3EKBg+88cooO2lG/B",
-	"Jow3H8JdiA3rfKRpGvqg4+hJSoqNv2lh4/iBO3dqgC01IIoUqUIhDiFNdq+OiZN7aZYZjNaNQr3bJo9F",
-	"1KbVSlt6sm5CrDp6zk5kl0ghypIYRB4IgiRnV84494Rf657sIPMabrFXzlV+GZqHpQbsTUS3XP/xBw0N",
-	"dpyvxJ20GE+8Q5IjL3mMpdzIHojskvlGriIjFeMy7K0W5HRZ7oPychKwSWD8E8QohHtmf8f0KBmu1NQp",
-	"LSyTYfNt1jcrdApNf5cgfJNE+S42qvIRmZgZYy4nlSRrk11Q0kLuCnrYk/lEKdZumG+ow65wDBprxVID",
-	"vbRi6fWWs9aKjCce8GL4qHjKq1JR5zS18rnn9pk55SLI4ovKIvuZ/l6IzGyS83p9psRRil0qKo1q1Yfq",
-	"ewrZyuR3JGImBA94WQqDcB0GrXJetBpwY8nR8ZwbUxxcH+pKo91AdCUPW/tyUprUbl89CatUEw6NSnh5",
-	"9H50l8V1U3Kh9oHPYrbVekC/7hHx89dtUdTywHYV16UraJr2Xymt26nVXwMlvRVhzfv3L1AllkzSUqrG",
-	"DuBoacflUyncT998dYa4biVTdDXbvq5tXyUDorFe6rKMzw4i09I7QxnYfUTebX6PLvQ+tvu8eA1uz9uj",
-	"r3k9Uy4kaZn779Tys70/nr2vCuKyDH4VkhpAVy/jaZr85bSwo9r8Cim99abS1mz1c6u/nM65Cz16enL5",
-	"VL7GqW/5uwNet75R+pptf9e2v5oC2VxFdVn/ZwiTiamgoTYA/eTevQWYgOT7bALm1ewE24A+GLRc4JbK",
-	"swJm9pVMPX8OWG4fhEtEsxZnK41baQxeXhJ7ID6NySYQvXxi/7E140bDt87umZA2236ubL8GjA5tB5wV",
-	"whwZD7PCHdKQcAVkW9VbJDwxsyVE/o9zNiXoGFwCmzY4GxLckKDQOqkdwcC8fKL/2loRYyG7uw6lbLYh",
-	"HNkQDfAc2oQ4I3g5MiBmNTuY+eAKwy0KV1zc1zuRLErP55EjnkdKMVzYaaQclw7C5btDuieR6uNvo55D",
-	"CkL6K03R0myUijNI9WW3Vszo6MTlk/qglYG56QhqGoaA6Gm2G52fO8qcNqbKqPPM8bzgMSllM9hpo6W0",
-	"LdTIsnj0rhYpH+nns8YKf2TvEpDCpDEWVNIcsZRmtUi5JV/nNedcoUXFNxayMpykzZk/cJLOuDpXXBHp",
-	"DQsr8XwBT8rY5Td4rxSfHQfjOQ4UOVyW50DBowbGiyc7NF0H6mvLo7oOJCG9XQeypdl1wF0H6kvu7ZjR",
-	"0ovLJ/WNF33fgSusdSsX2dO83rr2HUjRG2ujLt/BmcFjUtpmKN+BvbS7jxZHlnefM8J5sRo4OtkWd83r",
-	"l3zOS9Ow/6SWny378Sx7VRCXZdqrkNTAufKQnaZxX3oSelTrvqDEQXYm0dRs33P7vvRWewdw9DTk8qn0",
-	"/KG+je8Mct16puhqtvJdW/mF9M0VU5edf3YQmZbiGcrU7yPybmN/dKH3Mffn1Wtwg98efc0LWsbf7tey",
-	"9+9k4dnYH8/Yl1K4LEtfIlED3KKsrpEvWDa2iS/o6K0iRUOzeS/utRYSboWLhiZcPon/Gln1jjCmobR4",
-	"R7NF79qiF3I31UBd1vxZQWNKGmYoO95W0N02/Kii7mO/z0vToLa7HeKaVysMAXsfXWtt+gUlO/5U66nt",
-	"H94C6f1nlKT28Kpbsk6NKp333EiHGAMiROewiqMw/uYB+jiyt0bJzuZZCGVD95miaN7MjbeZoxK4rI0c",
-	"VU0e4HPAw0nXaxm1+zc2hwSXkvG11y1Eu8vXXtcRgmB1qGiwkRdURo/QfN2QqrPTiABDVfPNeBpnNZyG",
-	"cUaRlEK0Yw4nuydcMNylEcB67tPPsvC84o654nIpXNqqy4elscMQZXXdp4JlY7tPBR2996iiodl9yt2n",
-	"uJBwK1w0NOHySfzXyH3qCGPd6kR0NLtPXbtPhdxNNVCX+/SsoDElDTOU+9RW0N3u01FF3cd9Oi9Ng7pP",
-	"7RBnvFotsxzt4UE3Y6KQ1R2tdQ6YbSHfGXJZc7NpJU6mKTtoGq/hzCwB3OUT+4+V6TUOjDW2mZSu2V5z",
-	"Za/VAHK4lfx8QOVi+Z9V6WCmQG/UmivVPcgjbGoM/EEqna0tQKl3hl/a2mwJyJTJeYSHNgQYZpdP9F8r",
-	"M2AUAOsksM2j+Y0Fd/mRK1gczgY4F0S5sABmBTpUMuSegG1WpXlGEWkQS/Ulg2i802PS+xxL5SqWikjf",
-	"RSzVF4qi+WR3vJNdKoHLOtWlqsl1LNX42muOpZpCLBXVfA5iqWY8vfRYKook/VgqlMcxN7kaV9VPvIwp",
-	"ruYFskaQnJmO1kbnqxzYgzACDxH0kJS6QA77pTNSiY3Qt3aDsfr2OoTVd2V8TClvimBsRSDKTF4+sf/o",
-	"+ZukrMxmNqs2e4Cc5zE5lnC2BQiuyFwq5l5jjM5ownQ746aVZkRHIi3uN2cysXKITUuVXkjqj1YtLC8D",
-	"NlpTdhe9ZluqRnwub2wNaElhLnEBGPJ3pxXFb8VY2lCktv20J7Uv0H7CjKVHYpCzdvlE/tGzm6zuLNGr",
-	"RrPN5DzUuU6qLWbSKLJzOaUmFoBcz/4Wm8iJAKzsoemoxUuJBdbUqPK4T0+1/oKS3a30XJ0UKLQ663o+",
-	"2HN1sMelz872jBS2sJhvBX56wGE+0rNeugT7L+tITyil0qle44LWcp5HWPQ5GV9jzYd5UzjME9quDUzN",
-	"J3mKOGckvdhjPIGh4iRP39bSDKIShpbVmbEDpM2xU8PETlnZV3YhU7Nx5cK4ehHBUvZm1Zj6aTaophQd",
-	"ZWlNzQCaw6E6jShpNDUuk3ZL5Lzq1YjP5Yo34MFdnpUDoMjfnQd3XNtYHtyR2vb6gtS+wIO7PCsduHMx",
-	"yFm7fCL/6B3cWa0FVJHPB3eOD+7qpdpycDeK7FxOqUkd3DWxv+XgzokArA7upqMWL+PgTlujGhzcES73",
-	"ObjrCxRSfT64G/DgzkhhC4vZ+uBOgcPsW7Jeul7QwV3jgtbiYSIssj+4c6exZj/TxA7ujKwj5mpSxDkj",
-	"aT64kz4nfVtL8yUZYWhZxdE5QNr8gMwwD8hY2Vd21wlm48qFcfUiXoyxN6vG1E+zQTWlJ2IsrakZQPOb",
-	"MJ1G1GPzqd3/wocsCb5B6n0oCfHtm7caKj7dILCCN0kcQ+qKH/WkKtjCHaSDfyTDecwy/17l268gXkUQ",
-	"UW49ioF7gUI8bQYGOQrxgc6kXyFYQeRf/XlPFs6fIEDKXyALA/oH6YUSw6ZfjiL/yt9inGZXyyVGh9cb",
-	"GMPvMHgN8yVIw+X+rf98//z/AQAA//+N2fculKUBAA==",
+	"H4sIAAAAAAAC/+xdbW/buJb+K4J2P7p1O3d2scinTTud3uB2prlJO1hgEBSMTduayqIvRTnNDfLfF3wV",
+	"Zb1RJGXJjj61sSjq8JyHhw/Jw8OncIG2O5TAhKThxVO4AxhsIYGY/XWZkc17tITX9Ff6wxKmCxztSISS",
+	"8II9DhZoCcNZGNEf/pVB/BjOwgRsYXgRikfpYgO3gL5OHnf095TgKFmHz88zVsU1RvtoCXHdV5IgWsKE",
+	"RKsI4mCFcEA2MAD02zvxpvz+DpBN/nntKYb/yiIMl+EFwRlsEGkW/ngFf4DtLqa/riOyye5DIectAaRR",
+	"FSktUKML+axJGe8xZA0Fcd1XgoUqoisF4SCNs3W1GvJXvkVLe13k1bx6G9JHa/RKfCGX++oX+tqHZB9h",
+	"lGxhQmobAvMyxi3R3nFqilZPqS2a7KIxP+Aio2LXN0WWMG+IfMOtGbKWciPkE96Ejxhlu1rx1/Spseis",
+	"tJPYrIaSyExGLu5VsocJQfixVuRIljAWW73hJLqqpSS+kpk34Rqso2T9KdpGdT2AlwhiWqTGZchnuXBL",
+	"uAJZTMKLt2/ezKSoUULgGuIDWd++eaPk+LxapbBFEMTK1EiiHlaI0iYIEwOjv+Ci3hns+HNja4ryTrYU",
+	"dZQsKWTldryBO5RGjVjEqoix+PkrTi3Iqyk1IpdbtCNLkvoBNsDssbn8rLib7KyKstzsZy7z7WIDl1lc",
+	"O+IGqShgLLd8wUlyWUlJdimvkB4CvNj8k/ajmgbwEoHsapWkgRVpYQ23cIFhfd9K2WNzHbHibhpiVZT1",
+	"w34W2kGYvEdxtq0bVWkB6pYWrFCdehAmbcpBmHzG9eRSfgdhjUYeej/xrML5hSBdhLMQJtk2vPhT/EW/",
+	"EN7NmpXEClEBM7yH9d4lZY/NrceKu1mPVVG2HvuZW+8L3O7iBi4cEFHAWG75gpPkspKS7FJeLv3XtMET",
+	"ZmkHP0gLO0n81xLBA1mpdFzOP0Cc1at4T58aS8pKO4nKaihplskoxc1i0iBuFpMO4mYxcRQ3i0mFuFnM",
+	"PNAzrxim5B1aRpBNdt9jCAj8GKN7EPNx6B1aPtInC5QQmBD6X7DbxdEC0HbN/0pp4540kXYY7SAmokL+",
+	"0UNBqURJFsfgngrKG/XjFdpGFL7kkf/0PNM5TmUdVYzFtG6meWvJCPoOE9vXn5VfRPdU6vCZ/lSEy5cN",
+	"lJRkCQgICKLzXj5/LuKBT5qp2ej0YVB7uejUVCl8qmaqE4ELR60s4RZp7bpHKIYgMVbL+JUqJx8d1Zov",
+	"ejgq+HuULO01FKN1xKr/TwxX4UX4H/N8QW/OP5nOc1k/seLOdkF7iHG0hA7ASDcwjs0Fv2XFjwQJbZWt",
+	"Iyq05aNhvREj26wi+ihtU7QmN+fpYa4rgDF4PNLYwmiGldiMilhKbYoLfdHSHhhcwY7w0F6z07Sb23FB",
+	"p422xSzWXukMHpPOu+icTzG6qlwuPTvq+h6DZLGxV9YS3hf8UNfhSVOEw+DMVnDtpwAxeLxH6LvrMODw",
+	"PgEkSx2mCtq8vmUWo03SPUNabc90hLJa03eFMlygrYkK3rGCHeZxzg6puDfYIl5hm2/8Lm92sM7e0rrC",
+	"kvmY5if5ZldH/OYtGtgX26Ns0AnkLMxw3Ps6R7591NW8w69Rnd86ktCt3Mtx1C5YkGjvMkleYJQM5T0d",
+	"jTuCkV9tEHa0vhTI1fpxjB6+eVgqAXidbWWElp053Om0plzbSg7id1pgUYzEMf4GY3sI20tZCBVpkVEP",
+	"+zjSpKC6U3uZLYybL83E1qT56pDsx3zv0npFi+0ldf8q22zqeUFKbbRaejiuGecdAg++Ydh5gtSVtYsm",
+	"EYnh0ZY9c4j1v+bpCjHWDVwX3s56mso13jcR7mzHr6nz7CLnvypihjfDlggtt3yzS1W3AnFqXx/cgii2",
+	"N9wqi2PHTX6Qpg8IM+itEN4CwmIhxI8z22lrCvExFotZsEw7nHj4MfcKv2Dkuk0v9mur473yj/+pCt51",
+	"2l0/3A7OkjhKvre16xrirWu7IN5WE7uuDZ7xutzaTatg4cfV7abewYMxKYTaG8ZKdWtOAZstNmQRYT0a",
+	"sEMjrUxXaGu93dje/2VGNq7t7OS0Gv1RlQ5YSc013nXetE+pHkBGNvTPRY1XEh2XAcADkJkl2hvIi911",
+	"DE0pxv3Uo1lvkwdA17VpVgf1ysZ2hHR1m+tRLdo8Xn8kG2TokbT2nKZPqmxvvf2+7pZT2OVYl8szZpwG",
+	"s73AsMs2nVxjtIqctw6mqYlrUCc1QhejeYiVPb1gV0O9TMGuLyrY1RAVU7DrSwt27Q6MKdi1x2DXOqVP",
+	"wa69BbsWVD5FCE4RgqOMEDT002cQIXgKsVDDhBGaYmAKI/S/LjKFEZ5zGKGh9acwwtMNIzzJIMDjnSua",
+	"IgVPPlKwoxObIgWnSMGeITZFCo40UrDNjl4jBV1DA6dQwMFDARvwkkI86ogb1g7TcBvVmlONtalobUOg",
+	"RgrxCURxsjaZB3FqrTrlGM7KVtfZkn0y3aEk5VJfLmhNv4IohssPGPPDU8YaaKIfvyMSrcSrVaLzb1JZ",
+	"+bktGAAmC0vzjWGKMrxgtOUyxhAsHy8JAXQ2flwpb4QgQZQGgAsSACEJFe4dWOZUIj2ubF8TkJENwtG/",
+	"4TJ4iMgmeMAoWevRkCwFNIuv+kAnqumNsL1LdMperiOY7VzS4iX2qU+D1YgXJeS/fw6rcgqLJMRmhQki",
+	"IDYqe9D/+IszlXxZpT4WTTbpkJfBAsUx5EhGq0C8qszAl1ytzNCkZV5tnYdYQgKiOGU9C4j1zEORfECj",
+	"N5Nykc1Bd6OaeIg6/+CQstmgQ757cKLAhy0UqWjSE/tor51RjEvmptP1cBwDKhFtLFg4QJEb0nsHF5Yy",
+	"6d9raVR1wOGM8GRufj4BMgeeYvRl1JkiiX/QHkb8fWk5b1br2PlOfLAWTba2QsrvoSB08hzfQryHuFda",
+	"NwsJ/EHmG7KNi3UcThZK4t+iLQwiIWmQMlEDyGTlV2mAOFp+Qd9hMhSzX8MEYkBggHDApKH/55u28lCS",
+	"d095mZHNF/6JsmgfhUBLLgVnzfDHLsJsyYvNN35HZPi5RoJIYZ5BhVJk/8jTDJYXXYikZBBC/YqyZDnS",
+	"/qH0SSVfUUFDfshmFcXQO+5EvbWhthnGMCF5dDofs8P82E8+j/QuW161GYXQ4oLRKgCS31QK62OY0mes",
+	"pmOV3qYjDljaak4LGhSD9T7E6eqyGef045Lc4GUDa3vn3uGo1W2GRz1aswaQpbjjPqWWoeMGsidV4b3t",
+	"bWCbdn02QewKdm4BD5Ztb4CXpSatOptQ+RfnGAoKs1qu0iqodw0vZilxFDZ1XXyst6PMjuvfz8iazdy7",
+	"irKrcyuyOi+gU5WZAy9vzksDX64sGwBKw9ZjcNCVjoZlxrO2qsMSSSFFgz57kZGQEfRhzSivzdikKhbz",
+	"xdlT15aNUbX3azuq0q73wUKzm8lgkZ94qRktPmdkl9nRfyOc8forVokrhY/Rml2yKiYyKiF9jfAqYNZP",
+	"PxoR7LHWMvONPBU/fKTNPF1Iqx09rYLavpS3yv9GsKYwo83g/PBQLSL9L5Q1hbMU5auQZyw76LUKG/9+",
+	"ukXvPe8d+Fq0yWNc3vEmK/YzQ5K1nRnq1PzBGHe5Wo+BvFy+fmZHMjzeO/pkxWboU1HhNegrHhTpTVh5",
+	"QqeTyOIW5RbJ2fmD3gQXh3w6yc1vzW0R+8y6u2x89zMux+nuuXw23V29XdvdfcXqnORk1yZep3YBp/+I",
+	"HT3Vob4Ocgr2M1fy6QTi6SF41xjtoyXE70Ec34PF9xqT2MYVmASRSBGukohUhUfYfjuPrYmSiEQgjv7N",
+	"Mruxj+kfvuF3nHtu+g1cRpjCnqCAsMFrFSVwWSmBj54g6+2EWCWJd8jm4thAFGRkE+RVPM/CG7jCMN0c",
+	"NwZKfLQRvrfZYgHT9DeYpmANjxZqdB2DKAlS/vFgK77+PAtZY4YNFUsgC6+jehIHe1TE6AD7Fw3RqiOK",
+	"vjVpxVG2LfLTbmlYPPl1XuN1Iyka2n5O47t+yk3Z0LtHEA0yCYph+hFyjBpE/VLwIbi34tx/8JjiCA0W",
+	"4ayimjHnW0wqiKPVYy+jFa+6SqTfIAHs8CedaW4gJxsi1FqspG0BP/KpRr2K2AjKAtJvoIgt2sBXJNry",
+	"c91g+TmJHw+u87FN3NVcXRlL9LUyZGahppyq6FI6jvffKv3EfbeGqTer2qZFuh4mUgl/Q0sYUyBiuMMw",
+	"hQnRoju5z/WpiedZaJAUiV3eK5NlwCTb0iZyVcl8yDKh813FF/ymem7O4myZ9t97XmeKHpY6wcU4eYoZ",
+	"HTONiPokdd0BVgE30KzhbpiO98CUpQ4+iW80yH4rLdBFdgm/DrLvcLQHBH77Dh/9tO1WyFBqmx67atIu",
+	"LVxz0L5efzGpZd/yntW7347nP5+3jpwPBSs3gUY0viN0RFR6GUF1CYQdRoE9wDxOudLzt/cirbHBrRS7",
+	"SSVcvV01wsx5cgr5Q0hd1sfe2KPsq3wJz8yhi62yZKuEP0sYQwIrWwEIwXrmyVwwH06K1/ZtGaW7GFR7",
+	"aFGk3Uaf73MnJF7ixQstz0fWogNW0V1yseJbntKF/y0uVZIZe1QsWz47/qay+Yi/5T1MqqY8ZEfFPmhb",
+	"0do2lZhjqRrZH3k9BzdZlZ12rUbHcKESa4yzhKyWDUiWLnn5WCXtbaSz5U4JamUP39c5fgU3o56tgdMs",
+	"g7en/rmE94WBV6PesMh3rJ1qTUpVuyvTXWlLZY0pASRLKx+p7tplr9sqN7LvScYHDVIldH6UCSNakal5",
+	"vFHx1yNliPdpkY9CldXWuM63782MEmgpybwbp1tGET5+thuUvcCtKjOyqRuj5Z2GcihHD3zsFD/zPJIN",
+	"I2KH3XJLD+IFDKXcgFSKgkh3B4gJrpWdS8jJw/NNYHPAaEoXnXQ71d39cpSme088jWeLwnKceWPs89M6",
+	"TC/ouBMtwlnIchN0mGJYQ1ijp52C++3zih9tUe1KA3epnxT2DEpdhe0mR4tAJl9ku0gsV0sagGQp9xHY",
+	"SbvDnsOLGa8t5JsiVasg23xLv6zgirHtkLfIzaIW0lrQRoW2xCEaE5eCeNGGybhJl3Xu9lBn28anRdVb",
+	"JtcVyLIU05ouP0sFlLQoc46YqFEkHqmc2++btiw0vq4yLRsUzcim207iZUY23BFU1t0tHb8Xiw+dF9ol",
+	"JsSLFk1HnX4SWO9ydDutP1iHT3jRoY/VZR+pvIUzuVZuoMqbGE8P+pwYOO86HIcNNHBmFYRoospCWGBJ",
+	"odoSV/tKC472/KPtOl6gxKig+X62phfZlJJibgrksFU1haXOoy5ajZrke99u63NnrPIGPB0vN7qRy4jh",
+	"C9xGaJFr4ePdCO1/BaHWljV35fn2ijfSCCVLqqN5JrbUtjMMbwvx1vFR4rQWfbTOebrrxrfaXtUhSr5o",
+	"rWpFibbT1fHivOY78Rquu/O2KdJwHVZ5Z6RDwjOXK/LUhJXHUlr3gUhfMzTO2WJ78d54NoDGtfY10E14",
+	"fsJpBrlNT/inL7lbqfVPQkldvJQ4i1ym+C2+wH7tVxRNsu19vvGh9ik7rQY3XH9Xf7Od70vrqowU3Eqt",
+	"1trKPAZIO35dFQDkzAH2UpL6wVG1qzaap4j2js2ir8xq0+8ea7LjewHqEPra2pO4OK8T2N0v2ysbkyu+",
+	"ZMyvqeHsJo8DGtPdedMyr/sy74mvso5sgfNrWj39VNgz7WxsYa6X1YSdtjxYMdCu+p+ls5z+l7x9lZoy",
+	"j97Jj1a+9CgRXx3B9Nhdt7jDqiNHPDBEKe3uACC10UT6PokxRvrcMniRoT7DoKU6jIjhpWFHRAtKqI6N",
+	"AHGQEpwtSIYhBU+6QQ9aVISIlSiBZxXBuPrUTm2gg+4HNbHK51DZRCnDEXm8pbrkH3wH0mihDm0yysR+",
+	"Ua9vCGGu6B0EmFsnL8l/KhX9OwRiNKBcLNzwPyU/Df/v1eX11at/6HMcsIv+IVNhRckKyYAIwJErKE24",
+	"hj/g4n8f4P0m2u0i+HoJ81qp1n9AKjhboWfCpBfzOXvnNczC8jHc6yue8CNS93SKSmYB4Hf9RAstxSll",
+	"vhTXrOQVeM8OAS+gOBMrxLjcgcUGvvrp9ZuCJBfz+cPDw2vAnr5GeD0Xr6bzT1fvP/x++4G+8pqlMNHj",
+	"H7k8wecdTC6vr8JZuIc45eK/ff3m9ZtXIN5twFsW37+DCdhF4UX4N/qEQgsIMjunQ/9cnUPcoZSplQKP",
+	"geVqGV7w64vEGCpO/8orZKv6Y14koo2QL7NXDm9l/enNm/pqRLl58fqk51n485u37W9VXVj6PAv/y+SL",
+	"Vbdi6d0kvPjzbham2XYL8CO1bUY29EMLOgMSR+aD+8fCBaWzkIB1Sl0Mo1t3tD6u/kLulzWsskCUEpVt",
+	"JrTRYTlXTVN7foVkseGnq/cgYpT0MKlLfXMwT7tS2xiRlkUBqmtTDnPJmAKifE+YMxyUwoRM1Pb5efTg",
+	"Hq4QhkFERNaZJq3t1ZnuSqXxI9/WOjs4qT8GlXGR+MgXkUeZbQLkXYm6Vr6ZV6+2J4nI5/lCJMGq1aHM",
+	"kqXt2+8ABltIWN/7s7pNeRGWmEC+fE1/Dp9nRi/dEkBgpzfeo6V84e7A4H978z/m/b2UGYyZ/uf2CopX",
+	"ntG33v5k/tk8G1iTm5HCsXu8AU5hdaotI+vLtBT1Xoc992l7J8Mcpi2ztEuDdsUXmE6xls7MTL/5lTW1",
+	"I5J+33Znfd5CgBebf2YQPxp3jGuwjpL1p2gbkY7vfGa5WGrsZuRBKy8XZ0b7m5HRDi819OdI+WAN4lje",
+	"wZ3bkx9y5QbNYyzrDcqLHMOUtwiT9yjOtkmnVz7jLq53ULwU86WNDCk5rVtLm0vM8HWoOzrfr5wNvGer",
+	"GHLFpPN8QHvdfkZQvHraTbc//2Qwrh3mX/JnE66PAAQJfFCri4e2yPvv/EkuYj3z9QV2Fr1kpF/Y79JI",
+	"3bozP0HnAP2DnIrMPAavXbKz9zzjVG4dB8Na0RxPZuUGCECQ7uAiWkWLWtvOqv3x7QY9DGQ/r71rSCMI",
+	"f2diA3FGp2iDr2zl0pMVOvpJ7dsj8ZN2s4ZhvSvXogkEKl3sXD9YYeBrf8Vom68NHxcw+sHnXzByQE2V",
+	"/z42bEwmm6X7yz3iJomj5Hueuz5YYbTt6sIVpZYZWJ0wMZt4uLULLKXAPf1BLY5Vklh1fz6d3TcMcZV0",
+	"nvcgpqUvaAy+6xri7fn7rssYQ7B8LPmvgcdLLo/m95oRVUWaqP2igt+b4DTIUDgO6iWBtIN4y1NKd2Ng",
+	"KlGzIf0SUVEDAI5+eSJevogX20J1Yl0sX/lEuQaiXMVs8WfBt5gr8ke2hvVUE80aA81iXs6JY00oesns",
+	"isebGlErEf4+T2G8qt0FvN2ghzxxhlWYEX13jNteov3qdhNxfcQO4hQlIA7AYoEynn9UaE8eGGhZH9b1",
+	"ZbXIKyqw70d+tT4OZD+iDAfoIVF2ixIeOixCWEs20jGuUgBUgpyFM7mgvHhJ1ygwfgMJjuCeRx8m7JQw",
+	"XOp3ozSoTK1wN8Ue2i1gTvy4urv6XI3sMThgl9tdQw9b02kLELjW0nhbhQiICpy8YuFa//MJE8gPmJSt",
+	"ovdpFh8nzjAYhAvYLtfJlbYpZMBzyECTnWeNBG4oO3ruc6MKHmi2RjNB9GUPW345Kk96HoEEVk54rp8I",
+	"MWBc7wsHSFzgM61lujg0zQ7ntaap4fHgtv4yrgvJAg35X+F6tmO7vxpJnB1hXtVLdokFSlq4LKgFOEbe",
+	"cf5USLpiTl+9Ia7dyeSfmrivb+6r3WTY2S+1MeOTg8i4/E5fBNvF5O30e3Cju3D3afDqnc/bo69+PNNS",
+	"VBrR/Q96+YnvD8f3dUOcF+HXIWkAdD09qyHlL97iOijn10Rx9ptaXRPrF6y/eCtoG3rM/OT8qZjY15z5",
+	"+wNeu7/RvjVxf9/cX7+guLuLamP/JwiTkbmgviYAbnZvnwKMwPIuk4BpNDvCNMAFg5YD3JynqU7rM3DV",
+	"kRp1MfwpYLm5ET4RzWucWJpgaRxeAUoCkByHsklEz5/4f2xp3GD4Npk9U9Em7ueL+9VgtG8ecFII80Qe",
+	"JofbJ5HwBWRb15vfQ9GNS8hbGE6ZSrA2+AQ2q3AiEoJIMGgdlUdwMM+f2L+2LGIoZLe/wySbOIQnDlED",
+	"z74pxAnByxOBmNxsb/TBF4YbHO7eeDdyP9p9yDFsEe7PcHNw37gtqKcTrQGXzIlvBrC89LTZPSCSlRnO",
+	"DM2qXSbuUxY23uZWLwy9yS0FcR+RZU3TjEducGtGbsaMiU+cP6n/d5vLeIKaAcuUX5omJd43tdV1MV2d",
+	"UeuG9mnBY1TOpretbEtrW7iROcqImLBWIuUze3zSWOFNOAeg8JYMhZRdhvlFYZVAuaZPpyHnVKHFzNcv",
+	"svI7JIx4y68Ybe2yZ7tTZFED+/yUlc9XVj4GAJ6Wz+Jwujb1t7xqZJr2+5v2e72hZCRTfu6gCjn6Wo7t",
+	"N+TpE3r6gsbgw6Z8fWPI18f9Xzuq6pP26TadIPWik/dxMOXZ++wySkTJHiYEYXFPcNvAe6UVn0bf4UZf",
+	"zQ7nNQRreDSYd8jSj6bL7lfqhYGX3ZUgzsvuqqZp2V0su0eakZsxY+QX50/qlU7r7r6w1u5c1JemRRDf",
+	"6+7K9J29Udu6+4nBY1Tepq91d3trt8d8DWxvl+CtabDq+diYLe7qxy8MdyiNzIn9jV5+YvbDMXvdEOdF",
+	"7XVIGuBcFTcm9zf5GwOz+1wSD2kzZVUTvxf8Hut2bgGOmYecP+UvdeL43iDX7mfyT00s3zfLz63f3TG1",
+	"8fyTg8i4HE9fVN/F5O1kf3Cju9D9afTqnfDbo69hQMuSRNx22Mr2RdGJ6A9I9LkNzozj80aZgJqVNKb2",
+	"vPTQtJ5J4e4UWTUTnZd0Xtq2ASStXm/+xP/Tjb37QJXBCM0+M7F276yd6bWbr2ll66cCifH4kt4YuoV5",
+	"DZj5UAZ2YuTTwNMbE++MsvqxKF1s4DKLzVbcb1XhiYUPx8KVFc6LhyskGgBbljXl4lJlQ7NxKYezW5QV",
+	"TYxcpvzLLdwIFwNPOH+S/+3EzD1hzMBpiQ9N7Nw3O5d27+qB2hj6SUFjTB6mL55ua+h2rj6oqV34+jQ0",
+	"9crZ7RBXP1oRuN3FgJjx9i+q8MTbh+PtygrnxdsVEg2gLcua8napsqF5u5TD2TnKiibeLng7yS3cCBcD",
+	"Tzh/kv/txNs9YazdncgPTbzdN2+Xdu/qgdp4+0lBY0wepi/ebmvodt4+qKldePs0NPXK2+0Q13m0mqcZ",
+	"3sNH0yzm0la37K1TwGyD+N6Qy6ubqJVcEmXqYKl1+6NZErjzJ/4fK+o1DIwNpplMromv+eJrFYDsbyQ/",
+	"HVD5GP4nV9obFXBGbXenugdZTLqSgT/oSyfLBZj03vDLapuYgLrGJItJ30SAY3b+xP61ogGDANjkUoks",
+	"nu4983dnSQmL/XGAU0GUDwYwOdC+LihxBGy9K81ScfjFOLno13SQIwWiBvr1KbWor9Si1Po+Mot+Tadz",
+	"UcPu7DILnNeuLnNNvtOKDu+9pqSiY0gqyjyfh5yiE55eekZRhiTzhKIm540/xugexLbHjadhssKcBZV6",
+	"Gif7OgesYcfwvK/eutB6OUyvxd6j6LX4IiQjWshas+aVj98WDjpZHa89MGK3Tj+dlu3ztKxm53QDMFwa",
+	"Ho8d2KR9dMURHnZtsU7DWp1n+1itoY3X657TUdU6T63Wv2rJmN3axkTCKsznc5HCO/kCexDF4D7mjF4n",
+	"YfTvVgomJoKW1Iu+bd/56dtnSLWytNBvhRlUr50/0X/MuJXVNJ3NridG5ZlRVVu1gUQNYjufXWpUlKlO",
+	"/Q0syYsBrLjReNzieXAhY49qfOsg1bH9lYOuIEkhni4b7OuywU6OWjJlyzsGNSBM+4DWA9YLuV2wdghr",
+	"2ACk6rG9VNCXl5p2/kZ1nWAnJsQ3/ZQpJwxN9wey7T5zRiXjr8w51bXaSjw61sSnJ17li1cJ6zswq2uJ",
+	"n4lbDcGtpPrPi11Jp+SJXw3vsSaONQaOJb2dPcuakPTSmZbEUCvXoi/DRYYj8sgQ8ncIlhCHF3/e0SHi",
+	"HQRY+wuk0YL9cUffoiJwWGU4Di/CDSG79GI+J/jx9Rr+gIvXMJuDXTTfvw2f757/PwAA//90WTbh1cAB",
+	"AA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

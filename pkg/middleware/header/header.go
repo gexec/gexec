@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/genexec/genexec/pkg/version"
+	"github.com/gexec/gexec/pkg/version"
 )
 
 // Cache writes required cache headers to all requests.

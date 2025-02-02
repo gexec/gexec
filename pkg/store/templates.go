@@ -9,8 +9,8 @@ import (
 
 	"github.com/Machiel/slugify"
 	"github.com/dchest/uniuri"
-	"github.com/genexec/genexec/pkg/model"
-	"github.com/genexec/genexec/pkg/validate"
+	"github.com/gexec/gexec/pkg/model"
+	"github.com/gexec/gexec/pkg/validate"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
@@ -69,19 +69,21 @@ func (s *Templates) List(ctx context.Context, projectID string, params model.Lis
 }
 
 // Show implements the details for a specific template.
-func (s *Templates) Show(ctx context.Context, projectID, name string) (*model.Template, error) {
+func (s *Templates) Show(ctx context.Context, project *model.Project, name string) (*model.Template, error) {
 	record := &model.Template{}
 
-	if err := s.client.handle.NewSelect().
+	q := s.client.handle.NewSelect().
 		Model(record).
+		Relation("Project").
 		Relation("Repository").
 		Relation("Inventory").
 		Relation("Environment").
 		Relation("Surveys").
 		Relation("Vaults").
-		Where("template.project_id = ?", projectID).
-		Where("template.id = ? OR template.slug = ?", name, name).
-		Scan(ctx); err != nil {
+		Where("template.project_id = ?", project.ID).
+		Where("template.id = ? OR template.slug = ?", name, name)
+
+	if err := q.Scan(ctx); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return record, ErrTemplateNotFound
 		}
@@ -93,14 +95,14 @@ func (s *Templates) Show(ctx context.Context, projectID, name string) (*model.Te
 }
 
 // Create implements the create of a new template.
-func (s *Templates) Create(ctx context.Context, projectID string, record *model.Template) error {
+func (s *Templates) Create(ctx context.Context, project *model.Project, record *model.Template) error {
 	if record.Slug == "" {
 		record.Slug = s.slugify(
 			ctx,
 			"slug",
 			record.Name,
 			"",
-			projectID,
+			project.ID,
 		)
 	}
 
@@ -108,7 +110,7 @@ func (s *Templates) Create(ctx context.Context, projectID string, record *model.
 		return err
 	}
 
-	return s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+	if err := s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
 		if _, err := tx.NewInsert().
 			Model(record).
 			Exec(ctx); err != nil {
@@ -146,18 +148,38 @@ func (s *Templates) Create(ctx context.Context, projectID string, record *model.
 		}
 
 		return nil
-	})
+	}); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      project.ID,
+				ProjectDisplay: project.Name,
+				ObjectID:       record.ID,
+				ObjectDisplay:  record.Name,
+				ObjectType:     model.EventTypeTemplate,
+				Action:         model.EventActionCreate,
+			},
+		)).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Update implements the update of an existing template.
-func (s *Templates) Update(ctx context.Context, projectID string, record *model.Template) error {
+func (s *Templates) Update(ctx context.Context, project *model.Project, record *model.Template) error {
 	if record.Slug == "" {
 		record.Slug = s.slugify(
 			ctx,
 			"slug",
 			record.Name,
 			"",
-			projectID,
+			project.ID,
 		)
 	}
 
@@ -165,11 +187,13 @@ func (s *Templates) Update(ctx context.Context, projectID string, record *model.
 		return err
 	}
 
-	return s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-		if _, err := tx.NewUpdate().
+	if err := s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		q := tx.NewUpdate().
 			Model(record).
-			Where("id = ? and project_id = ?", record.ID, projectID).
-			Exec(ctx); err != nil {
+			Where("project_id = ?", project.ID).
+			Where("id = ?", record.ID)
+
+		if _, err := q.Exec(ctx); err != nil {
 			return err
 		}
 
@@ -195,10 +219,12 @@ func (s *Templates) Update(ctx context.Context, projectID string, record *model.
 			} else {
 				current := &model.TemplateSurvey{}
 
-				if err := tx.NewSelect().
+				q := tx.NewSelect().
 					Model(current).
-					Where("id = ? AND template_id = ?", survey.ID, survey.TemplateID).
-					Scan(ctx); err != nil {
+					Where("template_id = ?", survey.TemplateID).
+					Where("id = ?", survey.ID)
+
+				if err := q.Scan(ctx); err != nil {
 					if errors.Is(err, sql.ErrNoRows) {
 						return ErrTemplateSurveyNotFound
 					}
@@ -226,10 +252,12 @@ func (s *Templates) Update(ctx context.Context, projectID string, record *model.
 					current.Required = survey.Required
 				}
 
-				if _, err := tx.NewUpdate().
+				up := tx.NewUpdate().
 					Model(current).
-					Where("id = ? and template_id = ?", survey.ID, survey.TemplateID).
-					Exec(ctx); err != nil {
+					Where("template_id = ?", survey.TemplateID).
+					Where("id = ?", survey.ID)
+
+				if _, err := up.Exec(ctx); err != nil {
 					return err
 				}
 
@@ -245,10 +273,12 @@ func (s *Templates) Update(ctx context.Context, projectID string, record *model.
 					} else {
 						current := &model.TemplateValue{}
 
-						if err := tx.NewSelect().
+						q := tx.NewSelect().
 							Model(current).
-							Where("id = ? AND survey_id = ?", value.ID, value.SurveyID).
-							Scan(ctx); err != nil {
+							Where("survey_id = ?", value.SurveyID).
+							Where("id = ?", value.ID)
+
+						if err := q.Scan(ctx); err != nil {
 							if errors.Is(err, sql.ErrNoRows) {
 								return ErrTemplateValueNotFound
 							}
@@ -264,10 +294,12 @@ func (s *Templates) Update(ctx context.Context, projectID string, record *model.
 							current.Value = value.Value
 						}
 
-						if _, err := tx.NewUpdate().
+						up := tx.NewUpdate().
 							Model(value).
-							Where("id = ? and survey_id = ?", value.ID, value.SurveyID).
-							Exec(ctx); err != nil {
+							Where("survey_id = ?", value.SurveyID).
+							Where("id = ?", value.ID)
+
+						if _, err := up.Exec(ctx); err != nil {
 							return err
 						}
 					}
@@ -287,10 +319,12 @@ func (s *Templates) Update(ctx context.Context, projectID string, record *model.
 			} else {
 				current := &model.TemplateVault{}
 
-				if err := tx.NewSelect().
+				q := tx.NewSelect().
 					Model(current).
-					Where("id = ? AND template_id = ?", vault.ID, vault.TemplateID).
-					Scan(ctx); err != nil {
+					Where("template_id = ?", vault.TemplateID).
+					Where("id = ?", vault.ID)
+
+				if err := q.Scan(ctx); err != nil {
 					if errors.Is(err, sql.ErrNoRows) {
 						return ErrTemplateVaultNotFound
 					}
@@ -314,25 +348,34 @@ func (s *Templates) Update(ctx context.Context, projectID string, record *model.
 					current.Script = vault.Script
 				}
 
-				if _, err := tx.NewUpdate().
+				up := tx.NewUpdate().
 					Model(current).
-					Where("id = ? and template_id = ?", vault.ID, vault.TemplateID).
-					Exec(ctx); err != nil {
+					Where("template_id = ?", vault.TemplateID).
+					Where("id = ?", vault.ID)
+
+				if _, err := up.Exec(ctx); err != nil {
 					return err
 				}
 			}
 		}
 
 		return nil
-	})
-}
+	}); err != nil {
+		return err
+	}
 
-// Delete implements the deletion of a template.
-func (s *Templates) Delete(ctx context.Context, projectID, name string) error {
-	if _, err := s.client.handle.NewDelete().
-		Model((*model.Template)(nil)).
-		Where("project_id = ?", projectID).
-		Where("id = ? OR slug = ?", name, name).
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      project.ID,
+				ProjectDisplay: project.Name,
+				ObjectID:       record.ID,
+				ObjectDisplay:  record.Name,
+				ObjectType:     model.EventTypeTemplate,
+				Action:         model.EventActionUpdate,
+			},
+		)).
 		Exec(ctx); err != nil {
 		return err
 	}
@@ -340,6 +383,356 @@ func (s *Templates) Delete(ctx context.Context, projectID, name string) error {
 	return nil
 }
 
+// Delete implements the deletion of a template.
+func (s *Templates) Delete(ctx context.Context, project *model.Project, name string) error {
+	record, err := s.Show(ctx, project, name)
+
+	if err != nil {
+		return err
+	}
+
+	q := s.client.handle.NewDelete().
+		Model((*model.Template)(nil)).
+		Where("project_id = ?", project.ID).
+		Where("id = ? OR slug = ?", name, name)
+
+	if _, err := q.Exec(ctx); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      project.ID,
+				ProjectDisplay: project.Name,
+				ObjectID:       record.ID,
+				ObjectDisplay:  record.Name,
+				ObjectType:     model.EventTypeTemplate,
+				Action:         model.EventActionDelete,
+			},
+		)).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ShowSurvey implements the details for a specific template survey.
+func (s *Templates) ShowSurvey(ctx context.Context, template *model.Template, name string) (*model.TemplateSurvey, error) {
+	record := &model.TemplateSurvey{}
+
+	q := s.client.handle.NewSelect().
+		Model(record).
+		Relation("Values").
+		Where("template_survey.template_id = ?", template.ID).
+		Where("template_survey.id = ?", name)
+
+	if err := q.Scan(ctx); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return record, ErrTemplateSurveyNotFound
+		}
+
+		return record, err
+	}
+
+	return record, nil
+}
+
+// CreateSurvey implements the create of a new template survey.
+func (s *Templates) CreateSurvey(ctx context.Context, template *model.Template, record *model.TemplateSurvey) error {
+	if err := s.validateSurvey(ctx, template, record, false); err != nil {
+		return err
+	}
+
+	if err := s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		if _, err := tx.NewInsert().
+			Model(record).
+			Exec(ctx); err != nil {
+			return err
+		}
+
+		for _, row := range record.Values {
+			row.SurveyID = record.ID
+
+			if _, err := tx.NewInsert().
+				Model(row).
+				Exec(ctx); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      template.Project.ID,
+				ProjectDisplay: template.Project.Name,
+				ObjectID:       record.ID,
+				ObjectDisplay:  record.Name,
+				ObjectType:     model.EventTypeTemplateSurvey,
+				Action:         model.EventActionCreate,
+				Attrs: map[string]interface{}{
+					"template_id":      template.ID,
+					"template_display": template.Name,
+				},
+			},
+		)).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateSurvey implements the update of an existing template survey.
+func (s *Templates) UpdateSurvey(ctx context.Context, template *model.Template, record *model.TemplateSurvey) error {
+	if err := s.validateSurvey(ctx, template, record, true); err != nil {
+		return err
+	}
+
+	if err := s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		q := tx.NewUpdate().
+			Model(record).
+			Where("template_id = ?", template.ID).
+			Where("id = ?", record.ID)
+
+		if _, err := q.Exec(ctx); err != nil {
+			return err
+		}
+
+		for _, row := range record.Values { // TODO: broken for dropped rows
+			row.SurveyID = record.ID
+
+			if _, err := tx.NewUpdate().
+				Model(row).
+				Where("survey_id = ?", record.ID).
+				Where("id = ?", row.ID).
+				Exec(ctx); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      template.Project.ID,
+				ProjectDisplay: template.Project.Name,
+				ObjectID:       record.ID,
+				ObjectDisplay:  record.Name,
+				ObjectType:     model.EventTypeTemplateSurvey,
+				Action:         model.EventActionUpdate,
+				Attrs: map[string]interface{}{
+					"template_id":      template.ID,
+					"template_display": template.Name,
+				},
+			},
+		)).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DeleteSurvey implements the deletion of a template survey.
+func (s *Templates) DeleteSurvey(ctx context.Context, template *model.Template, name string) error {
+	record, err := s.ShowSurvey(ctx, template, name)
+
+	if err != nil {
+		return err
+	}
+
+	q := s.client.handle.NewDelete().
+		Model((*model.TemplateSurvey)(nil)).
+		Where("template_id = ?", template.ID).
+		Where("id = ?", record.ID)
+
+	if _, err := q.Exec(ctx); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      template.Project.ID,
+				ProjectDisplay: template.Project.Name,
+				ObjectID:       record.ID,
+				ObjectDisplay:  record.Name,
+				ObjectType:     model.EventTypeTemplateSurvey,
+				Action:         model.EventActionDelete,
+				Attrs: map[string]interface{}{
+					"template_id":      template.ID,
+					"template_display": template.Name,
+				},
+			},
+		)).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ShowVault implements the details for a specific template vault.
+func (s *Templates) ShowVault(ctx context.Context, template *model.Template, name string) (*model.TemplateVault, error) {
+	record := &model.TemplateVault{}
+
+	q := s.client.handle.NewSelect().
+		Model(record).
+		Where("template_id = ?", template.ID).
+		Where("id = ?", name)
+
+	if err := q.Scan(ctx); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return record, ErrTemplateVaultNotFound
+		}
+
+		return record, err
+	}
+
+	return record, nil
+}
+
+// CreateVault implements the create of a new template vault.
+func (s *Templates) CreateVault(ctx context.Context, template *model.Template, record *model.TemplateVault) error {
+	if err := s.validateVault(ctx, template, record, false); err != nil {
+		return err
+	}
+
+	if err := s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		if _, err := tx.NewInsert().
+			Model(record).
+			Exec(ctx); err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      template.Project.ID,
+				ProjectDisplay: template.Project.Name,
+				ObjectID:       record.ID,
+				ObjectDisplay:  record.Name,
+				ObjectType:     model.EventTypeTemplateVault,
+				Action:         model.EventActionCreate,
+				Attrs: map[string]interface{}{
+					"template_id":      template.ID,
+					"template_display": template.Name,
+				},
+			},
+		)).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateVault implements the update of an existing template vault.
+func (s *Templates) UpdateVault(ctx context.Context, template *model.Template, record *model.TemplateVault) error {
+	if err := s.validateVault(ctx, template, record, true); err != nil {
+		return err
+	}
+
+	if err := s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		q := tx.NewUpdate().
+			Model(record).
+			Where("template_id = ?", template.ID).
+			Where("id = ?", record.ID)
+
+		if _, err := q.Exec(ctx); err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      template.Project.ID,
+				ProjectDisplay: template.Project.Name,
+				ObjectID:       record.ID,
+				ObjectDisplay:  record.Name,
+				ObjectType:     model.EventTypeTemplateVault,
+				Action:         model.EventActionUpdate,
+				Attrs: map[string]interface{}{
+					"template_id":      template.ID,
+					"template_display": template.Name,
+				},
+			},
+		)).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DeleteVault implements the deletion of a template vault.
+func (s *Templates) DeleteVault(ctx context.Context, template *model.Template, name string) error {
+	record, err := s.ShowVault(ctx, template, name)
+
+	if err != nil {
+		return err
+	}
+
+	q := s.client.handle.NewDelete().
+		Model((*model.TemplateVault)(nil)).
+		Where("template_id = ?", template.ID).
+		Where("id = ?", record.ID)
+
+	if _, err := q.Exec(ctx); err != nil {
+		return err
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(model.PrepareEvent(
+			s.client.principal,
+			&model.Event{
+				ProjectID:      template.Project.ID,
+				ProjectDisplay: template.Project.Name,
+				ObjectID:       record.ID,
+				ObjectDisplay:  record.Name,
+				ObjectType:     model.EventTypeTemplateVault,
+				Action:         model.EventActionDelete,
+				Attrs: map[string]interface{}{
+					"template_id":      template.ID,
+					"template_display": template.Name,
+				},
+			},
+		)).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ValidateExists simply provides a validator for this record type.
 func (s *Templates) ValidateExists(ctx context.Context, projectID string) func(value interface{}) error {
 	return func(value interface{}) error {
 		val, _ := value.(string)
@@ -529,6 +922,80 @@ func (s *Templates) validate(ctx context.Context, record *model.Template, _ bool
 				Error: err,
 			})
 		}
+	}
+
+	if len(errs.Errors) > 0 {
+		return errs
+	}
+
+	return nil
+}
+
+func (s *Templates) validateSurvey(_ context.Context, _ *model.Template, record *model.TemplateSurvey, _ bool) error {
+	errs := validate.Errors{}
+
+	if err := validation.Validate(
+		record.Name,
+		validation.Required,
+	); err != nil {
+		errs.Errors = append(errs.Errors, validate.Error{
+			Field: "name",
+			Error: err,
+		})
+	}
+
+	if err := validation.Validate(
+		record.Kind,
+		validation.Required,
+		validation.Length(3, 255),
+		validation.In("string", "number", "enum", "secret"),
+	); err != nil {
+		errs.Errors = append(errs.Errors, validate.Error{
+			Field: "kind",
+			Error: err,
+		})
+	}
+
+	if len(errs.Errors) > 0 {
+		return errs
+	}
+
+	return nil
+}
+
+func (s *Templates) validateVault(ctx context.Context, template *model.Template, record *model.TemplateVault, _ bool) error {
+	errs := validate.Errors{}
+
+	if err := validation.Validate(
+		record.Name,
+		validation.Required,
+	); err != nil {
+		errs.Errors = append(errs.Errors, validate.Error{
+			Field: "name",
+			Error: err,
+		})
+	}
+
+	if err := validation.Validate(
+		record.Kind,
+		validation.Required,
+		validation.Length(3, 255),
+		validation.In("password", "script"),
+	); err != nil {
+		errs.Errors = append(errs.Errors, validate.Error{
+			Field: "kind",
+			Error: err,
+		})
+	}
+
+	if err := validation.Validate(
+		record.CredentialID,
+		validation.By(s.client.Environments.ValidateExists(ctx, template.ProjectID)),
+	); err != nil {
+		errs.Errors = append(errs.Errors, validate.Error{
+			Field: "credential_id",
+			Error: err,
+		})
 	}
 
 	if len(errs.Errors) > 0 {

@@ -47,17 +47,17 @@ tasks:
   be:lint:
     desc: Run revive linting for backend
     cmds:
-      - for PKG in {{ .PACKAGES }}; do go run github.com/mgechev/revive -config revive.toml -set_exit_status $PKG || exit 1; done;
+      - for PKG in {{ .PACKAGES }}; do go tool github.com/mgechev/revive -config revive.toml -set_exit_status $PKG || exit 1; done;
 
   be:golangci:
     desc: Run golangci linter for backend
     cmds:
-      - go run github.com/golangci/golangci-lint/cmd/golangci-lint run ./...
+      - go tool github.com/golangci/golangci-lint/cmd/golangci-lint run ./...
 
   be:staticcheck:
     desc: Run static checks for backend
     cmds:
-      - go run honnef.co/go/tools/cmd/staticcheck -tags 'netgo' {{ .PACKAGES }}
+      - go tool honnef.co/go/tools/cmd/staticcheck -tags 'netgo' {{ .PACKAGES }}
 
   be:generate:
     desc: Generate code for backend
@@ -108,12 +108,12 @@ tasks:
   build:release:
     desc: Generate a release with goreleaser
     cmds:
-      - go run github.com/goreleaser/goreleaser/v2 release --clean
+      - go tool github.com/goreleaser/goreleaser/v2 release --clean
 
   build:snapshot:
     desc: Generate a snapshot with goreleaser
     cmds:
-      - go run github.com/goreleaser/goreleaser/v2 release --clean --snapshot
+      - go tool github.com/goreleaser/goreleaser/v2 release --clean --snapshot
 
   build:client:
     desc: Build client component
@@ -121,12 +121,12 @@ tasks:
       - go build -v
           -tags 'netgo'
           -ldflags '-s -w -extldflags "-static" -X "{{ .IMPORT }}/pkg/version.String={{ .VERSION }}" -X "{{ .IMPORT }}/pkg/version.Revision={{ .REVISION }}" -X "{{ .IMPORT }}/pkg/version.Date={{ now | date "20060102" }}"'
-          -o bin/genexec-client{{if eq OS "windows"}}.exe{{end}}
-          ./cmd/genexec-client
+          -o bin/gexec-client{{if eq OS "windows"}}.exe{{end}}
+          ./cmd/gexec-client
     env:
       CGO_ENABLED: "0"
     vars:
-      IMPORT: github.com/genexec/genexec
+      IMPORT: github.com/gexec/gexec
       VERSION:
         sh: if [[ -z "${CI_COMMIT_TAG}" ]]; then git rev-parse --short HEAD; else echo "${CI_COMMIT_TAG#v}"; fi
       REVISION:
@@ -138,12 +138,12 @@ tasks:
       - go build -v
           -tags 'netgo'
           -ldflags '-s -w -extldflags "-static" -X "{{ .IMPORT }}/pkg/version.String={{ .VERSION }}" -X "{{ .IMPORT }}/pkg/version.Revision={{ .REVISION }}" -X "{{ .IMPORT }}/pkg/version.Date={{ now | date "20060102" }}"'
-          -o bin/genexec-server{{if eq OS "windows"}}.exe{{end}}
-          ./cmd/genexec-server
+          -o bin/gexec-server{{if eq OS "windows"}}.exe{{end}}
+          ./cmd/gexec-server
     env:
       CGO_ENABLED: "0"
     vars:
-      IMPORT: github.com/genexec/genexec
+      IMPORT: github.com/gexec/gexec
       VERSION:
         sh: if [[ -z "${CI_COMMIT_TAG}" ]]; then git rev-parse --short HEAD; else echo "${CI_COMMIT_TAG#v}"; fi
       REVISION:
@@ -155,12 +155,12 @@ tasks:
       - go build -v
           -tags 'netgo'
           -ldflags '-s -w -extldflags "-static" -X "{{ .IMPORT }}/pkg/version.String={{ .VERSION }}" -X "{{ .IMPORT }}/pkg/version.Revision={{ .REVISION }}" -X "{{ .IMPORT }}/pkg/version.Date={{ now | date "20060102" }}"'
-          -o bin/genexec-runner{{if eq OS "windows"}}.exe{{end}}
-          ./cmd/genexec-runner
+          -o bin/gexec-runner{{if eq OS "windows"}}.exe{{end}}
+          ./cmd/gexec-runner
     env:
       CGO_ENABLED: "0"
     vars:
-      IMPORT: github.com/genexec/genexec
+      IMPORT: github.com/gexec/gexec
       VERSION:
         sh: if [[ -z "${CI_COMMIT_TAG}" ]]; then git rev-parse --short HEAD; else echo "${CI_COMMIT_TAG#v}"; fi
       REVISION:
@@ -170,26 +170,28 @@ tasks:
     desc: Run reloading development server
     cmds:
       - task: build:server
-      - bin/genexec-server start
+      - bin/gexec-server start
     watch: true
     sources:
       - 'cmd/**/*.go'
       - 'pkg/**/*.go'
     env:
       GENEXEC_LOG_LEVEL: "{{ .GENEXEC_LOG_LEVEL | default \"debug\" }}"
+      GENEXEC_TOKEN_SECRET: "NTaCR5JztYujaOZNgesaUzaVPmoxkGo0"
       GENEXEC_ENCRYPT_PASSPHRASE: "aZRNei17y80b9iDR9fSqryhLzlk28OHZ"
 
   watch:runner:
     desc: Run reloading development runner
     cmds:
       - task: build:runner
-      - bin/genexec-runner start
+      - bin/gexec-runner start
     watch: true
     sources:
       - 'cmd/**/*.go'
       - 'pkg/**/*.go'
     env:
       GENEXEC_LOG_LEVEL: "{{ .GENEXEC_LOG_LEVEL | default \"debug\" }}"
+      GENEXEC_TOKEN_SECRET: "NTaCR5JztYujaOZNgesaUzaVPmoxkGo0"
       GENEXEC_ENCRYPT_PASSPHRASE: "aZRNei17y80b9iDR9fSqryhLzlk28OHZ"
 
   watch:frontend:

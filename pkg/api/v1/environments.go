@@ -1,62 +1,27 @@
 package v1
 
 import (
-	"context"
-	"errors"
+	"encoding/json"
 	"net/http"
 
-	"github.com/genexec/genexec/pkg/middleware/current"
-	"github.com/genexec/genexec/pkg/model"
-	"github.com/genexec/genexec/pkg/store"
-	"github.com/genexec/genexec/pkg/validate"
+	"github.com/gexec/gexec/pkg/middleware/current"
+	"github.com/gexec/gexec/pkg/model"
+	"github.com/gexec/gexec/pkg/validate"
+	"github.com/go-chi/render"
 	"github.com/rs/zerolog/log"
 )
 
 // ListProjectEnvironments implements the v1.ServerInterface.
-func (a *API) ListProjectEnvironments(ctx context.Context, request ListProjectEnvironmentsRequestObject) (ListProjectEnvironmentsResponseObject, error) {
-	parent, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Projects.Show(
-		ctx,
-		request.ProjectId,
-	)
+func (a *API) ListProjectEnvironments(w http.ResponseWriter, r *http.Request, _ ProjectID, params ListProjectEnvironmentsParams) {
+	ctx := r.Context()
+	project := a.ProjectFromContext(ctx)
+	sort, order, limit, offset, search := listEnvironmentsSorting(params)
 
-	if err != nil {
-		if errors.Is(err, store.ErrProjectNotFound) {
-			return ListProjectEnvironments404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
-		log.Error().
-			Err(err).
-			Str("action", "ListProjectEnvironments").
-			Str("project", request.ProjectId).
-			Msg("Failed to load project")
-
-		return ListProjectEnvironments500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load project"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
-
-	if !a.permitShowProject(ctx, projectPermissions{
-		User:   current.GetUser(ctx),
-		Record: parent,
-	}) {
-		return ListProjectEnvironments404JSONResponse{NotFoundErrorJSONResponse{
-			Message: ToPtr("Failed to find project"),
-			Status:  ToPtr(http.StatusNotFound),
-		}}, nil
-	}
-
-	sort, order, limit, offset, search := listEnvironmentsSorting(request)
 	records, count, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Environments.List(
 		ctx,
-		parent.ID,
+		project.ID,
 		model.ListParams{
 			Sort:   sort,
 			Order:  order,
@@ -69,186 +34,111 @@ func (a *API) ListProjectEnvironments(ctx context.Context, request ListProjectEn
 	if err != nil {
 		log.Error().
 			Err(err).
+			Str("project", project.ID).
 			Str("action", "ListProjectEnvironments").
-			Str("project", parent.ID).
 			Msg("Failed to load environments")
 
-		return ListProjectEnvironments500JSONResponse{InternalServerErrorJSONResponse{
+		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to load environments"),
 			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+		})
+
+		return
 	}
 
 	payload := make([]Environment, len(records))
 	for id, record := range records {
-		if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil { // TODO: remove it, security risk
+		if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
 			log.Error().
 				Err(err).
+				Str("project", project.ID).
 				Str("action", "ListProjectEnvironments").
-				Str("project", parent.ID).
 				Msg("Failed to decrypt secrets")
 
-			return ListProjectEnvironments500JSONResponse{InternalServerErrorJSONResponse{
+			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to decrypt secrets"),
 				Status:  ToPtr(http.StatusInternalServerError),
-			}}, nil
+			})
+
+			return
 		}
 
 		payload[id] = a.convertEnvironment(record)
 	}
 
-	return ListProjectEnvironments200JSONResponse{ProjectEnvironmentsResponseJSONResponse{
+	render.JSON(w, r, ProjectEnvironmentsResponse{
 		Total:        count,
 		Limit:        limit,
 		Offset:       offset,
-		Project:      ToPtr(a.convertProject(parent)),
+		Project:      ToPtr(a.convertProject(project)),
 		Environments: payload,
-	}}, nil
+	})
 }
 
 // ShowProjectEnvironment implements the v1.ServerInterface.
-func (a *API) ShowProjectEnvironment(ctx context.Context, request ShowProjectEnvironmentRequestObject) (ShowProjectEnvironmentResponseObject, error) {
-	parent, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Projects.Show(
-		ctx,
-		request.ProjectId,
-	)
+func (a *API) ShowProjectEnvironment(w http.ResponseWriter, r *http.Request, _ ProjectID, _ EnvironmentID) {
+	ctx := r.Context()
+	project := a.ProjectFromContext(ctx)
+	record := a.ProjectEnvironmentFromContext(ctx)
 
-	if err != nil {
-		if errors.Is(err, store.ErrProjectNotFound) {
-			return ShowProjectEnvironment404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project or environment"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
+	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		log.Error().
 			Err(err).
-			Str("action", "ShowProjectEnvironment").
-			Str("project", request.ProjectId).
-			Msg("Failed to load project")
-
-		return ShowProjectEnvironment500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load project"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
-
-	record, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Environments.Show(
-		ctx,
-		parent.ID,
-		request.EnvironmentId,
-	)
-
-	if err != nil {
-		if errors.Is(err, store.ErrEnvironmentNotFound) {
-			return ShowProjectEnvironment404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project or environment"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
-		log.Error().
-			Err(err).
-			Str("action", "ShowProjectEnvironment").
-			Str("project", parent.ID).
-			Str("project", request.EnvironmentId).
-			Msg("Failed to load environment")
-
-		return ShowProjectEnvironment500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load environment"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
-
-	if !a.permitShowEnvironment(ctx, environmentPermissions{
-		User:    current.GetUser(ctx),
-		Project: parent,
-		Record:  record,
-	}) {
-		return ShowProjectEnvironment404JSONResponse{NotFoundErrorJSONResponse{
-			Message: ToPtr("Failed to find project or environment"),
-			Status:  ToPtr(http.StatusNotFound),
-		}}, nil
-	}
-
-	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil { // TODO: remove it, security risk
-		log.Error().
-			Err(err).
-			Str("action", "ShowProjectEnvironment").
-			Str("project", parent.ID).
+			Str("project", project.ID).
 			Str("environment", record.ID).
+			Str("action", "ShowProjectEnvironment").
 			Msg("Failed to decrypt secrets")
 
-		return ShowProjectEnvironment500JSONResponse{InternalServerErrorJSONResponse{
+		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decrypt secrets"),
 			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+		})
+
+		return
 	}
 
-	return ShowProjectEnvironment200JSONResponse{ProjectEnvironmentResponseJSONResponse(
+	render.JSON(w, r, ProjectEnvironmentResponse(
 		a.convertEnvironment(record),
-	)}, nil
+	))
 }
 
 // CreateProjectEnvironment implements the v1.ServerInterface.
-func (a *API) CreateProjectEnvironment(ctx context.Context, request CreateProjectEnvironmentRequestObject) (CreateProjectEnvironmentResponseObject, error) {
-	parent, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Projects.Show(
-		ctx,
-		request.ProjectId,
-	)
+func (a *API) CreateProjectEnvironment(w http.ResponseWriter, r *http.Request, _ ProjectID) {
+	ctx := r.Context()
+	project := a.ProjectFromContext(ctx)
+	body := &CreateProjectEnvironmentBody{}
 
-	if err != nil {
-		if errors.Is(err, store.ErrProjectNotFound) {
-			return CreateProjectEnvironment404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
+	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
 		log.Error().
 			Err(err).
+			Str("project", project.ID).
 			Str("action", "CreateProjectEnvironment").
-			Str("project", request.ProjectId).
-			Msg("Failed to load project")
+			Msg("Failed to decode request body")
 
-		return CreateProjectEnvironment500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load project"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to decode request"),
+			Status:  ToPtr(http.StatusBadRequest),
+		})
 
-	if !a.permitCreateEnvironment(ctx, environmentPermissions{
-		User:    current.GetUser(ctx),
-		Project: parent,
-	}) {
-		return CreateProjectEnvironment404JSONResponse{NotFoundErrorJSONResponse{
-			Message: ToPtr("Failed to find project"),
-			Status:  ToPtr(http.StatusNotFound),
-		}}, nil
+		return
 	}
 
 	record := &model.Environment{
-		ProjectID: parent.ID,
+		ProjectID: project.ID,
 	}
 
-	if request.Body.Slug != nil {
-		record.Slug = FromPtr(request.Body.Slug)
+	if body.Slug != nil {
+		record.Slug = FromPtr(body.Slug)
 	}
 
-	if request.Body.Name != nil {
-		record.Name = FromPtr(request.Body.Name)
+	if body.Name != nil {
+		record.Name = FromPtr(body.Name)
 	}
 
-	if request.Body.Secrets != nil {
+	if body.Secrets != nil {
 		record.Secrets = make([]*model.EnvironmentSecret, 0)
 
-		for _, row := range FromPtr(request.Body.Secrets) {
+		for _, row := range FromPtr(body.Secrets) {
 			secret := &model.EnvironmentSecret{}
 
 			if row.Kind != nil {
@@ -267,10 +157,10 @@ func (a *API) CreateProjectEnvironment(ctx context.Context, request CreateProjec
 		}
 	}
 
-	if request.Body.Values != nil {
+	if body.Values != nil {
 		record.Values = make([]*model.EnvironmentValue, 0)
 
-		for _, row := range FromPtr(request.Body.Values) {
+		for _, row := range FromPtr(body.Values) {
 			value := &model.EnvironmentValue{}
 
 			if row.Kind != nil {
@@ -292,21 +182,23 @@ func (a *API) CreateProjectEnvironment(ctx context.Context, request CreateProjec
 	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		log.Error().
 			Err(err).
+			Str("project", project.ID).
 			Str("action", "CreateProjectEnvironment").
-			Str("project", parent.ID).
 			Msg("Failed to encrypt secrets")
 
-		return CreateProjectEnvironment500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to encrypt credentials"),
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to encrypt secrets"),
 			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+		})
+
+		return
 	}
 
 	if err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Environments.Create(
 		ctx,
-		parent.ID,
+		project,
 		record,
 	); err != nil {
 		if v, ok := err.(validate.Errors); ok {
@@ -322,129 +214,89 @@ func (a *API) CreateProjectEnvironment(ctx context.Context, request CreateProjec
 				)
 			}
 
-			return CreateProjectEnvironment422JSONResponse{ValidationErrorJSONResponse{
-				Status:  ToPtr(http.StatusUnprocessableEntity),
+			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to validate environment"),
+				Status:  ToPtr(http.StatusUnprocessableEntity),
 				Errors:  ToPtr(errors),
-			}}, nil
+			})
+
+			return
 		}
 
 		log.Error().
 			Err(err).
+			Str("project", project.ID).
 			Str("action", "CreateProjectEnvironment").
-			Str("project", parent.ID).
 			Msg("Failed to create environment")
 
-		return CreateProjectEnvironment500JSONResponse{InternalServerErrorJSONResponse{
+		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to create environment"),
 			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+		})
+
+		return
 	}
 
-	return CreateProjectEnvironment200JSONResponse{ProjectEnvironmentResponseJSONResponse(
+	render.JSON(w, r, ProjectEnvironmentResponse(
 		a.convertEnvironment(record),
-	)}, nil
+	))
 }
 
 // UpdateProjectEnvironment implements the v1.ServerInterface.
-func (a *API) UpdateProjectEnvironment(ctx context.Context, request UpdateProjectEnvironmentRequestObject) (UpdateProjectEnvironmentResponseObject, error) {
-	parent, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Projects.Show(
-		ctx,
-		request.ProjectId,
-	)
+func (a *API) UpdateProjectEnvironment(w http.ResponseWriter, r *http.Request, _ ProjectID, _ EnvironmentID) {
+	ctx := r.Context()
+	project := a.ProjectFromContext(ctx)
+	record := a.ProjectEnvironmentFromContext(ctx)
+	body := &UpdateProjectEnvironmentBody{}
 
-	if err != nil {
-		if errors.Is(err, store.ErrProjectNotFound) {
-			return UpdateProjectEnvironment404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project or environment"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
+	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
 		log.Error().
 			Err(err).
+			Str("project", project.ID).
+			Str("environment", record.ID).
 			Str("action", "UpdateProjectEnvironment").
-			Str("project", request.ProjectId).
-			Msg("Failed to load project")
+			Msg("Failed to decode request body")
 
-		return UpdateProjectEnvironment500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load project"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to decode request"),
+			Status:  ToPtr(http.StatusBadRequest),
+		})
 
-	record, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Environments.Show(
-		ctx,
-		parent.ID,
-		request.EnvironmentId,
-	)
-
-	if err != nil {
-		if errors.Is(err, store.ErrEnvironmentNotFound) {
-			return UpdateProjectEnvironment404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project or environment"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
-		log.Error().
-			Err(err).
-			Str("action", "UpdateProjectEnvironment").
-			Str("project", parent.ID).
-			Str("environment", request.EnvironmentId).
-			Msg("Failed to load environment")
-
-		return UpdateProjectEnvironment500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load environment"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
-
-	if !a.permitManageEnvironment(ctx, environmentPermissions{
-		User:    current.GetUser(ctx),
-		Project: parent,
-		Record:  record,
-	}) {
-		return UpdateProjectEnvironment404JSONResponse{NotFoundErrorJSONResponse{
-			Message: ToPtr("Failed to find project or environment"),
-			Status:  ToPtr(http.StatusNotFound),
-		}}, nil
+		return
 	}
 
 	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		log.Error().
 			Err(err).
-			Str("action", "UpdateProjectEnvironment").
-			Str("project", parent.ID).
+			Str("project", project.ID).
 			Str("environment", record.ID).
+			Str("action", "UpdateProjectEnvironment").
 			Msg("Failed to decrypt secrets")
 
-		return UpdateProjectEnvironment500JSONResponse{InternalServerErrorJSONResponse{
+		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decrypt credentials"),
 			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+		})
+
+		return
 	}
 
-	if request.Body.Slug != nil {
-		record.Slug = FromPtr(request.Body.Slug)
+	if body.Slug != nil {
+		record.Slug = FromPtr(body.Slug)
 	}
 
-	if request.Body.Name != nil {
-		record.Name = FromPtr(request.Body.Name)
+	if body.Name != nil {
+		record.Name = FromPtr(body.Name)
 	}
 
-	if request.Body.Secrets != nil {
+	if body.Secrets != nil {
 		record.Secrets = make([]*model.EnvironmentSecret, 0)
 
-		for _, row := range FromPtr(request.Body.Secrets) {
+		for _, row := range FromPtr(body.Secrets) {
 			secret := &model.EnvironmentSecret{}
 
-			if row.Id != nil {
-				secret.ID = FromPtr(row.Id)
+			if row.ID != nil {
+				secret.ID = FromPtr(row.ID)
 			}
 
 			if row.Kind != nil {
@@ -463,14 +315,14 @@ func (a *API) UpdateProjectEnvironment(ctx context.Context, request UpdateProjec
 		}
 	}
 
-	if request.Body.Values != nil {
+	if body.Values != nil {
 		record.Values = make([]*model.EnvironmentValue, 0)
 
-		for _, row := range FromPtr(request.Body.Values) {
+		for _, row := range FromPtr(body.Values) {
 			value := &model.EnvironmentValue{}
 
-			if row.Id != nil {
-				value.ID = FromPtr(row.Id)
+			if row.ID != nil {
+				value.ID = FromPtr(row.ID)
 			}
 
 			if row.Kind != nil {
@@ -492,22 +344,24 @@ func (a *API) UpdateProjectEnvironment(ctx context.Context, request UpdateProjec
 	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		log.Error().
 			Err(err).
-			Str("action", "UpdateProjectEnvironment").
-			Str("project", parent.ID).
+			Str("project", project.ID).
 			Str("environment", record.ID).
+			Str("action", "UpdateProjectEnvironment").
 			Msg("Failed to encrypt secrets")
 
-		return UpdateProjectEnvironment500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to encrypt credentials"),
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to encrypt secrets"),
 			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+		})
+
+		return
 	}
 
 	if err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Environments.Update(
 		ctx,
-		parent.ID,
+		project,
 		record,
 	); err != nil {
 		if v, ok := err.(validate.Errors); ok {
@@ -523,177 +377,662 @@ func (a *API) UpdateProjectEnvironment(ctx context.Context, request UpdateProjec
 				)
 			}
 
-			return UpdateProjectEnvironment422JSONResponse{ValidationErrorJSONResponse{
-				Status:  ToPtr(http.StatusUnprocessableEntity),
+			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to validate environment"),
+				Status:  ToPtr(http.StatusUnprocessableEntity),
 				Errors:  ToPtr(errors),
-			}}, nil
+			})
+
+			return
 		}
 
 		log.Error().
 			Err(err).
-			Str("action", "UpdateProjectEnvironment").
-			Str("project", parent.ID).
+			Str("project", project.ID).
 			Str("environment", record.ID).
+			Str("action", "UpdateProjectEnvironment").
 			Msg("Failed to update environment")
 
-		return UpdateProjectEnvironment500JSONResponse{InternalServerErrorJSONResponse{
+		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to update environment"),
 			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
+		})
+
+		return
 	}
 
-	return UpdateProjectEnvironment200JSONResponse{ProjectEnvironmentResponseJSONResponse(
+	render.JSON(w, r, ProjectEnvironmentResponse(
 		a.convertEnvironment(record),
-	)}, nil
+	))
 }
 
 // DeleteProjectEnvironment implements the v1.ServerInterface.
-func (a *API) DeleteProjectEnvironment(ctx context.Context, request DeleteProjectEnvironmentRequestObject) (DeleteProjectEnvironmentResponseObject, error) {
-	parent, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Projects.Show(
-		ctx,
-		request.ProjectId,
-	)
-
-	if err != nil {
-		if errors.Is(err, store.ErrProjectNotFound) {
-			return DeleteProjectEnvironment404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project or environment"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
-		log.Error().
-			Err(err).
-			Str("action", "DeleteProjectEnvironment").
-			Str("project", request.ProjectId).
-			Msg("Failed to load project")
-
-		return DeleteProjectEnvironment500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load project"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
-
-	record, err := a.storage.WithPrincipal(
-		current.GetUser(ctx),
-	).Environments.Show(
-		ctx,
-		parent.ID,
-		request.EnvironmentId,
-	)
-
-	if err != nil {
-		if errors.Is(err, store.ErrEnvironmentNotFound) {
-			return DeleteProjectEnvironment404JSONResponse{NotFoundErrorJSONResponse{
-				Message: ToPtr("Failed to find project or environment"),
-				Status:  ToPtr(http.StatusNotFound),
-			}}, nil
-		}
-
-		log.Error().
-			Err(err).
-			Str("action", "DeleteProjectEnvironment").
-			Str("project", parent.ID).
-			Str("environment", request.EnvironmentId).
-			Msg("Failed to load environment")
-
-		return DeleteProjectEnvironment500JSONResponse{InternalServerErrorJSONResponse{
-			Message: ToPtr("Failed to load environment"),
-			Status:  ToPtr(http.StatusInternalServerError),
-		}}, nil
-	}
-
-	if !a.permitManageEnvironment(ctx, environmentPermissions{
-		User:    current.GetUser(ctx),
-		Project: parent,
-		Record:  record,
-	}) {
-		return DeleteProjectEnvironment404JSONResponse{NotFoundErrorJSONResponse{
-			Message: ToPtr("Failed to find project or environment"),
-			Status:  ToPtr(http.StatusNotFound),
-		}}, nil
-	}
+func (a *API) DeleteProjectEnvironment(w http.ResponseWriter, r *http.Request, _ ProjectID, _ EnvironmentID) {
+	ctx := r.Context()
+	project := a.ProjectFromContext(ctx)
+	record := a.ProjectEnvironmentFromContext(ctx)
 
 	if err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Environments.Delete(
 		ctx,
-		parent.ID,
+		project,
 		record.ID,
 	); err != nil {
 		log.Error().
 			Err(err).
-			Str("action", "DeletProjectEnvironment").
-			Str("project", parent.ID).
+			Str("project", project.ID).
 			Str("environment", record.ID).
+			Str("action", "DeletProjectEnvironment").
 			Msg("Failed to delete environment")
 
-		return DeleteProjectEnvironment400JSONResponse{ActionFailedErrorJSONResponse{
-			Status:  ToPtr(http.StatusBadRequest),
+		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to delete environment"),
-		}}, nil
+			Status:  ToPtr(http.StatusBadRequest),
+		})
+
+		return
 	}
 
-	return DeleteProjectEnvironment200JSONResponse{SuccessMessageJSONResponse{
-		Status:  ToPtr(http.StatusOK),
+	a.RenderNotify(w, r, Notification{
 		Message: ToPtr("Successfully deleted environment"),
-	}}, nil
+		Status:  ToPtr(http.StatusOK),
+	})
 }
 
 // CreateProjectEnvironmentSecret implements the v1.ServerInterface.
-func (a *API) CreateProjectEnvironmentSecret(ctx context.Context, request CreateProjectEnvironmentSecretRequestObject) (CreateProjectEnvironmentSecretResponseObject, error) {
-	return CreateProjectEnvironmentSecret500JSONResponse{InternalServerErrorJSONResponse{
-		Message: ToPtr("Not implemented"),
-		Status:  ToPtr(http.StatusInternalServerError),
-	}}, nil
+func (a *API) CreateProjectEnvironmentSecret(w http.ResponseWriter, r *http.Request, _ ProjectID, _ EnvironmentID) {
+	ctx := r.Context()
+	project := a.ProjectFromContext(ctx)
+	record := a.ProjectEnvironmentFromContext(ctx)
+	body := &CreateProjectEnvironmentSecretBody{}
+
+	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
+		log.Error().
+			Err(err).
+			Str("project", project.ID).
+			Str("environment", record.ID).
+			Str("action", "CreateProjectEnvironmentSecret").
+			Msg("Failed to decode request body")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to decode request"),
+			Status:  ToPtr(http.StatusBadRequest),
+		})
+
+		return
+	}
+
+	child := &model.EnvironmentSecret{
+		EnvironmentID: record.ID,
+	}
+
+	if body.Kind != nil {
+		child.Kind = string(FromPtr(body.Kind))
+	}
+
+	if body.Name != nil {
+		child.Name = FromPtr(body.Name)
+	}
+
+	if body.Content != nil {
+		child.Content = FromPtr(body.Content)
+	}
+
+	if err := child.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+		log.Error().
+			Err(err).
+			Str("project", project.ID).
+			Str("environment", record.ID).
+			Str("action", "CreateProjectEnvironmentSecret").
+			Msg("Failed to encrypt secrets")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to encrypt secrets"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		})
+
+		return
+	}
+
+	if err := a.storage.WithPrincipal(
+		current.GetUser(ctx),
+	).Environments.CreateSecret(
+		ctx,
+		record,
+		child,
+	); err != nil {
+		if v, ok := err.(validate.Errors); ok {
+			errors := make([]Validation, 0)
+
+			for _, verr := range v.Errors {
+				errors = append(
+					errors,
+					Validation{
+						Field:   ToPtr(verr.Field),
+						Message: ToPtr(verr.Error.Error()),
+					},
+				)
+			}
+
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to validate environment secret"),
+				Status:  ToPtr(http.StatusUnprocessableEntity),
+				Errors:  ToPtr(errors),
+			})
+
+			return
+		}
+
+		log.Error().
+			Err(err).
+			Str("project", project.ID).
+			Str("environment", record.ID).
+			Str("action", "CreateProjectEnvironmentSecret").
+			Msg("Failed to create environment secret")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to create environment secret"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		})
+
+		return
+	}
+
+	if err := child.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
+		log.Error().
+			Err(err).
+			Str("project", project.ID).
+			Str("environment", record.ID).
+			Str("secret", child.ID).
+			Str("action", "CreateProjectEnvironmentSecret").
+			Msg("Failed to decrypt secrets")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to decrypt credentials"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		})
+
+		return
+	}
+
+	render.JSON(w, r, ProjectEnvironmentSecretResponse(
+		a.convertEnvironmentSecret(child),
+	))
 }
 
 // UpdateProjectEnvironmentSecret implements the v1.ServerInterface.
-func (a *API) UpdateProjectEnvironmentSecret(ctx context.Context, request UpdateProjectEnvironmentSecretRequestObject) (UpdateProjectEnvironmentSecretResponseObject, error) {
-	return UpdateProjectEnvironmentSecret500JSONResponse{InternalServerErrorJSONResponse{
-		Message: ToPtr("Not implemented"),
-		Status:  ToPtr(http.StatusInternalServerError),
-	}}, nil
+func (a *API) UpdateProjectEnvironmentSecret(w http.ResponseWriter, r *http.Request, _ ProjectID, _ EnvironmentID, _ SecretID) {
+	ctx := r.Context()
+	project := a.ProjectFromContext(ctx)
+	record := a.ProjectEnvironmentFromContext(ctx)
+	child := a.ProjectEnvironmentSecretFromContext(ctx)
+	body := &UpdateProjectEnvironmentSecretBody{}
+
+	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
+		log.Error().
+			Err(err).
+			Str("project", project.ID).
+			Str("environment", record.ID).
+			Str("secret", child.ID).
+			Str("action", "UpdateProjectEnvironmentSecret").
+			Msg("Failed to decode request body")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to decode request"),
+			Status:  ToPtr(http.StatusBadRequest),
+		})
+
+		return
+	}
+
+	if err := child.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
+		log.Error().
+			Err(err).
+			Str("project", project.ID).
+			Str("environment", record.ID).
+			Str("secret", child.ID).
+			Str("action", "UpdateProjectEnvironmentSecret").
+			Msg("Failed to decrypt secrets")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to decrypt credentials"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		})
+
+		return
+	}
+
+	if body.Kind != nil {
+		child.Kind = string(FromPtr(body.Kind))
+	}
+
+	if body.Name != nil {
+		child.Name = FromPtr(body.Name)
+	}
+
+	if body.Content != nil {
+		child.Content = FromPtr(body.Content)
+	}
+
+	if err := child.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+		log.Error().
+			Err(err).
+			Str("project", project.ID).
+			Str("environment", record.ID).
+			Str("secret", child.ID).
+			Str("action", "UpdateProjectEnvironmentSecret").
+			Msg("Failed to encrypt secrets")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to encrypt secrets"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		})
+
+		return
+	}
+
+	if err := a.storage.WithPrincipal(
+		current.GetUser(ctx),
+	).Environments.UpdateSecret(
+		ctx,
+		record,
+		child,
+	); err != nil {
+		if v, ok := err.(validate.Errors); ok {
+			errors := make([]Validation, 0)
+
+			for _, verr := range v.Errors {
+				errors = append(
+					errors,
+					Validation{
+						Field:   ToPtr(verr.Field),
+						Message: ToPtr(verr.Error.Error()),
+					},
+				)
+			}
+
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to validate environment secret"),
+				Status:  ToPtr(http.StatusUnprocessableEntity),
+				Errors:  ToPtr(errors),
+			})
+
+			return
+		}
+
+		log.Error().
+			Err(err).
+			Str("project", project.ID).
+			Str("environment", record.ID).
+			Str("secret", child.ID).
+			Str("action", "UpdateProjectEnvironmentSecret").
+			Msg("Failed to update environment secret")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to update environment secret"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		})
+
+		return
+	}
+
+	if err := child.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
+		log.Error().
+			Err(err).
+			Str("project", project.ID).
+			Str("environment", record.ID).
+			Str("secret", child.ID).
+			Str("action", "UpdateProjectEnvironmentSecret").
+			Msg("Failed to decrypt secrets")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to decrypt credentials"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		})
+
+		return
+	}
+
+	render.JSON(w, r, ProjectEnvironmentSecretResponse(
+		a.convertEnvironmentSecret(child),
+	))
 }
 
 // DeleteProjectEnvironmentSecret implements the v1.ServerInterface.
-func (a *API) DeleteProjectEnvironmentSecret(ctx context.Context, request DeleteProjectEnvironmentSecretRequestObject) (DeleteProjectEnvironmentSecretResponseObject, error) {
-	return DeleteProjectEnvironmentSecret500JSONResponse{InternalServerErrorJSONResponse{
-		Message: ToPtr("Not implemented"),
-		Status:  ToPtr(http.StatusInternalServerError),
-	}}, nil
+func (a *API) DeleteProjectEnvironmentSecret(w http.ResponseWriter, r *http.Request, _ ProjectID, _ EnvironmentID, _ SecretID) {
+	ctx := r.Context()
+	project := a.ProjectFromContext(ctx)
+	record := a.ProjectEnvironmentFromContext(ctx)
+	child := a.ProjectEnvironmentSecretFromContext(ctx)
+
+	if err := a.storage.WithPrincipal(
+		current.GetUser(ctx),
+	).Environments.DeleteSecret(
+		ctx,
+		record,
+		child.ID,
+	); err != nil {
+		log.Error().
+			Err(err).
+			Str("project", project.ID).
+			Str("environment", record.ID).
+			Str("secret", child.ID).
+			Str("action", "DeleteProjectEnvironmentSecret").
+			Msg("Failed to delete environment secret")
+
+		a.RenderNotify(w, r, Notification{
+			Status:  ToPtr(http.StatusBadRequest),
+			Message: ToPtr("Failed to delete environment secret"),
+		})
+
+		return
+	}
+
+	a.RenderNotify(w, r, Notification{
+		Message: ToPtr("Successfully deleted environment secret"),
+		Status:  ToPtr(http.StatusOK),
+	})
 }
 
 // CreateProjectEnvironmentValue implements the v1.ServerInterface.
-func (a *API) CreateProjectEnvironmentValue(ctx context.Context, request CreateProjectEnvironmentValueRequestObject) (CreateProjectEnvironmentValueResponseObject, error) {
-	return CreateProjectEnvironmentValue500JSONResponse{InternalServerErrorJSONResponse{
-		Message: ToPtr("Not implemented"),
-		Status:  ToPtr(http.StatusInternalServerError),
-	}}, nil
+func (a *API) CreateProjectEnvironmentValue(w http.ResponseWriter, r *http.Request, _ ProjectID, _ EnvironmentID) {
+	ctx := r.Context()
+	project := a.ProjectFromContext(ctx)
+	record := a.ProjectEnvironmentFromContext(ctx)
+	body := &CreateProjectEnvironmentValueBody{}
+
+	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
+		log.Error().
+			Err(err).
+			Str("project", project.ID).
+			Str("environment", record.ID).
+			Str("action", "CreateProjectEnvironmentValue").
+			Msg("Failed to decode request body")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to decode request"),
+			Status:  ToPtr(http.StatusBadRequest),
+		})
+
+		return
+	}
+
+	child := &model.EnvironmentValue{
+		EnvironmentID: record.ID,
+	}
+
+	if body.Kind != nil {
+		child.Kind = string(FromPtr(body.Kind))
+	}
+
+	if body.Name != nil {
+		child.Name = FromPtr(body.Name)
+	}
+
+	if body.Content != nil {
+		child.Content = FromPtr(body.Content)
+	}
+
+	if err := child.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+		log.Error().
+			Err(err).
+			Str("project", project.ID).
+			Str("environment", record.ID).
+			Str("action", "CreateProjectEnvironmentValue").
+			Msg("Failed to encrypt secrets")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to encrypt secrets"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		})
+
+		return
+	}
+
+	if err := a.storage.WithPrincipal(
+		current.GetUser(ctx),
+	).Environments.CreateValue(
+		ctx,
+		record,
+		child,
+	); err != nil {
+		if v, ok := err.(validate.Errors); ok {
+			errors := make([]Validation, 0)
+
+			for _, verr := range v.Errors {
+				errors = append(
+					errors,
+					Validation{
+						Field:   ToPtr(verr.Field),
+						Message: ToPtr(verr.Error.Error()),
+					},
+				)
+			}
+
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to validate environment value"),
+				Status:  ToPtr(http.StatusUnprocessableEntity),
+				Errors:  ToPtr(errors),
+			})
+
+			return
+		}
+
+		log.Error().
+			Err(err).
+			Str("project", project.ID).
+			Str("environment", record.ID).
+			Str("action", "CreateProjectEnvironmentValue").
+			Msg("Failed to create environment value")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to create environment value"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		})
+
+		return
+	}
+
+	if err := child.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
+		log.Error().
+			Err(err).
+			Str("project", project.ID).
+			Str("environment", record.ID).
+			Str("value", child.ID).
+			Str("action", "CreateProjectEnvironmentValue").
+			Msg("Failed to decrypt secrets")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to decrypt credentials"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		})
+
+		return
+	}
+
+	render.JSON(w, r, ProjectEnvironmentValueResponse(
+		a.convertEnvironmentValue(child),
+	))
 }
 
 // UpdateProjectEnvironmentValue implements the v1.ServerInterface.
-func (a *API) UpdateProjectEnvironmentValue(ctx context.Context, request UpdateProjectEnvironmentValueRequestObject) (UpdateProjectEnvironmentValueResponseObject, error) {
-	return UpdateProjectEnvironmentValue500JSONResponse{InternalServerErrorJSONResponse{
-		Message: ToPtr("Not implemented"),
-		Status:  ToPtr(http.StatusInternalServerError),
-	}}, nil
+func (a *API) UpdateProjectEnvironmentValue(w http.ResponseWriter, r *http.Request, _ ProjectID, _ EnvironmentID, _ ValueID) {
+	ctx := r.Context()
+	project := a.ProjectFromContext(ctx)
+	record := a.ProjectEnvironmentFromContext(ctx)
+	child := a.ProjectEnvironmentValueFromContext(ctx)
+	body := &UpdateProjectEnvironmentValueBody{}
+
+	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
+		log.Error().
+			Err(err).
+			Str("project", project.ID).
+			Str("environment", record.ID).
+			Str("value", child.ID).
+			Str("action", "UpdateProjectEnvironmentValue").
+			Msg("Failed to decode request body")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to decode request"),
+			Status:  ToPtr(http.StatusBadRequest),
+		})
+
+		return
+	}
+
+	if err := child.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
+		log.Error().
+			Err(err).
+			Str("project", project.ID).
+			Str("environment", record.ID).
+			Str("value", child.ID).
+			Str("action", "UpdateProjectEnvironmentValue").
+			Msg("Failed to decrypt secrets")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to decrypt credentials"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		})
+
+		return
+	}
+
+	if body.Kind != nil {
+		child.Kind = string(FromPtr(body.Kind))
+	}
+
+	if body.Name != nil {
+		child.Name = FromPtr(body.Name)
+	}
+
+	if body.Content != nil {
+		child.Content = FromPtr(body.Content)
+	}
+
+	if err := child.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+		log.Error().
+			Err(err).
+			Str("project", project.ID).
+			Str("environment", record.ID).
+			Str("value", child.ID).
+			Str("action", "UpdateProjectEnvironmentValue").
+			Msg("Failed to encrypt secrets")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to encrypt secrets"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		})
+
+		return
+	}
+
+	if err := a.storage.WithPrincipal(
+		current.GetUser(ctx),
+	).Environments.UpdateValue(
+		ctx,
+		record,
+		child,
+	); err != nil {
+		if v, ok := err.(validate.Errors); ok {
+			errors := make([]Validation, 0)
+
+			for _, verr := range v.Errors {
+				errors = append(
+					errors,
+					Validation{
+						Field:   ToPtr(verr.Field),
+						Message: ToPtr(verr.Error.Error()),
+					},
+				)
+			}
+
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to validate environment value"),
+				Status:  ToPtr(http.StatusUnprocessableEntity),
+				Errors:  ToPtr(errors),
+			})
+
+			return
+		}
+
+		log.Error().
+			Err(err).
+			Str("project", project.ID).
+			Str("environment", record.ID).
+			Str("value", child.ID).
+			Str("action", "UpdateProjectEnvironmentValue").
+			Msg("Failed to update environment value")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to update environment value"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		})
+
+		return
+	}
+
+	if err := child.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
+		log.Error().
+			Err(err).
+			Str("project", project.ID).
+			Str("environment", record.ID).
+			Str("value", child.ID).
+			Str("action", "UpdateProjectEnvironmentValue").
+			Msg("Failed to decrypt secrets")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to decrypt credentials"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		})
+
+		return
+	}
+
+	render.JSON(w, r, ProjectEnvironmentValueResponse(
+		a.convertEnvironmentValue(child),
+	))
 }
 
 // DeleteProjectEnvironmentValue implements the v1.ServerInterface.
-func (a *API) DeleteProjectEnvironmentValue(ctx context.Context, request DeleteProjectEnvironmentValueRequestObject) (DeleteProjectEnvironmentValueResponseObject, error) {
-	return DeleteProjectEnvironmentValue500JSONResponse{InternalServerErrorJSONResponse{
-		Message: ToPtr("Not implemented"),
-		Status:  ToPtr(http.StatusInternalServerError),
-	}}, nil
+func (a *API) DeleteProjectEnvironmentValue(w http.ResponseWriter, r *http.Request, _ ProjectID, _ EnvironmentID, _ ValueID) {
+	ctx := r.Context()
+	project := a.ProjectFromContext(ctx)
+	record := a.ProjectEnvironmentFromContext(ctx)
+	child := a.ProjectEnvironmentValueFromContext(ctx)
+
+	if err := a.storage.WithPrincipal(
+		current.GetUser(ctx),
+	).Environments.DeleteValue(
+		ctx,
+		record,
+		child.ID,
+	); err != nil {
+		log.Error().
+			Err(err).
+			Str("project", project.ID).
+			Str("environment", record.ID).
+			Str("value", child.ID).
+			Str("action", "DeletProjectEnvironmentValue").
+			Msg("Failed to delete environment")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to delete environment value"),
+			Status:  ToPtr(http.StatusBadRequest),
+		})
+
+		return
+	}
+
+	a.RenderNotify(w, r, Notification{
+		Message: ToPtr("Successfully deleted environment value"),
+		Status:  ToPtr(http.StatusOK),
+	})
 }
 
 func (a *API) convertEnvironment(record *model.Environment) Environment {
 	result := Environment{
-		Id:        ToPtr(record.ID),
+		ID:        ToPtr(record.ID),
 		Slug:      ToPtr(record.Slug),
 		Name:      ToPtr(record.Name),
 		CreatedAt: ToPtr(record.CreatedAt),
@@ -731,10 +1070,10 @@ func (a *API) convertEnvironment(record *model.Environment) Environment {
 
 func (a *API) convertEnvironmentSecret(record *model.EnvironmentSecret) EnvironmentSecret {
 	result := EnvironmentSecret{
-		Id:      ToPtr(record.ID),
+		ID:      ToPtr(record.ID),
 		Kind:    ToPtr(EnvironmentSecretKind(record.Kind)),
 		Name:    ToPtr(record.Name),
-		Content: ToPtr(record.Content), // TODO: remove this, security risk
+		Content: ToPtr(record.Content),
 	}
 
 	return result
@@ -742,55 +1081,37 @@ func (a *API) convertEnvironmentSecret(record *model.EnvironmentSecret) Environm
 
 func (a *API) convertEnvironmentValue(record *model.EnvironmentValue) EnvironmentValue {
 	result := EnvironmentValue{
-		Id:      ToPtr(record.ID),
+		ID:      ToPtr(record.ID),
 		Kind:    ToPtr(EnvironmentValueKind(record.Kind)),
 		Name:    ToPtr(record.Name),
-		Content: ToPtr(record.Content), // TODO: remove this, security risk
+		Content: ToPtr(record.Content),
 	}
 
 	return result
 }
 
-type environmentPermissions struct {
-	User      *model.User
-	Project   *model.Project
-	Record    *model.Environment
-	OwnerOnly bool
+// AllowShowProjectEnvironment defines a middleware to check permissions.
+func (a *API) AllowShowProjectEnvironment(next http.Handler) http.Handler {
+	return a.AllowShowProject(next)
 }
 
-func (a *API) permitCreateEnvironment(ctx context.Context, definition environmentPermissions) bool {
-	return a.permitManageProject(ctx, projectPermissions{
-		User:   definition.User,
-		Record: definition.Project,
-	})
+// AllowManageProjectEnvironment defines a middleware to check permissions.
+func (a *API) AllowManageProjectEnvironment(next http.Handler) http.Handler {
+	return a.AllowManageProject(next)
 }
 
-func (a *API) permitShowEnvironment(ctx context.Context, definition environmentPermissions) bool {
-	return a.permitShowProject(ctx, projectPermissions{
-		User:   definition.User,
-		Record: definition.Project,
-	})
-}
-
-func (a *API) permitManageEnvironment(ctx context.Context, definition environmentPermissions) bool {
-	return a.permitManageProject(ctx, projectPermissions{
-		User:   definition.User,
-		Record: definition.Project,
-	})
-}
-
-func listEnvironmentsSorting(request ListProjectEnvironmentsRequestObject) (string, string, int64, int64, string) {
+func listEnvironmentsSorting(request ListProjectEnvironmentsParams) (string, string, int64, int64, string) {
 	sort, limit, offset, search := toPageParams(
-		request.Params.Sort,
-		request.Params.Limit,
-		request.Params.Offset,
-		request.Params.Search,
+		request.Sort,
+		request.Limit,
+		request.Offset,
+		request.Search,
 	)
 
 	order := ""
 
-	if request.Params.Order != nil {
-		sort = string(FromPtr(request.Params.Order))
+	if request.Order != nil {
+		sort = string(FromPtr(request.Order))
 	}
 
 	return sort, order, limit, offset, search

@@ -20,6 +20,7 @@ type CredentialShell struct {
 	PrivateKey string `bun:"type:text"`
 }
 
+// SerializeSecret ensures to encrypt all related secrets stored on the database.
 func (m *CredentialShell) SerializeSecret(passphrase string) error {
 	gcm, err := prepareEncrypt(passphrase)
 
@@ -44,6 +45,7 @@ func (m *CredentialShell) SerializeSecret(passphrase string) error {
 	return nil
 }
 
+// DeserializeSecret ensures to decrypt all related secrets stored on the database.
 func (m *CredentialShell) DeserializeSecret(passphrase string) error {
 	gcm, err := prepareEncrypt(passphrase)
 
@@ -80,6 +82,7 @@ type CredentialLogin struct {
 	Password string `bun:"type:varchar(255)"`
 }
 
+// SerializeSecret ensures to encrypt all related secrets stored on the database.
 func (m *CredentialLogin) SerializeSecret(passphrase string) error {
 	gcm, err := prepareEncrypt(passphrase)
 
@@ -100,6 +103,7 @@ func (m *CredentialLogin) SerializeSecret(passphrase string) error {
 	return nil
 }
 
+// DeserializeSecret ensures to decrypt all related secrets stored on the database.
 func (m *CredentialLogin) DeserializeSecret(passphrase string) error {
 	gcm, err := prepareEncrypt(passphrase)
 
@@ -158,6 +162,7 @@ func (m *Credential) BeforeAppendModel(_ context.Context, query bun.Query) error
 	return nil
 }
 
+// SerializeSecret ensures to encrypt all related secrets stored on the database.
 func (m *Credential) SerializeSecret(passphrase string) error {
 	switch m.Kind {
 	case "shell":
@@ -169,6 +174,7 @@ func (m *Credential) SerializeSecret(passphrase string) error {
 	return nil
 }
 
+// DeserializeSecret ensures to decrypt all related secrets stored on the database.
 func (m *Credential) DeserializeSecret(passphrase string) error {
 	switch m.Kind {
 	case "shell":

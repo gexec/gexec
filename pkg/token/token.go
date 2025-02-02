@@ -103,7 +103,7 @@ func Authed(
 			RegisteredClaims: jwt.RegisteredClaims{
 				ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(exp)),
 				IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
-				Issuer:    "genexec",
+				Issuer:    "gexec",
 			},
 		},
 	)

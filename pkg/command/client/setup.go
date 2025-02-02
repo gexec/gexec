@@ -42,7 +42,7 @@ func setupLogger() error {
 }
 
 func setupConfig() {
-	viper.SetEnvPrefix("genexec")
+	viper.SetEnvPrefix("gexec")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 }
