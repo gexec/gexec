@@ -8,3 +8,6 @@ coverage.out
 bin/
 dist/
 storage/
+
+node_modules/
+npm-debug.log*
