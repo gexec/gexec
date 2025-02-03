@@ -22,6 +22,10 @@ var (
 
 // IsGitURL provides a vaöidator for Git clone URLs.
 func IsGitURL(str string) bool {
+	if len(str) >= 8000 {
+		return false
+	}
+
 	u, err := giturls.Parse(str)
 
 	if err != nil {
