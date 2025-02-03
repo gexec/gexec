@@ -207,7 +207,7 @@ func Server(
 
 						r.Get("/", wrapper.ShowProject)
 						r.With(apiv1.AllowOwnerProject).Delete("/", wrapper.DeleteProject)
-						r.With(apiv1.AllowManageProject).Put("/", wrapper.UpdateProject)
+						r.With(apiv1.AllowOwnerProject).Put("/", wrapper.UpdateProject)
 
 						r.Route("/events", func(r chi.Router) {
 							r.Use(apiv1.AllowShowProject)
