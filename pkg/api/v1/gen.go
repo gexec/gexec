@@ -8652,11 +8652,6 @@ type GroupsResponseJSONResponse struct {
 }
 
 type InternalServerErrorJSONResponse Notification
-type InternalServerErrorTexthtmlResponse struct {
-	Body io.Reader
-
-	ContentLength int64
-}
 
 type InvalidTokenErrorJSONResponse Notification
 
@@ -8667,11 +8662,6 @@ type NotAttachedErrorJSONResponse Notification
 type NotAuthorizedErrorJSONResponse Notification
 
 type NotFoundErrorJSONResponse Notification
-type NotFoundErrorTexthtmlResponse struct {
-	Body io.Reader
-
-	ContentLength int64
-}
 
 type ProfileResponseJSONResponse Profile
 
@@ -8820,24 +8810,6 @@ type ProjectsResponseJSONResponse struct {
 	Total    int64     `json:"total"`
 }
 
-type ProviderCallbackResponseTexthtmlResponse struct {
-	Body io.Reader
-
-	ContentLength int64
-}
-
-type ProviderInitErrorTexthtmlResponse struct {
-	Body io.Reader
-
-	ContentLength int64
-}
-
-type ProviderRequestResponseTexthtmlResponse struct {
-	Body io.Reader
-
-	ContentLength int64
-}
-
 type ProvidersResponseJSONResponse struct {
 	Providers []Provider `json:"providers"`
 	Total     int64      `json:"total"`
@@ -8921,24 +8893,6 @@ func (response LoginAuth500JSONResponse) VisitLoginAuthResponse(w http.ResponseW
 	return json.NewEncoder(w).Encode(response)
 }
 
-type LoginAuth500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response LoginAuth500TexthtmlResponse) VisitLoginAuthResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type ListProvidersRequestObject struct {
 }
 
@@ -8991,24 +8945,6 @@ func (response RefreshAuth500JSONResponse) VisitRefreshAuthResponse(w http.Respo
 	return json.NewEncoder(w).Encode(response)
 }
 
-type RefreshAuth500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response RefreshAuth500TexthtmlResponse) VisitRefreshAuthResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type VerifyAuthRequestObject struct {
 }
 
@@ -9045,24 +8981,6 @@ func (response VerifyAuth500JSONResponse) VisitVerifyAuthResponse(w http.Respons
 	return json.NewEncoder(w).Encode(response)
 }
 
-type VerifyAuth500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response VerifyAuth500TexthtmlResponse) VisitVerifyAuthResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type CallbackProviderRequestObject struct {
 	Provider AuthProviderParam `json:"provider"`
 	Params   CallbackProviderParams
@@ -9073,7 +8991,8 @@ type CallbackProviderResponseObject interface {
 }
 
 type CallbackProvider308TexthtmlResponse struct {
-	ProviderCallbackResponseTexthtmlResponse
+	Body          io.Reader
+	ContentLength int64
 }
 
 func (response CallbackProvider308TexthtmlResponse) VisitCallbackProviderResponse(w http.ResponseWriter) error {
@@ -9090,16 +9009,10 @@ func (response CallbackProvider308TexthtmlResponse) VisitCallbackProviderRespons
 	return err
 }
 
-type CallbackProvider404JSONResponse struct{ NotFoundErrorJSONResponse }
-
-func (response CallbackProvider404JSONResponse) VisitCallbackProviderResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
+type CallbackProvider404TexthtmlResponse struct {
+	Body          io.Reader
+	ContentLength int64
 }
-
-type CallbackProvider404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
 
 func (response CallbackProvider404TexthtmlResponse) VisitCallbackProviderResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "text/html")
@@ -9116,7 +9029,8 @@ func (response CallbackProvider404TexthtmlResponse) VisitCallbackProviderRespons
 }
 
 type CallbackProvider412TexthtmlResponse struct {
-	ProviderInitErrorTexthtmlResponse
+	Body          io.Reader
+	ContentLength int64
 }
 
 func (response CallbackProvider412TexthtmlResponse) VisitCallbackProviderResponse(w http.ResponseWriter) error {
@@ -9125,6 +9039,25 @@ func (response CallbackProvider412TexthtmlResponse) VisitCallbackProviderRespons
 		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
 	}
 	w.WriteHeader(412)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type CallbackProvider500TexthtmlResponse struct {
+	Body          io.Reader
+	ContentLength int64
+}
+
+func (response CallbackProvider500TexthtmlResponse) VisitCallbackProviderResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
 
 	if closer, ok := response.Body.(io.ReadCloser); ok {
 		defer closer.Close()
@@ -9142,7 +9075,8 @@ type RequestProviderResponseObject interface {
 }
 
 type RequestProvider308TexthtmlResponse struct {
-	ProviderRequestResponseTexthtmlResponse
+	Body          io.Reader
+	ContentLength int64
 }
 
 func (response RequestProvider308TexthtmlResponse) VisitRequestProviderResponse(w http.ResponseWriter) error {
@@ -9159,16 +9093,10 @@ func (response RequestProvider308TexthtmlResponse) VisitRequestProviderResponse(
 	return err
 }
 
-type RequestProvider404JSONResponse struct{ NotFoundErrorJSONResponse }
-
-func (response RequestProvider404JSONResponse) VisitRequestProviderResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
+type RequestProvider404TexthtmlResponse struct {
+	Body          io.Reader
+	ContentLength int64
 }
-
-type RequestProvider404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
 
 func (response RequestProvider404TexthtmlResponse) VisitRequestProviderResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "text/html")
@@ -9176,6 +9104,25 @@ func (response RequestProvider404TexthtmlResponse) VisitRequestProviderResponse(
 		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
 	}
 	w.WriteHeader(404)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type RequestProvider500TexthtmlResponse struct {
+	Body          io.Reader
+	ContentLength int64
+}
+
+func (response RequestProvider500TexthtmlResponse) VisitRequestProviderResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(500)
 
 	if closer, ok := response.Body.(io.ReadCloser); ok {
 		defer closer.Close()
@@ -9223,24 +9170,6 @@ func (response ListGlobalEvents500JSONResponse) VisitListGlobalEventsResponse(w 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ListGlobalEvents500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ListGlobalEvents500TexthtmlResponse) VisitListGlobalEventsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type ListGroupsRequestObject struct {
 	Params ListGroupsParams
 }
@@ -9276,24 +9205,6 @@ func (response ListGroups500JSONResponse) VisitListGroupsResponse(w http.Respons
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ListGroups500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ListGroups500TexthtmlResponse) VisitListGroupsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type CreateGroupRequestObject struct {
@@ -9342,24 +9253,6 @@ func (response CreateGroup500JSONResponse) VisitCreateGroupResponse(w http.Respo
 	return json.NewEncoder(w).Encode(response)
 }
 
-type CreateGroup500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response CreateGroup500TexthtmlResponse) VisitCreateGroupResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type DeleteGroupRequestObject struct {
 	GroupID GroupID `json:"group_id"`
 }
@@ -9404,22 +9297,6 @@ func (response DeleteGroup404JSONResponse) VisitDeleteGroupResponse(w http.Respo
 	return json.NewEncoder(w).Encode(response)
 }
 
-type DeleteGroup404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response DeleteGroup404TexthtmlResponse) VisitDeleteGroupResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type DeleteGroup500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -9429,24 +9306,6 @@ func (response DeleteGroup500JSONResponse) VisitDeleteGroupResponse(w http.Respo
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteGroup500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response DeleteGroup500TexthtmlResponse) VisitDeleteGroupResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type ShowGroupRequestObject struct {
@@ -9484,22 +9343,6 @@ func (response ShowGroup404JSONResponse) VisitShowGroupResponse(w http.ResponseW
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ShowGroup404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response ShowGroup404TexthtmlResponse) VisitShowGroupResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type ShowGroup500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -9509,24 +9352,6 @@ func (response ShowGroup500JSONResponse) VisitShowGroupResponse(w http.ResponseW
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ShowGroup500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ShowGroup500TexthtmlResponse) VisitShowGroupResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type UpdateGroupRequestObject struct {
@@ -9565,22 +9390,6 @@ func (response UpdateGroup404JSONResponse) VisitUpdateGroupResponse(w http.Respo
 	return json.NewEncoder(w).Encode(response)
 }
 
-type UpdateGroup404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response UpdateGroup404TexthtmlResponse) VisitUpdateGroupResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type UpdateGroup422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response UpdateGroup422JSONResponse) VisitUpdateGroupResponse(w http.ResponseWriter) error {
@@ -9599,24 +9408,6 @@ func (response UpdateGroup500JSONResponse) VisitUpdateGroupResponse(w http.Respo
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateGroup500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response UpdateGroup500TexthtmlResponse) VisitUpdateGroupResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type DeleteGroupFromProjectRequestObject struct {
@@ -9655,22 +9446,6 @@ func (response DeleteGroupFromProject404JSONResponse) VisitDeleteGroupFromProjec
 	return json.NewEncoder(w).Encode(response)
 }
 
-type DeleteGroupFromProject404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response DeleteGroupFromProject404TexthtmlResponse) VisitDeleteGroupFromProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type DeleteGroupFromProject412JSONResponse struct{ NotAttachedErrorJSONResponse }
 
 func (response DeleteGroupFromProject412JSONResponse) VisitDeleteGroupFromProjectResponse(w http.ResponseWriter) error {
@@ -9689,24 +9464,6 @@ func (response DeleteGroupFromProject500JSONResponse) VisitDeleteGroupFromProjec
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteGroupFromProject500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response DeleteGroupFromProject500TexthtmlResponse) VisitDeleteGroupFromProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type ListGroupProjectsRequestObject struct {
@@ -9747,22 +9504,6 @@ func (response ListGroupProjects404JSONResponse) VisitListGroupProjectsResponse(
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ListGroupProjects404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response ListGroupProjects404TexthtmlResponse) VisitListGroupProjectsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type ListGroupProjects500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -9772,24 +9513,6 @@ func (response ListGroupProjects500JSONResponse) VisitListGroupProjectsResponse(
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ListGroupProjects500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ListGroupProjects500TexthtmlResponse) VisitListGroupProjectsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type AttachGroupToProjectRequestObject struct {
@@ -9828,22 +9551,6 @@ func (response AttachGroupToProject404JSONResponse) VisitAttachGroupToProjectRes
 	return json.NewEncoder(w).Encode(response)
 }
 
-type AttachGroupToProject404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response AttachGroupToProject404TexthtmlResponse) VisitAttachGroupToProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type AttachGroupToProject412JSONResponse struct {
 	AlreadyAttachedErrorJSONResponse
 }
@@ -9873,24 +9580,6 @@ func (response AttachGroupToProject500JSONResponse) VisitAttachGroupToProjectRes
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type AttachGroupToProject500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response AttachGroupToProject500TexthtmlResponse) VisitAttachGroupToProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type PermitGroupProjectRequestObject struct {
@@ -9929,22 +9618,6 @@ func (response PermitGroupProject404JSONResponse) VisitPermitGroupProjectRespons
 	return json.NewEncoder(w).Encode(response)
 }
 
-type PermitGroupProject404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response PermitGroupProject404TexthtmlResponse) VisitPermitGroupProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type PermitGroupProject412JSONResponse struct{ NotAttachedErrorJSONResponse }
 
 func (response PermitGroupProject412JSONResponse) VisitPermitGroupProjectResponse(w http.ResponseWriter) error {
@@ -9972,24 +9645,6 @@ func (response PermitGroupProject500JSONResponse) VisitPermitGroupProjectRespons
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type PermitGroupProject500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response PermitGroupProject500TexthtmlResponse) VisitPermitGroupProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type DeleteGroupFromUserRequestObject struct {
@@ -10028,22 +9683,6 @@ func (response DeleteGroupFromUser404JSONResponse) VisitDeleteGroupFromUserRespo
 	return json.NewEncoder(w).Encode(response)
 }
 
-type DeleteGroupFromUser404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response DeleteGroupFromUser404TexthtmlResponse) VisitDeleteGroupFromUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type DeleteGroupFromUser412JSONResponse struct{ NotAttachedErrorJSONResponse }
 
 func (response DeleteGroupFromUser412JSONResponse) VisitDeleteGroupFromUserResponse(w http.ResponseWriter) error {
@@ -10062,24 +9701,6 @@ func (response DeleteGroupFromUser500JSONResponse) VisitDeleteGroupFromUserRespo
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteGroupFromUser500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response DeleteGroupFromUser500TexthtmlResponse) VisitDeleteGroupFromUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type ListGroupUsersRequestObject struct {
@@ -10118,22 +9739,6 @@ func (response ListGroupUsers404JSONResponse) VisitListGroupUsersResponse(w http
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ListGroupUsers404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response ListGroupUsers404TexthtmlResponse) VisitListGroupUsersResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type ListGroupUsers500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -10143,24 +9748,6 @@ func (response ListGroupUsers500JSONResponse) VisitListGroupUsersResponse(w http
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ListGroupUsers500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ListGroupUsers500TexthtmlResponse) VisitListGroupUsersResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type AttachGroupToUserRequestObject struct {
@@ -10199,22 +9786,6 @@ func (response AttachGroupToUser404JSONResponse) VisitAttachGroupToUserResponse(
 	return json.NewEncoder(w).Encode(response)
 }
 
-type AttachGroupToUser404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response AttachGroupToUser404TexthtmlResponse) VisitAttachGroupToUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type AttachGroupToUser412JSONResponse struct {
 	AlreadyAttachedErrorJSONResponse
 }
@@ -10244,24 +9815,6 @@ func (response AttachGroupToUser500JSONResponse) VisitAttachGroupToUserResponse(
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type AttachGroupToUser500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response AttachGroupToUser500TexthtmlResponse) VisitAttachGroupToUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type PermitGroupUserRequestObject struct {
@@ -10300,22 +9853,6 @@ func (response PermitGroupUser404JSONResponse) VisitPermitGroupUserResponse(w ht
 	return json.NewEncoder(w).Encode(response)
 }
 
-type PermitGroupUser404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response PermitGroupUser404TexthtmlResponse) VisitPermitGroupUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type PermitGroupUser412JSONResponse struct{ NotAttachedErrorJSONResponse }
 
 func (response PermitGroupUser412JSONResponse) VisitPermitGroupUserResponse(w http.ResponseWriter) error {
@@ -10343,24 +9880,6 @@ func (response PermitGroupUser500JSONResponse) VisitPermitGroupUserResponse(w ht
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type PermitGroupUser500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response PermitGroupUser500TexthtmlResponse) VisitPermitGroupUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type ShowProfileRequestObject struct {
@@ -10397,24 +9916,6 @@ func (response ShowProfile500JSONResponse) VisitShowProfileResponse(w http.Respo
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ShowProfile500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ShowProfile500TexthtmlResponse) VisitShowProfileResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type UpdateProfileRequestObject struct {
@@ -10463,24 +9964,6 @@ func (response UpdateProfile500JSONResponse) VisitUpdateProfileResponse(w http.R
 	return json.NewEncoder(w).Encode(response)
 }
 
-type UpdateProfile500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response UpdateProfile500TexthtmlResponse) VisitUpdateProfileResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type TokenProfileRequestObject struct {
 }
 
@@ -10515,24 +9998,6 @@ func (response TokenProfile500JSONResponse) VisitTokenProfileResponse(w http.Res
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type TokenProfile500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response TokenProfile500TexthtmlResponse) VisitTokenProfileResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type ListProjectsRequestObject struct {
@@ -10570,24 +10035,6 @@ func (response ListProjects500JSONResponse) VisitListProjectsResponse(w http.Res
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ListProjects500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ListProjects500TexthtmlResponse) VisitListProjectsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type CreateProjectRequestObject struct {
@@ -10636,24 +10083,6 @@ func (response CreateProject500JSONResponse) VisitCreateProjectResponse(w http.R
 	return json.NewEncoder(w).Encode(response)
 }
 
-type CreateProject500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response CreateProject500TexthtmlResponse) VisitCreateProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type DeleteProjectRequestObject struct {
 	ProjectID ProjectID `json:"project_id"`
 }
@@ -10698,22 +10127,6 @@ func (response DeleteProject404JSONResponse) VisitDeleteProjectResponse(w http.R
 	return json.NewEncoder(w).Encode(response)
 }
 
-type DeleteProject404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response DeleteProject404TexthtmlResponse) VisitDeleteProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type DeleteProject500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -10723,24 +10136,6 @@ func (response DeleteProject500JSONResponse) VisitDeleteProjectResponse(w http.R
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteProject500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response DeleteProject500TexthtmlResponse) VisitDeleteProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type ShowProjectRequestObject struct {
@@ -10778,22 +10173,6 @@ func (response ShowProject404JSONResponse) VisitShowProjectResponse(w http.Respo
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ShowProject404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response ShowProject404TexthtmlResponse) VisitShowProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type ShowProject500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -10803,24 +10182,6 @@ func (response ShowProject500JSONResponse) VisitShowProjectResponse(w http.Respo
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ShowProject500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ShowProject500TexthtmlResponse) VisitShowProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type UpdateProjectRequestObject struct {
@@ -10859,22 +10220,6 @@ func (response UpdateProject404JSONResponse) VisitUpdateProjectResponse(w http.R
 	return json.NewEncoder(w).Encode(response)
 }
 
-type UpdateProject404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response UpdateProject404TexthtmlResponse) VisitUpdateProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type UpdateProject422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response UpdateProject422JSONResponse) VisitUpdateProjectResponse(w http.ResponseWriter) error {
@@ -10893,24 +10238,6 @@ func (response UpdateProject500JSONResponse) VisitUpdateProjectResponse(w http.R
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateProject500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response UpdateProject500TexthtmlResponse) VisitUpdateProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type ListProjectCredentialsRequestObject struct {
@@ -10951,22 +10278,6 @@ func (response ListProjectCredentials404JSONResponse) VisitListProjectCredential
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ListProjectCredentials404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response ListProjectCredentials404TexthtmlResponse) VisitListProjectCredentialsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type ListProjectCredentials500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -10976,24 +10287,6 @@ func (response ListProjectCredentials500JSONResponse) VisitListProjectCredential
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ListProjectCredentials500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ListProjectCredentials500TexthtmlResponse) VisitListProjectCredentialsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type CreateProjectCredentialRequestObject struct {
@@ -11034,22 +10327,6 @@ func (response CreateProjectCredential404JSONResponse) VisitCreateProjectCredent
 	return json.NewEncoder(w).Encode(response)
 }
 
-type CreateProjectCredential404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response CreateProjectCredential404TexthtmlResponse) VisitCreateProjectCredentialResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type CreateProjectCredential422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response CreateProjectCredential422JSONResponse) VisitCreateProjectCredentialResponse(w http.ResponseWriter) error {
@@ -11068,24 +10345,6 @@ func (response CreateProjectCredential500JSONResponse) VisitCreateProjectCredent
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type CreateProjectCredential500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response CreateProjectCredential500TexthtmlResponse) VisitCreateProjectCredentialResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type DeleteProjectCredentialRequestObject struct {
@@ -11133,22 +10392,6 @@ func (response DeleteProjectCredential404JSONResponse) VisitDeleteProjectCredent
 	return json.NewEncoder(w).Encode(response)
 }
 
-type DeleteProjectCredential404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response DeleteProjectCredential404TexthtmlResponse) VisitDeleteProjectCredentialResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type DeleteProjectCredential500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -11158,24 +10401,6 @@ func (response DeleteProjectCredential500JSONResponse) VisitDeleteProjectCredent
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteProjectCredential500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response DeleteProjectCredential500TexthtmlResponse) VisitDeleteProjectCredentialResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type ShowProjectCredentialRequestObject struct {
@@ -11216,22 +10441,6 @@ func (response ShowProjectCredential404JSONResponse) VisitShowProjectCredentialR
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ShowProjectCredential404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response ShowProjectCredential404TexthtmlResponse) VisitShowProjectCredentialResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type ShowProjectCredential500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -11241,24 +10450,6 @@ func (response ShowProjectCredential500JSONResponse) VisitShowProjectCredentialR
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ShowProjectCredential500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ShowProjectCredential500TexthtmlResponse) VisitShowProjectCredentialResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type UpdateProjectCredentialRequestObject struct {
@@ -11300,22 +10491,6 @@ func (response UpdateProjectCredential404JSONResponse) VisitUpdateProjectCredent
 	return json.NewEncoder(w).Encode(response)
 }
 
-type UpdateProjectCredential404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response UpdateProjectCredential404TexthtmlResponse) VisitUpdateProjectCredentialResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type UpdateProjectCredential422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response UpdateProjectCredential422JSONResponse) VisitUpdateProjectCredentialResponse(w http.ResponseWriter) error {
@@ -11334,24 +10509,6 @@ func (response UpdateProjectCredential500JSONResponse) VisitUpdateProjectCredent
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateProjectCredential500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response UpdateProjectCredential500TexthtmlResponse) VisitUpdateProjectCredentialResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type ListProjectEnvironmentsRequestObject struct {
@@ -11392,22 +10549,6 @@ func (response ListProjectEnvironments404JSONResponse) VisitListProjectEnvironme
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ListProjectEnvironments404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response ListProjectEnvironments404TexthtmlResponse) VisitListProjectEnvironmentsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type ListProjectEnvironments500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -11417,24 +10558,6 @@ func (response ListProjectEnvironments500JSONResponse) VisitListProjectEnvironme
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ListProjectEnvironments500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ListProjectEnvironments500TexthtmlResponse) VisitListProjectEnvironmentsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type CreateProjectEnvironmentRequestObject struct {
@@ -11475,22 +10598,6 @@ func (response CreateProjectEnvironment404JSONResponse) VisitCreateProjectEnviro
 	return json.NewEncoder(w).Encode(response)
 }
 
-type CreateProjectEnvironment404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response CreateProjectEnvironment404TexthtmlResponse) VisitCreateProjectEnvironmentResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type CreateProjectEnvironment422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response CreateProjectEnvironment422JSONResponse) VisitCreateProjectEnvironmentResponse(w http.ResponseWriter) error {
@@ -11509,24 +10616,6 @@ func (response CreateProjectEnvironment500JSONResponse) VisitCreateProjectEnviro
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type CreateProjectEnvironment500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response CreateProjectEnvironment500TexthtmlResponse) VisitCreateProjectEnvironmentResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type DeleteProjectEnvironmentRequestObject struct {
@@ -11574,22 +10663,6 @@ func (response DeleteProjectEnvironment404JSONResponse) VisitDeleteProjectEnviro
 	return json.NewEncoder(w).Encode(response)
 }
 
-type DeleteProjectEnvironment404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response DeleteProjectEnvironment404TexthtmlResponse) VisitDeleteProjectEnvironmentResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type DeleteProjectEnvironment500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -11599,24 +10672,6 @@ func (response DeleteProjectEnvironment500JSONResponse) VisitDeleteProjectEnviro
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteProjectEnvironment500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response DeleteProjectEnvironment500TexthtmlResponse) VisitDeleteProjectEnvironmentResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type ShowProjectEnvironmentRequestObject struct {
@@ -11657,22 +10712,6 @@ func (response ShowProjectEnvironment404JSONResponse) VisitShowProjectEnvironmen
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ShowProjectEnvironment404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response ShowProjectEnvironment404TexthtmlResponse) VisitShowProjectEnvironmentResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type ShowProjectEnvironment500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -11682,24 +10721,6 @@ func (response ShowProjectEnvironment500JSONResponse) VisitShowProjectEnvironmen
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ShowProjectEnvironment500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ShowProjectEnvironment500TexthtmlResponse) VisitShowProjectEnvironmentResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type UpdateProjectEnvironmentRequestObject struct {
@@ -11741,22 +10762,6 @@ func (response UpdateProjectEnvironment404JSONResponse) VisitUpdateProjectEnviro
 	return json.NewEncoder(w).Encode(response)
 }
 
-type UpdateProjectEnvironment404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response UpdateProjectEnvironment404TexthtmlResponse) VisitUpdateProjectEnvironmentResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type UpdateProjectEnvironment422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response UpdateProjectEnvironment422JSONResponse) VisitUpdateProjectEnvironmentResponse(w http.ResponseWriter) error {
@@ -11775,24 +10780,6 @@ func (response UpdateProjectEnvironment500JSONResponse) VisitUpdateProjectEnviro
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateProjectEnvironment500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response UpdateProjectEnvironment500TexthtmlResponse) VisitUpdateProjectEnvironmentResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type CreateProjectEnvironmentSecretRequestObject struct {
@@ -11834,22 +10821,6 @@ func (response CreateProjectEnvironmentSecret404JSONResponse) VisitCreateProject
 	return json.NewEncoder(w).Encode(response)
 }
 
-type CreateProjectEnvironmentSecret404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response CreateProjectEnvironmentSecret404TexthtmlResponse) VisitCreateProjectEnvironmentSecretResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type CreateProjectEnvironmentSecret422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response CreateProjectEnvironmentSecret422JSONResponse) VisitCreateProjectEnvironmentSecretResponse(w http.ResponseWriter) error {
@@ -11868,24 +10839,6 @@ func (response CreateProjectEnvironmentSecret500JSONResponse) VisitCreateProject
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type CreateProjectEnvironmentSecret500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response CreateProjectEnvironmentSecret500TexthtmlResponse) VisitCreateProjectEnvironmentSecretResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type DeleteProjectEnvironmentSecretRequestObject struct {
@@ -11934,22 +10887,6 @@ func (response DeleteProjectEnvironmentSecret404JSONResponse) VisitDeleteProject
 	return json.NewEncoder(w).Encode(response)
 }
 
-type DeleteProjectEnvironmentSecret404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response DeleteProjectEnvironmentSecret404TexthtmlResponse) VisitDeleteProjectEnvironmentSecretResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type DeleteProjectEnvironmentSecret500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -11959,24 +10896,6 @@ func (response DeleteProjectEnvironmentSecret500JSONResponse) VisitDeleteProject
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteProjectEnvironmentSecret500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response DeleteProjectEnvironmentSecret500TexthtmlResponse) VisitDeleteProjectEnvironmentSecretResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type UpdateProjectEnvironmentSecretRequestObject struct {
@@ -12019,22 +10938,6 @@ func (response UpdateProjectEnvironmentSecret404JSONResponse) VisitUpdateProject
 	return json.NewEncoder(w).Encode(response)
 }
 
-type UpdateProjectEnvironmentSecret404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response UpdateProjectEnvironmentSecret404TexthtmlResponse) VisitUpdateProjectEnvironmentSecretResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type UpdateProjectEnvironmentSecret422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response UpdateProjectEnvironmentSecret422JSONResponse) VisitUpdateProjectEnvironmentSecretResponse(w http.ResponseWriter) error {
@@ -12053,24 +10956,6 @@ func (response UpdateProjectEnvironmentSecret500JSONResponse) VisitUpdateProject
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateProjectEnvironmentSecret500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response UpdateProjectEnvironmentSecret500TexthtmlResponse) VisitUpdateProjectEnvironmentSecretResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type CreateProjectEnvironmentValueRequestObject struct {
@@ -12112,22 +10997,6 @@ func (response CreateProjectEnvironmentValue404JSONResponse) VisitCreateProjectE
 	return json.NewEncoder(w).Encode(response)
 }
 
-type CreateProjectEnvironmentValue404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response CreateProjectEnvironmentValue404TexthtmlResponse) VisitCreateProjectEnvironmentValueResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type CreateProjectEnvironmentValue422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response CreateProjectEnvironmentValue422JSONResponse) VisitCreateProjectEnvironmentValueResponse(w http.ResponseWriter) error {
@@ -12146,24 +11015,6 @@ func (response CreateProjectEnvironmentValue500JSONResponse) VisitCreateProjectE
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type CreateProjectEnvironmentValue500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response CreateProjectEnvironmentValue500TexthtmlResponse) VisitCreateProjectEnvironmentValueResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type DeleteProjectEnvironmentValueRequestObject struct {
@@ -12212,22 +11063,6 @@ func (response DeleteProjectEnvironmentValue404JSONResponse) VisitDeleteProjectE
 	return json.NewEncoder(w).Encode(response)
 }
 
-type DeleteProjectEnvironmentValue404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response DeleteProjectEnvironmentValue404TexthtmlResponse) VisitDeleteProjectEnvironmentValueResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type DeleteProjectEnvironmentValue500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -12237,24 +11072,6 @@ func (response DeleteProjectEnvironmentValue500JSONResponse) VisitDeleteProjectE
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteProjectEnvironmentValue500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response DeleteProjectEnvironmentValue500TexthtmlResponse) VisitDeleteProjectEnvironmentValueResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type UpdateProjectEnvironmentValueRequestObject struct {
@@ -12297,22 +11114,6 @@ func (response UpdateProjectEnvironmentValue404JSONResponse) VisitUpdateProjectE
 	return json.NewEncoder(w).Encode(response)
 }
 
-type UpdateProjectEnvironmentValue404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response UpdateProjectEnvironmentValue404TexthtmlResponse) VisitUpdateProjectEnvironmentValueResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type UpdateProjectEnvironmentValue422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response UpdateProjectEnvironmentValue422JSONResponse) VisitUpdateProjectEnvironmentValueResponse(w http.ResponseWriter) error {
@@ -12331,24 +11132,6 @@ func (response UpdateProjectEnvironmentValue500JSONResponse) VisitUpdateProjectE
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateProjectEnvironmentValue500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response UpdateProjectEnvironmentValue500TexthtmlResponse) VisitUpdateProjectEnvironmentValueResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type ListProjectEventsRequestObject struct {
@@ -12389,22 +11172,6 @@ func (response ListProjectEvents404JSONResponse) VisitListProjectEventsResponse(
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ListProjectEvents404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response ListProjectEvents404TexthtmlResponse) VisitListProjectEventsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type ListProjectEvents500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -12414,24 +11181,6 @@ func (response ListProjectEvents500JSONResponse) VisitListProjectEventsResponse(
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ListProjectEvents500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ListProjectEvents500TexthtmlResponse) VisitListProjectEventsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type ListProjectExecutionsRequestObject struct {
@@ -12472,22 +11221,6 @@ func (response ListProjectExecutions404JSONResponse) VisitListProjectExecutionsR
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ListProjectExecutions404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response ListProjectExecutions404TexthtmlResponse) VisitListProjectExecutionsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type ListProjectExecutions500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -12497,24 +11230,6 @@ func (response ListProjectExecutions500JSONResponse) VisitListProjectExecutionsR
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ListProjectExecutions500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ListProjectExecutions500TexthtmlResponse) VisitListProjectExecutionsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type CreateProjectExecutionRequestObject struct {
@@ -12555,22 +11270,6 @@ func (response CreateProjectExecution404JSONResponse) VisitCreateProjectExecutio
 	return json.NewEncoder(w).Encode(response)
 }
 
-type CreateProjectExecution404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response CreateProjectExecution404TexthtmlResponse) VisitCreateProjectExecutionResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type CreateProjectExecution422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response CreateProjectExecution422JSONResponse) VisitCreateProjectExecutionResponse(w http.ResponseWriter) error {
@@ -12589,24 +11288,6 @@ func (response CreateProjectExecution500JSONResponse) VisitCreateProjectExecutio
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type CreateProjectExecution500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response CreateProjectExecution500TexthtmlResponse) VisitCreateProjectExecutionResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type DeleteProjectExecutionRequestObject struct {
@@ -12654,22 +11335,6 @@ func (response DeleteProjectExecution404JSONResponse) VisitDeleteProjectExecutio
 	return json.NewEncoder(w).Encode(response)
 }
 
-type DeleteProjectExecution404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response DeleteProjectExecution404TexthtmlResponse) VisitDeleteProjectExecutionResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type DeleteProjectExecution500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -12679,24 +11344,6 @@ func (response DeleteProjectExecution500JSONResponse) VisitDeleteProjectExecutio
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteProjectExecution500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response DeleteProjectExecution500TexthtmlResponse) VisitDeleteProjectExecutionResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type ShowProjectExecutionRequestObject struct {
@@ -12737,22 +11384,6 @@ func (response ShowProjectExecution404JSONResponse) VisitShowProjectExecutionRes
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ShowProjectExecution404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response ShowProjectExecution404TexthtmlResponse) VisitShowProjectExecutionResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type ShowProjectExecution500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -12762,24 +11393,6 @@ func (response ShowProjectExecution500JSONResponse) VisitShowProjectExecutionRes
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ShowProjectExecution500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ShowProjectExecution500TexthtmlResponse) VisitShowProjectExecutionResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type OutputProjectExecutionRequestObject struct {
@@ -12820,22 +11433,6 @@ func (response OutputProjectExecution404JSONResponse) VisitOutputProjectExecutio
 	return json.NewEncoder(w).Encode(response)
 }
 
-type OutputProjectExecution404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response OutputProjectExecution404TexthtmlResponse) VisitOutputProjectExecutionResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type OutputProjectExecution500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -12845,24 +11442,6 @@ func (response OutputProjectExecution500JSONResponse) VisitOutputProjectExecutio
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type OutputProjectExecution500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response OutputProjectExecution500TexthtmlResponse) VisitOutputProjectExecutionResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type PurgeProjectExecutionRequestObject struct {
@@ -12910,22 +11489,6 @@ func (response PurgeProjectExecution404JSONResponse) VisitPurgeProjectExecutionR
 	return json.NewEncoder(w).Encode(response)
 }
 
-type PurgeProjectExecution404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response PurgeProjectExecution404TexthtmlResponse) VisitPurgeProjectExecutionResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type PurgeProjectExecution500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -12935,24 +11498,6 @@ func (response PurgeProjectExecution500JSONResponse) VisitPurgeProjectExecutionR
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type PurgeProjectExecution500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response PurgeProjectExecution500TexthtmlResponse) VisitPurgeProjectExecutionResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type DeleteProjectFromGroupRequestObject struct {
@@ -12991,22 +11536,6 @@ func (response DeleteProjectFromGroup404JSONResponse) VisitDeleteProjectFromGrou
 	return json.NewEncoder(w).Encode(response)
 }
 
-type DeleteProjectFromGroup404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response DeleteProjectFromGroup404TexthtmlResponse) VisitDeleteProjectFromGroupResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type DeleteProjectFromGroup412JSONResponse struct{ NotAttachedErrorJSONResponse }
 
 func (response DeleteProjectFromGroup412JSONResponse) VisitDeleteProjectFromGroupResponse(w http.ResponseWriter) error {
@@ -13025,24 +11554,6 @@ func (response DeleteProjectFromGroup500JSONResponse) VisitDeleteProjectFromGrou
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteProjectFromGroup500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response DeleteProjectFromGroup500TexthtmlResponse) VisitDeleteProjectFromGroupResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type ListProjectGroupsRequestObject struct {
@@ -13083,22 +11594,6 @@ func (response ListProjectGroups404JSONResponse) VisitListProjectGroupsResponse(
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ListProjectGroups404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response ListProjectGroups404TexthtmlResponse) VisitListProjectGroupsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type ListProjectGroups500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -13108,24 +11603,6 @@ func (response ListProjectGroups500JSONResponse) VisitListProjectGroupsResponse(
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ListProjectGroups500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ListProjectGroups500TexthtmlResponse) VisitListProjectGroupsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type AttachProjectToGroupRequestObject struct {
@@ -13164,22 +11641,6 @@ func (response AttachProjectToGroup404JSONResponse) VisitAttachProjectToGroupRes
 	return json.NewEncoder(w).Encode(response)
 }
 
-type AttachProjectToGroup404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response AttachProjectToGroup404TexthtmlResponse) VisitAttachProjectToGroupResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type AttachProjectToGroup412JSONResponse struct {
 	AlreadyAttachedErrorJSONResponse
 }
@@ -13209,24 +11670,6 @@ func (response AttachProjectToGroup500JSONResponse) VisitAttachProjectToGroupRes
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type AttachProjectToGroup500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response AttachProjectToGroup500TexthtmlResponse) VisitAttachProjectToGroupResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type PermitProjectGroupRequestObject struct {
@@ -13265,22 +11708,6 @@ func (response PermitProjectGroup404JSONResponse) VisitPermitProjectGroupRespons
 	return json.NewEncoder(w).Encode(response)
 }
 
-type PermitProjectGroup404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response PermitProjectGroup404TexthtmlResponse) VisitPermitProjectGroupResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type PermitProjectGroup412JSONResponse struct{ NotAttachedErrorJSONResponse }
 
 func (response PermitProjectGroup412JSONResponse) VisitPermitProjectGroupResponse(w http.ResponseWriter) error {
@@ -13308,24 +11735,6 @@ func (response PermitProjectGroup500JSONResponse) VisitPermitProjectGroupRespons
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type PermitProjectGroup500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response PermitProjectGroup500TexthtmlResponse) VisitPermitProjectGroupResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type ListProjectInventoriesRequestObject struct {
@@ -13366,22 +11775,6 @@ func (response ListProjectInventories404JSONResponse) VisitListProjectInventorie
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ListProjectInventories404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response ListProjectInventories404TexthtmlResponse) VisitListProjectInventoriesResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type ListProjectInventories500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -13391,24 +11784,6 @@ func (response ListProjectInventories500JSONResponse) VisitListProjectInventorie
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ListProjectInventories500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ListProjectInventories500TexthtmlResponse) VisitListProjectInventoriesResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type CreateProjectInventoryRequestObject struct {
@@ -13449,22 +11824,6 @@ func (response CreateProjectInventory404JSONResponse) VisitCreateProjectInventor
 	return json.NewEncoder(w).Encode(response)
 }
 
-type CreateProjectInventory404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response CreateProjectInventory404TexthtmlResponse) VisitCreateProjectInventoryResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type CreateProjectInventory422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response CreateProjectInventory422JSONResponse) VisitCreateProjectInventoryResponse(w http.ResponseWriter) error {
@@ -13483,24 +11842,6 @@ func (response CreateProjectInventory500JSONResponse) VisitCreateProjectInventor
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type CreateProjectInventory500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response CreateProjectInventory500TexthtmlResponse) VisitCreateProjectInventoryResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type DeleteProjectInventoryRequestObject struct {
@@ -13548,22 +11889,6 @@ func (response DeleteProjectInventory404JSONResponse) VisitDeleteProjectInventor
 	return json.NewEncoder(w).Encode(response)
 }
 
-type DeleteProjectInventory404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response DeleteProjectInventory404TexthtmlResponse) VisitDeleteProjectInventoryResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type DeleteProjectInventory500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -13573,24 +11898,6 @@ func (response DeleteProjectInventory500JSONResponse) VisitDeleteProjectInventor
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteProjectInventory500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response DeleteProjectInventory500TexthtmlResponse) VisitDeleteProjectInventoryResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type ShowProjectInventoryRequestObject struct {
@@ -13631,22 +11938,6 @@ func (response ShowProjectInventory404JSONResponse) VisitShowProjectInventoryRes
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ShowProjectInventory404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response ShowProjectInventory404TexthtmlResponse) VisitShowProjectInventoryResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type ShowProjectInventory500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -13656,24 +11947,6 @@ func (response ShowProjectInventory500JSONResponse) VisitShowProjectInventoryRes
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ShowProjectInventory500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ShowProjectInventory500TexthtmlResponse) VisitShowProjectInventoryResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type UpdateProjectInventoryRequestObject struct {
@@ -13715,22 +11988,6 @@ func (response UpdateProjectInventory404JSONResponse) VisitUpdateProjectInventor
 	return json.NewEncoder(w).Encode(response)
 }
 
-type UpdateProjectInventory404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response UpdateProjectInventory404TexthtmlResponse) VisitUpdateProjectInventoryResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type UpdateProjectInventory422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response UpdateProjectInventory422JSONResponse) VisitUpdateProjectInventoryResponse(w http.ResponseWriter) error {
@@ -13749,24 +12006,6 @@ func (response UpdateProjectInventory500JSONResponse) VisitUpdateProjectInventor
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateProjectInventory500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response UpdateProjectInventory500TexthtmlResponse) VisitUpdateProjectInventoryResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type ListProjectRepositoriesRequestObject struct {
@@ -13807,22 +12046,6 @@ func (response ListProjectRepositories404JSONResponse) VisitListProjectRepositor
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ListProjectRepositories404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response ListProjectRepositories404TexthtmlResponse) VisitListProjectRepositoriesResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type ListProjectRepositories500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -13832,24 +12055,6 @@ func (response ListProjectRepositories500JSONResponse) VisitListProjectRepositor
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ListProjectRepositories500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ListProjectRepositories500TexthtmlResponse) VisitListProjectRepositoriesResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type CreateProjectRepositoryRequestObject struct {
@@ -13890,22 +12095,6 @@ func (response CreateProjectRepository404JSONResponse) VisitCreateProjectReposit
 	return json.NewEncoder(w).Encode(response)
 }
 
-type CreateProjectRepository404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response CreateProjectRepository404TexthtmlResponse) VisitCreateProjectRepositoryResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type CreateProjectRepository422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response CreateProjectRepository422JSONResponse) VisitCreateProjectRepositoryResponse(w http.ResponseWriter) error {
@@ -13924,24 +12113,6 @@ func (response CreateProjectRepository500JSONResponse) VisitCreateProjectReposit
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type CreateProjectRepository500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response CreateProjectRepository500TexthtmlResponse) VisitCreateProjectRepositoryResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type DeleteProjectRepositoryRequestObject struct {
@@ -13989,22 +12160,6 @@ func (response DeleteProjectRepository404JSONResponse) VisitDeleteProjectReposit
 	return json.NewEncoder(w).Encode(response)
 }
 
-type DeleteProjectRepository404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response DeleteProjectRepository404TexthtmlResponse) VisitDeleteProjectRepositoryResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type DeleteProjectRepository500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -14014,24 +12169,6 @@ func (response DeleteProjectRepository500JSONResponse) VisitDeleteProjectReposit
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteProjectRepository500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response DeleteProjectRepository500TexthtmlResponse) VisitDeleteProjectRepositoryResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type ShowProjectRepositoryRequestObject struct {
@@ -14072,22 +12209,6 @@ func (response ShowProjectRepository404JSONResponse) VisitShowProjectRepositoryR
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ShowProjectRepository404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response ShowProjectRepository404TexthtmlResponse) VisitShowProjectRepositoryResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type ShowProjectRepository500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -14097,24 +12218,6 @@ func (response ShowProjectRepository500JSONResponse) VisitShowProjectRepositoryR
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ShowProjectRepository500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ShowProjectRepository500TexthtmlResponse) VisitShowProjectRepositoryResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type UpdateProjectRepositoryRequestObject struct {
@@ -14156,22 +12259,6 @@ func (response UpdateProjectRepository404JSONResponse) VisitUpdateProjectReposit
 	return json.NewEncoder(w).Encode(response)
 }
 
-type UpdateProjectRepository404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response UpdateProjectRepository404TexthtmlResponse) VisitUpdateProjectRepositoryResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type UpdateProjectRepository422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response UpdateProjectRepository422JSONResponse) VisitUpdateProjectRepositoryResponse(w http.ResponseWriter) error {
@@ -14190,24 +12277,6 @@ func (response UpdateProjectRepository500JSONResponse) VisitUpdateProjectReposit
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateProjectRepository500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response UpdateProjectRepository500TexthtmlResponse) VisitUpdateProjectRepositoryResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type ListProjectRunnersRequestObject struct {
@@ -14248,22 +12317,6 @@ func (response ListProjectRunners404JSONResponse) VisitListProjectRunnersRespons
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ListProjectRunners404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response ListProjectRunners404TexthtmlResponse) VisitListProjectRunnersResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type ListProjectRunners500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -14273,24 +12326,6 @@ func (response ListProjectRunners500JSONResponse) VisitListProjectRunnersRespons
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ListProjectRunners500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ListProjectRunners500TexthtmlResponse) VisitListProjectRunnersResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type CreateProjectRunnerRequestObject struct {
@@ -14331,22 +12366,6 @@ func (response CreateProjectRunner404JSONResponse) VisitCreateProjectRunnerRespo
 	return json.NewEncoder(w).Encode(response)
 }
 
-type CreateProjectRunner404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response CreateProjectRunner404TexthtmlResponse) VisitCreateProjectRunnerResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type CreateProjectRunner422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response CreateProjectRunner422JSONResponse) VisitCreateProjectRunnerResponse(w http.ResponseWriter) error {
@@ -14365,24 +12384,6 @@ func (response CreateProjectRunner500JSONResponse) VisitCreateProjectRunnerRespo
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type CreateProjectRunner500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response CreateProjectRunner500TexthtmlResponse) VisitCreateProjectRunnerResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type DeleteProjectRunnerRequestObject struct {
@@ -14430,22 +12431,6 @@ func (response DeleteProjectRunner404JSONResponse) VisitDeleteProjectRunnerRespo
 	return json.NewEncoder(w).Encode(response)
 }
 
-type DeleteProjectRunner404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response DeleteProjectRunner404TexthtmlResponse) VisitDeleteProjectRunnerResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type DeleteProjectRunner500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -14455,24 +12440,6 @@ func (response DeleteProjectRunner500JSONResponse) VisitDeleteProjectRunnerRespo
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteProjectRunner500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response DeleteProjectRunner500TexthtmlResponse) VisitDeleteProjectRunnerResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type ShowProjectRunnerRequestObject struct {
@@ -14513,22 +12480,6 @@ func (response ShowProjectRunner404JSONResponse) VisitShowProjectRunnerResponse(
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ShowProjectRunner404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response ShowProjectRunner404TexthtmlResponse) VisitShowProjectRunnerResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type ShowProjectRunner500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -14538,24 +12489,6 @@ func (response ShowProjectRunner500JSONResponse) VisitShowProjectRunnerResponse(
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ShowProjectRunner500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ShowProjectRunner500TexthtmlResponse) VisitShowProjectRunnerResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type UpdateProjectRunnerRequestObject struct {
@@ -14597,22 +12530,6 @@ func (response UpdateProjectRunner404JSONResponse) VisitUpdateProjectRunnerRespo
 	return json.NewEncoder(w).Encode(response)
 }
 
-type UpdateProjectRunner404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response UpdateProjectRunner404TexthtmlResponse) VisitUpdateProjectRunnerResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type UpdateProjectRunner422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response UpdateProjectRunner422JSONResponse) VisitUpdateProjectRunnerResponse(w http.ResponseWriter) error {
@@ -14631,24 +12548,6 @@ func (response UpdateProjectRunner500JSONResponse) VisitUpdateProjectRunnerRespo
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateProjectRunner500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response UpdateProjectRunner500TexthtmlResponse) VisitUpdateProjectRunnerResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type ListProjectSchedulesRequestObject struct {
@@ -14689,22 +12588,6 @@ func (response ListProjectSchedules404JSONResponse) VisitListProjectSchedulesRes
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ListProjectSchedules404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response ListProjectSchedules404TexthtmlResponse) VisitListProjectSchedulesResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type ListProjectSchedules500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -14714,24 +12597,6 @@ func (response ListProjectSchedules500JSONResponse) VisitListProjectSchedulesRes
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ListProjectSchedules500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ListProjectSchedules500TexthtmlResponse) VisitListProjectSchedulesResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type CreateProjectScheduleRequestObject struct {
@@ -14772,22 +12637,6 @@ func (response CreateProjectSchedule404JSONResponse) VisitCreateProjectScheduleR
 	return json.NewEncoder(w).Encode(response)
 }
 
-type CreateProjectSchedule404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response CreateProjectSchedule404TexthtmlResponse) VisitCreateProjectScheduleResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type CreateProjectSchedule422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response CreateProjectSchedule422JSONResponse) VisitCreateProjectScheduleResponse(w http.ResponseWriter) error {
@@ -14806,24 +12655,6 @@ func (response CreateProjectSchedule500JSONResponse) VisitCreateProjectScheduleR
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type CreateProjectSchedule500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response CreateProjectSchedule500TexthtmlResponse) VisitCreateProjectScheduleResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type DeleteProjectScheduleRequestObject struct {
@@ -14871,22 +12702,6 @@ func (response DeleteProjectSchedule404JSONResponse) VisitDeleteProjectScheduleR
 	return json.NewEncoder(w).Encode(response)
 }
 
-type DeleteProjectSchedule404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response DeleteProjectSchedule404TexthtmlResponse) VisitDeleteProjectScheduleResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type DeleteProjectSchedule500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -14896,24 +12711,6 @@ func (response DeleteProjectSchedule500JSONResponse) VisitDeleteProjectScheduleR
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteProjectSchedule500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response DeleteProjectSchedule500TexthtmlResponse) VisitDeleteProjectScheduleResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type ShowProjectScheduleRequestObject struct {
@@ -14954,22 +12751,6 @@ func (response ShowProjectSchedule404JSONResponse) VisitShowProjectScheduleRespo
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ShowProjectSchedule404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response ShowProjectSchedule404TexthtmlResponse) VisitShowProjectScheduleResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type ShowProjectSchedule500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -14979,24 +12760,6 @@ func (response ShowProjectSchedule500JSONResponse) VisitShowProjectScheduleRespo
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ShowProjectSchedule500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ShowProjectSchedule500TexthtmlResponse) VisitShowProjectScheduleResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type UpdateProjectScheduleRequestObject struct {
@@ -15038,22 +12801,6 @@ func (response UpdateProjectSchedule404JSONResponse) VisitUpdateProjectScheduleR
 	return json.NewEncoder(w).Encode(response)
 }
 
-type UpdateProjectSchedule404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response UpdateProjectSchedule404TexthtmlResponse) VisitUpdateProjectScheduleResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type UpdateProjectSchedule422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response UpdateProjectSchedule422JSONResponse) VisitUpdateProjectScheduleResponse(w http.ResponseWriter) error {
@@ -15072,24 +12819,6 @@ func (response UpdateProjectSchedule500JSONResponse) VisitUpdateProjectScheduleR
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateProjectSchedule500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response UpdateProjectSchedule500TexthtmlResponse) VisitUpdateProjectScheduleResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type ListProjectTemplatesRequestObject struct {
@@ -15130,22 +12859,6 @@ func (response ListProjectTemplates404JSONResponse) VisitListProjectTemplatesRes
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ListProjectTemplates404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response ListProjectTemplates404TexthtmlResponse) VisitListProjectTemplatesResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type ListProjectTemplates500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -15155,24 +12868,6 @@ func (response ListProjectTemplates500JSONResponse) VisitListProjectTemplatesRes
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ListProjectTemplates500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ListProjectTemplates500TexthtmlResponse) VisitListProjectTemplatesResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type CreateProjectTemplateRequestObject struct {
@@ -15213,22 +12908,6 @@ func (response CreateProjectTemplate404JSONResponse) VisitCreateProjectTemplateR
 	return json.NewEncoder(w).Encode(response)
 }
 
-type CreateProjectTemplate404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response CreateProjectTemplate404TexthtmlResponse) VisitCreateProjectTemplateResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type CreateProjectTemplate422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response CreateProjectTemplate422JSONResponse) VisitCreateProjectTemplateResponse(w http.ResponseWriter) error {
@@ -15247,24 +12926,6 @@ func (response CreateProjectTemplate500JSONResponse) VisitCreateProjectTemplateR
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type CreateProjectTemplate500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response CreateProjectTemplate500TexthtmlResponse) VisitCreateProjectTemplateResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type DeleteProjectTemplateRequestObject struct {
@@ -15312,22 +12973,6 @@ func (response DeleteProjectTemplate404JSONResponse) VisitDeleteProjectTemplateR
 	return json.NewEncoder(w).Encode(response)
 }
 
-type DeleteProjectTemplate404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response DeleteProjectTemplate404TexthtmlResponse) VisitDeleteProjectTemplateResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type DeleteProjectTemplate500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -15337,24 +12982,6 @@ func (response DeleteProjectTemplate500JSONResponse) VisitDeleteProjectTemplateR
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteProjectTemplate500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response DeleteProjectTemplate500TexthtmlResponse) VisitDeleteProjectTemplateResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type ShowProjectTemplateRequestObject struct {
@@ -15395,22 +13022,6 @@ func (response ShowProjectTemplate404JSONResponse) VisitShowProjectTemplateRespo
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ShowProjectTemplate404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response ShowProjectTemplate404TexthtmlResponse) VisitShowProjectTemplateResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type ShowProjectTemplate500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -15420,24 +13031,6 @@ func (response ShowProjectTemplate500JSONResponse) VisitShowProjectTemplateRespo
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ShowProjectTemplate500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ShowProjectTemplate500TexthtmlResponse) VisitShowProjectTemplateResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type UpdateProjectTemplateRequestObject struct {
@@ -15479,22 +13072,6 @@ func (response UpdateProjectTemplate404JSONResponse) VisitUpdateProjectTemplateR
 	return json.NewEncoder(w).Encode(response)
 }
 
-type UpdateProjectTemplate404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response UpdateProjectTemplate404TexthtmlResponse) VisitUpdateProjectTemplateResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type UpdateProjectTemplate422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response UpdateProjectTemplate422JSONResponse) VisitUpdateProjectTemplateResponse(w http.ResponseWriter) error {
@@ -15513,24 +13090,6 @@ func (response UpdateProjectTemplate500JSONResponse) VisitUpdateProjectTemplateR
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateProjectTemplate500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response UpdateProjectTemplate500TexthtmlResponse) VisitUpdateProjectTemplateResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type CreateProjectTemplateSurveyRequestObject struct {
@@ -15572,22 +13131,6 @@ func (response CreateProjectTemplateSurvey404JSONResponse) VisitCreateProjectTem
 	return json.NewEncoder(w).Encode(response)
 }
 
-type CreateProjectTemplateSurvey404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response CreateProjectTemplateSurvey404TexthtmlResponse) VisitCreateProjectTemplateSurveyResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type CreateProjectTemplateSurvey422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response CreateProjectTemplateSurvey422JSONResponse) VisitCreateProjectTemplateSurveyResponse(w http.ResponseWriter) error {
@@ -15606,24 +13149,6 @@ func (response CreateProjectTemplateSurvey500JSONResponse) VisitCreateProjectTem
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type CreateProjectTemplateSurvey500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response CreateProjectTemplateSurvey500TexthtmlResponse) VisitCreateProjectTemplateSurveyResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type DeleteProjectTemplateSurveyRequestObject struct {
@@ -15672,22 +13197,6 @@ func (response DeleteProjectTemplateSurvey404JSONResponse) VisitDeleteProjectTem
 	return json.NewEncoder(w).Encode(response)
 }
 
-type DeleteProjectTemplateSurvey404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response DeleteProjectTemplateSurvey404TexthtmlResponse) VisitDeleteProjectTemplateSurveyResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type DeleteProjectTemplateSurvey500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -15697,24 +13206,6 @@ func (response DeleteProjectTemplateSurvey500JSONResponse) VisitDeleteProjectTem
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteProjectTemplateSurvey500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response DeleteProjectTemplateSurvey500TexthtmlResponse) VisitDeleteProjectTemplateSurveyResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type UpdateProjectTemplateSurveyRequestObject struct {
@@ -15757,22 +13248,6 @@ func (response UpdateProjectTemplateSurvey404JSONResponse) VisitUpdateProjectTem
 	return json.NewEncoder(w).Encode(response)
 }
 
-type UpdateProjectTemplateSurvey404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response UpdateProjectTemplateSurvey404TexthtmlResponse) VisitUpdateProjectTemplateSurveyResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type UpdateProjectTemplateSurvey422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response UpdateProjectTemplateSurvey422JSONResponse) VisitUpdateProjectTemplateSurveyResponse(w http.ResponseWriter) error {
@@ -15791,24 +13266,6 @@ func (response UpdateProjectTemplateSurvey500JSONResponse) VisitUpdateProjectTem
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateProjectTemplateSurvey500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response UpdateProjectTemplateSurvey500TexthtmlResponse) VisitUpdateProjectTemplateSurveyResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type CreateProjectTemplateVaultRequestObject struct {
@@ -15850,22 +13307,6 @@ func (response CreateProjectTemplateVault404JSONResponse) VisitCreateProjectTemp
 	return json.NewEncoder(w).Encode(response)
 }
 
-type CreateProjectTemplateVault404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response CreateProjectTemplateVault404TexthtmlResponse) VisitCreateProjectTemplateVaultResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type CreateProjectTemplateVault422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response CreateProjectTemplateVault422JSONResponse) VisitCreateProjectTemplateVaultResponse(w http.ResponseWriter) error {
@@ -15884,24 +13325,6 @@ func (response CreateProjectTemplateVault500JSONResponse) VisitCreateProjectTemp
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type CreateProjectTemplateVault500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response CreateProjectTemplateVault500TexthtmlResponse) VisitCreateProjectTemplateVaultResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type DeleteProjectTemplateVaultRequestObject struct {
@@ -15950,22 +13373,6 @@ func (response DeleteProjectTemplateVault404JSONResponse) VisitDeleteProjectTemp
 	return json.NewEncoder(w).Encode(response)
 }
 
-type DeleteProjectTemplateVault404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response DeleteProjectTemplateVault404TexthtmlResponse) VisitDeleteProjectTemplateVaultResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type DeleteProjectTemplateVault500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -15975,24 +13382,6 @@ func (response DeleteProjectTemplateVault500JSONResponse) VisitDeleteProjectTemp
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteProjectTemplateVault500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response DeleteProjectTemplateVault500TexthtmlResponse) VisitDeleteProjectTemplateVaultResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type UpdateProjectTemplateVaultRequestObject struct {
@@ -16035,22 +13424,6 @@ func (response UpdateProjectTemplateVault404JSONResponse) VisitUpdateProjectTemp
 	return json.NewEncoder(w).Encode(response)
 }
 
-type UpdateProjectTemplateVault404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response UpdateProjectTemplateVault404TexthtmlResponse) VisitUpdateProjectTemplateVaultResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type UpdateProjectTemplateVault422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response UpdateProjectTemplateVault422JSONResponse) VisitUpdateProjectTemplateVaultResponse(w http.ResponseWriter) error {
@@ -16069,24 +13442,6 @@ func (response UpdateProjectTemplateVault500JSONResponse) VisitUpdateProjectTemp
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateProjectTemplateVault500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response UpdateProjectTemplateVault500TexthtmlResponse) VisitUpdateProjectTemplateVaultResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type DeleteProjectFromUserRequestObject struct {
@@ -16125,22 +13480,6 @@ func (response DeleteProjectFromUser404JSONResponse) VisitDeleteProjectFromUserR
 	return json.NewEncoder(w).Encode(response)
 }
 
-type DeleteProjectFromUser404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response DeleteProjectFromUser404TexthtmlResponse) VisitDeleteProjectFromUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type DeleteProjectFromUser412JSONResponse struct{ NotAttachedErrorJSONResponse }
 
 func (response DeleteProjectFromUser412JSONResponse) VisitDeleteProjectFromUserResponse(w http.ResponseWriter) error {
@@ -16159,24 +13498,6 @@ func (response DeleteProjectFromUser500JSONResponse) VisitDeleteProjectFromUserR
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteProjectFromUser500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response DeleteProjectFromUser500TexthtmlResponse) VisitDeleteProjectFromUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type ListProjectUsersRequestObject struct {
@@ -16217,22 +13538,6 @@ func (response ListProjectUsers404JSONResponse) VisitListProjectUsersResponse(w 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ListProjectUsers404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response ListProjectUsers404TexthtmlResponse) VisitListProjectUsersResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type ListProjectUsers500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -16242,24 +13547,6 @@ func (response ListProjectUsers500JSONResponse) VisitListProjectUsersResponse(w 
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ListProjectUsers500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ListProjectUsers500TexthtmlResponse) VisitListProjectUsersResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type AttachProjectToUserRequestObject struct {
@@ -16298,22 +13585,6 @@ func (response AttachProjectToUser404JSONResponse) VisitAttachProjectToUserRespo
 	return json.NewEncoder(w).Encode(response)
 }
 
-type AttachProjectToUser404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response AttachProjectToUser404TexthtmlResponse) VisitAttachProjectToUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type AttachProjectToUser412JSONResponse struct {
 	AlreadyAttachedErrorJSONResponse
 }
@@ -16343,24 +13614,6 @@ func (response AttachProjectToUser500JSONResponse) VisitAttachProjectToUserRespo
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type AttachProjectToUser500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response AttachProjectToUser500TexthtmlResponse) VisitAttachProjectToUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type PermitProjectUserRequestObject struct {
@@ -16399,22 +13652,6 @@ func (response PermitProjectUser404JSONResponse) VisitPermitProjectUserResponse(
 	return json.NewEncoder(w).Encode(response)
 }
 
-type PermitProjectUser404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response PermitProjectUser404TexthtmlResponse) VisitPermitProjectUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type PermitProjectUser412JSONResponse struct{ NotAttachedErrorJSONResponse }
 
 func (response PermitProjectUser412JSONResponse) VisitPermitProjectUserResponse(w http.ResponseWriter) error {
@@ -16442,24 +13679,6 @@ func (response PermitProjectUser500JSONResponse) VisitPermitProjectUserResponse(
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type PermitProjectUser500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response PermitProjectUser500TexthtmlResponse) VisitPermitProjectUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type ListGlobalRunnersRequestObject struct {
@@ -16499,24 +13718,6 @@ func (response ListGlobalRunners500JSONResponse) VisitListGlobalRunnersResponse(
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ListGlobalRunners500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ListGlobalRunners500TexthtmlResponse) VisitListGlobalRunnersResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type CreateGlobalRunnerRequestObject struct {
@@ -16567,24 +13768,6 @@ func (response CreateGlobalRunner500JSONResponse) VisitCreateGlobalRunnerRespons
 	return json.NewEncoder(w).Encode(response)
 }
 
-type CreateGlobalRunner500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response CreateGlobalRunner500TexthtmlResponse) VisitCreateGlobalRunnerResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type DeleteGlobalRunnerRequestObject struct {
 	RunnerID RunnerID `json:"runner_id"`
 }
@@ -16629,22 +13812,6 @@ func (response DeleteGlobalRunner404JSONResponse) VisitDeleteGlobalRunnerRespons
 	return json.NewEncoder(w).Encode(response)
 }
 
-type DeleteGlobalRunner404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response DeleteGlobalRunner404TexthtmlResponse) VisitDeleteGlobalRunnerResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type DeleteGlobalRunner500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -16654,24 +13821,6 @@ func (response DeleteGlobalRunner500JSONResponse) VisitDeleteGlobalRunnerRespons
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteGlobalRunner500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response DeleteGlobalRunner500TexthtmlResponse) VisitDeleteGlobalRunnerResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type ShowGlobalRunnerRequestObject struct {
@@ -16711,22 +13860,6 @@ func (response ShowGlobalRunner404JSONResponse) VisitShowGlobalRunnerResponse(w 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ShowGlobalRunner404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response ShowGlobalRunner404TexthtmlResponse) VisitShowGlobalRunnerResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type ShowGlobalRunner500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -16736,24 +13869,6 @@ func (response ShowGlobalRunner500JSONResponse) VisitShowGlobalRunnerResponse(w 
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ShowGlobalRunner500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ShowGlobalRunner500TexthtmlResponse) VisitShowGlobalRunnerResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type UpdateGlobalRunnerRequestObject struct {
@@ -16794,22 +13909,6 @@ func (response UpdateGlobalRunner404JSONResponse) VisitUpdateGlobalRunnerRespons
 	return json.NewEncoder(w).Encode(response)
 }
 
-type UpdateGlobalRunner404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response UpdateGlobalRunner404TexthtmlResponse) VisitUpdateGlobalRunnerResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type UpdateGlobalRunner422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response UpdateGlobalRunner422JSONResponse) VisitUpdateGlobalRunnerResponse(w http.ResponseWriter) error {
@@ -16828,24 +13927,6 @@ func (response UpdateGlobalRunner500JSONResponse) VisitUpdateGlobalRunnerRespons
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateGlobalRunner500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response UpdateGlobalRunner500TexthtmlResponse) VisitUpdateGlobalRunnerResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type ListUsersRequestObject struct {
@@ -16883,24 +13964,6 @@ func (response ListUsers500JSONResponse) VisitListUsersResponse(w http.ResponseW
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ListUsers500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ListUsers500TexthtmlResponse) VisitListUsersResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type CreateUserRequestObject struct {
@@ -16949,24 +14012,6 @@ func (response CreateUser500JSONResponse) VisitCreateUserResponse(w http.Respons
 	return json.NewEncoder(w).Encode(response)
 }
 
-type CreateUser500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response CreateUser500TexthtmlResponse) VisitCreateUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type DeleteUserRequestObject struct {
 	UserID UserID `json:"user_id"`
 }
@@ -17011,22 +14056,6 @@ func (response DeleteUser404JSONResponse) VisitDeleteUserResponse(w http.Respons
 	return json.NewEncoder(w).Encode(response)
 }
 
-type DeleteUser404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response DeleteUser404TexthtmlResponse) VisitDeleteUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type DeleteUser500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -17036,24 +14065,6 @@ func (response DeleteUser500JSONResponse) VisitDeleteUserResponse(w http.Respons
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteUser500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response DeleteUser500TexthtmlResponse) VisitDeleteUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type ShowUserRequestObject struct {
@@ -17091,22 +14102,6 @@ func (response ShowUser404JSONResponse) VisitShowUserResponse(w http.ResponseWri
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ShowUser404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response ShowUser404TexthtmlResponse) VisitShowUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type ShowUser500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -17116,24 +14111,6 @@ func (response ShowUser500JSONResponse) VisitShowUserResponse(w http.ResponseWri
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ShowUser500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ShowUser500TexthtmlResponse) VisitShowUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type UpdateUserRequestObject struct {
@@ -17172,22 +14149,6 @@ func (response UpdateUser404JSONResponse) VisitUpdateUserResponse(w http.Respons
 	return json.NewEncoder(w).Encode(response)
 }
 
-type UpdateUser404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response UpdateUser404TexthtmlResponse) VisitUpdateUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type UpdateUser422JSONResponse struct{ ValidationErrorJSONResponse }
 
 func (response UpdateUser422JSONResponse) VisitUpdateUserResponse(w http.ResponseWriter) error {
@@ -17206,24 +14167,6 @@ func (response UpdateUser500JSONResponse) VisitUpdateUserResponse(w http.Respons
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateUser500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response UpdateUser500TexthtmlResponse) VisitUpdateUserResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type DeleteUserFromGroupRequestObject struct {
@@ -17262,22 +14205,6 @@ func (response DeleteUserFromGroup404JSONResponse) VisitDeleteUserFromGroupRespo
 	return json.NewEncoder(w).Encode(response)
 }
 
-type DeleteUserFromGroup404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response DeleteUserFromGroup404TexthtmlResponse) VisitDeleteUserFromGroupResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type DeleteUserFromGroup412JSONResponse struct{ NotAttachedErrorJSONResponse }
 
 func (response DeleteUserFromGroup412JSONResponse) VisitDeleteUserFromGroupResponse(w http.ResponseWriter) error {
@@ -17296,24 +14223,6 @@ func (response DeleteUserFromGroup500JSONResponse) VisitDeleteUserFromGroupRespo
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteUserFromGroup500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response DeleteUserFromGroup500TexthtmlResponse) VisitDeleteUserFromGroupResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type ListUserGroupsRequestObject struct {
@@ -17352,22 +14261,6 @@ func (response ListUserGroups404JSONResponse) VisitListUserGroupsResponse(w http
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ListUserGroups404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response ListUserGroups404TexthtmlResponse) VisitListUserGroupsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type ListUserGroups500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -17377,24 +14270,6 @@ func (response ListUserGroups500JSONResponse) VisitListUserGroupsResponse(w http
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ListUserGroups500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ListUserGroups500TexthtmlResponse) VisitListUserGroupsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type AttachUserToGroupRequestObject struct {
@@ -17433,22 +14308,6 @@ func (response AttachUserToGroup404JSONResponse) VisitAttachUserToGroupResponse(
 	return json.NewEncoder(w).Encode(response)
 }
 
-type AttachUserToGroup404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response AttachUserToGroup404TexthtmlResponse) VisitAttachUserToGroupResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type AttachUserToGroup412JSONResponse struct {
 	AlreadyAttachedErrorJSONResponse
 }
@@ -17478,24 +14337,6 @@ func (response AttachUserToGroup500JSONResponse) VisitAttachUserToGroupResponse(
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type AttachUserToGroup500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response AttachUserToGroup500TexthtmlResponse) VisitAttachUserToGroupResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type PermitUserGroupRequestObject struct {
@@ -17534,22 +14375,6 @@ func (response PermitUserGroup404JSONResponse) VisitPermitUserGroupResponse(w ht
 	return json.NewEncoder(w).Encode(response)
 }
 
-type PermitUserGroup404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response PermitUserGroup404TexthtmlResponse) VisitPermitUserGroupResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type PermitUserGroup412JSONResponse struct{ NotAttachedErrorJSONResponse }
 
 func (response PermitUserGroup412JSONResponse) VisitPermitUserGroupResponse(w http.ResponseWriter) error {
@@ -17577,24 +14402,6 @@ func (response PermitUserGroup500JSONResponse) VisitPermitUserGroupResponse(w ht
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type PermitUserGroup500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response PermitUserGroup500TexthtmlResponse) VisitPermitUserGroupResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type DeleteUserFromProjectRequestObject struct {
@@ -17633,22 +14440,6 @@ func (response DeleteUserFromProject404JSONResponse) VisitDeleteUserFromProjectR
 	return json.NewEncoder(w).Encode(response)
 }
 
-type DeleteUserFromProject404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response DeleteUserFromProject404TexthtmlResponse) VisitDeleteUserFromProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type DeleteUserFromProject412JSONResponse struct{ NotAttachedErrorJSONResponse }
 
 func (response DeleteUserFromProject412JSONResponse) VisitDeleteUserFromProjectResponse(w http.ResponseWriter) error {
@@ -17667,24 +14458,6 @@ func (response DeleteUserFromProject500JSONResponse) VisitDeleteUserFromProjectR
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteUserFromProject500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response DeleteUserFromProject500TexthtmlResponse) VisitDeleteUserFromProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type ListUserProjectsRequestObject struct {
@@ -17725,22 +14498,6 @@ func (response ListUserProjects404JSONResponse) VisitListUserProjectsResponse(w 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ListUserProjects404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response ListUserProjects404TexthtmlResponse) VisitListUserProjectsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type ListUserProjects500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
@@ -17750,24 +14507,6 @@ func (response ListUserProjects500JSONResponse) VisitListUserProjectsResponse(w 
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type ListUserProjects500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response ListUserProjects500TexthtmlResponse) VisitListUserProjectsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type AttachUserToProjectRequestObject struct {
@@ -17806,22 +14545,6 @@ func (response AttachUserToProject404JSONResponse) VisitAttachUserToProjectRespo
 	return json.NewEncoder(w).Encode(response)
 }
 
-type AttachUserToProject404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response AttachUserToProject404TexthtmlResponse) VisitAttachUserToProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type AttachUserToProject412JSONResponse struct {
 	AlreadyAttachedErrorJSONResponse
 }
@@ -17851,24 +14574,6 @@ func (response AttachUserToProject500JSONResponse) VisitAttachUserToProjectRespo
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type AttachUserToProject500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response AttachUserToProject500TexthtmlResponse) VisitAttachUserToProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 type PermitUserProjectRequestObject struct {
@@ -17907,22 +14612,6 @@ func (response PermitUserProject404JSONResponse) VisitPermitUserProjectResponse(
 	return json.NewEncoder(w).Encode(response)
 }
 
-type PermitUserProject404TexthtmlResponse struct{ NotFoundErrorTexthtmlResponse }
-
-func (response PermitUserProject404TexthtmlResponse) VisitPermitUserProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(404)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
 type PermitUserProject412JSONResponse struct{ NotAttachedErrorJSONResponse }
 
 func (response PermitUserProject412JSONResponse) VisitPermitUserProjectResponse(w http.ResponseWriter) error {
@@ -17950,24 +14639,6 @@ func (response PermitUserProject500JSONResponse) VisitPermitUserProjectResponse(
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type PermitUserProject500TexthtmlResponse struct {
-	InternalServerErrorTexthtmlResponse
-}
-
-func (response PermitUserProject500TexthtmlResponse) VisitPermitUserProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/html")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(500)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
 }
 
 // StrictServerInterface represents all server handlers.
@@ -21534,134 +18205,133 @@ func (sh *strictHandler) PermitUserProject(w http.ResponseWriter, r *http.Reques
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
-	"AA==",
+	"H4sIAAAAAAAC/+xdbW/buJb+K4J2P7p12ttdLPJp006nN7idaW7SDhYYBAUj07amsuRLUU59g/z3BV9F",
+	"WW8USVmyo09tLIo6POfh4UPy8PDJD5LNNolhjFP/8snfAgQ2EENE/7rK8PpDsoA35FfywwKmAQq3OExi",
+	"/5I+9oJkAf2ZH5If/pVBtPdnfgw20L/0+aM0WMMNIK/j/Zb8nmIUxiv/+XlGq7hByS5cQFT3ldgLFzDG",
+	"4TKEyFsmyMNr6AHy7S1/U3x/C/A6/7zyFMF/ZSGCC/8Soww2iDTzf76CP8FmG5FfVyFeZw8+l/MOA9yo",
+	"ipQUqNGFeNakjA8I0oaCqO4rXiCLqEpJkJdG2apaDfkr38OFuS7yal698cmjVfKKfyGX+/oX8trHeBei",
+	"JN7AGNc2BOZltFuivGPVFKWeUlsU2XljfsIgI2LXN0WU0G+IeMOuGaKWciPEE9aETyjJtrXir8hTbdFp",
+	"aSuxaQ0lkamMTNzreAdjnKB9rcihKKEttnzDSnRZS0l8KTNrwg1YhfHqc7gJ63oAK+FFpEiNyxDPcuEW",
+	"cAmyCPuXby4uZkLUMMZwBdGBrG8uLqQcX5bLFLYIktAyNZLIhxWitAlCxUDJXzCodwZb9lzbmry8lS15",
+	"HSVLclmZHW/hNknDRiwiWURb/PwVqxbk1ZQakcvN25HFcf0A6yH6WF9+WtxOdlpFWW76M5P5LljDRRbV",
+	"jrheygtoyy1esJJcVFKSXcjLpYcABet/kn5U0wBWwhNdrZI00CItrOEOBgjW962UPtbXES1upyFaRVk/",
+	"9GeunQThD0mUbepGVVKAuKWAFqpTT4Jwm3IShL+genIpvpMghUYeej/+rML5+SAN/JkP42zjX/7J/yJf",
+	"8O9nzUqihYiAGdrBeu+S0sf61qPF7axHqyhbj/7MrPcVbrZRAxf2MC+gLbd4wUpyUUlJdiEvk/5b2uAJ",
+	"s7SDHySFrST+a5HAA1mJdEzOP0CU1at4R55qS0pLW4lKayhplsooxM0i3CBuFuEO4mYRthQ3i3CFuFlE",
+	"PdAzqxim+H2yCCGd7H5AEGD4KUoeQMTGoffJYk+eBEmMYYzJf8F2G4UBIO2a/5WSxj0pIm1RsoUI8wrZ",
+	"Rw8FJRLFWRSBByIoa9TPV8kmJPDFe/bT80zlOJV1VDEW3bqp5o0lw8kPGJu+/iz9YvJApPafyU9FuHxd",
+	"Q0FJFgADDydk3svmz0U8sEkzMRuZPgxqLxud6iqFTdV0dcJxYamVBdwkSrsekiSCINZWy/iVKiYfHdWa",
+	"L3pYKvhHGC/MNRQlq5BW/58ILv1L/z/m+YLenH0yneeyfqbFre2S7CBC4QJaACNdwyjSF/yOFj8SJJRV",
+	"to6oUJaPhvVGlGzTisijtE3RityMp/u5rgBCYH+ksYXSDCOxKRUxlFoXF+qipTkwmIIt4aG8ZqZpO7dj",
+	"g04TbfNZrLnSKTwmnXfROZtidFW5WHq21PUDAnGwNlfWAj4U/FDX4UlRhMXgTFdwzacAEdg/JMkP22HA",
+	"4n0McJZaTBWUeX3LLEaZpDuGtNye6QhluaZvC2UYJBsdFbynBTvM46wdUnFvsEW8wjbf+F3e7GCdvaV1",
+	"hSXzMc1P8s2ujvjNWzSwLzZH2aATyJmfoaj3dY58+6ireYdfozq/dSSuW7GXY6ldEOBwZzNJDlASD+U9",
+	"LY07gpFfbhB2tL4QyNb6UZQ8fnewVALQKtuICC0zc9jTaUW5ppUcxO+0wKIYiaP9Dcr2EmQuZSFUpEVG",
+	"NezjSJOC6k7tZLYwbr4041uT+qtDoh+zvUvjFS26l9T9q3SzqecFKbnRaujhmGasdwgc+IZh5wlCV8Yu",
+	"Goc4gkdb9swh1v+apy3EaDewXXg762kq03jfRLizHb+l1rOLnP/KiBnWDFMitNiwzS5Z3RJEqXl9cAPC",
+	"yNxwyyyKLDf5QZo+JohCb5mgDcA0FoL/ODOdtqYQHWOxmAbLtMOJhR8zr/ALSmy36fl+bXW8V/7xP2XB",
+	"+06764fbwVkchfGPtnbdQLSxbRdEm2pi17XBM1aXXbtJFTT8uLrdxDs4MCaBUHvDaKluzSlgs8WGNCKs",
+	"RwN2aKSR6Qptrbcb3fu/yvDatp2dnFajP6rSAS2puMb7zpv2KdEDyPCa/BnUeCXecSkAHACZWqK9gazY",
+	"fcfQlGLcTz2a1TY5AHRdm2Z1UK9sbEdIV7e5HtW8zeP1R6JBmh5Jac9p+qTK9tbb79t2MYVdjnW5PKPG",
+	"aTDbCwy7bNPJDUqWofXWwTQ1sQ3qJEboYjQHsbKnF+yqqZcp2PVFBbtqomIKdn1pwa7dgTEFu/YY7Fqn",
+	"9CnYtbdg14LKpwjBKUJwlBGCmn76DCIETyEWapgwQl0MTGGE7tdFpjDCcw4j1LT+FEZ4umGEJxkEeLxz",
+	"RVOk4MlHCnZ0YlOk4BQp2DPEpkjBkUYKttnRaaSgbWjgFAo4eChgA15SiEYdcUPboRtuI1tzqrE2Fa1t",
+	"CNRIITqBKE7aJv0gTqVVpxzDWdnqOlvST6bbJE6Z1FcBqelXEEZw8REhdnhKWwNN9OP3BIdL/mqV6Oyb",
+	"RFZ2bgt6gMpC03wjmCYZCihtuYoQBIv9FcaAzMaPK+UtF8QLUw8wQTzAJSHCvQeLnEqkx5XtWwwyvE5Q",
+	"+G+48B5DvPYeURKv1GhImgKaxld9JBPV9Jbb3iY6ZSfWEfR2LknxEvtUp8FyxAtj/N/v/KqcwjwJsV5h",
+	"nGAQaZU96H/sxZlMvixTH/Mm63TIKy9IoggyJCdLj78qzcCWXI3M0KRlVm2dh1hADMIopT0L8PXMQ5Fc",
+	"QKM3kzKR9UF3K5t4iDr34BCymaBDvHtwosCFLSSpaNIT/WivnZGPS/qmU/VwHANKEU0sWDhAkRvSeQfn",
+	"ltLp3ythVHnA4YzwpG9+NgHSB55k9GXU6SKJfdAcRux9YTlnVuvY+U58sOZNNrZCyu6hwGTyHN1BtIPo",
+	"uLTuLtlAL+QCeCmVwINUBHZDBojCxdfkB4yHIuwrGEMEMPQS5FFpyP/ZXqw4a+TcAV5leP2VfaIs2icu",
+	"0IJJwcgw/LkNEV3JotOI3xM8/BQiTnBh+kCEkhz+yLMHmu6ciyRl4EL9mmTxUGoiAi3J9312JGYZRtA5",
+	"nHi9tYGxGUIwxnksORth/fyQTj7rcy5bXrXegK9E8SZLDwg2Uimsi0FFnV/qjixqm444vChrLy1okHzT",
+	"+YCkqstkVFIPNzKDlw2s7HQ7h6NStx4e1djKGkCWooT7lFoEemvIHlcF47a3gW6x9dkEvofXuQUstLW9",
+	"AU4WhpTqTALbX5xjKCjMaHFJqaDeNbyYhb9R2NR2qbDejiKXrXs/I2rWc+8yJq7OrYjqnIBOVqYPvLw5",
+	"Lw18ubJMACgMW4/BQdclGhYFz9qqFgsahYQK6uxFxC2G0IU1w7w2bZPKyMkXZ09VWyZGVd6v7ahSu84H",
+	"C8VuOoNFfj6lZrT4kuFtZkb/tXDG6q9Y060UPkpW9EpUPpGR6eNrhJfhrW760Yhgj5SW6W+7yWjfI229",
+	"qUIa7b8pFdT2pbxV7rdtFYVpbd3mR31qEel+oawp+KQoX4U8Y9nvrlXY+He/DXrvee+X16JNHLpyjjdR",
+	"sZsZkqjtzFAn5w/auMvVegzk5fL1MzsSwezO0Scq1kOfjOGuQV/xWEdvworzNJ1E5ncet0hOTwv0Jjg/",
+	"ktNJbnbHbYvYZ9bdReO7n0g5TnfP5TPp7vLt2u7uKrLmJCe7JtE1tQs4/cfXqIkJ1XWQU7CfvpJPJ2xO",
+	"DZi7QckuXLjpS1tRVxed0Td6UVoujomSQIbXXl7F88y/hUsE0/Vxg2v4RxuDa+6yIIBp+htMU7CCR4sZ",
+	"uYlAGHsp+7i34V9/nvm0McPGIMWQxm0RPfGDIDLCcIAV9IboxhFFa+q04igL5/npqNQvnhQ6rxGjcVge",
+	"2n5WI4x6Kkra0LlH4A3SCcug+uFyjBpE/ZLAIdifZH1/sGDVMBksdFaGy5Imw5T2uj8gCpf7XkYrVnWV",
+	"SL9BDOhhQTLXWUNGNngML1/L2QB2RFCOehW784QFpN9BEVukga9wuGHngMHiSxztD65/MU301FxdGUvk",
+	"tTJkZr6inKr4RjKO998q9YR2t4bJN6vapsRaHibe8H9LFjAiQERwi2AKY6zEFzKf61ITzzNfI4kOvexV",
+	"JFeAcbYhTWSqEvlzRQLg+4ovuE0N3Jz11zBNvPM8wAQ99Ki9jXHylCQqZhoR9VnougOsPGagWcNdIh3v",
+	"DSlL7X3m32iQ/U5YoIvsAn4dZN+icAcw/P4D7t207Y7LUGrbx+JN9a3tUm+2H7Kv119kadi3nGeB7rfj",
+	"uc//rCLnY8HKTaDhje8IHR4XXUZQXcJZi1FgBxCLlK30/O29SGmsdyfEblIJU29XjVBznpxC/uBSl/Wx",
+	"0/YouypfwjI5qGLLrMoyQcwCRhDDylYAjJGaqTAXzIWTYrV9X4TpNgLVHpoXabfRl4fcCfGXWPFCy/OR",
+	"teiAZXyRWKz4nqcAYX/zS3hEhhcZTZXPjr/L7C/8b3Fvj6wpDxqRu+/KZqiyUcLnWLJG+kdez8HNR2Wn",
+	"XavRMVzAQxtjLSGtZQ3ihU0eN1pJexvJbLlTQlPRw3d1jl/CTatnK+DUy/jsqH8u4ENh4FWoNyzyHWOn",
+	"WpOC0+yKbVvaUlljigHO0spHsrt22W01yqXrepLxUYFUCZ2fRIKBVmQqHm9U/PVIGcVdWuQTV2W1NW7y",
+	"DWQ9o3hKCivnxumWgYKNn+0GpS8wq4oMXvKGYXEHnhjKk0c2dvKfWd7BhhGxw36toQdxAoZSLjkiRUGk",
+	"+wPEeDfSziXk5AHiOrA5YDSlizG6nSvufplG0z0ZjsazoLAcp98Y83ymFtMLMu6EgT/z6en4DlMMYwgr",
+	"9LRTeLl5HuqjLapdK+Au9ZPCnkGpq9Dd5DDwRLI+uotEk4CkHogXYh+BnvU67DmsmPbaQr4pUrUKssm3",
+	"9MsKrhjbDnmL2CxqIa0FbVRoix/j0HEpCSvaMBnX6bLW3R6qbFv7vKJ8Sye9vShLMK3o8otQQEmLIuuF",
+	"jhp56ovKuf2uactC4esyM69G0Qyvu+0kXmV4zRxBZd3d0rc7sfjQeYRtYkKcaFF31Okn4fE2R7fV+oNx",
+	"+IQTHbpYXXaR+pk7kxvpBqq8ifb0oM+JgfWuw3HYQANnlkGIOqoshAWWFKoscbWvtKBwxz7aruMgibUK",
+	"6u9nK3oRTSkp5rZADltVU1jqPOqi1ahJvvPttj53xipvTFPxcqsauYwYtsCthRaxFj7ejdD+VxBqbVlz",
+	"t5prr3grjFCypDwcpmNLZTtD83YJZx0/ia3Woo/WOU933fhO2as6RMlXpVWtKFF2ujpetNZ8h1rD9WjO",
+	"NkUark8q74x0SLllc6WanLCyWErjPhCqa4baWUNML2obzwbQuNa+Bro5zU04zSC3r3H/9DV3K7X+iSup",
+	"i5fip2HLFL/FF5iv/fKicbZ5yDc+5D5lp9XghuvS6m9Cc33JWZWRvDuh1Vpb6ccAKQeAqwKArDnATkhS",
+	"PzjKdtVG8xTR3rFZ5JVZbQLYY012XC9AHUJfWXviF611Arv95WxlYzLFl4z5LdWc3eRxQGO6a21a5rVf",
+	"5j3xVdaRLXB+S6unnxJ7up2NLsz1spqwVZYHKwbaZf+zdJos/oq1r1JT+tE7+dHKlx4l4qoj6B676xZ3",
+	"WHXkiAWGSKXdHwCkNppI3SfRxkifWwYvMtRnGLRUhxFRvDTsiChBCdWxESDyUoyyAGcIEvCk6+RRiYrg",
+	"sRIl8CxDGFWf2qkNdFD9oCJW+RwqnShlKMT7O6JL9sH3IA0DeWiTUib6i3x9jTF1Re8hQMw6eUn2U6no",
+	"3yHgowHhYv6a/Sn4qf9/r65url/9Q53jgG34D5GMKYyXiQiIAAy5nNL4K/gTBv/7CB/W4XYbwtcLmNdK",
+	"tP4TEsHpCj0VJr2cz+k7r2Hml4/h3lx7C7gM41De68grmXmAXSITBkqSTcJ8Ca5pyWvwgR4CDiA/E8vF",
+	"uNqCYA1fvX19UZDkcj5/fHx8DejT1wlazfmr6fzz9YePv999JK+8XuNN5Kvxj0we78sWxlc31/7M30GU",
+	"MvHfvL54ffEKRNs1eEPj+7cwBtvQv/T/Rp4QaAFOZudk6J/Lc4jbJKVqJcCjYLle+JfsXhw+hvLTv+LK",
+	"0ar+mBcJSSPEy/SVw1s8315c1FfDy82L9/I8z/x3F2/a36q64PJ55v+XzherblFSu4l/+ef9zE+zzQag",
+	"PbFthtfkQwGZAfEj897DvnCh5czHYJUSF0Pp1j2pj6m/kPtlBassEKZYZpvxTXRYzlXT1J5fIQ7W7HT1",
+	"DoSUkh4mdalvDmJpV2obw9OySEB1bcphLhldQJQvoLKGg1QYl4nYPj+P7j3AZYKgF2KedaZJazt5prtS",
+	"aezIt7HODk7qj0FlTCQ28oV4L7JNgLwrEdfKNvPq1fYkEPk8D0AUPYDgR60OP/ACyr79FiCwgZj2vT+r",
+	"25QXoYkJxMs35Gf/eab10h0GGHZ640OyEC/cHxj8bxf/c3hGD/7EczpCFHIsHLKBhsw/IttPfhnau4t3",
+	"jr4iNFa8H+vdm7eO6s9zVNABG0Thv2EeZpID1sGnrqsvt2vwpAJz9GprgFJIvSolF3ChBsNoAFxk3qh3",
+	"rPS5S3j3h71buAgRDDBRDFGJarC+sTckILiRaJuRogM9SORX2dTyBPXW7M4QuIMABet/ZhDttd3VDViF",
+	"8epzuAlxx3e+0Aw5NVDTGtcqrwinCPpb+8sVdxi6G94YhQJRJG7Szu3Jjh4zg+aRr/UGZUWOYcq7BOEP",
+	"SZRt4k6vfEFdBsRB8VLMYjcypORkeyVsLjDDVgfvn2c1c7QPdG1JrGN1nqUpr5vP04oXSNvp9t3btxqs",
+	"9iArljubMH14wIvho1zzPbRF3n/nT2Jp8Zmt+tAMASUj/UJ/F0bq1p3ZuUYL6B9kuqTm0XjtimZEYBwr",
+	"t46FYdnY3vqqcpGrO7MyA3jAS7cwCJdhUGvbWbU/vlsnjwPZz2nvGtII3N/p2ICfnCra4BtdT3ZkhY5+",
+	"Uvn2SPykkSUH9q5MizoQqHSxc/W4i4av/RUlm3zF/riAUY+j/4ISC9RU+e9jw+bNW70PFq4rd4ibOArj",
+	"H3lOe2+Jkk1XFy4ptciLa4WJ2cTDjV1gKTHx6Q9qUSRT98rr8snsvmGIq6TzrAdRLX1NxuC7biDanL/v",
+	"uooQBIt9yX8NPF4yeRS/14yoKtJE7BcW/N4Ep0GGwnFQLwGkLUQblui7GwOT6bM16RePVRsAcOTLE/Fy",
+	"RbzoxrYV66JZ5CfKNRDlKubwPwu+RV2RO7I1rKeaaNYYaBb1clYca0LRS2ZXLApYi1rxQwnzFEbL2l3A",
+	"u3XymKczMQr+Iu+OcduLt1/eOcMv9dhClCYxiDwQBEnGssJy7YljHC3rw6q+jBZ5eQXm/cit1seB7H2S",
+	"IS95jKXdwpgFdPPA4pKNVIzLxAyVIKdBZjYoL16dNgqM30KMQrhjMaExPbsNF+qNNQ0qkyvcTRGhZguY",
+	"Ez+u7q4uVyN7DA7Y5nZX0EPXdNoCBG6U5OpGIQK8AiuvWLju/3zCBPJjP2WrqH2ahvTxkyUa4QKmy3Vi",
+	"pW0KGXAcMtBk51kjgRvKjo773KiCB5qt0UwQXdnDlF+OypOeRyCBkROeq+d0NBjXh8KxHhv4TGuZNg5N",
+	"scN5rWkqeDy4xb+M60IKR03+V7g079jur0YSa0eYV/WSXWKBkhaucGoBjpZ3nD8VUuHo01dniGt3Mvmn",
+	"Ju7rmvsq90t29kttzPjkIDIuv9MXwbYxeTv9HtzoNtx9Grx65/Pm6Ksfz5TEoVp0/6NafuL7w/F91RDn",
+	"RfhVSGoAXU2aq0n5i3frDsr5FVGs/aZS18T6Oesv3tXahh49Pzl/KqZb1mf+7oDX7m+Ub03c3zX3V6+N",
+	"7u6i2tj/CcJkZC6orwmAnd3bpwAjsLzNJGAazY4wDbDBoOEAN2fJw9P6vGh1pEZe138KWG5uhEtEsxon",
+	"lsZZGoOXl8QeiI9D2QSi50/sP6Y0bjB868yeiWgT93PF/Wow2jcPOCmEOSIPk8Ptk0i4ArKp681vB+nG",
+	"JcTdGKdMJWgbXAKbVjgRCU4kKLSOyiMYmOdP9F9TFjEUstvfoZJNHMIRh6iBZ98U4oTg5YhATG62N/rg",
+	"CsMNDnenvRu5G+0+5Bi2CHdnuDm4a9wWVNOJ1oBL3FSgB7C89LTZPSCSpRnODM2yXTruUxTW3uaWLwy9",
+	"yS0EsR+RRU3TjEdscCtGbsaMjk+cP8n/d5vLOIKaBssUX5omJc43teUlPl2dUeuG9mnBY1TOpretbENr",
+	"G7iReZJhPmGtRMoX+vikscKacA5AYS0ZCinbDLHr2yqBckOeTkPOqUKLmq9fZOV3SGjxll9RsjHLnm1P",
+	"kXkN9PNTVj5XWfkoAFhaPoPD6crU3/CqkWna727a7/SGkpFM+ZmDKuToazm235Cnj+vpazIGHzbl6xtD",
+	"vj7m/9pRVZ+0T7XpBKkXnbyPgSnP3meWUSKMdzDGCeK3N7cNvNdK8Wn0HW70VexwXkOwgkeNeYcovddd",
+	"dr+WLwy87C4FsV52lzVNy+582T1UjNyMGS2/OH+Sr3Rad3eFtXbnIr80LYK4XneXpu/sjdrW3U8MHqPy",
+	"Nn2tu5tbuz3ma2B72wRvTYNVz8fGTHFXP34huE3SUJ/Y36rlJ2Y/HLNXDXFe1F6FpAbOZXFtcn+bvzEw",
+	"u88lcZA2U1Q18XvO75Fq5xbg6HnI+VP+UieO7wxy7X4m/9TE8l2z/Nz63R1TG88/OYiMy/H0RfVtTN5O",
+	"9gc3ug3dn0av3gm/OfoaBrQsjvlth61snxediP6ARJ/Z4Mw4PmuUDqhpSW1qz0oPTeupFPZOkVYz0XlB",
+	"54VtG0DS6vXmT+w/3di7C1RpjND0MxNrd87aqV67+ZpWtn4qkBiPL+mNoRuYV4OZD2VgK0Y+DTy9MfHO",
+	"KKsfi9JgDRdZpLfificLTyx8OBYurXBePFwiUQPYoqwuFxcqG5qNCzms3aKoaGLkIuVfbuFGuGh4wvmT",
+	"+G8nZu4IYxpOi39oYueu2bmwe1cP1MbQTwoaY/IwffF0U0O3c/VBTW3D16ehqVfOboa4+tEKw802AliP",
+	"t3+VhSfePhxvl1Y4L94ukagBbVFWl7cLlQ3N24Uc1s5RVDTxds7bcW7hRrhoeML5k/hvJ97uCGPt7kR8",
+	"aOLtrnm7sHtXD9TG208KGmPyMH3xdlNDt/P2QU1tw9unoalX3m6GuM6j1TzN0A7udbOYC1vd0bdOAbMN",
+	"4jtDLqtuolZiSZSqg6bW7Y9mCeDOn9h/jKjXMDDWmGZSuSa+5oqvVQCyv5H8dEDlYvifXGlvVMAatd2d",
+	"6g5kEe5KBv4gL50sF6DSO8MvrW1iAvIakyzCfRMBhtn5E/3XiAYMAmCdSyWyaLr3zN2dJSUs9scBTgVR",
+	"LhjA5ED7uqDEErD1rjRL+eEX7eSi39JBjhTwGsjXp9SirlKLEuu7yCz6LZ3ORQ27s0stcF67utQ1uU4r",
+	"Orz3mpKKjiGpKPV8DnKKTnh66RlFKZL0E4rqnDf+FCUPIDI9bjwNkxXmLKjU0TjZ1zlgBTua533V1vnG",
+	"y2FqLeYeRa3FFSEZ0ULWijavfPy2cNDJ6HjtgRG7dfrptGyfp2UVO6drgOBC83jswCbtoyuO8LBri3Ua",
+	"1uoc28doDW28XvecjqrWeWq5/lVLxszWNiYSVmE+l4sUzskX2IEwAg8RY/QqCSN/t1IwPhE0pF7kbfPO",
+	"T94+Q6qVpYV+y80ge+38ifyjx62Mpul0dj0xKseMqtqqDSRqENu57FKjokx16m9gSU4MYMSNxuMWz4ML",
+	"aXtU7VsHiY7Nrxy0BUkK0XTZYF+XDXZy1IIpG94xqABh2gc0HrBeyO2CtUNYwwYgUY/ppYKuvNS08zeq",
+	"6wQ7MSG26SdNOWFouj+QbvfpMyoRf6XPqW7kVuLRscY/PfEqV7yKW9+CWd0I/EzcaghuJdR/XuxKOCVH",
+	"/Gp4jzVxrDFwLOHtzFnWhKSXzrQEhlq5FnkZBhkK8Z4i5O8QLCDyL/+8J0PEewiQ8hdIw4D+cU/eIiIw",
+	"WGUo8i/9Ncbb9HI+x2j/egV/wuA1zOZgG853b/zn++f/DwAA//+9Kf2Um8ABAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

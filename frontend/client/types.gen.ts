@@ -997,9 +997,13 @@ export type RequestProviderData = {
 
 export type RequestProviderErrors = {
     /**
-     * Resource not found
+     * Provider not found
      */
     404: string;
+    /**
+     * Internal server error
+     */
+    500: string;
 };
 
 export type RequestProviderError = RequestProviderErrors[keyof RequestProviderErrors];
@@ -1027,13 +1031,17 @@ export type CallbackProviderData = {
 
 export type CallbackProviderErrors = {
     /**
-     * Resource not found
+     * Provider not found
      */
     404: string;
     /**
      * Failed to initialize provider
      */
     412: string;
+    /**
+     * Internal server error
+     */
+    500: string;
 };
 
 export type CallbackProviderError = CallbackProviderErrors[keyof CallbackProviderErrors];
@@ -1075,7 +1083,7 @@ export type LoginAuthErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type LoginAuthError = LoginAuthErrors[keyof LoginAuthErrors];
@@ -1104,7 +1112,7 @@ export type RefreshAuthErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type RefreshAuthError = RefreshAuthErrors[keyof RefreshAuthErrors];
@@ -1133,7 +1141,7 @@ export type VerifyAuthErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type VerifyAuthError = VerifyAuthErrors[keyof VerifyAuthErrors];
@@ -1162,7 +1170,7 @@ export type TokenProfileErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type TokenProfileError = TokenProfileErrors[keyof TokenProfileErrors];
@@ -1191,7 +1199,7 @@ export type ShowProfileErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ShowProfileError = ShowProfileErrors[keyof ShowProfileErrors];
@@ -1227,7 +1235,7 @@ export type UpdateProfileErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type UpdateProfileError = UpdateProfileErrors[keyof UpdateProfileErrors];
@@ -1277,7 +1285,7 @@ export type ListProjectsErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ListProjectsError = ListProjectsErrors[keyof ListProjectsErrors];
@@ -1318,7 +1326,7 @@ export type CreateProjectErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type CreateProjectError = CreateProjectErrors[keyof CreateProjectErrors];
@@ -1356,11 +1364,11 @@ export type DeleteProjectErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type DeleteProjectError = DeleteProjectErrors[keyof DeleteProjectErrors];
@@ -1394,11 +1402,11 @@ export type ShowProjectErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ShowProjectError = ShowProjectErrors[keyof ShowProjectErrors];
@@ -1435,7 +1443,7 @@ export type UpdateProjectErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Failed to validate request
      */
@@ -1443,7 +1451,7 @@ export type UpdateProjectErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type UpdateProjectError = UpdateProjectErrors[keyof UpdateProjectErrors];
@@ -1480,7 +1488,7 @@ export type DeleteProjectFromUserErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Resource is not attached
      */
@@ -1488,7 +1496,7 @@ export type DeleteProjectFromUserErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type DeleteProjectFromUserError = DeleteProjectFromUserErrors[keyof DeleteProjectFromUserErrors];
@@ -1543,11 +1551,11 @@ export type ListProjectUsersErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ListProjectUsersError = ListProjectUsersErrors[keyof ListProjectUsersErrors];
@@ -1590,7 +1598,7 @@ export type AttachProjectToUserErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Resource is already attached
      */
@@ -1602,7 +1610,7 @@ export type AttachProjectToUserErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type AttachProjectToUserError = AttachProjectToUserErrors[keyof AttachProjectToUserErrors];
@@ -1639,7 +1647,7 @@ export type PermitProjectUserErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Resource is not attached
      */
@@ -1651,7 +1659,7 @@ export type PermitProjectUserErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type PermitProjectUserError = PermitProjectUserErrors[keyof PermitProjectUserErrors];
@@ -1688,7 +1696,7 @@ export type DeleteProjectFromGroupErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Resource is not attached
      */
@@ -1696,7 +1704,7 @@ export type DeleteProjectFromGroupErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type DeleteProjectFromGroupError = DeleteProjectFromGroupErrors[keyof DeleteProjectFromGroupErrors];
@@ -1751,11 +1759,11 @@ export type ListProjectGroupsErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ListProjectGroupsError = ListProjectGroupsErrors[keyof ListProjectGroupsErrors];
@@ -1798,7 +1806,7 @@ export type AttachProjectToGroupErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Resource is already attached
      */
@@ -1810,7 +1818,7 @@ export type AttachProjectToGroupErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type AttachProjectToGroupError = AttachProjectToGroupErrors[keyof AttachProjectToGroupErrors];
@@ -1847,7 +1855,7 @@ export type PermitProjectGroupErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Resource is not attached
      */
@@ -1859,7 +1867,7 @@ export type PermitProjectGroupErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type PermitProjectGroupError = PermitProjectGroupErrors[keyof PermitProjectGroupErrors];
@@ -1906,11 +1914,11 @@ export type ListProjectEventsErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ListProjectEventsError = ListProjectEventsErrors[keyof ListProjectEventsErrors];
@@ -1971,11 +1979,11 @@ export type ListProjectRunnersErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ListProjectRunnersError = ListProjectRunnersErrors[keyof ListProjectRunnersErrors];
@@ -2018,7 +2026,7 @@ export type CreateProjectRunnerErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Failed to validate request
      */
@@ -2026,7 +2034,7 @@ export type CreateProjectRunnerErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type CreateProjectRunnerError = CreateProjectRunnerErrors[keyof CreateProjectRunnerErrors];
@@ -2068,11 +2076,11 @@ export type DeleteProjectRunnerErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type DeleteProjectRunnerError = DeleteProjectRunnerErrors[keyof DeleteProjectRunnerErrors];
@@ -2110,11 +2118,11 @@ export type ShowProjectRunnerErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ShowProjectRunnerError = ShowProjectRunnerErrors[keyof ShowProjectRunnerErrors];
@@ -2155,7 +2163,7 @@ export type UpdateProjectRunnerErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Failed to validate request
      */
@@ -2163,7 +2171,7 @@ export type UpdateProjectRunnerErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type UpdateProjectRunnerError = UpdateProjectRunnerErrors[keyof UpdateProjectRunnerErrors];
@@ -2218,11 +2226,11 @@ export type ListProjectCredentialsErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ListProjectCredentialsError = ListProjectCredentialsErrors[keyof ListProjectCredentialsErrors];
@@ -2265,7 +2273,7 @@ export type CreateProjectCredentialErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Failed to validate request
      */
@@ -2273,7 +2281,7 @@ export type CreateProjectCredentialErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type CreateProjectCredentialError = CreateProjectCredentialErrors[keyof CreateProjectCredentialErrors];
@@ -2315,11 +2323,11 @@ export type DeleteProjectCredentialErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type DeleteProjectCredentialError = DeleteProjectCredentialErrors[keyof DeleteProjectCredentialErrors];
@@ -2357,11 +2365,11 @@ export type ShowProjectCredentialErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ShowProjectCredentialError = ShowProjectCredentialErrors[keyof ShowProjectCredentialErrors];
@@ -2402,7 +2410,7 @@ export type UpdateProjectCredentialErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Failed to validate request
      */
@@ -2410,7 +2418,7 @@ export type UpdateProjectCredentialErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type UpdateProjectCredentialError = UpdateProjectCredentialErrors[keyof UpdateProjectCredentialErrors];
@@ -2465,11 +2473,11 @@ export type ListProjectRepositoriesErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ListProjectRepositoriesError = ListProjectRepositoriesErrors[keyof ListProjectRepositoriesErrors];
@@ -2512,7 +2520,7 @@ export type CreateProjectRepositoryErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Failed to validate request
      */
@@ -2520,7 +2528,7 @@ export type CreateProjectRepositoryErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type CreateProjectRepositoryError = CreateProjectRepositoryErrors[keyof CreateProjectRepositoryErrors];
@@ -2562,11 +2570,11 @@ export type DeleteProjectRepositoryErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type DeleteProjectRepositoryError = DeleteProjectRepositoryErrors[keyof DeleteProjectRepositoryErrors];
@@ -2604,11 +2612,11 @@ export type ShowProjectRepositoryErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ShowProjectRepositoryError = ShowProjectRepositoryErrors[keyof ShowProjectRepositoryErrors];
@@ -2649,7 +2657,7 @@ export type UpdateProjectRepositoryErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Failed to validate request
      */
@@ -2657,7 +2665,7 @@ export type UpdateProjectRepositoryErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type UpdateProjectRepositoryError = UpdateProjectRepositoryErrors[keyof UpdateProjectRepositoryErrors];
@@ -2712,11 +2720,11 @@ export type ListProjectInventoriesErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ListProjectInventoriesError = ListProjectInventoriesErrors[keyof ListProjectInventoriesErrors];
@@ -2759,7 +2767,7 @@ export type CreateProjectInventoryErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Failed to validate request
      */
@@ -2767,7 +2775,7 @@ export type CreateProjectInventoryErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type CreateProjectInventoryError = CreateProjectInventoryErrors[keyof CreateProjectInventoryErrors];
@@ -2809,11 +2817,11 @@ export type DeleteProjectInventoryErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type DeleteProjectInventoryError = DeleteProjectInventoryErrors[keyof DeleteProjectInventoryErrors];
@@ -2851,11 +2859,11 @@ export type ShowProjectInventoryErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ShowProjectInventoryError = ShowProjectInventoryErrors[keyof ShowProjectInventoryErrors];
@@ -2896,7 +2904,7 @@ export type UpdateProjectInventoryErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Failed to validate request
      */
@@ -2904,7 +2912,7 @@ export type UpdateProjectInventoryErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type UpdateProjectInventoryError = UpdateProjectInventoryErrors[keyof UpdateProjectInventoryErrors];
@@ -2959,11 +2967,11 @@ export type ListProjectEnvironmentsErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ListProjectEnvironmentsError = ListProjectEnvironmentsErrors[keyof ListProjectEnvironmentsErrors];
@@ -3006,7 +3014,7 @@ export type CreateProjectEnvironmentErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Failed to validate request
      */
@@ -3014,7 +3022,7 @@ export type CreateProjectEnvironmentErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type CreateProjectEnvironmentError = CreateProjectEnvironmentErrors[keyof CreateProjectEnvironmentErrors];
@@ -3056,11 +3064,11 @@ export type DeleteProjectEnvironmentErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type DeleteProjectEnvironmentError = DeleteProjectEnvironmentErrors[keyof DeleteProjectEnvironmentErrors];
@@ -3098,11 +3106,11 @@ export type ShowProjectEnvironmentErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ShowProjectEnvironmentError = ShowProjectEnvironmentErrors[keyof ShowProjectEnvironmentErrors];
@@ -3143,7 +3151,7 @@ export type UpdateProjectEnvironmentErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Failed to validate request
      */
@@ -3151,7 +3159,7 @@ export type UpdateProjectEnvironmentErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type UpdateProjectEnvironmentError = UpdateProjectEnvironmentErrors[keyof UpdateProjectEnvironmentErrors];
@@ -3192,7 +3200,7 @@ export type CreateProjectEnvironmentSecretErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Failed to validate request
      */
@@ -3200,7 +3208,7 @@ export type CreateProjectEnvironmentSecretErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type CreateProjectEnvironmentSecretError = CreateProjectEnvironmentSecretErrors[keyof CreateProjectEnvironmentSecretErrors];
@@ -3246,11 +3254,11 @@ export type DeleteProjectEnvironmentSecretErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type DeleteProjectEnvironmentSecretError = DeleteProjectEnvironmentSecretErrors[keyof DeleteProjectEnvironmentSecretErrors];
@@ -3295,7 +3303,7 @@ export type UpdateProjectEnvironmentSecretErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Failed to validate request
      */
@@ -3303,7 +3311,7 @@ export type UpdateProjectEnvironmentSecretErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type UpdateProjectEnvironmentSecretError = UpdateProjectEnvironmentSecretErrors[keyof UpdateProjectEnvironmentSecretErrors];
@@ -3344,7 +3352,7 @@ export type CreateProjectEnvironmentValueErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Failed to validate request
      */
@@ -3352,7 +3360,7 @@ export type CreateProjectEnvironmentValueErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type CreateProjectEnvironmentValueError = CreateProjectEnvironmentValueErrors[keyof CreateProjectEnvironmentValueErrors];
@@ -3398,11 +3406,11 @@ export type DeleteProjectEnvironmentValueErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type DeleteProjectEnvironmentValueError = DeleteProjectEnvironmentValueErrors[keyof DeleteProjectEnvironmentValueErrors];
@@ -3447,7 +3455,7 @@ export type UpdateProjectEnvironmentValueErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Failed to validate request
      */
@@ -3455,7 +3463,7 @@ export type UpdateProjectEnvironmentValueErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type UpdateProjectEnvironmentValueError = UpdateProjectEnvironmentValueErrors[keyof UpdateProjectEnvironmentValueErrors];
@@ -3510,11 +3518,11 @@ export type ListProjectTemplatesErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ListProjectTemplatesError = ListProjectTemplatesErrors[keyof ListProjectTemplatesErrors];
@@ -3557,7 +3565,7 @@ export type CreateProjectTemplateErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Failed to validate request
      */
@@ -3565,7 +3573,7 @@ export type CreateProjectTemplateErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type CreateProjectTemplateError = CreateProjectTemplateErrors[keyof CreateProjectTemplateErrors];
@@ -3607,11 +3615,11 @@ export type DeleteProjectTemplateErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type DeleteProjectTemplateError = DeleteProjectTemplateErrors[keyof DeleteProjectTemplateErrors];
@@ -3649,11 +3657,11 @@ export type ShowProjectTemplateErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ShowProjectTemplateError = ShowProjectTemplateErrors[keyof ShowProjectTemplateErrors];
@@ -3694,7 +3702,7 @@ export type UpdateProjectTemplateErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Failed to validate request
      */
@@ -3702,7 +3710,7 @@ export type UpdateProjectTemplateErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type UpdateProjectTemplateError = UpdateProjectTemplateErrors[keyof UpdateProjectTemplateErrors];
@@ -3743,7 +3751,7 @@ export type CreateProjectTemplateSurveyErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Failed to validate request
      */
@@ -3751,7 +3759,7 @@ export type CreateProjectTemplateSurveyErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type CreateProjectTemplateSurveyError = CreateProjectTemplateSurveyErrors[keyof CreateProjectTemplateSurveyErrors];
@@ -3797,11 +3805,11 @@ export type DeleteProjectTemplateSurveyErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type DeleteProjectTemplateSurveyError = DeleteProjectTemplateSurveyErrors[keyof DeleteProjectTemplateSurveyErrors];
@@ -3846,7 +3854,7 @@ export type UpdateProjectTemplateSurveyErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Failed to validate request
      */
@@ -3854,7 +3862,7 @@ export type UpdateProjectTemplateSurveyErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type UpdateProjectTemplateSurveyError = UpdateProjectTemplateSurveyErrors[keyof UpdateProjectTemplateSurveyErrors];
@@ -3895,7 +3903,7 @@ export type CreateProjectTemplateVaultErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Failed to validate request
      */
@@ -3903,7 +3911,7 @@ export type CreateProjectTemplateVaultErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type CreateProjectTemplateVaultError = CreateProjectTemplateVaultErrors[keyof CreateProjectTemplateVaultErrors];
@@ -3949,11 +3957,11 @@ export type DeleteProjectTemplateVaultErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type DeleteProjectTemplateVaultError = DeleteProjectTemplateVaultErrors[keyof DeleteProjectTemplateVaultErrors];
@@ -3998,7 +4006,7 @@ export type UpdateProjectTemplateVaultErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Failed to validate request
      */
@@ -4006,7 +4014,7 @@ export type UpdateProjectTemplateVaultErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type UpdateProjectTemplateVaultError = UpdateProjectTemplateVaultErrors[keyof UpdateProjectTemplateVaultErrors];
@@ -4061,11 +4069,11 @@ export type ListProjectSchedulesErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ListProjectSchedulesError = ListProjectSchedulesErrors[keyof ListProjectSchedulesErrors];
@@ -4108,7 +4116,7 @@ export type CreateProjectScheduleErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Failed to validate request
      */
@@ -4116,7 +4124,7 @@ export type CreateProjectScheduleErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type CreateProjectScheduleError = CreateProjectScheduleErrors[keyof CreateProjectScheduleErrors];
@@ -4158,11 +4166,11 @@ export type DeleteProjectScheduleErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type DeleteProjectScheduleError = DeleteProjectScheduleErrors[keyof DeleteProjectScheduleErrors];
@@ -4200,11 +4208,11 @@ export type ShowProjectScheduleErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ShowProjectScheduleError = ShowProjectScheduleErrors[keyof ShowProjectScheduleErrors];
@@ -4245,7 +4253,7 @@ export type UpdateProjectScheduleErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Failed to validate request
      */
@@ -4253,7 +4261,7 @@ export type UpdateProjectScheduleErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type UpdateProjectScheduleError = UpdateProjectScheduleErrors[keyof UpdateProjectScheduleErrors];
@@ -4308,11 +4316,11 @@ export type ListProjectExecutionsErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ListProjectExecutionsError = ListProjectExecutionsErrors[keyof ListProjectExecutionsErrors];
@@ -4355,7 +4363,7 @@ export type CreateProjectExecutionErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Failed to validate request
      */
@@ -4363,7 +4371,7 @@ export type CreateProjectExecutionErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type CreateProjectExecutionError = CreateProjectExecutionErrors[keyof CreateProjectExecutionErrors];
@@ -4405,11 +4413,11 @@ export type DeleteProjectExecutionErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type DeleteProjectExecutionError = DeleteProjectExecutionErrors[keyof DeleteProjectExecutionErrors];
@@ -4447,11 +4455,11 @@ export type ShowProjectExecutionErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ShowProjectExecutionError = ShowProjectExecutionErrors[keyof ShowProjectExecutionErrors];
@@ -4493,11 +4501,11 @@ export type PurgeProjectExecutionErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type PurgeProjectExecutionError = PurgeProjectExecutionErrors[keyof PurgeProjectExecutionErrors];
@@ -4535,11 +4543,11 @@ export type OutputProjectExecutionErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type OutputProjectExecutionError = OutputProjectExecutionErrors[keyof OutputProjectExecutionErrors];
@@ -4581,7 +4589,7 @@ export type ListGlobalEventsErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ListGlobalEventsError = ListGlobalEventsErrors[keyof ListGlobalEventsErrors];
@@ -4636,7 +4644,7 @@ export type ListGlobalRunnersErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ListGlobalRunnersError = ListGlobalRunnersErrors[keyof ListGlobalRunnersErrors];
@@ -4677,7 +4685,7 @@ export type CreateGlobalRunnerErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type CreateGlobalRunnerError = CreateGlobalRunnerErrors[keyof CreateGlobalRunnerErrors];
@@ -4715,11 +4723,11 @@ export type DeleteGlobalRunnerErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type DeleteGlobalRunnerError = DeleteGlobalRunnerErrors[keyof DeleteGlobalRunnerErrors];
@@ -4753,11 +4761,11 @@ export type ShowGlobalRunnerErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ShowGlobalRunnerError = ShowGlobalRunnerErrors[keyof ShowGlobalRunnerErrors];
@@ -4794,7 +4802,7 @@ export type UpdateGlobalRunnerErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Failed to validate request
      */
@@ -4802,7 +4810,7 @@ export type UpdateGlobalRunnerErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type UpdateGlobalRunnerError = UpdateGlobalRunnerErrors[keyof UpdateGlobalRunnerErrors];
@@ -4852,7 +4860,7 @@ export type ListGroupsErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ListGroupsError = ListGroupsErrors[keyof ListGroupsErrors];
@@ -4893,7 +4901,7 @@ export type CreateGroupErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type CreateGroupError = CreateGroupErrors[keyof CreateGroupErrors];
@@ -4931,11 +4939,11 @@ export type DeleteGroupErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type DeleteGroupError = DeleteGroupErrors[keyof DeleteGroupErrors];
@@ -4969,11 +4977,11 @@ export type ShowGroupErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ShowGroupError = ShowGroupErrors[keyof ShowGroupErrors];
@@ -5010,7 +5018,7 @@ export type UpdateGroupErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Failed to validate request
      */
@@ -5018,7 +5026,7 @@ export type UpdateGroupErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type UpdateGroupError = UpdateGroupErrors[keyof UpdateGroupErrors];
@@ -5055,7 +5063,7 @@ export type DeleteGroupFromUserErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Resource is not attached
      */
@@ -5063,7 +5071,7 @@ export type DeleteGroupFromUserErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type DeleteGroupFromUserError = DeleteGroupFromUserErrors[keyof DeleteGroupFromUserErrors];
@@ -5118,11 +5126,11 @@ export type ListGroupUsersErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ListGroupUsersError = ListGroupUsersErrors[keyof ListGroupUsersErrors];
@@ -5165,7 +5173,7 @@ export type AttachGroupToUserErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Resource is already attached
      */
@@ -5177,7 +5185,7 @@ export type AttachGroupToUserErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type AttachGroupToUserError = AttachGroupToUserErrors[keyof AttachGroupToUserErrors];
@@ -5214,7 +5222,7 @@ export type PermitGroupUserErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Resource is not attached
      */
@@ -5226,7 +5234,7 @@ export type PermitGroupUserErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type PermitGroupUserError = PermitGroupUserErrors[keyof PermitGroupUserErrors];
@@ -5263,7 +5271,7 @@ export type DeleteGroupFromProjectErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Resource is not attached
      */
@@ -5271,7 +5279,7 @@ export type DeleteGroupFromProjectErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type DeleteGroupFromProjectError = DeleteGroupFromProjectErrors[keyof DeleteGroupFromProjectErrors];
@@ -5326,11 +5334,11 @@ export type ListGroupProjectsErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ListGroupProjectsError = ListGroupProjectsErrors[keyof ListGroupProjectsErrors];
@@ -5373,7 +5381,7 @@ export type AttachGroupToProjectErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Resource is already attached
      */
@@ -5385,7 +5393,7 @@ export type AttachGroupToProjectErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type AttachGroupToProjectError = AttachGroupToProjectErrors[keyof AttachGroupToProjectErrors];
@@ -5422,7 +5430,7 @@ export type PermitGroupProjectErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Resource is not attached
      */
@@ -5434,7 +5442,7 @@ export type PermitGroupProjectErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type PermitGroupProjectError = PermitGroupProjectErrors[keyof PermitGroupProjectErrors];
@@ -5484,7 +5492,7 @@ export type ListUsersErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ListUsersError = ListUsersErrors[keyof ListUsersErrors];
@@ -5525,7 +5533,7 @@ export type CreateUserErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type CreateUserError = CreateUserErrors[keyof CreateUserErrors];
@@ -5563,11 +5571,11 @@ export type DeleteUserErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type DeleteUserError = DeleteUserErrors[keyof DeleteUserErrors];
@@ -5601,11 +5609,11 @@ export type ShowUserErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ShowUserError = ShowUserErrors[keyof ShowUserErrors];
@@ -5642,7 +5650,7 @@ export type UpdateUserErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Failed to validate request
      */
@@ -5650,7 +5658,7 @@ export type UpdateUserErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type UpdateUserError = UpdateUserErrors[keyof UpdateUserErrors];
@@ -5687,7 +5695,7 @@ export type DeleteUserFromGroupErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Resource is not attached
      */
@@ -5695,7 +5703,7 @@ export type DeleteUserFromGroupErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type DeleteUserFromGroupError = DeleteUserFromGroupErrors[keyof DeleteUserFromGroupErrors];
@@ -5750,11 +5758,11 @@ export type ListUserGroupsErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ListUserGroupsError = ListUserGroupsErrors[keyof ListUserGroupsErrors];
@@ -5797,7 +5805,7 @@ export type AttachUserToGroupErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Resource is already attached
      */
@@ -5809,7 +5817,7 @@ export type AttachUserToGroupErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type AttachUserToGroupError = AttachUserToGroupErrors[keyof AttachUserToGroupErrors];
@@ -5846,7 +5854,7 @@ export type PermitUserGroupErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Resource is not attached
      */
@@ -5858,7 +5866,7 @@ export type PermitUserGroupErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type PermitUserGroupError = PermitUserGroupErrors[keyof PermitUserGroupErrors];
@@ -5895,7 +5903,7 @@ export type DeleteUserFromProjectErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Resource is not attached
      */
@@ -5903,7 +5911,7 @@ export type DeleteUserFromProjectErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type DeleteUserFromProjectError = DeleteUserFromProjectErrors[keyof DeleteUserFromProjectErrors];
@@ -5958,11 +5966,11 @@ export type ListUserProjectsErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type ListUserProjectsError = ListUserProjectsErrors[keyof ListUserProjectsErrors];
@@ -6005,7 +6013,7 @@ export type AttachUserToProjectErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Resource is already attached
      */
@@ -6017,7 +6025,7 @@ export type AttachUserToProjectErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type AttachUserToProjectError = AttachUserToProjectErrors[keyof AttachUserToProjectErrors];
@@ -6054,7 +6062,7 @@ export type PermitUserProjectErrors = {
     /**
      * Resource not found
      */
-    404: string;
+    404: Notification;
     /**
      * Resource is not attached
      */
@@ -6066,7 +6074,7 @@ export type PermitUserProjectErrors = {
     /**
      * Some internal server error
      */
-    500: string;
+    500: Notification;
 };
 
 export type PermitUserProjectError = PermitUserProjectErrors[keyof PermitUserProjectErrors];

@@ -33,9 +33,23 @@ paths:
       security: []
       responses:
         "308":
-          $ref: "#/components/responses/ProviderRequestResponse"
+          description: "Redirect to the provider"
+          content:
+            text/html:
+              schema:
+                type: "string"
         "404":
-          $ref: "#/components/responses/NotFoundError"
+          description: "Provider not found"
+          content:
+            text/html:
+              schema:
+                type: "string"
+        "500":
+          description: "Internal server error"
+          content:
+            text/html:
+              schema:
+                type: "string"
 
   /auth/{provider}/callback:
     get:
@@ -50,11 +64,29 @@ paths:
       security: []
       responses:
         "308":
-          $ref: "#/components/responses/ProviderCallbackResponse"
-        "404":
-          $ref: "#/components/responses/NotFoundError"
+          description: "Generated expiring token"
+          content:
+            text/html:
+              schema:
+                type: "string"
         "412":
-          $ref: "#/components/responses/ProviderInitError"
+          description: "Failed to initialize provider"
+          content:
+            text/html:
+              schema:
+                type: "string"
+        "404":
+          description: "Provider not found"
+          content:
+            text/html:
+              schema:
+                type: "string"
+        "500":
+          description: "Internal server error"
+          content:
+            text/html:
+              schema:
+                type: "string"
 
   /auth/providers:
     get:
@@ -3656,18 +3688,12 @@ components:
     NotFoundError:
       description: "Resource not found"
       content:
-        text/html:
-          schema:
-            type: "string"
         application/json:
           schema:
             $ref: "#/components/schemas/Notification"
     InternalServerError:
       description: "Some internal server error"
       content:
-        text/html:
-          schema:
-            type: "string"
         application/json:
           schema:
             $ref: "#/components/schemas/Notification"
@@ -3730,26 +3756,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Notification"
-
-    ProviderInitError:
-      description: "Failed to initialize provider"
-      content:
-        text/html:
-          schema:
-            type: "string"
-
-    ProviderRequestResponse:
-      description: "Redirect to the defined provider"
-      content:
-        text/html:
-          schema:
-            type: "string"
-    ProviderCallbackResponse:
-      description: "Generated token with expire date"
-      content:
-        text/html:
-          schema:
-            type: "string"
 
     ProvidersResponse:
       description: "A collection of auth providers"
