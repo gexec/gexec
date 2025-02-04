@@ -142,7 +142,7 @@
                   httpie
                   nixfmt-rfc-style
                   sqlite
-                  yq
+                  yq-go
                 ];
 
                 env = {
