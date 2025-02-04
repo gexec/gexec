@@ -12,3 +12,5 @@ storage/
 node_modules/
 npm-debug.log*
 *.log
+
+.pre-commit-config.yaml

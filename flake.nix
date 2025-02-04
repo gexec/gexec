@@ -13,12 +13,18 @@
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
     };
+
+    git-hooks = {
+      url = "github:cachix/git-hooks.nix";
+    };
   };
 
-  outputs = inputs@{ flake-parts, ... }:
+  outputs =
+    inputs@{ flake-parts, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
         inputs.devenv.flakeModule
+        inputs.git-hooks.flakeModule
       ];
 
       systems = [
@@ -28,103 +34,132 @@
         "aarch64-darwin"
       ];
 
-      perSystem = { config, self', inputs', pkgs, system, ... }: {
-        imports = [
-          {
-            _module.args.pkgs = import inputs.nixpkgs {
-              inherit system;
-              config.allowUnfree = true;
-            };
-          }
-        ];
-
-        devenv = {
-          shells = {
-            default = {
-              name = "gexec";
-
-              languages = {
-                go = {
-                  enable = true;
-                  package = pkgs.go_1_24;
-                };
-                javascript = {
-                  enable = true;
-                  package = pkgs.nodejs_20;
-                };
+      perSystem =
+        {
+          config,
+          self',
+          inputs',
+          pkgs,
+          system,
+          ...
+        }:
+        {
+          imports = [
+            {
+              _module.args.pkgs = import inputs.nixpkgs {
+                inherit system;
+                config.allowUnfree = true;
               };
+            }
+          ];
 
-              services = {
-                minio = {
-                  enable = true;
-                  accessKey = "WMHJQCKGKWUW1CRGPQ8Y";
-                  secretKey = "CKchNYh6D1mn1Vs6XMfnDmuK76PZ3XE3vF56LDS0";
-                  buckets = [
-                    "gexec"
-                  ];
-                };
-                mysql = {
-                  enable = true;
-                  ensureUsers = [
-                    {
-                      name = "gexec";
-                      password = "p455w0rd";
-                      ensurePermissions = {
-                        "gexec.*" = "ALL PRIVILEGES";
-                      };
-                    }
-                  ];
-                  initialDatabases = [{
-                    name = "gexec";
-                  }];
-                };
-                postgres = {
-                  enable = true;
-                  listen_addresses = "127.0.0.1";
-                  initialScript = ''
-                    CREATE USER gexec WITH ENCRYPTED PASSWORD 'p455w0rd';
-                    GRANT ALL PRIVILEGES ON DATABASE gexec TO gexec;
-                  '';
-                  initialDatabases = [{
-                    name = "gexec";
-                  }];
-                };
-              };
+          devenv = {
+            shells = {
+              default = {
+                name = "gexec";
 
-              processes = {
-                server = {
-                  exec = "task watch:server";
+                git-hooks = {
+                  hooks = {
+                    nixfmt-rfc-style = {
+                      enable = true;
+                    };
+
+                    gofmt = {
+                      enable = true;
+                    };
+
+                    golangci-lint = {
+                      enable = true;
+                    };
+                  };
                 };
 
-                runner = {
-                  exec = "task watch:runner";
+                languages = {
+                  go = {
+                    enable = true;
+                    package = pkgs.go_1_24;
+                  };
+                  javascript = {
+                    enable = true;
+                    package = pkgs.nodejs_20;
+                  };
                 };
-              };
 
-              packages = with pkgs; [
-                bingo
-                go-task
-                httpie
-                nixpkgs-fmt
-                sqlite
-              ];
+                services = {
+                  minio = {
+                    enable = true;
+                    accessKey = "WMHJQCKGKWUW1CRGPQ8Y";
+                    secretKey = "CKchNYh6D1mn1Vs6XMfnDmuK76PZ3XE3vF56LDS0";
+                    buckets = [
+                      "gexec"
+                    ];
+                  };
+                  mysql = {
+                    enable = true;
+                    ensureUsers = [
+                      {
+                        name = "gexec";
+                        password = "p455w0rd";
+                        ensurePermissions = {
+                          "gexec.*" = "ALL PRIVILEGES";
+                        };
+                      }
+                    ];
+                    initialDatabases = [
+                      {
+                        name = "gexec";
+                      }
+                    ];
+                  };
+                  postgres = {
+                    enable = true;
+                    listen_addresses = "127.0.0.1";
+                    initialScript = ''
+                      CREATE USER gexec WITH ENCRYPTED PASSWORD 'p455w0rd';
+                      GRANT ALL PRIVILEGES ON DATABASE gexec TO gexec;
+                    '';
+                    initialDatabases = [
+                      {
+                        name = "gexec";
+                      }
+                    ];
+                  };
+                };
 
-              env = {
-                GENEXEC_TOKEN_SECRET = "NTaCR5JztYujaOZNgesaUzaVPmoxkGo0";
+                processes = {
+                  server = {
+                    exec = "task watch:server";
+                  };
 
-                GENEXEC_ADMIN_USERNAME = "admin";
-                GENEXEC_ADMIN_PASSWORD = "p455w0rd";
-                GENEXEC_ADMIN_EMAIL = "gexec@webhippie.de";
+                  runner = {
+                    exec = "task watch:runner";
+                  };
+                };
 
-                GENEXEC_DATABASE_DRIVER = "sqlite3";
-                GENEXEC_DATABASE_NAME = "storage/gexec.sqlite3";
+                packages = with pkgs; [
+                  cosign
+                  go-task
+                  httpie
+                  nixfmt-rfc-style
+                  sqlite
+                ];
 
-                GENEXEC_UPLOAD_DRIVER = "file";
-                GENEXEC_UPLOAD_PATH = "storage/uploads/";
+                env = {
+                  GENEXEC_TOKEN_SECRET = "NTaCR5JztYujaOZNgesaUzaVPmoxkGo0";
+
+                  GENEXEC_ADMIN_USERNAME = "admin";
+                  GENEXEC_ADMIN_PASSWORD = "p455w0rd";
+                  GENEXEC_ADMIN_EMAIL = "gexec@webhippie.de";
+
+                  GENEXEC_DATABASE_DRIVER = "sqlite3";
+                  GENEXEC_DATABASE_NAME = "storage/gexec.sqlite3";
+
+                  GENEXEC_UPLOAD_DRIVER = "file";
+                  GENEXEC_UPLOAD_PATH = "storage/uploads/";
+                };
               };
             };
           };
         };
-      };
     };
 }
