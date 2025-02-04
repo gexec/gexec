@@ -108,5 +108,5 @@ faster.
 Thanks for your help! This project would not be what it is today without your
 contributions.
 
-[issues]: https://github.com/gexec/gexec-api/issues
+[issues]: https://github.com/gexec/gexec/issues
 [bugreport]: http://www.chiark.greenend.org.uk/~sgtatham/bugs.html
