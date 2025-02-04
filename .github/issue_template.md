@@ -2,8 +2,9 @@
 
 Please write english, this is the language everybody of us understands. Take a
 moment to search the issues, maybe somebody already reported your problem. If
-you only got questions please head over to our Matrix channel:
+you only got questions please head over to discussions on the main repository or
+join our Discord server:
 
-  https://matrix.to/#/#gexec:matrix.org
+  https://discord.gg/Yda8rD4ZkJ
 
 -->
