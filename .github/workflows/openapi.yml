@@ -24,7 +24,7 @@ jobs:
       - name: Setup yq
         uses: chrisdickinson/setup-yq@v1.0.1
         with:
-          yq-version: 3.4.1
+          yq-version: 3.4.3
 
       - name: Upload spec
         run: |
