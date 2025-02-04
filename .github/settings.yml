@@ -1,9 +1,9 @@
 ---
 repository:
   name: gexec
-  description: "Generic execution platform for Ansible/Terraform/OpenTofu"
+  description: "Gexec: Server"
   homepage: https://gexec.eu
-  topics: gexec, ansible, terraform, opentofu, golang, go
+  topics: gexec, ansible, terraform, opentofu
 
   private: false
   has_issues: true
@@ -31,6 +31,7 @@ branches:
         contexts:
           - testing
       enforce_admins: false
+      required_linear_history: true
       restrictions:
         apps:
           - renovate
