@@ -2,10 +2,13 @@ package v1
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/gexec/gexec/pkg/model"
+	"github.com/gexec/gexec/pkg/store"
 	"github.com/go-chi/chi/v5"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -37,32 +40,26 @@ func (a *API) ProjectToContext(next http.Handler) http.Handler {
 			id,
 		)
 
-		// if err != nil {
-		// 	if errors.Is(err, store.ErrProjectNotFound) {
-		// 		return ListProjectCredentials404JSONResponse{NotFoundErrorJSONResponse{
-		// 			Message: ToPtr("Failed to find project"),
-		// 			Status:  ToPtr(http.StatusNotFound),
-		// 		}}, nil
-		// 	}
-
-		// 	log.Error().
-		// 		Err(err).
-		// 		Str("action", "ListProjectCredentials").
-		// 		Str("project", request.ProjectID).
-		// 		Msg("Failed to load project")
-
-		// 	return ListProjectCredentials500JSONResponse{InternalServerErrorJSONResponse{
-		// 		Message: ToPtr("Failed to load project"),
-		// 		Status:  ToPtr(http.StatusInternalServerError),
-		// 	}}, nil
-		// }
-
 		if err != nil {
-			http.Error(
-				w,
-				http.StatusText(404),
-				404,
-			)
+			if errors.Is(err, store.ErrProjectNotFound) {
+				a.RenderNotify(w, r, Notification{
+					Message: ToPtr("Failed to find project"),
+					Status:  ToPtr(http.StatusNotFound),
+				})
+
+				return
+			}
+
+			log.Error().
+				Err(err).
+				Str("action", "ProjectToContext").
+				Str("project", id).
+				Msg("Failed to load project")
+
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to load project"),
+				Status:  ToPtr(http.StatusInternalServerError),
+			})
 
 			return
 		}
@@ -95,11 +92,10 @@ func (a *API) ProjectExecutionToContext(next http.Handler) http.Handler {
 		project := a.ProjectFromContext(ctx)
 
 		if project == nil {
-			http.Error(
-				w,
-				http.StatusText(404),
-				404,
-			)
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to find project"),
+				Status:  ToPtr(http.StatusNotFound),
+			})
 
 			return
 		}
@@ -113,11 +109,26 @@ func (a *API) ProjectExecutionToContext(next http.Handler) http.Handler {
 		)
 
 		if err != nil {
-			http.Error(
-				w,
-				http.StatusText(404),
-				404,
-			)
+			if errors.Is(err, store.ErrExecutionNotFound) {
+				a.RenderNotify(w, r, Notification{
+					Message: ToPtr("Failed to find execution"),
+					Status:  ToPtr(http.StatusNotFound),
+				})
+
+				return
+			}
+
+			log.Error().
+				Err(err).
+				Str("action", "ProjectExecutionToContext").
+				Str("project", project.ID).
+				Str("execution", id).
+				Msg("Failed to load execution")
+
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to load execution"),
+				Status:  ToPtr(http.StatusInternalServerError),
+			})
 
 			return
 		}
@@ -150,11 +161,10 @@ func (a *API) ProjectScheduleToContext(next http.Handler) http.Handler {
 		project := a.ProjectFromContext(ctx)
 
 		if project == nil {
-			http.Error(
-				w,
-				http.StatusText(404),
-				404,
-			)
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to find project"),
+				Status:  ToPtr(http.StatusNotFound),
+			})
 
 			return
 		}
@@ -167,33 +177,27 @@ func (a *API) ProjectScheduleToContext(next http.Handler) http.Handler {
 			id,
 		)
 
-		// if err != nil {
-		// 	if errors.Is(err, store.ErrScheduleNotFound) {
-		// 		return ShowProjectSchedule404JSONResponse{NotFoundErrorJSONResponse{
-		// 			Message: ToPtr("Failed to find project or schedule"),
-		// 			Status:  ToPtr(http.StatusNotFound),
-		// 		}}, nil
-		// 	}
-
-		// 	log.Error().
-		// 		Err(err).
-		// 		Str("action", "ShowProjectSchedule").
-		// 		Str("project", parent.ID).
-		// 		Str("schedule", request.ScheduleID).
-		// 		Msg("Failed to load schedule")
-
-		// 	return ShowProjectSchedule500JSONResponse{InternalServerErrorJSONResponse{
-		// 		Message: ToPtr("Failed to load schedule"),
-		// 		Status:  ToPtr(http.StatusInternalServerError),
-		// 	}}, nil
-		// }
-
 		if err != nil {
-			http.Error(
-				w,
-				http.StatusText(404),
-				404,
-			)
+			if errors.Is(err, store.ErrScheduleNotFound) {
+				a.RenderNotify(w, r, Notification{
+					Message: ToPtr("Failed to find schedule"),
+					Status:  ToPtr(http.StatusNotFound),
+				})
+
+				return
+			}
+
+			log.Error().
+				Err(err).
+				Str("action", "ProjectScheduleToContext").
+				Str("project", project.ID).
+				Str("schedule", id).
+				Msg("Failed to load schedule")
+
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to load schedule"),
+				Status:  ToPtr(http.StatusInternalServerError),
+			})
 
 			return
 		}
@@ -226,11 +230,10 @@ func (a *API) ProjectRunnerToContext(next http.Handler) http.Handler {
 		project := a.ProjectFromContext(ctx)
 
 		if project == nil {
-			http.Error(
-				w,
-				http.StatusText(404),
-				404,
-			)
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to find project"),
+				Status:  ToPtr(http.StatusNotFound),
+			})
 
 			return
 		}
@@ -244,11 +247,26 @@ func (a *API) ProjectRunnerToContext(next http.Handler) http.Handler {
 		)
 
 		if err != nil {
-			http.Error(
-				w,
-				http.StatusText(404),
-				404,
-			)
+			if errors.Is(err, store.ErrRunnerNotFound) {
+				a.RenderNotify(w, r, Notification{
+					Message: ToPtr("Failed to find runner"),
+					Status:  ToPtr(http.StatusNotFound),
+				})
+
+				return
+			}
+
+			log.Error().
+				Err(err).
+				Str("action", "ProjectRunnerToContext").
+				Str("project", project.ID).
+				Str("runner", id).
+				Msg("Failed to load runner")
+
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to load runner"),
+				Status:  ToPtr(http.StatusInternalServerError),
+			})
 
 			return
 		}
@@ -281,11 +299,10 @@ func (a *API) ProjectCredentialToContext(next http.Handler) http.Handler {
 		project := a.ProjectFromContext(ctx)
 
 		if project == nil {
-			http.Error(
-				w,
-				http.StatusText(404),
-				404,
-			)
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to find project"),
+				Status:  ToPtr(http.StatusNotFound),
+			})
 
 			return
 		}
@@ -299,11 +316,26 @@ func (a *API) ProjectCredentialToContext(next http.Handler) http.Handler {
 		)
 
 		if err != nil {
-			http.Error(
-				w,
-				http.StatusText(404),
-				404,
-			)
+			if errors.Is(err, store.ErrCredentialNotFound) {
+				a.RenderNotify(w, r, Notification{
+					Message: ToPtr("Failed to find credential"),
+					Status:  ToPtr(http.StatusNotFound),
+				})
+
+				return
+			}
+
+			log.Error().
+				Err(err).
+				Str("action", "ProjectCredentialToContext").
+				Str("project", project.ID).
+				Str("credential", id).
+				Msg("Failed to load credential")
+
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to load credential"),
+				Status:  ToPtr(http.StatusInternalServerError),
+			})
 
 			return
 		}
@@ -336,11 +368,10 @@ func (a *API) ProjectInventoryToContext(next http.Handler) http.Handler {
 		project := a.ProjectFromContext(ctx)
 
 		if project == nil {
-			http.Error(
-				w,
-				http.StatusText(404),
-				404,
-			)
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to find project"),
+				Status:  ToPtr(http.StatusNotFound),
+			})
 
 			return
 		}
@@ -354,11 +385,26 @@ func (a *API) ProjectInventoryToContext(next http.Handler) http.Handler {
 		)
 
 		if err != nil {
-			http.Error(
-				w,
-				http.StatusText(404),
-				404,
-			)
+			if errors.Is(err, store.ErrInventoryNotFound) {
+				a.RenderNotify(w, r, Notification{
+					Message: ToPtr("Failed to find inventory"),
+					Status:  ToPtr(http.StatusNotFound),
+				})
+
+				return
+			}
+
+			log.Error().
+				Err(err).
+				Str("action", "ProjectInventoryToContext").
+				Str("project", project.ID).
+				Str("inventory", id).
+				Msg("Failed to load inventory")
+
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to load inventory"),
+				Status:  ToPtr(http.StatusInternalServerError),
+			})
 
 			return
 		}
@@ -391,11 +437,10 @@ func (a *API) ProjectRepositoryToContext(next http.Handler) http.Handler {
 		project := a.ProjectFromContext(ctx)
 
 		if project == nil {
-			http.Error(
-				w,
-				http.StatusText(404),
-				404,
-			)
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to find project"),
+				Status:  ToPtr(http.StatusNotFound),
+			})
 
 			return
 		}
@@ -409,11 +454,26 @@ func (a *API) ProjectRepositoryToContext(next http.Handler) http.Handler {
 		)
 
 		if err != nil {
-			http.Error(
-				w,
-				http.StatusText(404),
-				404,
-			)
+			if errors.Is(err, store.ErrRepositoryNotFound) {
+				a.RenderNotify(w, r, Notification{
+					Message: ToPtr("Failed to find repository"),
+					Status:  ToPtr(http.StatusNotFound),
+				})
+
+				return
+			}
+
+			log.Error().
+				Err(err).
+				Str("action", "ProjectRepositoryToContext").
+				Str("project", project.ID).
+				Str("repository", id).
+				Msg("Failed to load repository")
+
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to load repository"),
+				Status:  ToPtr(http.StatusInternalServerError),
+			})
 
 			return
 		}
@@ -446,11 +506,10 @@ func (a *API) ProjectEnvironmentToContext(next http.Handler) http.Handler {
 		project := a.ProjectFromContext(ctx)
 
 		if project == nil {
-			http.Error(
-				w,
-				http.StatusText(404),
-				404,
-			)
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to find project"),
+				Status:  ToPtr(http.StatusNotFound),
+			})
 
 			return
 		}
@@ -464,11 +523,26 @@ func (a *API) ProjectEnvironmentToContext(next http.Handler) http.Handler {
 		)
 
 		if err != nil {
-			http.Error(
-				w,
-				http.StatusText(404),
-				404,
-			)
+			if errors.Is(err, store.ErrEnvironmentNotFound) {
+				a.RenderNotify(w, r, Notification{
+					Message: ToPtr("Failed to find environment"),
+					Status:  ToPtr(http.StatusNotFound),
+				})
+
+				return
+			}
+
+			log.Error().
+				Err(err).
+				Str("action", "ProjectEnvironmentToContext").
+				Str("project", project.ID).
+				Str("environment", id).
+				Msg("Failed to load environment")
+
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to load environment"),
+				Status:  ToPtr(http.StatusInternalServerError),
+			})
 
 			return
 		}
@@ -498,14 +572,23 @@ func (a *API) ProjectEnvironmentFromContext(ctx context.Context) *model.Environm
 func (a *API) ProjectEnvironmentSecretToContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		environment := a.ProjectEnvironmentFromContext(ctx)
 
+		project := a.ProjectFromContext(ctx)
+		if project == nil {
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to find project"),
+				Status:  ToPtr(http.StatusNotFound),
+			})
+
+			return
+		}
+
+		environment := a.ProjectEnvironmentFromContext(ctx)
 		if environment == nil {
-			http.Error(
-				w,
-				http.StatusText(404),
-				404,
-			)
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to find environment"),
+				Status:  ToPtr(http.StatusNotFound),
+			})
 
 			return
 		}
@@ -519,11 +602,27 @@ func (a *API) ProjectEnvironmentSecretToContext(next http.Handler) http.Handler 
 		)
 
 		if err != nil {
-			http.Error(
-				w,
-				http.StatusText(404),
-				404,
-			)
+			if errors.Is(err, store.ErrEnvironmentSecretNotFound) {
+				a.RenderNotify(w, r, Notification{
+					Message: ToPtr("Failed to find environment secret"),
+					Status:  ToPtr(http.StatusNotFound),
+				})
+
+				return
+			}
+
+			log.Error().
+				Err(err).
+				Str("action", "ProjectEnvironmentSecretToContext").
+				Str("project", project.ID).
+				Str("environment", environment.ID).
+				Str("secret", id).
+				Msg("Failed to load environment secret")
+
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to load environment secret"),
+				Status:  ToPtr(http.StatusInternalServerError),
+			})
 
 			return
 		}
@@ -553,14 +652,23 @@ func (a *API) ProjectEnvironmentSecretFromContext(ctx context.Context) *model.En
 func (a *API) ProjectEnvironmentValueToContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		environment := a.ProjectEnvironmentFromContext(ctx)
 
+		project := a.ProjectFromContext(ctx)
+		if project == nil {
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to find project"),
+				Status:  ToPtr(http.StatusNotFound),
+			})
+
+			return
+		}
+
+		environment := a.ProjectEnvironmentFromContext(ctx)
 		if environment == nil {
-			http.Error(
-				w,
-				http.StatusText(404),
-				404,
-			)
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to find environment"),
+				Status:  ToPtr(http.StatusNotFound),
+			})
 
 			return
 		}
@@ -574,11 +682,27 @@ func (a *API) ProjectEnvironmentValueToContext(next http.Handler) http.Handler {
 		)
 
 		if err != nil {
-			http.Error(
-				w,
-				http.StatusText(404),
-				404,
-			)
+			if errors.Is(err, store.ErrEnvironmentValueNotFound) {
+				a.RenderNotify(w, r, Notification{
+					Message: ToPtr("Failed to find environment value"),
+					Status:  ToPtr(http.StatusNotFound),
+				})
+
+				return
+			}
+
+			log.Error().
+				Err(err).
+				Str("action", "ProjectEnvironmentValueToContext").
+				Str("project", project.ID).
+				Str("environment", environment.ID).
+				Str("value", id).
+				Msg("Failed to load environment value")
+
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to load environment value"),
+				Status:  ToPtr(http.StatusInternalServerError),
+			})
 
 			return
 		}
@@ -611,11 +735,10 @@ func (a *API) ProjectTemplateToContext(next http.Handler) http.Handler {
 		project := a.ProjectFromContext(ctx)
 
 		if project == nil {
-			http.Error(
-				w,
-				http.StatusText(404),
-				404,
-			)
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to find project"),
+				Status:  ToPtr(http.StatusNotFound),
+			})
 
 			return
 		}
@@ -629,11 +752,26 @@ func (a *API) ProjectTemplateToContext(next http.Handler) http.Handler {
 		)
 
 		if err != nil {
-			http.Error(
-				w,
-				http.StatusText(404),
-				404,
-			)
+			if errors.Is(err, store.ErrTemplateNotFound) {
+				a.RenderNotify(w, r, Notification{
+					Message: ToPtr("Failed to find template"),
+					Status:  ToPtr(http.StatusNotFound),
+				})
+
+				return
+			}
+
+			log.Error().
+				Err(err).
+				Str("action", "ProjectTemplateToContext").
+				Str("project", project.ID).
+				Str("template", id).
+				Msg("Failed to load template")
+
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to load template"),
+				Status:  ToPtr(http.StatusInternalServerError),
+			})
 
 			return
 		}
@@ -663,14 +801,23 @@ func (a *API) ProjectTemplateFromContext(ctx context.Context) *model.Template {
 func (a *API) ProjectTemplateSurveyToContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		template := a.ProjectTemplateFromContext(ctx)
 
+		project := a.ProjectFromContext(ctx)
+		if project == nil {
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to find project"),
+				Status:  ToPtr(http.StatusNotFound),
+			})
+
+			return
+		}
+
+		template := a.ProjectTemplateFromContext(ctx)
 		if template == nil {
-			http.Error(
-				w,
-				http.StatusText(404),
-				404,
-			)
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to find template"),
+				Status:  ToPtr(http.StatusNotFound),
+			})
 
 			return
 		}
@@ -684,11 +831,27 @@ func (a *API) ProjectTemplateSurveyToContext(next http.Handler) http.Handler {
 		)
 
 		if err != nil {
-			http.Error(
-				w,
-				http.StatusText(404),
-				404,
-			)
+			if errors.Is(err, store.ErrTemplateSurveyNotFound) {
+				a.RenderNotify(w, r, Notification{
+					Message: ToPtr("Failed to find template survey"),
+					Status:  ToPtr(http.StatusNotFound),
+				})
+
+				return
+			}
+
+			log.Error().
+				Err(err).
+				Str("action", "ProjectTemplateSurveyToContext").
+				Str("project", project.ID).
+				Str("template", template.ID).
+				Str("survey", id).
+				Msg("Failed to load template survey")
+
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to load template survey"),
+				Status:  ToPtr(http.StatusInternalServerError),
+			})
 
 			return
 		}
@@ -718,14 +881,23 @@ func (a *API) ProjectTemplateSurveyFromContext(ctx context.Context) *model.Templ
 func (a *API) ProjectTemplateVaultToContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		template := a.ProjectTemplateFromContext(ctx)
 
+		project := a.ProjectFromContext(ctx)
+		if project == nil {
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to find project"),
+				Status:  ToPtr(http.StatusNotFound),
+			})
+
+			return
+		}
+
+		template := a.ProjectTemplateFromContext(ctx)
 		if template == nil {
-			http.Error(
-				w,
-				http.StatusText(404),
-				404,
-			)
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to find template"),
+				Status:  ToPtr(http.StatusNotFound),
+			})
 
 			return
 		}
@@ -739,11 +911,27 @@ func (a *API) ProjectTemplateVaultToContext(next http.Handler) http.Handler {
 		)
 
 		if err != nil {
-			http.Error(
-				w,
-				http.StatusText(404),
-				404,
-			)
+			if errors.Is(err, store.ErrTemplateVaultNotFound) {
+				a.RenderNotify(w, r, Notification{
+					Message: ToPtr("Failed to find template vault"),
+					Status:  ToPtr(http.StatusNotFound),
+				})
+
+				return
+			}
+
+			log.Error().
+				Err(err).
+				Str("action", "ProjectTemplateVaultToContext").
+				Str("project", project.ID).
+				Str("template", template.ID).
+				Str("vault", id).
+				Msg("Failed to load template vault")
+
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to load template vault"),
+				Status:  ToPtr(http.StatusInternalServerError),
+			})
 
 			return
 		}
@@ -782,11 +970,25 @@ func (a *API) GlobalRunnerToContext(next http.Handler) http.Handler {
 		)
 
 		if err != nil {
-			http.Error(
-				w,
-				http.StatusText(404),
-				404,
-			)
+			if errors.Is(err, store.ErrRunnerNotFound) {
+				a.RenderNotify(w, r, Notification{
+					Message: ToPtr("Failed to find runner"),
+					Status:  ToPtr(http.StatusNotFound),
+				})
+
+				return
+			}
+
+			log.Error().
+				Err(err).
+				Str("action", "GlobalRunnerToContext").
+				Str("runner", id).
+				Msg("Failed to load runner")
+
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to load runner"),
+				Status:  ToPtr(http.StatusInternalServerError),
+			})
 
 			return
 		}
@@ -824,11 +1026,25 @@ func (a *API) GroupToContext(next http.Handler) http.Handler {
 		)
 
 		if err != nil {
-			http.Error(
-				w,
-				http.StatusText(404),
-				404,
-			)
+			if errors.Is(err, store.ErrGroupNotFound) {
+				a.RenderNotify(w, r, Notification{
+					Message: ToPtr("Failed to find group"),
+					Status:  ToPtr(http.StatusNotFound),
+				})
+
+				return
+			}
+
+			log.Error().
+				Err(err).
+				Str("action", "GroupToContext").
+				Str("group", id).
+				Msg("Failed to load group")
+
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to load group"),
+				Status:  ToPtr(http.StatusInternalServerError),
+			})
 
 			return
 		}
@@ -866,11 +1082,25 @@ func (a *API) UserToContext(next http.Handler) http.Handler {
 		)
 
 		if err != nil {
-			http.Error(
-				w,
-				http.StatusText(404),
-				404,
-			)
+			if errors.Is(err, store.ErrUserNotFound) {
+				a.RenderNotify(w, r, Notification{
+					Message: ToPtr("Failed to find user"),
+					Status:  ToPtr(http.StatusNotFound),
+				})
+
+				return
+			}
+
+			log.Error().
+				Err(err).
+				Str("action", "UserToContext").
+				Str("user", id).
+				Msg("Failed to load user")
+
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to load user"),
+				Status:  ToPtr(http.StatusInternalServerError),
+			})
 
 			return
 		}
