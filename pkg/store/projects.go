@@ -226,7 +226,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 				Slug:         "development",
 				Name:         "Developmment",
 				Kind:         "file",
-				Content:      "ansible/development/inventory.yml",
+				Content:      "ansible/environments/development/inventory.yml",
 			}
 
 			if err := inventory2.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
@@ -246,7 +246,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 				Slug:         "staging",
 				Name:         "Staging",
 				Kind:         "file",
-				Content:      "ansible/staging/inventory.yml",
+				Content:      "ansible/environments/staging/inventory.yml",
 			}
 
 			if err := inventory3.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
@@ -266,7 +266,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 				Slug:         "production",
 				Name:         "Production",
 				Kind:         "file",
-				Content:      "ansible/production/inventory.yml",
+				Content:      "ansible/environments/production/inventory.yml",
 			}
 
 			if err := inventory4.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
@@ -554,9 +554,9 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 				EnvironmentID: environment1.ID,
 				Slug:          "ping-site",
 				Name:          "Ping Site",
-				Description:   "This template pings the website to provide real word example of using Genexec.",
+				Description:   "This template pings the website to provide real world example of using Genexec.",
 				Executor:      "ansible",
-				Playbook:      "ping.yml",
+				Playbook:      "ansible/ping.yml",
 			}
 
 			if err := template1.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
@@ -565,6 +565,50 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 
 			if _, err := tx.NewInsert().
 				Model(template1).
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			template2 := &model.Template{
+				ProjectID:     record.ID,
+				RepositoryID:  repository1.ID,
+				InventoryID:   inventory1.ID,
+				EnvironmentID: environment1.ID,
+				Slug:          "opentofu-file",
+				Name:          "OpenTofu File",
+				Description:   "This template simply creates a file in the workspace with OpenTofu.",
+				Executor:      "opentofu",
+				Playbook:      "terraform/",
+			}
+
+			if err := template2.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
+				return err
+			}
+
+			if _, err := tx.NewInsert().
+				Model(template2).
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			template3 := &model.Template{
+				ProjectID:     record.ID,
+				RepositoryID:  repository1.ID,
+				InventoryID:   inventory1.ID,
+				EnvironmentID: environment1.ID,
+				Slug:          "terraform-file",
+				Name:          "Terraform File",
+				Description:   "This template simply creates a file in the workspace with Terraform.",
+				Executor:      "terraform",
+				Playbook:      "terraform/",
+			}
+
+			if err := template3.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
+				return err
+			}
+
+			if _, err := tx.NewInsert().
+				Model(template3).
 				Exec(ctx); err != nil {
 				return err
 			}
