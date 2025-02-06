@@ -8,6 +8,28 @@ TBD
 
 TBD
 
+### Frontend
+
+1. Install dependencies
+
+```sh
+npm ci
+```
+
+2. Run development server
+
+```sh
+npm run serve
+```
+
+#### Components
+
+We're using [shadcn-vue](https://www.shadcn-vue.com/) to build our UI components. To add new component, run the following command:
+
+```sh
+npx shadcn-vue@latest add <component-name>
+```
+
 ## Security
 
 If you find a security issue please contact
