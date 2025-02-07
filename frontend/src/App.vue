@@ -12,13 +12,20 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar'
+import { RouterView } from 'vue-router'
+import { useAuthStore } from './feature/auth/store/auth'
+import { Toaster } from './components/ui/toast'
+
+const authStore = useAuthStore()
 </script>
 
 <template>
   <SidebarProvider>
-    <NavigationSidebar />
+    <NavigationSidebar v-if="authStore.isAuthenticated" />
+
     <SidebarInset>
       <header
+        v-if="authStore.isAuthenticated"
         class="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12"
       >
         <div class="flex items-center gap-2 px-4">
@@ -33,6 +40,10 @@ import {
           </Breadcrumb>
         </div>
       </header>
+
+      <RouterView />
     </SidebarInset>
   </SidebarProvider>
+
+  <Toaster />
 </template>
