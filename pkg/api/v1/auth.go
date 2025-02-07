@@ -231,14 +231,11 @@ func (a *API) CallbackProvider(w http.ResponseWriter, r *http.Request, providerP
 	log.Info().
 		Str("username", user.Username).
 		Str("uid", user.ID).
-		Str("token", result).
 		Msg("Successfully generated token")
-
-	// TODO: create temporary token and redirect to frontend to gather the jwt
 
 	w.Header().Set(
 		"Location",
-		"/",
+		"/?token="+result,
 	)
 
 	w.Header().Set(
