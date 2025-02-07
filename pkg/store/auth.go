@@ -84,6 +84,7 @@ func (s *Auth) External(ctx context.Context, provider, ref, username, email, ful
 		if err := tx.NewSelect().
 			Model(record).
 			Relation("Auths").
+			Join("JOIN user_auths AS user_auth ON user.id = user_auth.user_id").
 			Where("user_auth.provider = ?", provider).
 			Where("user_auth.ref = ?", ref).
 			Scan(ctx); err != nil && !errors.Is(err, sql.ErrNoRows) {
