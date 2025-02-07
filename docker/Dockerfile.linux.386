@@ -9,8 +9,8 @@ VOLUME ["/var/lib/gexec"]
 ENTRYPOINT ["/usr/bin/gexec"]
 CMD ["server"]
 
-ENV GENEXEC_DATABASE_DSN sqlite:///var/lib/gexec/database.sqlite3
-ENV GENEXEC_UPLOAD_DSN file:///var/lib/gexec/uploads
+ENV GEXEC_DATABASE_DSN sqlite:///var/lib/gexec/database.sqlite3
+ENV GEXEC_UPLOAD_DSN file:///var/lib/gexec/uploads
 
 COPY bin/gexec /usr/bin/gexec
 WORKDIR /var/lib/gexec

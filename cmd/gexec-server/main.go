@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	if env := os.Getenv("GENEXEC_ENV_FILE"); env != "" {
+	if env := os.Getenv("GEXEC_ENV_FILE"); env != "" {
 		_ = godotenv.Load(env)
 	}
 

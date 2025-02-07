@@ -146,17 +146,17 @@
                 ];
 
                 env = {
-                  GENEXEC_TOKEN_SECRET = "NTaCR5JztYujaOZNgesaUzaVPmoxkGo0";
+                  GEXEC_TOKEN_SECRET = "NTaCR5JztYujaOZNgesaUzaVPmoxkGo0";
 
-                  GENEXEC_ADMIN_USERNAME = "admin";
-                  GENEXEC_ADMIN_PASSWORD = "p455w0rd";
-                  GENEXEC_ADMIN_EMAIL = "gexec@webhippie.de";
+                  GEXEC_ADMIN_USERNAME = "admin";
+                  GEXEC_ADMIN_PASSWORD = "p455w0rd";
+                  GEXEC_ADMIN_EMAIL = "gexec@webhippie.de";
 
-                  GENEXEC_DATABASE_DRIVER = "sqlite3";
-                  GENEXEC_DATABASE_NAME = "storage/gexec.sqlite3";
+                  GEXEC_DATABASE_DRIVER = "sqlite3";
+                  GEXEC_DATABASE_NAME = "storage/gexec.sqlite3";
 
-                  GENEXEC_UPLOAD_DRIVER = "file";
-                  GENEXEC_UPLOAD_PATH = "storage/uploads/";
+                  GEXEC_UPLOAD_DRIVER = "file";
+                  GEXEC_UPLOAD_PATH = "storage/uploads/";
                 };
               };
             };

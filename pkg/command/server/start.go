@@ -105,7 +105,7 @@ func init() {
 	_ = viper.BindPFlag("server.assets", serverCmd.PersistentFlags().Lookup("server-assets"))
 
 	serverCmd.PersistentFlags().Bool("server-docs", defaultServerDocs, "Enable OpenAPI docs")
-	viper.SetDefault("server.docs", defaultServerKey)
+	viper.SetDefault("server.docs", defaultServerDocs)
 	_ = viper.BindPFlag("server.docs", serverCmd.PersistentFlags().Lookup("server-docs"))
 
 	serverCmd.PersistentFlags().String("encrypt-passphrase", defaultEncryptPassphrase, "Passphrase for secret encryption")

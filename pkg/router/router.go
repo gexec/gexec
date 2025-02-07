@@ -103,6 +103,7 @@ func Server(
 				{
 					URL: cfg.Server.Host + path.Join(
 						cfg.Server.Root,
+						"api",
 						"v1",
 					),
 				},
@@ -135,11 +136,13 @@ func Server(
 				r.Handle("/docs", oamw.SwaggerUI(oamw.SwaggerUIOpts{
 					Path: path.Join(
 						cfg.Server.Root,
+						"api",
 						"v1",
 						"docs",
 					),
 					SpecURL: cfg.Server.Host + path.Join(
 						cfg.Server.Root,
+						"api",
 						"v1",
 						"spec",
 					),

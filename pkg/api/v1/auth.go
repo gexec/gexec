@@ -40,6 +40,8 @@ func (a *API) RequestProvider(w http.ResponseWriter, r *http.Request, providerPa
 				Status: http.StatusPreconditionFailed,
 			},
 		))
+
+		return
 	}
 
 	w.Header().Set(
@@ -88,6 +90,8 @@ func (a *API) CallbackProvider(w http.ResponseWriter, r *http.Request, providerP
 				Status: http.StatusPreconditionFailed,
 			},
 		))
+
+		return
 	}
 
 	exchange, err := provider.OAuth2.Exchange(
@@ -119,6 +123,8 @@ func (a *API) CallbackProvider(w http.ResponseWriter, r *http.Request, providerP
 				Status: http.StatusPreconditionFailed,
 			},
 		))
+
+		return
 	}
 
 	external, err := provider.Claims(
@@ -144,6 +150,8 @@ func (a *API) CallbackProvider(w http.ResponseWriter, r *http.Request, providerP
 				Status: http.StatusPreconditionFailed,
 			},
 		))
+
+		return
 	}
 
 	user, err := a.storage.Auth.External(
@@ -175,6 +183,8 @@ func (a *API) CallbackProvider(w http.ResponseWriter, r *http.Request, providerP
 				Status: http.StatusPreconditionFailed,
 			},
 		))
+
+		return
 	}
 
 	log.Debug().
@@ -214,6 +224,8 @@ func (a *API) CallbackProvider(w http.ResponseWriter, r *http.Request, providerP
 				Status: http.StatusPreconditionFailed,
 			},
 		))
+
+		return
 	}
 
 	log.Info().

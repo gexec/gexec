@@ -34,7 +34,7 @@ var (
 	}
 
 	defaultCertGenCertHosts  = []string{"gexec"}
-	defaultCertGenCertOrg    = "Genexec"
+	defaultCertGenCertOrg    = "Gexec"
 	defaultCertGenCertName   = "API"
 	defaultCertGenEcdsaCurve = ""
 	defaultCertGenRSABits    = 4096

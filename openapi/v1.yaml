@@ -3,10 +3,10 @@ openapi: "3.0.0"
 
 info:
   version: "1.0.0-alpha1"
-  description: "API definition for Genexec, a generic execution platform for IaC"
-  title: "Genexec OpenAPI"
+  description: "API definition for Gexec, a generic execution platform for IaC"
+  title: "Gexec OpenAPI"
   contact:
-    name: "Genexec"
+    name: "Gexec"
     email: "gexec@webhippie.de"
     url: "https://gexec.eu"
   license:

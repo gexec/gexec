@@ -554,7 +554,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 				EnvironmentID: environment1.ID,
 				Slug:          "ping-site",
 				Name:          "Ping Site",
-				Description:   "This template pings the website to provide real world example of using Genexec.",
+				Description:   "This template pings the website to provide real world example of using Gexec.",
 				Executor:      "ansible",
 				Playbook:      "ansible/ping.yml",
 			}

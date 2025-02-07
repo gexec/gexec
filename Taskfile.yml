@@ -176,9 +176,9 @@ tasks:
       - 'cmd/**/*.go'
       - 'pkg/**/*.go'
     env:
-      GENEXEC_LOG_LEVEL: "{{ .GENEXEC_LOG_LEVEL | default \"debug\" }}"
-      GENEXEC_TOKEN_SECRET: "NTaCR5JztYujaOZNgesaUzaVPmoxkGo0"
-      GENEXEC_ENCRYPT_PASSPHRASE: "aZRNei17y80b9iDR9fSqryhLzlk28OHZ"
+      GEXEC_LOG_LEVEL: "{{ .GEXEC_LOG_LEVEL | default \"debug\" }}"
+      GEXEC_TOKEN_SECRET: "NTaCR5JztYujaOZNgesaUzaVPmoxkGo0"
+      GEXEC_ENCRYPT_PASSPHRASE: "aZRNei17y80b9iDR9fSqryhLzlk28OHZ"
 
   watch:runner:
     desc: Run reloading development runner
@@ -190,9 +190,9 @@ tasks:
       - 'cmd/**/*.go'
       - 'pkg/**/*.go'
     env:
-      GENEXEC_LOG_LEVEL: "{{ .GENEXEC_LOG_LEVEL | default \"debug\" }}"
-      GENEXEC_TOKEN_SECRET: "NTaCR5JztYujaOZNgesaUzaVPmoxkGo0"
-      GENEXEC_ENCRYPT_PASSPHRASE: "aZRNei17y80b9iDR9fSqryhLzlk28OHZ"
+      GEXEC_LOG_LEVEL: "{{ .GEXEC_LOG_LEVEL | default \"debug\" }}"
+      GEXEC_TOKEN_SECRET: "NTaCR5JztYujaOZNgesaUzaVPmoxkGo0"
+      GEXEC_ENCRYPT_PASSPHRASE: "aZRNei17y80b9iDR9fSqryhLzlk28OHZ"
 
   watch:frontend:
     desc: Run reloading development frontend
