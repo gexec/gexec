@@ -1,4 +1,4 @@
-<script setup lang=ts>
+<script setup lang="ts">
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -7,7 +7,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu'
 import {
   Sidebar,
   SidebarContent,
@@ -19,7 +19,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-} from "@/components/ui/sidebar";
+} from '@/components/ui/sidebar'
 import {
   AudioWaveform,
   BadgeCheck,
@@ -28,38 +28,38 @@ import {
   GalleryVerticalEnd,
   LogOut,
   Plus,
-} from "lucide-vue-next";
-import { ref } from "vue";
-import { links } from "./links";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+} from 'lucide-vue-next'
+import { ref } from 'vue'
+import { links } from './links'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 // TODO: Replace with real data
 const data = {
   user: {
-    name: "Lill Tindemann",
-    email: "lill@example.org",
-    avatar: "",
+    name: 'Lill Tindemann',
+    email: 'lill@example.org',
+    avatar: '',
   },
   projects: [
     {
-      name: "Acme Inc",
+      name: 'Acme Inc',
       logo: GalleryVerticalEnd,
     },
     {
-      name: "Acme Corp.",
+      name: 'Acme Corp.',
       logo: AudioWaveform,
     },
     {
-      name: "Evil Corp.",
+      name: 'Evil Corp.',
       logo: Command,
     },
   ],
-};
+}
 
-const activeTeam = ref(data.projects[0]);
+const activeTeam = ref(data.projects[0])
 
 function setActiveTeam(team: (typeof data.projects)[number]) {
-  activeTeam.value = team;
+  activeTeam.value = team
 }
 </script>
 
