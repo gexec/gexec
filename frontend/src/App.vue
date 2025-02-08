@@ -1,17 +1,17 @@
-<script setup lang=ts>
+<script setup lang="ts">
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbList,
   BreadcrumbPage,
-} from "@/components/ui/breadcrumb";
-import { Separator } from "@/components/ui/separator";
-import { NavigationSidebar } from "@/components/common/navigation-sidebar";
+} from '@/components/ui/breadcrumb'
+import { Separator } from '@/components/ui/separator'
+import { NavigationSidebar } from '@/components/common/navigation-sidebar'
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar";
+} from '@/components/ui/sidebar'
 </script>
 
 <template>

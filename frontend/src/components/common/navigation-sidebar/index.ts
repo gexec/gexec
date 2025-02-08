@@ -1,1 +1,1 @@
-export { default as NavigationSidebar } from "./NavigationSidebar.vue";
+export { default as NavigationSidebar } from './NavigationSidebar.vue'

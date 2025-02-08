@@ -8,56 +8,56 @@ import {
   ListTodo,
   Users,
   Variable,
-} from "lucide-vue-next";
+} from 'lucide-vue-next'
 
 export const links = {
   mainNav: [
     {
-      name: "Dashboard",
-      url: "#",
+      name: 'Dashboard',
+      url: '#',
       icon: LayoutDashboard,
     },
     {
-      name: "Task Templates",
-      url: "#",
+      name: 'Task Templates',
+      url: '#',
       icon: ListTodo,
     },
     {
-      name: "Schedule",
-      url: "#",
+      name: 'Schedule',
+      url: '#',
       icon: CalendarSync,
     },
     {
-      name: "Inventory",
-      url: "#",
+      name: 'Inventory',
+      url: '#',
       icon: Archive,
     },
     {
-      name: "Variable Groups",
-      url: "#",
+      name: 'Variable Groups',
+      url: '#',
       icon: Variable,
     },
     {
-      name: "Key Stores",
-      url: "#",
+      name: 'Key Stores',
+      url: '#',
       icon: Key,
     },
     {
-      name: "Repositories",
-      url: "#",
+      name: 'Repositories',
+      url: '#',
       icon: FolderGit2,
     },
   ],
   admin: [
     {
-      name: "Teams",
-      url: "#",
+      name: 'Teams',
+      url: '#',
       icon: Users,
     },
     {
-      name: "Projects",
-      url: "#",
+      name: 'Projects',
+      url: '#',
       icon: Book,
     },
   ],
-};
+}
