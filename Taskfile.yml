@@ -12,21 +12,7 @@ tasks:
     desc: Remove all temporary build artifacts
     cmds:
       - go clean -i ./...
-      - rm -rf bin/ frontend/static/
-
-  build:
-    desc: Build all required binary artifacts
-    deps:
-      - build:client
-      - build:server
-      - build:runner
-
-  watch:
-    desc: Start components with hot reloading
-    deps:
-      - watch:server
-      - watch:runner
-      - watch:frontend
+      - rm -rf bin/ dist/ frontend/dist/ pkg/frontend/files/*
 
   generate:
     desc: Generate code like openapi clients
@@ -69,11 +55,18 @@ tasks:
     cmds:
       - go test -coverprofile coverage.out {{ .PACKAGES }}
 
+  be:build:
+    desc: Build all required binary artifacts
+    deps:
+      - build:client
+      - build:server
+      - build:runner
+
   fe:install:
     desc: Install dependencies for frontend
     dir: frontend/
     cmds:
-      - npm install
+      - npm install --ci
 
   fe:fmt:
     desc: Run standard formatter for frontend
@@ -172,9 +165,11 @@ tasks:
       - task: build:server
       - bin/gexec-server start
     watch: true
+    method: none
     sources:
       - 'cmd/**/*.go'
       - 'pkg/**/*.go'
+      - 'pkg/**/*.tmpl'
     env:
       GEXEC_LOG_LEVEL: "{{ .GEXEC_LOG_LEVEL | default \"debug\" }}"
       GEXEC_TOKEN_SECRET: "NTaCR5JztYujaOZNgesaUzaVPmoxkGo0"
@@ -186,9 +181,11 @@ tasks:
       - task: build:runner
       - bin/gexec-runner start
     watch: true
+    method: none
     sources:
       - 'cmd/**/*.go'
       - 'pkg/**/*.go'
+      - 'pkg/**/*.tmpl'
     env:
       GEXEC_LOG_LEVEL: "{{ .GEXEC_LOG_LEVEL | default \"debug\" }}"
       GEXEC_TOKEN_SECRET: "NTaCR5JztYujaOZNgesaUzaVPmoxkGo0"
@@ -198,6 +195,7 @@ tasks:
     desc: Run reloading development frontend
     dir: frontend/
     cmds:
+      - task: fe:install
       - npm run serve
 
 ...

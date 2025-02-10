@@ -12,6 +12,7 @@ import (
 	v1 "github.com/gexec/gexec/pkg/api/v1"
 	"github.com/gexec/gexec/pkg/authn"
 	"github.com/gexec/gexec/pkg/config"
+	"github.com/gexec/gexec/pkg/handler"
 	"github.com/gexec/gexec/pkg/metrics"
 	"github.com/gexec/gexec/pkg/middleware/current"
 	"github.com/gexec/gexec/pkg/middleware/header"
@@ -493,6 +494,13 @@ func Server(
 				),
 			))
 		})
+
+		handlers := handler.New(cfg)
+		root.Get("/", handlers.Index())
+		root.Get("/favicon.svg", handlers.Favicon())
+		root.Get("/config.json", handlers.Config())
+		root.Get("/manifest.json", handlers.Manifest())
+		root.Handle("/assets/*", handlers.Assets())
 	})
 
 	return mux

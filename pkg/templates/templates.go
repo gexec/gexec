@@ -39,8 +39,8 @@ func String(cfg *config.Config, name string, data any) string {
 	return buffer.String()
 }
 
-// Read simply provides an io.Reader for direct usage.
-func Read(cfg *config.Config, name string, data any) io.Reader {
+// Reader simply provides an io.Reader for direct usage.
+func Reader(cfg *config.Config, name string, data any) io.Reader {
 	tmpls := Load(cfg)
 	buffer := bytes.NewBufferString("")
 
@@ -68,7 +68,7 @@ func Load(cfg *config.Config) *template.Template {
 		Funcs(),
 	)
 
-	files, err := allEmbeddedTemplates(
+	files, err := embeddedTemplates(
 		&assets,
 		"",
 	)
@@ -76,7 +76,7 @@ func Load(cfg *config.Config) *template.Template {
 	if err != nil {
 		log.Warn().
 			Err(err).
-			Msg("failed to get builtin template list")
+			Msg("Failed to get builtin template list")
 	} else {
 		for _, name := range files {
 			file, err := assets.ReadFile(name)
@@ -85,7 +85,7 @@ func Load(cfg *config.Config) *template.Template {
 				log.Warn().
 					Err(err).
 					Str("file", name).
-					Msg("failed to read builtin template")
+					Msg("Failed to read builtin template")
 			}
 
 			if _, err := tpls.New(
@@ -97,16 +97,16 @@ func Load(cfg *config.Config) *template.Template {
 				log.Warn().
 					Err(err).
 					Str("file", name).
-					Msg("failed to parse builtin template")
+					Msg("Failed to parse builtin template")
 			}
 		}
 	}
 
-	if cfg.Server.Assets != "" {
-		if stat, err := os.Stat(cfg.Server.Assets); err == nil && stat.IsDir() {
+	if cfg.Server.Templates != "" {
+		if stat, err := os.Stat(cfg.Server.Templates); err == nil && stat.IsDir() {
 			files := []string{}
 
-			_ = filepath.Walk(cfg.Server.Assets, func(path string, f os.FileInfo, err error) error {
+			_ = filepath.Walk(cfg.Server.Templates, func(path string, f os.FileInfo, err error) error {
 				if err != nil {
 					return err
 				}
@@ -134,13 +134,13 @@ func Load(cfg *config.Config) *template.Template {
 					log.Warn().
 						Err(err).
 						Str("file", name).
-						Msg("failed to read custom template")
+						Msg("Failed to read custom template")
 				}
 
 				tplName := strings.TrimPrefix(
 					strings.TrimPrefix(
 						name,
-						cfg.Server.Assets,
+						cfg.Server.Templates,
 					),
 					"/",
 				)
@@ -149,12 +149,12 @@ func Load(cfg *config.Config) *template.Template {
 					log.Warn().
 						Err(err).
 						Str("file", name).
-						Msg("failed to parse custom template")
+						Msg("Failed to parse custom template")
 				}
 			}
 		} else {
 			log.Warn().
-				Msg("custom assets directory doesn't exist")
+				Msg("Custom templates directory doesn't exist")
 		}
 	}
 
@@ -166,7 +166,7 @@ func Funcs() template.FuncMap {
 	return funcmap.Funcs
 }
 
-func allEmbeddedTemplates(fs *embed.FS, dir string) ([]string, error) {
+func embeddedTemplates(fs *embed.FS, dir string) ([]string, error) {
 	if len(dir) == 0 {
 		dir = "."
 	}
@@ -185,7 +185,7 @@ func allEmbeddedTemplates(fs *embed.FS, dir string) ([]string, error) {
 		)
 
 		if entry.IsDir() {
-			res, err := allEmbeddedTemplates(
+			res, err := embeddedTemplates(
 				fs,
 				fp,
 			)

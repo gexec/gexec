@@ -36,7 +36,8 @@ var (
 	defaultServerRoot        = "/"
 	defaultServerCert        = ""
 	defaultServerKey         = ""
-	defaultServerAssets      = ""
+	defaultServerTemplates   = ""
+	defaultServerFrontend    = ""
 	defaultServerDocs        = true
 	defaultEncryptPassphrase = secret.Generate(32)
 	defaultDatabaseDriver    = "sqlite3"
@@ -100,9 +101,13 @@ func init() {
 	viper.SetDefault("server.key", defaultServerKey)
 	_ = viper.BindPFlag("server.key", serverCmd.PersistentFlags().Lookup("server-key"))
 
-	serverCmd.PersistentFlags().String("server-assets", defaultServerAssets, "Path to custom tepmplates")
-	viper.SetDefault("server.assets", defaultServerKey)
-	_ = viper.BindPFlag("server.assets", serverCmd.PersistentFlags().Lookup("server-assets"))
+	serverCmd.PersistentFlags().String("server-templates", defaultServerTemplates, "Path to custom template filrs")
+	viper.SetDefault("server.templates", defaultServerTemplates)
+	_ = viper.BindPFlag("server.templates", serverCmd.PersistentFlags().Lookup("server-templates"))
+
+	serverCmd.PersistentFlags().String("server-frontend", defaultServerFrontend, "Path to custom frontend files")
+	viper.SetDefault("server.frontend", defaultServerFrontend)
+	_ = viper.BindPFlag("server.frontend", serverCmd.PersistentFlags().Lookup("server-frontend"))
 
 	serverCmd.PersistentFlags().Bool("server-docs", defaultServerDocs, "Enable OpenAPI docs")
 	viper.SetDefault("server.docs", defaultServerDocs)

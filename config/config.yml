@@ -5,7 +5,8 @@ server:
   root: "/"
   cert: ~
   key: ~
-  assets: ~
+  templates: ~
+  frontend: ~
   docs: true
 
 runner:

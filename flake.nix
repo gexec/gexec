@@ -134,6 +134,10 @@
                   runner = {
                     exec = "task watch:runner";
                   };
+
+                  frontend = {
+                    exec = "task watch:frontend";
+                  };
                 };
 
                 packages = with pkgs; [

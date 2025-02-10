@@ -18,4 +18,15 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./frontend/src', import.meta.url)),
     },
   },
-})
+  server: {
+    proxy: {
+      '/api': 'http://localhost:8080',
+    },
+  },
+  build: {
+    outDir: '../pkg/frontend/files',
+    sourcemap: true,
+    manifest: 'manifest.json',
+    emptyOutDir: true,
+  },
+});

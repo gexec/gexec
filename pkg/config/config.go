@@ -10,13 +10,14 @@ import (
 
 // Server defines the server configuration.
 type Server struct {
-	Addr   string `mapstructure:"addr"`
-	Host   string `mapstructure:"host"`
-	Root   string `mapstructure:"root"`
-	Cert   string `mapstructure:"cert"`
-	Key    string `mapstructure:"key"`
-	Assets string `mapstructure:"assets"`
-	Docs   bool   `mapstructure:"docs"`
+	Addr      string `mapstructure:"addr"`
+	Host      string `mapstructure:"host"`
+	Root      string `mapstructure:"root"`
+	Cert      string `mapstructure:"cert"`
+	Key       string `mapstructure:"key"`
+	Templates string `mapstructure:"templates"`
+	Frontend  string `mapstructure:"frontend"`
+	Docs      bool   `mapstructure:"docs"`
 }
 
 // Runner defines the runner configuration.
