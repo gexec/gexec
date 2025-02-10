@@ -44,9 +44,7 @@ require (
 	github.com/uptrace/bun/driver/sqliteshim v1.2.9
 	github.com/whilp/git-urls v1.0.0
 	golang.org/x/crypto v0.32.0
-	golang.org/x/net v0.34.0
 	golang.org/x/oauth2 v0.25.0
-	gorm.io/gorm v1.25.9
 )
 
 require (
@@ -295,7 +293,6 @@ require (
 	github.com/huandu/xstrings v1.5.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/invopop/jsonschema v0.13.0 // indirect
-	github.com/invopop/yaml v0.3.1 // indirect
 	github.com/ipfs/bbloom v0.0.4 // indirect
 	github.com/ipfs/go-block-format v0.2.0 // indirect
 	github.com/ipfs/go-cid v0.4.1 // indirect
@@ -314,7 +311,6 @@ require (
 	github.com/jgautheron/goconst v1.7.1 // indirect
 	github.com/jingyugao/rowserrcheck v1.1.1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
-	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/jjti/go-spancheck v0.6.4 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
@@ -501,6 +497,7 @@ require (
 	golang.org/x/exp v0.0.0-20250128182459-e0ece0dbea4c // indirect
 	golang.org/x/exp/typeparams v0.0.0-20241108190413-2d47ceb2692f // indirect
 	golang.org/x/mod v0.22.0 // indirect
+	golang.org/x/net v0.34.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/term v0.28.0 // indirect
@@ -524,13 +521,10 @@ require (
 	honnef.co/go/tools v0.5.1 // indirect
 	lukechampine.com/blake3 v1.2.1 // indirect
 	mellium.im/sasl v0.3.2 // indirect
-	modernc.org/gc/v3 v3.0.0-20250121204235-2db1fde51ea4 // indirect
 	modernc.org/libc v1.61.11 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.8.2 // indirect
 	modernc.org/sqlite v1.34.5 // indirect
-	modernc.org/strutil v1.2.1 // indirect
-	modernc.org/token v1.1.0 // indirect
 	mvdan.cc/gofumpt v0.7.0 // indirect
 	mvdan.cc/unparam v0.0.0-20240528143540-8a5130ca722f // indirect
 	sigs.k8s.io/kind v0.24.0 // indirect
@@ -544,5 +538,4 @@ tool (
 	github.com/goreleaser/goreleaser/v2
 	github.com/mgechev/revive
 	github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen
-	honnef.co/go/tools/cmd/staticcheck
 )

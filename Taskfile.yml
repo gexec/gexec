@@ -40,11 +40,6 @@ tasks:
     cmds:
       - go tool github.com/golangci/golangci-lint/cmd/golangci-lint run ./...
 
-  be:staticcheck:
-    desc: Run static checks for backend
-    cmds:
-      - go tool honnef.co/go/tools/cmd/staticcheck -tags 'netgo' {{ .PACKAGES }}
-
   be:generate:
     desc: Generate code for backend
     cmds:
