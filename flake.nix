@@ -85,61 +85,6 @@
                   };
                 };
 
-                services = {
-                  minio = {
-                    enable = true;
-                    accessKey = "WMHJQCKGKWUW1CRGPQ8Y";
-                    secretKey = "CKchNYh6D1mn1Vs6XMfnDmuK76PZ3XE3vF56LDS0";
-                    buckets = [
-                      "gexec"
-                    ];
-                  };
-                  mysql = {
-                    enable = true;
-                    ensureUsers = [
-                      {
-                        name = "gexec";
-                        password = "p455w0rd";
-                        ensurePermissions = {
-                          "gexec.*" = "ALL PRIVILEGES";
-                        };
-                      }
-                    ];
-                    initialDatabases = [
-                      {
-                        name = "gexec";
-                      }
-                    ];
-                  };
-                  postgres = {
-                    enable = true;
-                    listen_addresses = "127.0.0.1";
-                    initialScript = ''
-                      CREATE USER gexec WITH ENCRYPTED PASSWORD 'p455w0rd';
-                      GRANT ALL PRIVILEGES ON DATABASE gexec TO gexec;
-                    '';
-                    initialDatabases = [
-                      {
-                        name = "gexec";
-                      }
-                    ];
-                  };
-                };
-
-                processes = {
-                  server = {
-                    exec = "task watch:server";
-                  };
-
-                  runner = {
-                    exec = "task watch:runner";
-                  };
-
-                  frontend = {
-                    exec = "task watch:frontend";
-                  };
-                };
-
                 packages = with pkgs; [
                   cosign
                   go-task
@@ -161,6 +106,109 @@
 
                   GEXEC_UPLOAD_DRIVER = "file";
                   GEXEC_UPLOAD_PATH = "storage/uploads/";
+                };
+
+                services = {
+                  minio = {
+                    enable = true;
+                    accessKey = "WMHJQCKGKWUW1CRGPQ8Y";
+                    secretKey = "CKchNYh6D1mn1Vs6XMfnDmuK76PZ3XE3vF56LDS0";
+                    buckets = [
+                      "gexec"
+                    ];
+                  };
+                  postgres = {
+                    enable = true;
+                    listen_addresses = "127.0.0.1";
+                    initialScript = ''
+                      CREATE USER gexec WITH ENCRYPTED PASSWORD 'p455w0rd';
+                      GRANT ALL PRIVILEGES ON DATABASE gexec TO gexec;
+                    '';
+                    initialDatabases = [
+                      {
+                        name = "gexec";
+                      }
+                    ];
+                  };
+                  redis = {
+                    enable = true;
+                  };
+                };
+
+                processes = {
+                  gexec-server = {
+                    exec = "task watch:server";
+
+                    process-compose = {
+                      readiness_probe = {
+                        exec.command = "${pkgs.curl}/bin/curl -sSf http://localhost:8000/readyz";
+                        initial_delay_seconds = 2;
+                        period_seconds = 10;
+                        timeout_seconds = 4;
+                        success_threshold = 1;
+                        failure_threshold = 5;
+                      };
+
+                      availability = {
+                        restart = "on_failure";
+                      };
+                    };
+                  };
+
+                  gexec-worker = {
+                    exec = "task watch:runner";
+
+                    process-compose = {
+                      readiness_probe = {
+                        exec.command = "${pkgs.curl}/bin/curl -sSf http://localhost:8001/readyz";
+                        initial_delay_seconds = 2;
+                        period_seconds = 10;
+                        timeout_seconds = 4;
+                        success_threshold = 1;
+                        failure_threshold = 5;
+                      };
+
+                      availability = {
+                        restart = "on_failure";
+                      };
+                    };
+                  };
+
+                  gexec-webui = {
+                    exec = "task watch:frontend";
+
+                    process-compose = {
+                      readiness_probe = {
+                        exec.command = "${pkgs.curl}/bin/curl -sSf http://localhost:5173";
+                        initial_delay_seconds = 2;
+                        period_seconds = 10;
+                        timeout_seconds = 4;
+                        success_threshold = 1;
+                        failure_threshold = 5;
+                      };
+
+                      availability = {
+                        restart = "on_failure";
+                      };
+                    };
+                  };
+
+                  minio = {
+                    process-compose = {
+                      readiness_probe = {
+                        exec.command = "${pkgs.curl}/bin/curl -sSf http://localhost:9000/minio/health/live";
+                        initial_delay_seconds = 2;
+                        period_seconds = 10;
+                        timeout_seconds = 4;
+                        success_threshold = 1;
+                        failure_threshold = 5;
+                      };
+
+                      availability = {
+                        restart = "on_failure";
+                      };
+                    };
+                  };
                 };
               };
             };
