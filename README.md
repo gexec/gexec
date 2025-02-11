@@ -105,3 +105,4 @@ Copyright (c) 2025 Thomas Boerger <thomas@webhippie.de>
 [nodejs]: https://nodejs.org/en/download/package-manager/
 [gotask]: https://taskfile.dev/installation/
 [direnv]: https://direnv.net/
+[devenv]: https://devenv.sh/
