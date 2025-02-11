@@ -29,9 +29,11 @@ import {
   LogOut,
   Plus,
 } from 'lucide-vue-next'
-import { ref } from 'vue'
+import { computed, ref, unref } from 'vue'
 import { links } from './links'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { useAuthStore } from '@/feature/auth/store/auth'
+import { storeToRefs } from 'pinia'
 
 // TODO: Replace with real data
 const data = {
@@ -56,7 +58,17 @@ const data = {
   ],
 }
 
+const authStore = useAuthStore()
+const { user } = storeToRefs(authStore)
+
 const activeTeam = ref(data.projects[0])
+
+const usersInitials = computed(() =>
+  unref(user)
+    .displayName.split(' ')
+    .map((n) => n[0])
+    .join('')
+)
 
 function setActiveTeam(team: (typeof data.projects)[number]) {
   activeTeam.value = team
@@ -109,15 +121,20 @@ function setActiveTeam(team: (typeof data.projects)[number]) {
                 </div>
                 {{ project.name }}
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem class="gap-2 p-2">
-                <div
-                  class="flex size-6 items-center justify-center rounded-md border bg-background"
-                >
-                  <Plus class="size-4" />
-                </div>
-                <div class="font-medium text-muted-foreground">Add project</div>
-              </DropdownMenuItem>
+
+              <template v-if="user.isAdmin">
+                <DropdownMenuSeparator />
+                <DropdownMenuItem class="gap-2 p-2">
+                  <div
+                    class="flex size-6 items-center justify-center rounded-md border bg-background"
+                  >
+                    <Plus class="size-4" />
+                  </div>
+                  <div class="font-medium text-muted-foreground">
+                    Add project
+                  </div>
+                </DropdownMenuItem>
+              </template>
             </DropdownMenuContent>
           </DropdownMenu>
         </SidebarMenuItem>
@@ -137,7 +154,7 @@ function setActiveTeam(team: (typeof data.projects)[number]) {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarGroup>
-      <SidebarGroup>
+      <SidebarGroup v-if="user.isAdmin">
         <SidebarGroupLabel>Admin</SidebarGroupLabel>
         <SidebarMenu>
           <SidebarMenuItem v-for="item in links.admin" :key="item.name">
@@ -161,14 +178,15 @@ function setActiveTeam(team: (typeof data.projects)[number]) {
                 class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               >
                 <Avatar class="h-8 w-8 rounded-lg">
-                  <AvatarImage :src="data.user.avatar" :alt="data.user.name" />
-                  <AvatarFallback class="rounded-lg">LT</AvatarFallback>
+                  <AvatarFallback class="rounded-lg">{{
+                    usersInitials
+                  }}</AvatarFallback>
                 </Avatar>
                 <div class="grid flex-1 text-left text-sm leading-tight">
                   <span class="truncate font-semibold">{{
-                    data.user.name
+                    user.displayName
                   }}</span>
-                  <span class="truncate text-xs">{{ data.user.email }}</span>
+                  <span class="truncate text-xs">{{ user.email }}</span>
                 </div>
                 <ChevronsUpDown class="ml-auto size-4" />
               </SidebarMenuButton>
@@ -184,17 +202,15 @@ function setActiveTeam(team: (typeof data.projects)[number]) {
                   class="flex items-center gap-2 px-1 py-1.5 text-left text-sm"
                 >
                   <Avatar class="h-8 w-8 rounded-lg">
-                    <AvatarImage
-                      :src="data.user.avatar"
-                      :alt="data.user.name"
-                    />
-                    <AvatarFallback class="rounded-lg">LT</AvatarFallback>
+                    <AvatarFallback class="rounded-lg">{{
+                      usersInitials
+                    }}</AvatarFallback>
                   </Avatar>
                   <div class="grid flex-1 text-left text-sm leading-tight">
                     <span class="truncate font-semibold">{{
-                      data.user.name
+                      user.displayName
                     }}</span>
-                    <span class="truncate text-xs">{{ data.user.email }}</span>
+                    <span class="truncate text-xs">{{ user.email }}</span>
                   </div>
                 </div>
               </DropdownMenuLabel>
@@ -206,7 +222,7 @@ function setActiveTeam(team: (typeof data.projects)[number]) {
                 </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem @select="authStore.signOutUser">
                 <LogOut />
                 Log out
               </DropdownMenuItem>

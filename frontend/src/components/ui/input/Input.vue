@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { HTMLAttributes } from 'vue'
+import type { HTMLAttributes, InputHTMLAttributes } from 'vue'
 import { cn } from '@/lib/utils'
 import { useVModel } from '@vueuse/core'
 
@@ -7,6 +7,7 @@ const props = defineProps<{
   defaultValue?: string | number
   modelValue?: string | number
   class?: HTMLAttributes['class']
+  autocomplete?: InputHTMLAttributes['autocomplete']
 }>()
 
 const emits = defineEmits<{
@@ -28,5 +29,6 @@ const modelValue = useVModel(props, 'modelValue', emits, {
         props.class
       )
     "
+    :autocomplete="props.autocomplete"
   />
 </template>
