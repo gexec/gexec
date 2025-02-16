@@ -9,10 +9,20 @@ const routes = [
     component: () => import('../feature/dashboard/views/Dashboard.vue'),
     meta: { auth: true },
   },
+
+  // Auth
   {
     name: 'SignIn',
     path: '/login',
     component: () => import('../feature/auth/views/SignIn.vue'),
+  },
+
+  // Projects
+  {
+    name: 'Projects',
+    path: '/projects',
+    component: () => import('../feature/projects/views/Projects.vue'),
+    meta: { auth: true },
   },
 ]
 
