@@ -1,3 +1,4 @@
+import { client } from '../../../../client/client.gen'
 import { defineStore } from 'pinia'
 import { computed, reactive, unref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -54,6 +55,11 @@ export const useAuthStore = defineStore('auth', () => {
   function signInUser(accessToken: string) {
     const parsedToken = parseJwt(accessToken)
 
+    if (parsedToken.exp < Date.now() / 1000) {
+      localStorage.removeItem(AUTH_STORAGE_KEYS.accessToken)
+      return
+    }
+
     Object.assign(token, {
       accessToken: accessToken,
       expires: parsedToken.exp,
@@ -65,6 +71,7 @@ export const useAuthStore = defineStore('auth', () => {
     })
 
     localStorage.setItem(AUTH_STORAGE_KEYS.accessToken, accessToken)
+    client.setConfig({ headers: { Authorization: `Bearer ${accessToken}` } })
   }
 
   function init() {

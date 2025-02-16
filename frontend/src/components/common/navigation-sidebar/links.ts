@@ -56,7 +56,7 @@ export const links = {
     },
     {
       name: 'Projects',
-      url: '#',
+      url: '/projects',
       icon: Book,
     },
   ],

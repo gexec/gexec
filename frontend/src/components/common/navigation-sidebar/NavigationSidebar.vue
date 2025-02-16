@@ -37,11 +37,6 @@ import { storeToRefs } from 'pinia'
 
 // TODO: Replace with real data
 const data = {
-  user: {
-    name: 'Lill Tindemann',
-    email: 'lill@example.org',
-    avatar: '',
-  },
   projects: [
     {
       name: 'Acme Inc',
