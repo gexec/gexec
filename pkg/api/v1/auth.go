@@ -453,27 +453,3 @@ func detectAdminFor(provider *authn.Provider, external *authn.User) bool {
 
 	return false
 }
-
-// CallbackProviderRedirectResponse defines the response to redirect to frontend after auth.
-type CallbackProviderRedirectResponse struct {
-	URL string
-}
-
-// VisitCallbackProviderResponse implements the middleware.Responder interface for redirects.
-func (r CallbackProviderRedirectResponse) VisitCallbackProviderResponse(w http.ResponseWriter) error {
-	w.Header().Set(
-		"Location",
-		r.URL,
-	)
-
-	w.Header().Set(
-		"Content-Type",
-		"text/html",
-	)
-
-	w.WriteHeader(
-		http.StatusPermanentRedirect,
-	)
-
-	return nil
-}
