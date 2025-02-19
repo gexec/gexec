@@ -222,7 +222,7 @@ func (a *API) UpdateGroup(w http.ResponseWriter, r *http.Request, _ GroupID) {
 // DeleteGroup implements the v1.ServerInterface.
 func (a *API) DeleteGroup(w http.ResponseWriter, r *http.Request, _ GroupID) {
 	ctx := r.Context()
-	record := a.UserFromContext(ctx)
+	record := a.GroupFromContext(ctx)
 
 	if err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
