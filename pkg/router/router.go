@@ -1,8 +1,6 @@
 package router
 
 import (
-	"encoding/json"
-	"io"
 	"net/http"
 	"path"
 	"time"
@@ -111,27 +109,9 @@ func Server(
 			}
 
 			if cfg.Server.Docs {
-				r.Get("/spec", func(w http.ResponseWriter, _ *http.Request) {
-					w.Header().Set("Content-Type", "application/json")
-
-					b, err := json.Marshal(swagger)
-
-					if err != nil {
-						log.Error().
-							Err(err).
-							Msg("Failed to generate json response")
-
-						http.Error(
-							w,
-							http.StatusText(http.StatusUnprocessableEntity),
-							http.StatusUnprocessableEntity,
-						)
-
-						return
-					}
-
-					w.WriteHeader(http.StatusOK)
-					_, _ = w.Write(b)
+				r.Get("/spec", func(w http.ResponseWriter, r *http.Request) {
+					render.Status(r, http.StatusOK)
+					render.JSON(w, r, swagger)
 				})
 
 				r.Handle("/docs", oamw.SwaggerUI(oamw.SwaggerUIOpts{
@@ -489,6 +469,7 @@ func Server(
 			r.Handle("/storage/*", uploads.Handler(
 				path.Join(
 					cfg.Server.Root,
+					"api",
 					"v1",
 					"storage",
 				),
@@ -527,18 +508,14 @@ func Metrics(
 			root.Mount("/debug", middleware.Profiler())
 		}
 
-		root.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) {
-			w.Header().Set("Content-Type", "text/plain")
-			w.WriteHeader(http.StatusOK)
-
-			_, _ = io.WriteString(w, http.StatusText(http.StatusOK))
+		root.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
+			render.Status(r, http.StatusOK)
+			render.PlainText(w, r, http.StatusText(http.StatusOK))
 		})
 
-		root.Get("/readyz", func(w http.ResponseWriter, _ *http.Request) {
-			w.Header().Set("Content-Type", "text/plain")
-			w.WriteHeader(http.StatusOK)
-
-			_, _ = io.WriteString(w, http.StatusText(http.StatusOK))
+		root.Get("/readyz", func(w http.ResponseWriter, r *http.Request) {
+			render.Status(r, http.StatusOK)
+			render.PlainText(w, r, http.StatusText(http.StatusOK))
 		})
 	})
 
