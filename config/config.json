@@ -53,7 +53,7 @@
     "expire": "1h0m0s"
   },
   "scim": {
-    "enabled": true,
+    "enabled": false,
     "token": ""
   },
   "admin": {
