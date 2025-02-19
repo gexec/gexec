@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"path"
 	"strings"
 	"time"
@@ -14,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	transport "github.com/aws/smithy-go/endpoints"
 	"github.com/gexec/gexec/pkg/config"
 )
 
@@ -44,7 +46,7 @@ func (u *S3Upload) Info() map[string]interface{} {
 
 // Prepare simply prepares the upload handler.
 func (u *S3Upload) Prepare() (Upload, error) {
-	opts := []func(*awsconfig.LoadOptions) error{
+	globalOpts := []func(*awsconfig.LoadOptions) error{
 		awsconfig.WithRegion(
 			u.region,
 		),
@@ -63,8 +65,8 @@ func (u *S3Upload) Prepare() (Upload, error) {
 			return nil, fmt.Errorf("failed to parse secret key: %w", err)
 		}
 
-		opts = append(
-			opts,
+		globalOpts = append(
+			globalOpts,
 			awsconfig.WithCredentialsProvider(
 				credentials.NewStaticCredentialsProvider(
 					access,
@@ -75,29 +77,37 @@ func (u *S3Upload) Prepare() (Upload, error) {
 		)
 	}
 
-	if u.endpoint != "" {
-		opts = append(
-			opts,
-			awsconfig.WithEndpointResolver(
-				&CustomEndpointResolver{
-					Endpoint: u.endpoint,
-					Region:   u.region,
-				},
-			),
-		)
-	}
-
 	cfg, err := awsconfig.LoadDefaultConfig(
 		context.Background(),
-		opts...,
+		globalOpts...,
 	)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to load configuration: %w", err)
 	}
 
+	serviceOpts := []func(*s3.Options){}
+
+	if u.endpoint != "" {
+		endpoint, err := url.Parse(u.endpoint)
+
+		if err != nil {
+			return nil, err
+		}
+
+		serviceOpts = append(
+			serviceOpts,
+			s3.WithEndpointResolverV2(
+				&CustomEndpointResolver{
+					Endpoint: endpoint,
+				},
+			),
+		)
+	}
+
 	u.client = s3.NewFromConfig(
 		cfg,
+		serviceOpts...,
 	)
 
 	u.presign = s3.NewPresignClient(
@@ -208,18 +218,12 @@ func MustS3Upload(cfg config.Upload) Upload {
 
 // CustomEndpointResolver is used for S3 compatible storage endpoints.
 type CustomEndpointResolver struct {
-	Endpoint string
-	Region   string
+	Endpoint *url.URL
 }
 
 // ResolveEndpoint resolves endpoints for a specific service and region
-func (r *CustomEndpointResolver) ResolveEndpoint(service, _ string) (aws.Endpoint, error) {
-	if service == s3.ServiceID {
-		return aws.Endpoint{
-			URL:           r.Endpoint,
-			SigningRegion: r.Region,
-		}, nil
-	}
-
-	return aws.Endpoint{}, &aws.EndpointNotFoundError{}
+func (r *CustomEndpointResolver) ResolveEndpoint(_ context.Context, _ s3.EndpointParameters) (transport.Endpoint, error) {
+	return transport.Endpoint{
+		URI: *r.Endpoint,
+	}, nil
 }
