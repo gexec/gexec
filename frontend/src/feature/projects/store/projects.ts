@@ -4,8 +4,9 @@ import { ref } from 'vue'
 
 export const useProjectsStore = defineStore('projects', () => {
   const projects = ref<Project[]>([])
+  const selectedProject = ref<Project | null>(null)
 
-  async function loadProjects({ signal }: { signal: AbortSignal }) {
+  async function loadProjects({ signal }: { signal?: AbortSignal } = {}) {
     const { data, error } = await listProjects({ signal })
 
     if (error) {
@@ -20,9 +21,15 @@ export const useProjectsStore = defineStore('projects', () => {
     projects.value = [...projects.value, project]
   }
 
+  function selectProject(project: Project) {
+    selectedProject.value = project
+  }
+
   return {
     projects,
+    selectedProject,
     loadProjects,
     addProject,
+    selectProject,
   }
 })

@@ -70,7 +70,7 @@ const onSubmit = handleSubmit(async (values, actions) => {
     }
 
     signInUser(data.token)
-    router.replace({ name: 'Dashboard' })
+    await router.replace('/')
   } catch (error) {
     console.error(error)
     toast({

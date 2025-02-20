@@ -16,3 +16,10 @@ export function valueUpdater<T extends Updater<unknown>>(
       ? updaterOrValue(ref.value)
       : updaterOrValue
 }
+
+export function getInitials(value: string): string {
+  return value
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+}

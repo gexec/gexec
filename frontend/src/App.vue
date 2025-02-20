@@ -15,33 +15,10 @@ import {
 import { RouterView } from 'vue-router'
 import { useAuthStore } from './feature/auth/store/auth'
 import { Toaster } from './components/ui/toast'
-import { onWatcherCleanup, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useProjectsStore } from './feature/projects/store/projects'
 
 const authStore = useAuthStore()
 const { isAuthenticated } = storeToRefs(authStore)
-
-const { loadProjects } = useProjectsStore()
-
-watch(
-  isAuthenticated,
-  (isAuthenticated) => {
-    if (!isAuthenticated) {
-      return
-    }
-
-    const controller = new AbortController()
-    loadProjects({ signal: controller.signal }).catch((error) => {
-      console.error(error)
-    })
-
-    onWatcherCleanup(() => {
-      controller.abort()
-    })
-  },
-  { immediate: true }
-)
 </script>
 
 <template>
