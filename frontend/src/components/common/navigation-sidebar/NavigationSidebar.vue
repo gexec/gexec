@@ -20,54 +20,25 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from '@/components/ui/sidebar'
-import {
-  AudioWaveform,
-  BadgeCheck,
-  ChevronsUpDown,
-  Command,
-  GalleryVerticalEnd,
-  LogOut,
-  Plus,
-} from 'lucide-vue-next'
-import { computed, ref, unref } from 'vue'
+import { BadgeCheck, ChevronsUpDown, LogOut, Plus } from 'lucide-vue-next'
+import { computed, unref } from 'vue'
 import { links } from './links'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useAuthStore } from '@/feature/auth/store/auth'
 import { storeToRefs } from 'pinia'
-
-// TODO: Replace with real data
-const data = {
-  projects: [
-    {
-      name: 'Acme Inc',
-      logo: GalleryVerticalEnd,
-    },
-    {
-      name: 'Acme Corp.',
-      logo: AudioWaveform,
-    },
-    {
-      name: 'Evil Corp.',
-      logo: Command,
-    },
-  ],
-}
+import { useProjectsStore } from '@/feature/projects/store/projects'
+import { getInitials } from '@/lib/utils'
+import { useRouter } from 'vue-router'
 
 const authStore = useAuthStore()
+const projectsStore = useProjectsStore()
+
 const { user } = storeToRefs(authStore)
+const { projects, selectedProject } = storeToRefs(projectsStore)
 
-const activeTeam = ref(data.projects[0])
+const router = useRouter()
 
-const usersInitials = computed(() =>
-  unref(user)
-    .displayName.split(' ')
-    .map((n) => n[0])
-    .join('')
-)
-
-function setActiveTeam(team: (typeof data.projects)[number]) {
-  activeTeam.value = team
-}
+const usersInitials = computed(() => getInitials(unref(user).displayName))
 </script>
 
 <template>
@@ -84,11 +55,17 @@ function setActiveTeam(team: (typeof data.projects)[number]) {
                 <div
                   class="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground"
                 >
-                  <component :is="activeTeam.logo" class="size-4" />
+                  <Avatar
+                    class="size-4 shrink-0 bg-gray-900 text-white rounded-lg"
+                  >
+                    <AvatarFallback>{{
+                      getInitials(selectedProject?.name || '')
+                    }}</AvatarFallback>
+                  </Avatar>
                 </div>
                 <div class="grid flex-1 text-left text-sm leading-tight">
                   <span class="truncate font-semibold">{{
-                    activeTeam.name
+                    selectedProject?.name
                   }}</span>
                 </div>
                 <ChevronsUpDown class="ml-auto" />
@@ -104,15 +81,27 @@ function setActiveTeam(team: (typeof data.projects)[number]) {
                 Projects
               </DropdownMenuLabel>
               <DropdownMenuItem
-                v-for="project in data.projects"
+                v-for="project in projects"
                 :key="project.name"
                 class="gap-2 p-2"
-                @click="setActiveTeam(project)"
+                @click="
+                  router.push({
+                    name: unref(router.currentRoute).name,
+                    params: {
+                      ...unref(router.currentRoute).params,
+                      project_slug: project.slug,
+                    },
+                  })
+                "
               >
                 <div
                   class="flex size-6 items-center justify-center rounded-sm border"
                 >
-                  <component :is="project.logo" class="size-4 shrink-0" />
+                  <Avatar class="size-4 shrink-0 bg-transparent">
+                    <AvatarFallback>{{
+                      getInitials(project.name!)
+                    }}</AvatarFallback>
+                  </Avatar>
                 </div>
                 {{ project.name }}
               </DropdownMenuItem>

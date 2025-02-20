@@ -89,6 +89,7 @@ export const useAuthStore = defineStore('auth', () => {
     Object.assign(token, { accessToken: '', expires: 0 })
 
     localStorage.removeItem(AUTH_STORAGE_KEYS.accessToken)
+    client.setConfig({ headers: { Authorization: undefined } })
     await router.push({ name: 'SignIn' })
   }
 
