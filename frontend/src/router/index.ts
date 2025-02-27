@@ -19,6 +19,12 @@ const routes = [
     component: () => import('../feature/dashboard/views/Dashboard.vue'),
     meta: { auth: true },
   },
+  {
+    name: 'Credentials',
+    path: '/:project_slug/credentials',
+    component: () => import('../feature/credentials/views/Credentials.vue'),
+    meta: { auth: true },
+  },
 
   // Admin
   {
@@ -46,7 +52,6 @@ router.beforeEach(async (to) => {
   }
 
   if (
-    to.path === '/' &&
     to.meta.auth &&
     !unref(authStore.isAuthenticated) &&
     to.name !== 'SignIn'

@@ -22,13 +22,13 @@ import {
 } from '@/components/ui/sidebar'
 import { BadgeCheck, ChevronsUpDown, LogOut, Plus } from 'lucide-vue-next'
 import { computed, unref } from 'vue'
-import { links } from './links'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useAuthStore } from '@/feature/auth/store/auth'
 import { storeToRefs } from 'pinia'
 import { useProjectsStore } from '@/feature/projects/store/projects'
 import { getInitials } from '@/lib/utils'
-import { useRouter } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
+import { useNavigationLinks } from '@/composables/useNavigationLinks'
 
 const authStore = useAuthStore()
 const projectsStore = useProjectsStore()
@@ -37,6 +37,7 @@ const { user } = storeToRefs(authStore)
 const { projects, selectedProject } = storeToRefs(projectsStore)
 
 const router = useRouter()
+const { links } = useNavigationLinks()
 
 const usersInitials = computed(() => getInitials(unref(user).displayName))
 </script>
@@ -130,10 +131,10 @@ const usersInitials = computed(() => getInitials(unref(user).displayName))
         <SidebarMenu>
           <SidebarMenuItem v-for="item in links.mainNav" :key="item.name">
             <SidebarMenuButton as-child>
-              <a :href="item.url">
+              <RouterLink :to="item.url">
                 <component :is="item.icon" />
                 <span>{{ item.name }}</span>
-              </a>
+              </RouterLink>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -143,10 +144,10 @@ const usersInitials = computed(() => getInitials(unref(user).displayName))
         <SidebarMenu>
           <SidebarMenuItem v-for="item in links.admin" :key="item.name">
             <SidebarMenuButton as-child>
-              <a :href="item.url">
+              <RouterLink :to="item.url">
                 <component :is="item.icon" />
                 <span>{{ item.name }}</span>
-              </a>
+              </RouterLink>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
