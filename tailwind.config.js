@@ -66,6 +66,13 @@ module.exports = {
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))',
         },
+        chart: {
+          1: 'hsl(var(--chart-1))',
+          2: 'hsl(var(--chart-2))',
+          3: 'hsl(var(--chart-3))',
+          4: 'hsl(var(--chart-4))',
+          5: 'hsl(var(--chart-5))',
+        },
       },
       borderRadius: {
         xl: 'calc(var(--radius) + 4px)',
@@ -99,5 +106,5 @@ module.exports = {
       },
     },
   },
-  plugins: [animate],
+  plugins: [animate, require('tailwindcss-animate')],
 }

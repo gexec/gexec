@@ -24,6 +24,7 @@ import { computed, ref, unref, watch } from 'vue'
 import { createProject } from '../../../../../client'
 import { useProjectsStore } from '../../store/projects'
 import { toast } from '@/components/ui/toast'
+import { formatSlug } from '@/lib/utils'
 
 const { addProject } = useProjectsStore()
 
@@ -34,7 +35,15 @@ const formSchema = toTypedSchema(
   })
 )
 
-const { handleSubmit, isSubmitting, isValidating, errors, values, setFieldValue, setFieldError } = useForm({
+const {
+  handleSubmit,
+  isSubmitting,
+  isValidating,
+  errors,
+  values,
+  setFieldValue,
+  setFieldError,
+} = useForm({
   validationSchema: formSchema,
 })
 
@@ -84,32 +93,30 @@ const onSubmit = handleSubmit(async (values) => {
     addProject(data)
     closeModal()
     toast({
-        title: 'Success',
-        description:
-          'Project successfully created.',
-      })
+      title: 'Success',
+      description: 'Project successfully created.',
+    })
   } catch (error) {
     console.error(error)
     toast({
-        title: 'An error occurred',
-        description:
-          'We have encountered an unexpected issue while creating the project. Try again later.',
-        variant: 'destructive',
-      })
+      title: 'An error occurred',
+      description:
+        'We have encountered an unexpected issue while creating the project. Try again later.',
+      variant: 'destructive',
+    })
   }
 })
 
-function formatSlug(value: string): string {
-  return value.replaceAll(' ', '-').toLowerCase()
-}
+watch(
+  () => values.slug,
+  (value) => {
+    if (!value) {
+      return
+    }
 
-watch(() => values.slug, (value) => {
-  if (!value) {
-    return
+    setFieldValue('slug', formatSlug(value))
   }
-
-  setFieldValue('slug', formatSlug(value))
-})
+)
 </script>
 
 <template>
@@ -147,7 +154,12 @@ watch(() => values.slug, (value) => {
         </FormField>
 
         <DialogFooter>
-          <Button variant="secondary" :disabled="isSubmitting" @click="closeModal">Cancel</Button>
+          <Button
+            variant="secondary"
+            :disabled="isSubmitting"
+            @click="closeModal"
+            >Cancel</Button
+          >
           <Button type="submit" :disabled="isSubmitDisabled">Create</Button>
         </DialogFooter>
       </form>
