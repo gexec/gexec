@@ -1,22 +1,21 @@
 <script lang="ts" setup>
 import type { HTMLAttributes } from 'vue'
 import { cn } from '@/lib/utils'
-import { Primitive, type PrimitiveProps } from 'radix-vue'
+import { type RouterLinkProps } from 'vue-router'
 
 const props = withDefaults(
-  defineProps<PrimitiveProps & { class?: HTMLAttributes['class'] }>(),
+  defineProps<RouterLinkProps & { class?: HTMLAttributes['class'] }>(),
   {
-    as: 'a',
+    class: '',
   }
 )
 </script>
 
 <template>
-  <Primitive
-    :as="as"
-    :as-child="asChild"
+  <RouterLink
+    :to="props.to"
     :class="cn('transition-colors hover:text-foreground', props.class)"
   >
     <slot />
-  </Primitive>
+  </RouterLink>
 </template>
