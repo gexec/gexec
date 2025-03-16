@@ -2,8 +2,10 @@
 import {
   Breadcrumb,
   BreadcrumbItem,
+  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
+  BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
 import { Separator } from '@/components/ui/separator'
 import { NavigationSidebar } from '@/components/common/navigation-sidebar'
@@ -16,9 +18,11 @@ import { RouterView } from 'vue-router'
 import { useAuthStore } from './feature/auth/store/auth'
 import { Toaster } from './components/ui/toast'
 import { storeToRefs } from 'pinia'
+import { useBreadcrumbs } from './composables/useBreadcrumbs'
 
 const authStore = useAuthStore()
 const { isAuthenticated } = storeToRefs(authStore)
+const { breadcrumbs } = useBreadcrumbs()
 </script>
 
 <template>
@@ -35,9 +39,25 @@ const { isAuthenticated } = storeToRefs(authStore)
           <Separator orientation="vertical" class="mr-2 h-4" />
           <Breadcrumb>
             <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbPage>Dashboard</BreadcrumbPage>
-              </BreadcrumbItem>
+              <template
+                v-for="(breadcrumb, index) in breadcrumbs"
+                :key="breadcrumb.url"
+              >
+                <BreadcrumbItem>
+                  <BreadcrumbPage
+                    v-if="index === breadcrumbs.length - 1"
+                    :href="breadcrumb.url"
+                  >
+                    {{ breadcrumb.name }}
+                  </BreadcrumbPage>
+
+                  <BreadcrumbLink v-else :to="breadcrumb.url">
+                    {{ breadcrumb.name }}
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+
+                <BreadcrumbSeparator v-if="index !== breadcrumbs.length - 1" />
+              </template>
             </BreadcrumbList>
           </Breadcrumb>
         </div>

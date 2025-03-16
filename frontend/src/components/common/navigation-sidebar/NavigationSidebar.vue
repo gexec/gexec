@@ -100,7 +100,7 @@ const usersInitials = computed(() => getInitials(unref(user).displayName))
                 >
                   <Avatar class="size-4 shrink-0 bg-transparent">
                     <AvatarFallback>{{
-                      getInitials(project.name!)
+                      getInitials(project.name || '')
                     }}</AvatarFallback>
                   </Avatar>
                 </div>
