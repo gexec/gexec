@@ -19,7 +19,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import DialogNewCredentials from '../DialogNewCredentials'
-import { h, ref, unref } from 'vue'
+import { computed, h, ref, unref } from 'vue'
 import { valueUpdater } from '@/lib/utils'
 
 const { credentials, loadCredentials } = useCredentials()
@@ -74,6 +74,15 @@ const table = useVueTable({
   },
 })
 
+const filter = computed({
+  get() {
+    return table.getColumn('name')?.getFilterValue() as string
+  },
+  set(value: string) {
+    table.getColumn('name')?.setFilterValue(value)
+  },
+})
+
 loadCredentials()
 </script>
 
@@ -81,10 +90,9 @@ loadCredentials()
   <div class="w-full">
     <div class="flex gap-2 items-center justify-between py-4">
       <Input
+        v-model="filter"
         class="max-w-sm"
         placeholder="Filter credentials by name"
-        :model-value="table.getColumn('name')?.getFilterValue() as string"
-        @update:model-value="table.getColumn('name')?.setFilterValue($event)"
       />
       <DialogNewCredentials />
     </div>
