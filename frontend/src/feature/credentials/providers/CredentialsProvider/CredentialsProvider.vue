@@ -7,8 +7,11 @@ import { useProjectsStore } from '@/feature/projects/store/projects'
 const projectsStore = useProjectsStore()
 
 const credentials = ref<Credential[]>([])
+const isLoading = ref(false)
 
 async function loadCredentials() {
+  isLoading.value = true
+
   const project = unref(projectsStore.selectedProject)
 
   if (!project?.id) {
@@ -20,17 +23,24 @@ async function loadCredentials() {
   })
 
   if (error) {
+    isLoading.value = false
     throw error
   }
 
   credentials.value = data.credentials
+  isLoading.value = false
 }
 
 function addCredentials(credential: Credential) {
   credentials.value = [credential, ...credentials.value]
 }
 
-provideCredentialsContext({ credentials, loadCredentials, addCredentials })
+provideCredentialsContext({
+  credentials,
+  isLoading,
+  loadCredentials,
+  addCredentials,
+})
 </script>
 
 <template>

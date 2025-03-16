@@ -19,7 +19,7 @@ export function useNavigationLinks() {
     const selectedProjectSlug = unref(projectsStore.selectedProject)?.slug || ''
 
     return {
-      mainNav: [
+      project: [
         {
           name: 'Dashboard',
           url: `/${selectedProjectSlug}`,
@@ -52,7 +52,7 @@ export function useNavigationLinks() {
         },
         {
           name: 'Repositories',
-          url: '#',
+          url: `/${selectedProjectSlug}/repositories`,
           icon: FolderGit2,
         },
       ],

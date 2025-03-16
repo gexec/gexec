@@ -129,7 +129,7 @@ const usersInitials = computed(() => getInitials(unref(user).displayName))
       <SidebarGroup>
         <SidebarGroupLabel>Project</SidebarGroupLabel>
         <SidebarMenu>
-          <SidebarMenuItem v-for="item in links.mainNav" :key="item.name">
+          <SidebarMenuItem v-for="item in links.project" :key="item.name">
             <SidebarMenuButton as-child>
               <RouterLink :to="item.url">
                 <component :is="item.icon" />
