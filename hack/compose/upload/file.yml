@@ -1,0 +1,12 @@
+version: '3.4'
+
+volumes:
+  file:
+
+services:
+  server:
+    environment:
+      - GEXEC_UPLOAD_DRIVER=file
+      - GEXEC_UPLOAD_PATH=/var/lib/upload
+    volumes:
+      - file:/var/lib/upload

@@ -1,0 +1,31 @@
+version: '3.4'
+
+services:
+  mariadb:
+    image: mariadb:10.8
+    restart: always
+    environment:
+      - MARIADB_ROOT_PASSWORD=root
+      - MARIADB_USER=gopad
+      - MARIADB_PASSWORD=gopad
+      - MARIADB_DATABASE=gopad
+    volumes:
+      - mariadb:/var/lib/mysql
+    ports:
+      - 3306:3306
+
+  postgres:
+    image: postgres:14.3
+    restart: always
+    environment:
+      - POSTGRES_USER=gopad
+      - POSTGRES_PASSWORD=gopad
+      - POSTGRES_DB=gopad
+    volumes:
+      - postgres:/var/lib/postgresql
+    ports:
+      - 5432:5432
+
+volumes:
+  mariadb:
+  postgres:

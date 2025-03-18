@@ -380,7 +380,7 @@ func listRunnersSorting(request ListProjectRunnersParams) (string, string, int64
 	order := ""
 
 	if request.Order != nil {
-		sort = string(FromPtr(request.Order))
+		order = string(FromPtr(request.Order))
 	}
 
 	return sort, order, limit, offset, search

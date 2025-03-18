@@ -70,6 +70,8 @@
 
                     golangci-lint = {
                       enable = true;
+                      entry = "go tool github.com/golangci/golangci-lint/cmd/golangci-lint run ./...";
+                      pass_filenames = false;
                     };
                   };
                 };
@@ -86,26 +88,36 @@
                 };
 
                 packages = with pkgs; [
-                  cosign
                   go-task
                   httpie
                   nixfmt-rfc-style
+                  posting
                   sqlite
                   yq-go
                 ];
 
                 env = {
-                  GEXEC_TOKEN_SECRET = "NTaCR5JztYujaOZNgesaUzaVPmoxkGo0";
+                  CGO_ENABLED = "0";
 
-                  GEXEC_ADMIN_USERNAME = "admin";
-                  GEXEC_ADMIN_PASSWORD = "p455w0rd";
-                  GEXEC_ADMIN_EMAIL = "gexec@webhippie.de";
+                  GEXEC_LOG_LEVEL = "debug";
+                  GEXEC_LOG_PRETTY = "true";
+                  GEXEC_LOG_COLOR = "true";
+
+                  GEXEC_TOKEN_SECRET = "Fpu9YldPhWM9fn9KcL4R7JT1";
+                  GEXEC_TOKEN_EXPIRE = "1h";
 
                   GEXEC_DATABASE_DRIVER = "sqlite3";
                   GEXEC_DATABASE_NAME = "storage/gexec.sqlite3";
 
                   GEXEC_UPLOAD_DRIVER = "file";
                   GEXEC_UPLOAD_PATH = "storage/uploads/";
+
+                  GEXEC_CLEANUP_ENABLED = "true";
+                  GEXEC_CLEANUP_INTERVAL = "5m";
+
+                  GEXEC_ADMIN_USERNAME = "admin";
+                  GEXEC_ADMIN_PASSWORD = "p455w0rd";
+                  GEXEC_ADMIN_EMAIL = "gexec@webhippie.de";
                 };
 
                 services = {
@@ -140,6 +152,10 @@
                     exec = "task watch:server";
 
                     process-compose = {
+                      environment = [
+                        "GEXEC_SERVER_HOST=http://localhost:5173"
+                      ];
+
                       readiness_probe = {
                         exec.command = "${pkgs.curl}/bin/curl -sSf http://localhost:8000/readyz";
                         initial_delay_seconds = 2;
@@ -159,6 +175,10 @@
                     exec = "task watch:runner";
 
                     process-compose = {
+                      environment = [
+                        "CONSOLE_SERVER_HOST=http://localhost:5173"
+                      ];
+
                       readiness_probe = {
                         exec.command = "${pkgs.curl}/bin/curl -sSf http://localhost:8001/readyz";
                         initial_delay_seconds = 2;

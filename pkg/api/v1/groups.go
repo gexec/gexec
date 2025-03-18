@@ -961,7 +961,7 @@ func listGroupsSorting(request ListGroupsParams) (string, string, int64, int64, 
 	order := ""
 
 	if request.Order != nil {
-		sort = string(FromPtr(request.Order))
+		order = string(FromPtr(request.Order))
 	}
 
 	return sort, order, limit, offset, search
@@ -978,7 +978,7 @@ func listGroupUsersSorting(request ListGroupUsersParams) (string, string, int64,
 	order := ""
 
 	if request.Order != nil {
-		sort = string(FromPtr(request.Order))
+		order = string(FromPtr(request.Order))
 	}
 
 	return sort, order, limit, offset, search
@@ -995,7 +995,7 @@ func listGroupProjectsSorting(request ListGroupProjectsParams) (string, string, 
 	order := ""
 
 	if request.Order != nil {
-		sort = string(FromPtr(request.Order))
+		order = string(FromPtr(request.Order))
 	}
 
 	return sort, order, limit, offset, search

@@ -4,8 +4,8 @@ package: v1
 
 generate:
   chi-server: true
-  strict-server: true
   models: true
+  client: true
   embedded-spec: true
 
 compatibility:

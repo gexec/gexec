@@ -486,7 +486,7 @@ func listCredentialsSorting(request ListProjectCredentialsParams) (string, strin
 	order := ""
 
 	if request.Order != nil {
-		sort = string(FromPtr(request.Order))
+		order = string(FromPtr(request.Order))
 	}
 
 	return sort, order, limit, offset, search

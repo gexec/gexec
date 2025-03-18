@@ -20,12 +20,6 @@ type Server struct {
 	Docs      bool   `mapstructure:"docs"`
 }
 
-// Runner defines the runner configuration.
-type Runner struct {
-	Server string `mapstructure:"server"`
-	Token  string `mapstructure:"token"`
-}
-
 // Metrics defines the metrics server configuration.
 type Metrics struct {
 	Addr  string `mapstructure:"addr"`
@@ -38,6 +32,12 @@ type Logs struct {
 	Level  string `mapstructure:"level"`
 	Pretty bool   `mapstructure:"pretty"`
 	Color  bool   `mapstructure:"color"`
+}
+
+// Cleanup defines the cleanup process configuration.
+type Cleanup struct {
+	Enabled  bool          `mapstructure:"enabled"`
+	Interval time.Duration `mapstructure:"interval"`
 }
 
 // Auth defines the authentication configuration.
@@ -56,33 +56,24 @@ type Database struct {
 	Options  map[string]string `mapstructure:"options"`
 }
 
-// Encrypt defines the encrypt configuration.
-type Encrypt struct {
-	Passphrase string `mapstructure:"passphrase"`
-}
-
 // Upload defines the asset upload configuration.
 type Upload struct {
-	Driver   string `mapstructure:"driver"`
-	Endpoint string `mapstructure:"endpoint"`
-	Path     string `mapstructure:"path"`
-	Access   string `mapstructure:"access"`
-	Secret   string `mapstructure:"secret"`
-	Bucket   string `mapstructure:"bucket"`
-	Region   string `mapstructure:"region"`
-	Perms    string `mapstructure:"perms"`
+	Driver    string `mapstructure:"driver"`
+	Endpoint  string `mapstructure:"endpoint"`
+	Pathstyle bool   `mapstructure:"pathstyle"`
+	Path      string `mapstructure:"path"`
+	Access    string `mapstructure:"access"`
+	Secret    string `mapstructure:"secret"`
+	Bucket    string `mapstructure:"bucket"`
+	Region    string `mapstructure:"region"`
+	Perms     string `mapstructure:"perms"`
+	Proxy     bool   `mapstructure:"proxy"`
 }
 
 // Token defines the token handle configuration.
 type Token struct {
 	Secret string        `mapstructure:"secret"`
 	Expire time.Duration `mapstructure:"expire"`
-}
-
-// Scim defines the scim provisioning configuration.
-type Scim struct {
-	Enabled bool   `mapstructure:"enabled"`
-	Token   string `mapstructure:"token"`
 }
 
 // Admin defines the initial admin user configuration.
@@ -93,19 +84,37 @@ type Admin struct {
 	Email    string `mapstructure:"email"`
 }
 
+// Scim defines the scim provisioning configuration.
+type Scim struct {
+	Enabled bool   `mapstructure:"enabled"`
+	Token   string `mapstructure:"token"`
+}
+
+// Runner defines the runner configuration.
+type Runner struct {
+	Server string `mapstructure:"server"`
+	Token  string `mapstructure:"token"`
+}
+
+// Encrypt defines the encrypt configuration.
+type Encrypt struct {
+	Passphrase string `mapstructure:"passphrase"`
+}
+
 // Config is a combination of all available configurations.
 type Config struct {
 	Server   Server   `mapstructure:"server"`
-	Runner   Runner   `mapstructure:"runner"`
 	Metrics  Metrics  `mapstructure:"metrics"`
 	Logs     Logs     `mapstructure:"log"`
+	Cleanup  Cleanup  `mapstructure:"cleanup"`
 	Auth     Auth     `mapstructure:"auth"`
 	Database Database `mapstructure:"database"`
-	Encrypt  Encrypt  `mapstructure:"encrypt"`
 	Upload   Upload   `mapstructure:"upload"`
 	Token    Token    `mapstructure:"token"`
 	Scim     Scim     `mapstructure:"scim"`
 	Admin    Admin    `mapstructure:"admin"`
+	Runner   Runner   `mapstructure:"runner"`
+	Encrypt  Encrypt  `mapstructure:"encrypt"`
 }
 
 // Load initializes a default configuration struct.

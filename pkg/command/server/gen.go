@@ -35,7 +35,7 @@ var (
 
 	defaultCertGenCertHosts  = []string{"gexec"}
 	defaultCertGenCertOrg    = "Gexec"
-	defaultCertGenCertName   = "API"
+	defaultCertGenCertName   = "Server"
 	defaultCertGenEcdsaCurve = ""
 	defaultCertGenRSABits    = 4096
 	defaultCertGenValidFor   = 365 * 24 * time.Hour

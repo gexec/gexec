@@ -12,13 +12,13 @@
 
     "baseUrl": "./frontend/",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./*"]
     },
     "lib": ["ES2023", "DOM"]
   },
   "include": [
-    "./frontend/src/**/*.ts",
-    "./frontend/src/**/*.tsx",
-    "./frontend/src/**/*.vue"
+    "./frontend/**/*.ts",
+    "./frontend/**/*.tsx",
+    "./frontend/**/*.vue"
   ]
 }

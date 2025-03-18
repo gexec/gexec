@@ -59,37 +59,31 @@ tasks:
 
   fe:install:
     desc: Install dependencies for frontend
-    dir: frontend/
     cmds:
       - npm install --ci
 
   fe:fmt:
     desc: Run standard formatter for frontend
-    dir: frontend/
     cmds:
       - npm run format
 
   fe:lint:
     desc: Run configured linters for frontend
-    dir: frontend/
     cmds:
       - npm run lint
 
   fe:generate:
     desc: Generate code for frontend
-    dir: frontend/
     cmds:
       - npm run openapi
 
   fe:test:
     desc: Run tests for frontend
-    dir: frontend/
     cmds:
       - npm run test
 
   fe:build:
     desc: Build entire project for frontend
-    dir: frontend/
     cmds:
       - npm run build
 
@@ -188,7 +182,6 @@ tasks:
 
   watch:frontend:
     desc: Run reloading development frontend
-    dir: frontend/
     cmds:
       - task: fe:install
       - npm run serve
