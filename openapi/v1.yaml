@@ -3,7 +3,7 @@ openapi: "3.0.0"
 
 info:
   version: "1.0.0-alpha1"
-  description: "API definition for Gexec, a generic execution platform for IaC"
+  description: "API definition for Gexec, a generic execution platform for Ansible/OpenTofu/Terraform"
   title: "Gexec OpenAPI"
   contact:
     name: "Gexec"
@@ -99,6 +99,25 @@ paths:
         "200":
           $ref: "#/components/responses/ProvidersResponse"
 
+  /auth/redirect:
+    post:
+      summary: "Retrieve real token after redirect"
+      operationId: "RedirectAuth"
+      tags:
+        - "auth"
+      requestBody:
+        $ref: "#/components/requestBodies/RedirectAuthBody"
+      security: []
+      responses:
+        "200":
+          $ref: "#/components/responses/TokenResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/InvalidTokenError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
   /auth/login:
     post:
       summary: "Authenticate an user by credentials"
@@ -111,6 +130,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/LoginResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "401":
           $ref: "#/components/responses/BadCredentialsError"
         "500":
@@ -182,6 +203,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ProfileResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "422":
@@ -219,6 +242,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ProjectResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "422":
@@ -256,6 +281,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ProjectResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -319,6 +346,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -342,6 +371,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -365,6 +396,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -409,6 +442,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -432,6 +467,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -455,6 +492,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -522,6 +561,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ProjectRunnerResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -565,6 +606,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ProjectRunnerResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -632,6 +675,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ProjectCredentialResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -675,6 +720,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ProjectCredentialResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -742,6 +789,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ProjectRepositoryResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -785,6 +834,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ProjectRepositoryResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -852,6 +903,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ProjectInventoryResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -895,6 +948,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ProjectInventoryResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -962,6 +1017,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ProjectEnvironmentResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -1005,6 +1062,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ProjectEnvironmentResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -1050,6 +1109,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ProjectEnvironmentSecretResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -1075,6 +1136,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ProjectEnvironmentSecretResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -1121,6 +1184,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ProjectEnvironmentValueResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -1146,6 +1211,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ProjectEnvironmentValueResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -1214,6 +1281,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ProjectTemplateResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -1257,6 +1326,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ProjectTemplateResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -1302,6 +1373,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ProjectTemplateSurveyResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -1327,6 +1400,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ProjectTemplateSurveyResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -1373,6 +1448,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ProjectTemplateVaultResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -1398,6 +1475,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ProjectTemplateVaultResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -1466,6 +1545,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ProjectScheduleResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -1509,6 +1590,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ProjectScheduleResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -1576,6 +1659,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ProjectExecutionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -1716,6 +1801,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/GlobalRunnerResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "422":
@@ -1754,6 +1841,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/GlobalRunnerResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -1813,6 +1902,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/GroupResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "422":
@@ -1850,6 +1941,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/GroupResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -1913,6 +2006,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -1936,6 +2031,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -1959,6 +2056,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -2003,6 +2102,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -2026,6 +2127,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -2049,6 +2152,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -2088,6 +2193,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/UserResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "422":
@@ -2125,6 +2232,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/UserResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -2188,6 +2297,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -2211,6 +2322,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -2234,6 +2347,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -2278,6 +2393,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -2301,6 +2418,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -2324,6 +2443,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/SuccessMessage"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
         "403":
           $ref: "#/components/responses/NotAuthorizedError"
         "404":
@@ -2554,6 +2675,19 @@ components:
       x-go-name: "UserID"
 
   requestBodies:
+    RedirectAuthBody:
+      description: "The redirect token to authenticate"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+            required:
+              - "token"
+            properties:
+              token:
+                type: "string"
+
     LoginAuthBody:
       description: "The credentials to authenticate"
       required: true
@@ -3685,6 +3819,12 @@ components:
                 type: "string"
 
   responses:
+    BadRequestError:
+      description: "Failed to parse request"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Notification"
     NotFoundError:
       description: "Resource not found"
       content:

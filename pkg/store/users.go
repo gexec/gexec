@@ -6,8 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/gexec/gexec/pkg/model"
+	"github.com/gexec/gexec/pkg/secret"
 	"github.com/gexec/gexec/pkg/validate"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
@@ -164,6 +166,74 @@ func (s *Users) Delete(ctx context.Context, name string) error {
 				Action:        model.EventActionDelete,
 			},
 		)).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ShowRedirectToken implements the details for a specific redirect token.
+func (s *Users) ShowRedirectToken(ctx context.Context, token string) (*model.UserToken, error) {
+	record := &model.UserToken{}
+	expired := time.Now().UTC().Add(-5 * time.Minute)
+
+	if err := s.client.handle.NewSelect().
+		Model(record).
+		Where("token = ? AND kind = ? AND created_at > ?", token, model.UserTokenKindRedirect, expired).
+		Scan(ctx); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return record, ErrTokenNotFound
+		}
+
+		return record, err
+	}
+
+	return record, nil
+}
+
+// CreateRedirectToken implements the create of a new redirect token.
+func (s *Users) CreateRedirectToken(ctx context.Context, username string) (*model.UserToken, error) {
+	user, err := s.Show(ctx, username)
+
+	if err != nil {
+		return nil, err
+	}
+
+	record := &model.UserToken{
+		UserID: user.ID,
+		Kind:   model.UserTokenKindRedirect,
+		Token:  secret.Generate(32),
+	}
+
+	if _, err := s.client.handle.NewInsert().
+		Model(record).
+		Exec(ctx); err != nil {
+		return nil, err
+	}
+
+	return record, nil
+}
+
+// DeleteRedirectToken implements the deletion of a redirect token.
+func (s *Users) DeleteRedirectToken(ctx context.Context, token string) error {
+	if _, err := s.client.handle.NewDelete().
+		Model((*model.UserToken)(nil)).
+		Where("token = ? AND kind = ?", token, model.UserTokenKindRedirect).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// CleanupRedirectTokens implements the cleanup of expired redirect tokens.
+func (s *Users) CleanupRedirectTokens(ctx context.Context) error {
+	expired := time.Now().UTC().Add(-5 * time.Minute)
+
+	if _, err := s.client.handle.NewDelete().
+		Model((*model.UserToken)(nil)).
+		Where("kind = ? AND created_at < ?", model.UserTokenKindRedirect, expired).
 		Exec(ctx); err != nil {
 		return err
 	}

@@ -1381,7 +1381,7 @@ func listTemplatesSorting(request ListProjectTemplatesParams) (string, string, i
 	//
 
 	if request.Order != nil {
-		sort = string(FromPtr(request.Order))
+		order = string(FromPtr(request.Order))
 	}
 
 	return sort, order, limit, offset, search

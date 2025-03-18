@@ -23,7 +23,15 @@ import (
 
 var (
 	_ ServerInterface = (*API)(nil)
+
+	// ErrUnsupportedImageFormat defines the error for unsupported image formats.
+	ErrUnsupportedImageFormat = fmt.Errorf("unsupported avatar file format")
 )
+
+func init() {
+	openapi3filter.RegisterBodyDecoder("image/jpeg", openapi3filter.FileBodyDecoder)
+	openapi3filter.RegisterBodyDecoder("image/png", openapi3filter.FileBodyDecoder)
+}
 
 // New creates a new API that adds the handler implementations.
 func New(

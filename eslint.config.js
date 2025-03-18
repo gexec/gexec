@@ -5,7 +5,7 @@ import globals from 'globals'
 import typescriptEslint from 'typescript-eslint'
 
 export default typescriptEslint.config(
-  { ignores: ['*.d.ts', '**/coverage', '**/dist', '**/frontend/client'] },
+  { ignores: ['*.d.ts', '**/coverage', '**/dist'] },
   {
     extends: [
       eslint.configs.recommended,

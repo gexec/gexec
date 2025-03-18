@@ -13,6 +13,7 @@ import (
 	"github.com/gexec/gexec/pkg/config"
 	"github.com/gexec/gexec/pkg/migrations"
 	"github.com/gexec/gexec/pkg/model"
+	"github.com/gexec/gexec/pkg/upload"
 	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/mysqldialect"
@@ -34,8 +35,9 @@ var (
 
 // Store provides the general database abstraction layer.
 type Store struct {
-	encrypt config.Encrypt
 	scim    config.Scim
+	encrypt config.Encrypt
+	upload  upload.Upload
 
 	driver          string
 	username        string
@@ -410,7 +412,7 @@ func (s *Store) open() error {
 }
 
 // NewStore initializes a new Bun
-func NewStore(cfg config.Database, encrypt config.Encrypt, scim config.Scim) (*Store, error) {
+func NewStore(cfg config.Database, scim config.Scim, encrypt config.Encrypt, uploads upload.Upload) (*Store, error) {
 	username, err := config.Value(cfg.Username)
 
 	if err != nil {
@@ -424,8 +426,9 @@ func NewStore(cfg config.Database, encrypt config.Encrypt, scim config.Scim) (*S
 	}
 
 	client := &Store{
-		encrypt:  encrypt,
 		scim:     scim,
+		encrypt:  encrypt,
+		upload:   uploads,
 		driver:   cfg.Driver,
 		database: cfg.Name,
 		username: username,
@@ -583,8 +586,8 @@ func NewStore(cfg config.Database, encrypt config.Encrypt, scim config.Scim) (*S
 }
 
 // MustStore simply calls NewStore and panics on an error.
-func MustStore(cfg config.Database, encrypt config.Encrypt, scim config.Scim) *Store {
-	s, err := NewStore(cfg, encrypt, scim)
+func MustStore(cfg config.Database, scim config.Scim, encrypt config.Encrypt, uploads upload.Upload) *Store {
+	s, err := NewStore(cfg, scim, encrypt, uploads)
 
 	if err != nil {
 		panic(err)

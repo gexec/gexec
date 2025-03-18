@@ -1,6 +1,7 @@
 package upload
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net/http"
@@ -18,7 +19,7 @@ type Upload interface {
 	Info() map[string]interface{}
 	Prepare() (Upload, error)
 	Close() error
-	Upload(context.Context, string, string, []byte) error
-	Delete(context.Context, string) error
+	Upload(context.Context, string, *bytes.Buffer) error
+	Delete(context.Context, string, bool) error
 	Handler(string) http.Handler
 }

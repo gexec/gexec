@@ -7,10 +7,7 @@ module.exports = {
   prefix: '',
 
   content: [
-    './frontend/pages/**/*.{ts,tsx,vue}',
-    './frontend/components/**/*.{ts,tsx,vue}',
-    './frontend/app/**/*.{ts,tsx,vue}',
-    './frontend/src/**/*.{ts,tsx,vue}',
+    './frontend/**/*.{ts,tsx,vue}',
   ],
 
   theme: {

@@ -1,0 +1,12 @@
+version: '3.4'
+
+services:
+  server:
+    restart: always
+    environment:
+      - GEXEC_LOG_LEVEL=debug
+      - GEXEC_SERVER_HOST=${GEXEC_SERVER_HOST:-http://localhost:8080}
+      - GEXEC_TOKEN_SECRET=${GEXEC_TOKEN_SECRET:-Fpu9YldPhWM9fn9KcL4R7JT1}
+      - GEXEC_ADMIN_EMAIL=admin@webhippie.de
+    ports:
+      - ${GEXEC_SERVER_PORT:-8080}:8080

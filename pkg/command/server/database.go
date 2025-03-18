@@ -20,6 +20,13 @@ var (
 		Args:  cobra.NoArgs,
 	}
 
+	dbCleanupCmd = &cobra.Command{
+		Use:   "cleanup",
+		Short: "Cleanup expired content",
+		Run:   dbCleanupAction,
+		Args:  cobra.NoArgs,
+	}
+
 	dbMigrateCmd = &cobra.Command{
 		Use:   "migrate",
 		Short: "Execute migrations",
@@ -65,6 +72,7 @@ var (
 func init() {
 	rootCmd.AddCommand(dbCmd)
 
+	dbCmd.AddCommand(dbCleanupCmd)
 	dbCmd.AddCommand(dbMigrateCmd)
 	dbCmd.AddCommand(dbRollbackCmd)
 	dbCmd.AddCommand(dbLockCmd)
@@ -99,6 +107,24 @@ func init() {
 	dbCmd.PersistentFlags().StringToString("database-options", defaultDatabaseOptions, "Options for the database connection")
 	viper.SetDefault("database.options", defaultDatabaseOptions)
 	_ = viper.BindPFlag("database.options", serverCmd.PersistentFlags().Lookup("database-options"))
+}
+
+func dbCleanupAction(ccmd *cobra.Command, _ []string) {
+	storage := prepareStorage(ccmd.Context())
+	defer storage.Close()
+
+	if err := storage.Users.CleanupRedirectTokens(
+		context.Background(),
+	); err != nil {
+		log.Error().
+			Err(err).
+			Msg("Failed to cleanup redirect tokens")
+
+		os.Exit(1)
+	}
+
+	log.Info().
+		Msg("Finished cleanup task")
 }
 
 func dbMigrateAction(ccmd *cobra.Command, _ []string) {
@@ -290,8 +316,9 @@ func dbCreateAction(ccmd *cobra.Command, args []string) {
 func prepareStorage(ctx context.Context) *store.Store {
 	storage, err := store.NewStore(
 		cfg.Database,
-		cfg.Encrypt,
 		cfg.Scim,
+		cfg.Encrypt,
+		nil,
 	)
 
 	if err != nil {

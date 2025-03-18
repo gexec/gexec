@@ -413,7 +413,7 @@ func listSchedulesSorting(request ListProjectSchedulesParams) (string, string, i
 	order := ""
 
 	if request.Order != nil {
-		sort = string(FromPtr(request.Order))
+		order = string(FromPtr(request.Order))
 	}
 
 	return sort, order, limit, offset, search

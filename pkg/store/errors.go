@@ -61,4 +61,7 @@ var (
 
 	// ErrExecutionNotFound is returned when a execution was not found.
 	ErrExecutionNotFound = errors.New("execution not found")
+
+	// ErrTokenNotFound is returned when a token was not found.
+	ErrTokenNotFound = errors.New("token not found")
 )

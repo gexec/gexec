@@ -534,6 +534,13 @@ export type GroupParam = string;
 export type UserParam = string;
 
 /**
+ * The redirect token to authenticate
+ */
+export type RedirectAuthBody = {
+    token: string;
+};
+
+/**
  * The credentials to authenticate
  */
 export type LoginAuthBody = {
@@ -1065,6 +1072,42 @@ export type ListProvidersResponses = {
 
 export type ListProvidersResponse = ListProvidersResponses[keyof ListProvidersResponses];
 
+export type RedirectAuthData = {
+    /**
+     * The redirect token to authenticate
+     */
+    body: RedirectAuthBody;
+    path?: never;
+    query?: never;
+    url: '/auth/redirect';
+};
+
+export type RedirectAuthErrors = {
+    /**
+     * Failed to parse request
+     */
+    400: Notification;
+    /**
+     * Failed to generate or validate token
+     */
+    401: Notification;
+    /**
+     * Some internal server error
+     */
+    500: Notification;
+};
+
+export type RedirectAuthError = RedirectAuthErrors[keyof RedirectAuthErrors];
+
+export type RedirectAuthResponses = {
+    /**
+     * Generated token never expiring
+     */
+    200: AuthToken;
+};
+
+export type RedirectAuthResponse = RedirectAuthResponses[keyof RedirectAuthResponses];
+
 export type LoginAuthData = {
     /**
      * The credentials to authenticate
@@ -1076,6 +1119,10 @@ export type LoginAuthData = {
 };
 
 export type LoginAuthErrors = {
+    /**
+     * Failed to parse request
+     */
+    400: Notification;
     /**
      * Unauthorized with wrong credentials
      */
@@ -1225,6 +1272,10 @@ export type UpdateProfileData = {
 
 export type UpdateProfileErrors = {
     /**
+     * Failed to parse request
+     */
+    400: Notification;
+    /**
      * User is not authorized
      */
     403: Notification;
@@ -1315,6 +1366,10 @@ export type CreateProjectData = {
 };
 
 export type CreateProjectErrors = {
+    /**
+     * Failed to parse request
+     */
+    400: Notification;
     /**
      * User is not authorized
      */
@@ -1437,6 +1492,10 @@ export type UpdateProjectData = {
 
 export type UpdateProjectErrors = {
     /**
+     * Failed to parse request
+     */
+    400: Notification;
+    /**
      * User is not authorized
      */
     403: Notification;
@@ -1481,6 +1540,10 @@ export type DeleteProjectFromUserData = {
 };
 
 export type DeleteProjectFromUserErrors = {
+    /**
+     * Failed to parse request
+     */
+    400: Notification;
     /**
      * User is not authorized
      */
@@ -1592,6 +1655,10 @@ export type AttachProjectToUserData = {
 
 export type AttachProjectToUserErrors = {
     /**
+     * Failed to parse request
+     */
+    400: Notification;
+    /**
      * User is not authorized
      */
     403: Notification;
@@ -1641,6 +1708,10 @@ export type PermitProjectUserData = {
 
 export type PermitProjectUserErrors = {
     /**
+     * Failed to parse request
+     */
+    400: Notification;
+    /**
      * User is not authorized
      */
     403: Notification;
@@ -1689,6 +1760,10 @@ export type DeleteProjectFromGroupData = {
 };
 
 export type DeleteProjectFromGroupErrors = {
+    /**
+     * Failed to parse request
+     */
+    400: Notification;
     /**
      * User is not authorized
      */
@@ -1800,6 +1875,10 @@ export type AttachProjectToGroupData = {
 
 export type AttachProjectToGroupErrors = {
     /**
+     * Failed to parse request
+     */
+    400: Notification;
+    /**
      * User is not authorized
      */
     403: Notification;
@@ -1848,6 +1927,10 @@ export type PermitProjectGroupData = {
 };
 
 export type PermitProjectGroupErrors = {
+    /**
+     * Failed to parse request
+     */
+    400: Notification;
     /**
      * User is not authorized
      */
@@ -2020,6 +2103,10 @@ export type CreateProjectRunnerData = {
 
 export type CreateProjectRunnerErrors = {
     /**
+     * Failed to parse request
+     */
+    400: Notification;
+    /**
      * User is not authorized
      */
     403: Notification;
@@ -2157,6 +2244,10 @@ export type UpdateProjectRunnerData = {
 
 export type UpdateProjectRunnerErrors = {
     /**
+     * Failed to parse request
+     */
+    400: Notification;
+    /**
      * User is not authorized
      */
     403: Notification;
@@ -2266,6 +2357,10 @@ export type CreateProjectCredentialData = {
 };
 
 export type CreateProjectCredentialErrors = {
+    /**
+     * Failed to parse request
+     */
+    400: Notification;
     /**
      * User is not authorized
      */
@@ -2404,6 +2499,10 @@ export type UpdateProjectCredentialData = {
 
 export type UpdateProjectCredentialErrors = {
     /**
+     * Failed to parse request
+     */
+    400: Notification;
+    /**
      * User is not authorized
      */
     403: Notification;
@@ -2513,6 +2612,10 @@ export type CreateProjectRepositoryData = {
 };
 
 export type CreateProjectRepositoryErrors = {
+    /**
+     * Failed to parse request
+     */
+    400: Notification;
     /**
      * User is not authorized
      */
@@ -2651,6 +2754,10 @@ export type UpdateProjectRepositoryData = {
 
 export type UpdateProjectRepositoryErrors = {
     /**
+     * Failed to parse request
+     */
+    400: Notification;
+    /**
      * User is not authorized
      */
     403: Notification;
@@ -2760,6 +2867,10 @@ export type CreateProjectInventoryData = {
 };
 
 export type CreateProjectInventoryErrors = {
+    /**
+     * Failed to parse request
+     */
+    400: Notification;
     /**
      * User is not authorized
      */
@@ -2898,6 +3009,10 @@ export type UpdateProjectInventoryData = {
 
 export type UpdateProjectInventoryErrors = {
     /**
+     * Failed to parse request
+     */
+    400: Notification;
+    /**
      * User is not authorized
      */
     403: Notification;
@@ -3007,6 +3122,10 @@ export type CreateProjectEnvironmentData = {
 };
 
 export type CreateProjectEnvironmentErrors = {
+    /**
+     * Failed to parse request
+     */
+    400: Notification;
     /**
      * User is not authorized
      */
@@ -3145,6 +3264,10 @@ export type UpdateProjectEnvironmentData = {
 
 export type UpdateProjectEnvironmentErrors = {
     /**
+     * Failed to parse request
+     */
+    400: Notification;
+    /**
      * User is not authorized
      */
     403: Notification;
@@ -3193,6 +3316,10 @@ export type CreateProjectEnvironmentSecretData = {
 };
 
 export type CreateProjectEnvironmentSecretErrors = {
+    /**
+     * Failed to parse request
+     */
+    400: Notification;
     /**
      * User is not authorized
      */
@@ -3297,6 +3424,10 @@ export type UpdateProjectEnvironmentSecretData = {
 
 export type UpdateProjectEnvironmentSecretErrors = {
     /**
+     * Failed to parse request
+     */
+    400: Notification;
+    /**
      * User is not authorized
      */
     403: Notification;
@@ -3345,6 +3476,10 @@ export type CreateProjectEnvironmentValueData = {
 };
 
 export type CreateProjectEnvironmentValueErrors = {
+    /**
+     * Failed to parse request
+     */
+    400: Notification;
     /**
      * User is not authorized
      */
@@ -3448,6 +3583,10 @@ export type UpdateProjectEnvironmentValueData = {
 };
 
 export type UpdateProjectEnvironmentValueErrors = {
+    /**
+     * Failed to parse request
+     */
+    400: Notification;
     /**
      * User is not authorized
      */
@@ -3558,6 +3697,10 @@ export type CreateProjectTemplateData = {
 };
 
 export type CreateProjectTemplateErrors = {
+    /**
+     * Failed to parse request
+     */
+    400: Notification;
     /**
      * User is not authorized
      */
@@ -3696,6 +3839,10 @@ export type UpdateProjectTemplateData = {
 
 export type UpdateProjectTemplateErrors = {
     /**
+     * Failed to parse request
+     */
+    400: Notification;
+    /**
      * User is not authorized
      */
     403: Notification;
@@ -3744,6 +3891,10 @@ export type CreateProjectTemplateSurveyData = {
 };
 
 export type CreateProjectTemplateSurveyErrors = {
+    /**
+     * Failed to parse request
+     */
+    400: Notification;
     /**
      * User is not authorized
      */
@@ -3848,6 +3999,10 @@ export type UpdateProjectTemplateSurveyData = {
 
 export type UpdateProjectTemplateSurveyErrors = {
     /**
+     * Failed to parse request
+     */
+    400: Notification;
+    /**
      * User is not authorized
      */
     403: Notification;
@@ -3896,6 +4051,10 @@ export type CreateProjectTemplateVaultData = {
 };
 
 export type CreateProjectTemplateVaultErrors = {
+    /**
+     * Failed to parse request
+     */
+    400: Notification;
     /**
      * User is not authorized
      */
@@ -3999,6 +4158,10 @@ export type UpdateProjectTemplateVaultData = {
 };
 
 export type UpdateProjectTemplateVaultErrors = {
+    /**
+     * Failed to parse request
+     */
+    400: Notification;
     /**
      * User is not authorized
      */
@@ -4109,6 +4272,10 @@ export type CreateProjectScheduleData = {
 };
 
 export type CreateProjectScheduleErrors = {
+    /**
+     * Failed to parse request
+     */
+    400: Notification;
     /**
      * User is not authorized
      */
@@ -4247,6 +4414,10 @@ export type UpdateProjectScheduleData = {
 
 export type UpdateProjectScheduleErrors = {
     /**
+     * Failed to parse request
+     */
+    400: Notification;
+    /**
      * User is not authorized
      */
     403: Notification;
@@ -4356,6 +4527,10 @@ export type CreateProjectExecutionData = {
 };
 
 export type CreateProjectExecutionErrors = {
+    /**
+     * Failed to parse request
+     */
+    400: Notification;
     /**
      * User is not authorized
      */
@@ -4675,6 +4850,10 @@ export type CreateGlobalRunnerData = {
 
 export type CreateGlobalRunnerErrors = {
     /**
+     * Failed to parse request
+     */
+    400: Notification;
+    /**
      * User is not authorized
      */
     403: Notification;
@@ -4796,6 +4975,10 @@ export type UpdateGlobalRunnerData = {
 
 export type UpdateGlobalRunnerErrors = {
     /**
+     * Failed to parse request
+     */
+    400: Notification;
+    /**
      * User is not authorized
      */
     403: Notification;
@@ -4890,6 +5073,10 @@ export type CreateGroupData = {
 };
 
 export type CreateGroupErrors = {
+    /**
+     * Failed to parse request
+     */
+    400: Notification;
     /**
      * User is not authorized
      */
@@ -5012,6 +5199,10 @@ export type UpdateGroupData = {
 
 export type UpdateGroupErrors = {
     /**
+     * Failed to parse request
+     */
+    400: Notification;
+    /**
      * User is not authorized
      */
     403: Notification;
@@ -5056,6 +5247,10 @@ export type DeleteGroupFromUserData = {
 };
 
 export type DeleteGroupFromUserErrors = {
+    /**
+     * Failed to parse request
+     */
+    400: Notification;
     /**
      * User is not authorized
      */
@@ -5167,6 +5362,10 @@ export type AttachGroupToUserData = {
 
 export type AttachGroupToUserErrors = {
     /**
+     * Failed to parse request
+     */
+    400: Notification;
+    /**
      * User is not authorized
      */
     403: Notification;
@@ -5216,6 +5415,10 @@ export type PermitGroupUserData = {
 
 export type PermitGroupUserErrors = {
     /**
+     * Failed to parse request
+     */
+    400: Notification;
+    /**
      * User is not authorized
      */
     403: Notification;
@@ -5264,6 +5467,10 @@ export type DeleteGroupFromProjectData = {
 };
 
 export type DeleteGroupFromProjectErrors = {
+    /**
+     * Failed to parse request
+     */
+    400: Notification;
     /**
      * User is not authorized
      */
@@ -5375,6 +5582,10 @@ export type AttachGroupToProjectData = {
 
 export type AttachGroupToProjectErrors = {
     /**
+     * Failed to parse request
+     */
+    400: Notification;
+    /**
      * User is not authorized
      */
     403: Notification;
@@ -5423,6 +5634,10 @@ export type PermitGroupProjectData = {
 };
 
 export type PermitGroupProjectErrors = {
+    /**
+     * Failed to parse request
+     */
+    400: Notification;
     /**
      * User is not authorized
      */
@@ -5522,6 +5737,10 @@ export type CreateUserData = {
 };
 
 export type CreateUserErrors = {
+    /**
+     * Failed to parse request
+     */
+    400: Notification;
     /**
      * User is not authorized
      */
@@ -5644,6 +5863,10 @@ export type UpdateUserData = {
 
 export type UpdateUserErrors = {
     /**
+     * Failed to parse request
+     */
+    400: Notification;
+    /**
      * User is not authorized
      */
     403: Notification;
@@ -5688,6 +5911,10 @@ export type DeleteUserFromGroupData = {
 };
 
 export type DeleteUserFromGroupErrors = {
+    /**
+     * Failed to parse request
+     */
+    400: Notification;
     /**
      * User is not authorized
      */
@@ -5799,6 +6026,10 @@ export type AttachUserToGroupData = {
 
 export type AttachUserToGroupErrors = {
     /**
+     * Failed to parse request
+     */
+    400: Notification;
+    /**
      * User is not authorized
      */
     403: Notification;
@@ -5848,6 +6079,10 @@ export type PermitUserGroupData = {
 
 export type PermitUserGroupErrors = {
     /**
+     * Failed to parse request
+     */
+    400: Notification;
+    /**
      * User is not authorized
      */
     403: Notification;
@@ -5896,6 +6131,10 @@ export type DeleteUserFromProjectData = {
 };
 
 export type DeleteUserFromProjectErrors = {
+    /**
+     * Failed to parse request
+     */
+    400: Notification;
     /**
      * User is not authorized
      */
@@ -6007,6 +6246,10 @@ export type AttachUserToProjectData = {
 
 export type AttachUserToProjectErrors = {
     /**
+     * Failed to parse request
+     */
+    400: Notification;
+    /**
      * User is not authorized
      */
     403: Notification;
@@ -6055,6 +6298,10 @@ export type PermitUserProjectData = {
 };
 
 export type PermitUserProjectErrors = {
+    /**
+     * Failed to parse request
+     */
+    400: Notification;
     /**
      * User is not authorized
      */

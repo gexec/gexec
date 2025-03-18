@@ -43,7 +43,7 @@ func (s *Scim) Server() (http.HandlerFunc, error) {
 	server, err := scim.NewServer(
 		&scim.ServerArgs{
 			ServiceProviderConfig: &scim.ServiceProviderConfig{
-				DocumentationURI: optional.NewString("https://gexec.eu/usage/scim"),
+				DocumentationURI: optional.NewString("https://kleister.eu/usage/scim"),
 				SupportPatch:     true,
 			},
 			ResourceTypes: []scim.ResourceType{

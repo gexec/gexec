@@ -9,10 +9,6 @@
     "frontend": "",
     "docs": true
   },
-  "runner": {
-    "server": "http://localhost:8080",
-    "token": ""
-  },
   "metrics": {
     "addr": "0.0.0.0:8000",
     "token": "",
@@ -23,11 +19,12 @@
     "pretty": true,
     "color": true
   },
+  "cleanup": {
+    "enabled": true,
+    "interval": "30m"
+  },
   "auth": {
     "config": ""
-  },
-  "encrypt": {
-    "passphrase": ""
   },
   "database": {
     "driver": "sqlite3",
@@ -46,10 +43,12 @@
     "secret": "",
     "bucket": "",
     "region": "us-east-1",
-    "perms": "0755"
+    "perms": "0755",
+    "pathstyle": false,
+    "proxy": true
   },
   "token": {
-    "secret": "TxHrYxMAg01rBeEWrHn1BjOP",
+    "secret": "Fpu9YldPhWM9fn9KcL4R7JT1",
     "expire": "1h0m0s"
   },
   "scim": {
@@ -66,5 +65,12 @@
       "username2",
       "username3"
     ]
+  },
+  "runner": {
+    "server": "http://localhost:8080",
+    "token": ""
+  },
+  "encrypt": {
+    "passphrase": ""
   }
 }

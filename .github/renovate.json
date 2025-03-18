@@ -3,5 +3,12 @@
   "extends": [
     "github>gexec/.github//renovate/preset"
   ],
-  "packageRules": []
+  "packageRules": [
+    {
+      "matchPackagePatterns": [
+        "^github.com/uptrace/bun/"
+      ],
+      "groupName": "github.com-uptrace-bun deps"
+    }
+  ]
 }

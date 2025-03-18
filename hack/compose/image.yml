@@ -1,0 +1,5 @@
+version: '3.4'
+
+services:
+  server:
+    image: ghcr.io/gexec/gexec-server:${GEXEC_DOCKER_IMAGE:-latest}

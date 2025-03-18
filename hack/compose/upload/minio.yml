@@ -1,0 +1,30 @@
+version: '3.4'
+
+volumes:
+  minio:
+
+services:
+  server:
+    environment:
+      - GEXEC_UPLOAD_DRIVER=s3
+      - GEXEC_UPLOAD_ENDPOINT=minio:9000
+      - GEXEC_UPLOAD_BUCKET=gopad
+      - GEXEC_UPLOAD_REGION=us-east-1
+      - GEXEC_UPLOAD_ACCESS=minioadmin
+      - GEXEC_UPLOAD_SECRET=minioadmin
+      - GEXEC_UPLOAD_PATHSTYLE=true
+      - GEXEC_UPLOAD_PROXY=true
+    depends_on:
+      - minio
+
+  minio:
+    image: minio/minio:latest
+    restart: always
+    command:
+      - minio
+      - server
+      - /var/lib/minio
+    ports:
+      - 9000:9000
+    volumes:
+      - minio:/var/lib/minio

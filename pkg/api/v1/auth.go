@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"path"
+	"strings"
 
 	"github.com/gexec/gexec/pkg/authn"
 	"github.com/gexec/gexec/pkg/middleware/current"
@@ -195,14 +197,9 @@ func (a *API) CallbackProvider(w http.ResponseWriter, r *http.Request, providerP
 		Str("external", external.Ident).
 		Msg("Authenticated")
 
-	result, err := token.Authed(
-		a.config.Token.Secret,
-		a.config.Token.Expire,
+	redirect, err := a.storage.Users.CreateRedirectToken(
+		r.Context(),
 		user.ID,
-		user.Username,
-		user.Email,
-		user.Fullname,
-		user.Admin,
 	)
 
 	if err != nil {
@@ -231,11 +228,20 @@ func (a *API) CallbackProvider(w http.ResponseWriter, r *http.Request, providerP
 	log.Info().
 		Str("username", user.Username).
 		Str("uid", user.ID).
+		Str("token", redirect.Token).
 		Msg("Successfully generated token")
 
 	w.Header().Set(
 		"Location",
-		"/?token="+result,
+		strings.Join([]string{
+			a.config.Server.Host,
+			path.Join(
+				a.config.Server.Root,
+				"auth",
+				"callback",
+				redirect.Token,
+			),
+		}, ""),
 	)
 
 	w.Header().Set(
@@ -269,6 +275,116 @@ func (a *API) ListProviders(w http.ResponseWriter, r *http.Request) {
 			Total:     int64(len(records)),
 			Providers: records,
 		},
+	)
+}
+
+// RedirectAuth implements the v1.ServerInterface.
+func (a *API) RedirectAuth(w http.ResponseWriter, r *http.Request) {
+	body := &RedirectAuthBody{}
+
+	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
+		log.Error().
+			Err(err).
+			Msg("Failed to decode request body")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to decode request"),
+			Status:  ToPtr(http.StatusBadRequest),
+		})
+
+		return
+	}
+
+	redirect, err := a.storage.Users.ShowRedirectToken(
+		r.Context(),
+		body.Token,
+	)
+
+	if err != nil {
+		if errors.Is(err, store.ErrTokenNotFound) {
+			a.RenderNotify(w, r, Notification{
+				Message: ToPtr("Failed to validate token"),
+				Status:  ToPtr(http.StatusUnauthorized),
+			})
+
+			return
+		}
+
+		log.Error().
+			Err(err).
+			Str("token", body.Token).
+			Msg("Failed to validate token")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to validate token"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		})
+
+		return
+	}
+
+	user, err := a.storage.Auth.ByID(
+		r.Context(),
+		redirect.UserID,
+	)
+
+	if err != nil {
+		log.Error().
+			Err(err).
+			Str("token", body.Token).
+			Msg("Failed to authenticate")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to authenticate user"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		})
+
+		return
+	}
+
+	result, err := token.Authed(
+		a.config.Token.Secret,
+		a.config.Token.Expire,
+		user.ID,
+		user.Username,
+		user.Email,
+		user.Fullname,
+		user.Admin,
+	)
+
+	if err != nil {
+		log.Error().
+			Err(err).
+			Str("token", body.Token).
+			Msg("Failed to generate a token")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to generate a token"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		})
+
+		return
+	}
+
+	if err := a.storage.Users.DeleteRedirectToken(
+		r.Context(),
+		redirect.Token,
+	); err != nil {
+		log.Error().
+			Err(err).
+			Str("token", body.Token).
+			Msg("Failed to cleanup redirect")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to cleanup redirect"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		})
+
+		return
+	}
+
+	render.JSON(w, r,
+		a.convertAuthToken(result),
 	)
 }
 
