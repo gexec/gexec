@@ -58,7 +58,7 @@ jobs:
           builder: ${{ steps.buildx.outputs.name }}
           context: .
           file: cmd/gexec-server/Dockerfile
-          platforms: linux/amd64,linux/386,linux/arm64,linux/arm/v6
+          platforms: linux/amd64,linux/386,linux/arm64,linux/arm/v7
           push: ${{ github.event_name != 'pull_request' }}
           labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ steps.meta.outputs.tags }}
@@ -110,12 +110,10 @@ jobs:
           builder: ${{ steps.buildx.outputs.name }}
           context: .
           file: cmd/gexec-runner/Dockerfile
-          platforms: linux/amd64,linux/386,linux/arm64,linux/arm/v6
+          platforms: linux/amd64,linux/386,linux/arm64,linux/arm/v7
           push: ${{ github.event_name != 'pull_request' }}
           labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ steps.meta.outputs.tags }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
   client:
     runs-on: ubuntu-latest
@@ -162,7 +160,7 @@ jobs:
           builder: ${{ steps.buildx.outputs.name }}
           context: .
           file: cmd/gexec-client/Dockerfile
-          platforms: linux/amd64,linux/386,linux/arm64,linux/arm/v6
+          platforms: linux/amd64,linux/386,linux/arm64,linux/arm/v7
           push: ${{ github.event_name != 'pull_request' }}
           labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ steps.meta.outputs.tags }}
