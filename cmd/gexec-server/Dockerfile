@@ -18,7 +18,8 @@ RUN --mount=type=cache,target=/go/pkg \
     --mount=type=cache,target=/root/.cache/go-build \
     task fe:install fe:generate fe:build && \
     task be:generate build:server GOOS=${TARGETOS} GOARCH=${TARGETARCH} && \
-    GOOS=${TARGETOS} GOARCH=${TARGETARCH} go install -ldflags="-s -X main.version=${ASDF_VERSION}" github.com/asdf-vm/asdf/cmd/asdf@${ASDF_VERSION}
+    GOOS=${TARGETOS} GOARCH=${TARGETARCH} go install -ldflags="-s -X main.version=${ASDF_VERSION}" github.com/asdf-vm/asdf/cmd/asdf@${ASDF_VERSION} && \
+    mv $(find /go/bin -iname asdf) /go/bin # doing this as multi-arch is using different target paths
 
 FROM alpine:3.21
 
