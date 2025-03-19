@@ -11,8 +11,8 @@ const props = defineProps<{
   config?: ConfigItem | Config<U>
 }>()
 
-function isValidConfig(config: any): config is ConfigItem {
-  return !!config?.component
+function isValidConfig(config: unknown): config is ConfigItem {
+  return !!(config as ConfigItem)?.component
 }
 
 const delegatedProps = computed(() => {
@@ -21,16 +21,20 @@ const delegatedProps = computed(() => {
   return undefined
 })
 
-const { isDisabled, isHidden, isRequired, overrideOptions } = useDependencies(props.fieldName)
+const { isDisabled, isHidden, isRequired, overrideOptions } = useDependencies(
+  props.fieldName
+)
 </script>
 
 <template>
   <component
-    :is="isValidConfig(config)
-      ? typeof config.component === 'string'
-        ? INPUT_COMPONENTS[config.component!]
-        : config.component
-      : INPUT_COMPONENTS[DEFAULT_ZOD_HANDLERS[shape.type]] "
+    :is="
+      isValidConfig(config)
+        ? typeof config.component === 'string'
+          ? INPUT_COMPONENTS[config.component!]
+          : config.component
+        : INPUT_COMPONENTS[DEFAULT_ZOD_HANDLERS[shape.type]]
+    "
     v-if="!isHidden"
     :field-name="fieldName"
     :label="shape.schema?.description"
