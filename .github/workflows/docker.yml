@@ -12,6 +12,9 @@ name: docker
     branches:
       - master
 
+permissions:
+  packages: write
+
 jobs:
   server:
     runs-on: ubuntu-latest
