@@ -31,6 +31,12 @@ const routes = [
     component: () => import('../feature/repositories/views/Repositories.vue'),
     meta: { auth: true },
   },
+  {
+    name: 'Inventory',
+    path: '/:project_slug/inventory',
+    component: () => import('../feature/inventory/views/Inventory.vue'),
+    meta: { auth: true },
+  },
 
   // Admin
   {

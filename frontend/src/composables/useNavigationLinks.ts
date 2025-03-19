@@ -37,7 +37,7 @@ export function useNavigationLinks() {
         },
         {
           name: 'Inventory',
-          url: '#',
+          url: `/${selectedProjectSlug}/inventory`,
           icon: Archive,
         },
         {

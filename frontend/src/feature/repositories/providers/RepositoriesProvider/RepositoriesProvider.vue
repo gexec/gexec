@@ -44,7 +44,12 @@ function addRepository(repository: Repository) {
   repositories.value = [repository, ...repositories.value]
 }
 
-provideRepositoriesContext({ repositories, loadRepositories, addRepository })
+provideRepositoriesContext({
+  repositories,
+  isLoading,
+  loadRepositories,
+  addRepository,
+})
 </script>
 
 <template>
