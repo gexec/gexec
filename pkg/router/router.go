@@ -491,6 +491,7 @@ func Server(
 		root.Get("/config.json", handlers.Config())
 		root.Get("/manifest.json", handlers.Manifest())
 		root.Handle("/assets/*", handlers.Assets())
+		root.NotFound(handlers.Index())
 	})
 
 	return mux
