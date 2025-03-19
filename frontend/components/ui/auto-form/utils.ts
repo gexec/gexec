@@ -1,9 +1,9 @@
-import type { z } from 'zod'
+import type { UnknownKeysParam, z, ZodRawShape } from 'zod'
 
 // TODO: This should support recursive ZodEffects but TypeScript doesn't allow circular type definitions.
 export type ZodObjectOrWrapped =
-  | z.ZodObject<any, any>
-  | z.ZodEffects<z.ZodObject<any, any>>
+  | z.ZodObject<ZodRawShape, UnknownKeysParam>
+  | z.ZodEffects<z.ZodObject<ZodRawShape, UnknownKeysParam>>
 
 /**
  * Beautify a camelCase string.
@@ -38,8 +38,7 @@ export function getIndexIfArray(string: string) {
 export function getBaseSchema<
   ChildType extends z.ZodAny | z.AnyZodObject = z.ZodAny,
 >(schema: ChildType | z.ZodEffects<ChildType>): ChildType | null {
-  if (!schema)
-    return null;
+  if (!schema) return null
   if ('innerType' in schema._def)
     return getBaseSchema(schema._def.innerType as ChildType)
 
@@ -55,13 +54,13 @@ export function getBaseSchema<
  */
 export function getBaseType(schema: z.ZodAny) {
   const baseSchema = getBaseSchema(schema)
-  return baseSchema ? baseSchema._def.typeName : '';
+  return baseSchema ? baseSchema._def.typeName : ''
 }
 
 /**
  * Search for a "ZodDefault" in the Zod stack and return its value.
  */
-export function getDefaultValueInZodStack(schema: z.ZodAny): any {
+export function getDefaultValueInZodStack(schema: z.ZodAny): unknown {
   const typedSchema = schema as unknown as z.ZodDefault<
     z.ZodNumber | z.ZodString
   >
@@ -71,12 +70,12 @@ export function getDefaultValueInZodStack(schema: z.ZodAny): any {
 
   if ('innerType' in typedSchema._def) {
     return getDefaultValueInZodStack(
-      typedSchema._def.innerType as unknown as z.ZodAny,
+      typedSchema._def.innerType as unknown as z.ZodAny
     )
   }
   if ('schema' in typedSchema._def) {
     return getDefaultValueInZodStack(
-      (typedSchema._def as any).schema as z.ZodAny,
+      (typedSchema._def as { schema: z.ZodAny }).schema
     )
   }
 
@@ -84,25 +83,26 @@ export function getDefaultValueInZodStack(schema: z.ZodAny): any {
 }
 
 export function getObjectFormSchema(
-  schema: ZodObjectOrWrapped,
-): z.ZodObject<any, any> {
+  schema: ZodObjectOrWrapped
+): z.ZodObject<ZodRawShape, UnknownKeysParam> {
   if (schema?._def.typeName === 'ZodEffects') {
-    const typedSchema = schema as z.ZodEffects<z.ZodObject<any, any>>
+    const typedSchema = schema as z.ZodEffects<
+      z.ZodObject<ZodRawShape, UnknownKeysParam>
+    >
     return getObjectFormSchema(typedSchema._def.schema)
   }
-  return schema as z.ZodObject<any, any>
+  return schema as z.ZodObject<ZodRawShape, UnknownKeysParam>
 }
 
 function isIndex(value: unknown): value is number {
-  return Number(value) >= 0;
+  return Number(value) >= 0
 }
 /**
  * Constructs a path with dot paths for arrays to use brackets to be compatible with vee-validate path syntax
  */
 export function normalizeFormPath(path: string): string {
   const pathArr = path.split('.')
-  if (!pathArr.length)
-    return '';
+  if (!pathArr.length) return ''
 
   let fullPath = String(pathArr[0])
   for (let i = 1; i < pathArr.length; i++) {
@@ -125,14 +125,13 @@ export function isNotNestedPath(path: string) {
   return /^\[.+\]$/.test(path)
 }
 function isObject(obj: unknown): obj is Record<string, unknown> {
-  return obj !== null && !!obj && typeof obj === 'object' && !Array.isArray(obj);
+  return obj !== null && !!obj && typeof obj === 'object' && !Array.isArray(obj)
 }
 function isContainerValue(value: unknown): value is Record<string, unknown> {
   return isObject(value) || Array.isArray(value)
 }
 function cleanupNonNestedPath(path: string) {
-  if (isNotNestedPath(path))
-    return path.replace(/\[|\]/g, '');
+  if (isNotNestedPath(path)) return path.replace(/\[|\]/g, '')
 
   return path
 }
@@ -140,19 +139,21 @@ function cleanupNonNestedPath(path: string) {
 /**
  * Gets a nested property value from an object
  */
-export function getFromPath<TValue = unknown>(object: NestedRecord | undefined, path: string): TValue | undefined
+export function getFromPath<TValue = unknown>(
+  object: NestedRecord | undefined,
+  path: string
+): TValue | undefined
 export function getFromPath<TValue = unknown, TFallback = TValue>(
   object: NestedRecord | undefined,
   path: string,
-  fallback?: TFallback,
+  fallback?: TFallback
 ): TValue | TFallback
 export function getFromPath<TValue = unknown, TFallback = TValue>(
   object: NestedRecord | undefined,
   path: string,
-  fallback?: TFallback,
+  fallback?: TFallback
 ): TValue | TFallback | undefined {
-  if (!object)
-    return fallback
+  if (!object) return fallback
 
   if (isNotNestedPath(path))
     return object[cleanupNonNestedPath(path)] as TValue | undefined
@@ -161,8 +162,7 @@ export function getFromPath<TValue = unknown, TFallback = TValue>(
     .split(/\.|\[(\d+)\]/)
     .filter(Boolean)
     .reduce((acc, propKey) => {
-      if (isContainerValue(acc) && propKey in acc)
-        return acc[propKey]
+      if (isContainerValue(acc) && propKey in acc) return acc[propKey]
 
       return fallback
     }, object as unknown)
@@ -176,10 +176,10 @@ export function booleanishToBoolean(value: Booleanish) {
   switch (value) {
     case 'true':
     case true:
-      return true;
+      return true
     case 'false':
     case false:
-      return false;
+      return false
   }
 }
 
