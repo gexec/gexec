@@ -43,12 +43,12 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run release
-        if: startsWith(github.ref, 'refs/tags/')
-        run: task build:release
-
-      - name: Run snapshot
-        if: !startsWith(github.ref, 'refs/tags/')
-        run: task build:snapshot
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            task build:release
+          else
+            task build:snapshot
+          fi
 
       - name: Sign release
         uses: actionhippie/gpgsign@v1
@@ -60,7 +60,6 @@ jobs:
           excludes: dist/*.sha256
 
       - name: Upload release
-        id: upload
         if: startsWith(github.ref, 'refs/tags/')
         uses: ncipollo/release-action@v1
         with:
@@ -68,7 +67,6 @@ jobs:
           artifacts: dist/*
 
       - name: Upload version
-        id: version
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           aws s3 sync dist/gexec-server* s3://dl.gexec.eu/server/${{ github.ref_name }}/
@@ -76,7 +74,6 @@ jobs:
           aws s3 sync dist/gexec-client* s3://dl.gexec.eu/client/${{ github.ref_name }}/
 
       - name: Upload testing
-        id: testing
         if: startsWith(github.ref, 'refs/heads/')
         run: |
           aws s3 sync dist/gexec-server* s3://dl.gexec.eu/server/testing/
