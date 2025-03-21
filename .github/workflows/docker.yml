@@ -52,8 +52,8 @@ jobs:
         if: github.event_name != 'pull_request'
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: gexecz
+          password: ${{ secrets.BOT_ACCESS_TOKEN }}
 
       - name: Build image
         uses: docker/build-push-action@v6
@@ -104,8 +104,8 @@ jobs:
         if: github.event_name != 'pull_request'
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: gexecz
+          password: ${{ secrets.BOT_ACCESS_TOKEN }}
 
       - name: Build image
         uses: docker/build-push-action@v6
@@ -154,8 +154,8 @@ jobs:
         if: github.event_name != 'pull_request'
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: gexecz
+          password: ${{ secrets.BOT_ACCESS_TOKEN }}
 
       - name: Build image
         uses: docker/build-push-action@v6
