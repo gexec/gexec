@@ -1,12 +1,16 @@
-# Gexec: Server
+# Gexec
 
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/10812ff088364821976ecaf4341a0225)](https://app.codacy.com/gh/gexec/gexec/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [![Discord](https://img.shields.io/discord/1335976189025849395)](https://discord.gg/Yda8rD4ZkJ)
+[![General Workflow](https://github.com/gexec/gexec/actions/workflows/general.yml/badge.svg)](https://github.com/gexec/gexec/actions/workflows/general.yml) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/10812ff088364821976ecaf4341a0225)](https://app.codacy.com/gh/gexec/gexec/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [![Discord](https://img.shields.io/discord/1335976189025849395)](https://discord.gg/Yda8rD4ZkJ) [![Go Reference](https://pkg.go.dev/badge/github.com/gexec/gexec.svg)](https://pkg.go.dev/github.com/gexec/gexec) [![GitHub Repo](https://img.shields.io/badge/github-repo-yellowgreen)](https://github.com/gexec/gexec)
 
 > [!CAUTION]
 > This project is in active development and does not provide any stable release
 > yet, you can expect breaking changes until our first real release!
 
-TBD
+With Gexec we are building a generic execution platform for Ansible, OpenTodu
+and Terraform. Besides that it should be possible to execute any kind of script
+which is supported by [Asdf][asdf] plugins. Some plugins are installed as part
+of the containers, if you are installing this project differently it is up to
+you to install and configure [Asdf][asdf].
 
 ## Install
 
@@ -28,8 +32,8 @@ define all commands to build this project.
 git clone https://github.com/gexec/gexec.git
 cd gexec
 
-task be:build fe:install fe:build
-./bin/gexec -h
+task fe:install fe:build be:build
+./bin/gexec-server -h
 ```
 
 If you got [Nix][nix] and [Direnv][direnv] configured you can simply execute
@@ -95,9 +99,10 @@ Apache-2.0
 Copyright (c) 2025 Thomas Boerger <thomas@webhippie.de>
 ```
 
+[asdf]: https://asdf-vm.com/
 [releases]: https://github.com/gexec/gexec/releases
 [downloads]: http://dl.gexec.eu
-[ghcr]: https://ghcr.io/gexec/gexec
+[ghcr]: https://github.com/orgs/gexec/packages
 [homebrew]: https://github.com/gexec/homebrew-gexec
 [docs]: https://gexec.eu
 [nix]: https://nixos.org/
