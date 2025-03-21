@@ -79,7 +79,7 @@ builds:
 
 archives:
   - id: server
-    builds:
+    ids:
       - server
     name_template: "gexec-server-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}-{{ . }}{{ end }}"
     format_overrides:
@@ -93,7 +93,7 @@ archives:
         dst: README.md
 
   - id: runner
-    builds:
+    ids:
       - runner
     name_template: "gexec-runner-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}-{{ . }}{{ end }}"
     format_overrides:
@@ -107,7 +107,7 @@ archives:
         dst: README.md
 
   - id: client
-    builds:
+    ids:
       - client
     name_template: "gexec-client-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}-{{ . }}{{ end }}"
     format_overrides:
@@ -122,7 +122,7 @@ archives:
 
 nfpms:
   - id: server
-    builds:
+    ids:
       - server
     package_name: gexec-server
     file_name_template: "gexec-server-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}-{{ . }}{{ end }}"
@@ -161,7 +161,7 @@ nfpms:
       - dst: /var/lib/gexec
         type: dir
   - id: runner
-    builds:
+    ids:
       - runner
     package_name: gexec-runner
     file_name_template: "gexec-runner-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}-{{ . }}{{ end }}"
@@ -197,7 +197,7 @@ nfpms:
       - dst: /var/lib/gexec
         type: dir
   - id: client
-    builds:
+    ids:
       - client
     package_name: gexec-client
     file_name_template: "gexec-client-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}-{{ . }}{{ end }}"
@@ -220,7 +220,7 @@ signs:
       - --batch
       - --armor
       - --local-user
-      - A00EB86E74BD561BABA4F7877D7D72E3BCE73D47
+      - 00753823B686D98A56DFD4BC15223049735CB53A
       - --output
       - ${signature}
       - --detach-sign
@@ -233,7 +233,7 @@ signs:
       - --batch
       - --armor
       - --local-user
-      - A00EB86E74BD561BABA4F7877D7D72E3BCE73D47
+      - 00753823B686D98A56DFD4BC15223049735CB53A
       - --output
       - ${signature}
       - --detach-sign
