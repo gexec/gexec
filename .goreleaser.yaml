@@ -3,16 +3,17 @@ version: 2
 
 before:
   hooks:
-    - go mod tidy
+    - task fe:install
+    - task fe:build
 
 builds:
   - id: server
-    main: ./cmd/genexec-server
-    binary: genexec-server
+    main: ./cmd/gexec-server
+    binary: gexec-server
     env:
       - CGO_ENABLED=0
     ldflags:
-      - -s -w -extldflags "-static" -X "github.com/genexec/genexec/pkg/version.String={{.Version}}" -X "github.com/genexec/genexec/pkg/version.Revision={{.Commit}}" -X "github.com/genexec/genexec/pkg/version.Date={{.Date}}"
+      - -s -w -extldflags "-static" -X "github.com/gexec/gexec/pkg/version.String={{.Version}}" -X "github.com/gexec/gexec/pkg/version.Revision={{.Commit}}" -X "github.com/gexec/gexec/pkg/version.Date={{.Date}}"
     tags:
       - netgo
     goos:
@@ -30,12 +31,12 @@ builds:
       - goos: windows
         goarch: arm
   - id: runner
-    main: ./cmd/genexec-runner
-    binary: genexec-runner
+    main: ./cmd/gexec-runner
+    binary: gexec-runner
     env:
       - CGO_ENABLED=0
     ldflags:
-      - -s -w -extldflags "-static" -X "github.com/genexec/genexec/pkg/version.String={{.Version}}" -X "github.com/genexec/genexec/pkg/version.Revision={{.Commit}}" -X "github.com/genexec/genexec/pkg/version.Date={{.Date}}"
+      - -s -w -extldflags "-static" -X "github.com/gexec/gexec/pkg/version.String={{.Version}}" -X "github.com/gexec/gexec/pkg/version.Revision={{.Commit}}" -X "github.com/gexec/gexec/pkg/version.Date={{.Date}}"
     tags:
       - netgo
     goos:
@@ -53,12 +54,12 @@ builds:
       - goos: windows
         goarch: arm
   - id: client
-    main: ./cmd/genexec-client
-    binary: genexec-client
+    main: ./cmd/gexec-client
+    binary: gexec-client
     env:
       - CGO_ENABLED=0
     ldflags:
-      - -s -w -extldflags "-static" -X "github.com/genexec/genexec/pkg/version.String={{.Version}}" -X "github.com/genexec/genexec/pkg/version.Revision={{.Commit}}" -X "github.com/genexec/genexec/pkg/version.Date={{.Date}}"
+      - -s -w -extldflags "-static" -X "github.com/gexec/gexec/pkg/version.String={{.Version}}" -X "github.com/gexec/gexec/pkg/version.Revision={{.Commit}}" -X "github.com/gexec/gexec/pkg/version.Date={{.Date}}"
     tags:
       - netgo
     goos:
@@ -80,56 +81,170 @@ archives:
   - id: server
     builds:
       - server
-    name_template: "{{ .ProjectName }}-server-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}-{{ . }}{{ end }}"
+    name_template: "gexec-server-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}-{{ . }}{{ end }}"
     format_overrides:
       - goos: windows
-        format: zip
+        formats:
+          - zip
     files:
       - LICENSE
       - CHANGELOG.md
-      - src: cmd/genexec-server/README.md
+      - src: cmd/gexec-server/README.md
         dst: README.md
 
   - id: runner
     builds:
       - runner
-    name_template: "{{ .ProjectName }}-runner-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}-{{ . }}{{ end }}"
+    name_template: "gexec-runner-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}-{{ . }}{{ end }}"
     format_overrides:
       - goos: windows
-        format: zip
+        formats:
+          - zip
     files:
       - LICENSE
       - CHANGELOG.md
-      - src: cmd/genexec-runner/README.md
+      - src: cmd/gexec-runner/README.md
         dst: README.md
 
   - id: client
     builds:
       - client
-    name_template: "{{ .ProjectName }}-client-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}-{{ . }}{{ end }}"
+    name_template: "gexec-client-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}-{{ . }}{{ end }}"
     format_overrides:
       - goos: windows
-        format: zip
+        formats:
+          - zip
     files:
       - LICENSE
       - CHANGELOG.md
-      - src: cmd/genexec-client/README.md
+      - src: cmd/gexec-client/README.md
         dst: README.md
+
+nfpms:
+  - id: server
+    builds:
+      - server
+    package_name: gexec-server
+    file_name_template: "gexec-server-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}-{{ . }}{{ end }}"
+    vendor: Gexec
+    homepage: https://gexec.eu
+    maintainer: Thomas Boerger <thomas@webhippie.de>
+    description: |-
+      Server for the generic execution platform for Ansible/OpenTodu/Terraform
+    license: Apache 2.0
+    formats:
+      - deb
+      - rpm
+    dependencies:
+      - git
+    recommends:
+      - ansible
+    contents:
+      - src: packaging/systemd/server.rpm.service
+        dst: /usr/lib/systemd/system/gexec-server.service
+        packager: rpm
+      - src: packaging/systemd/server.deb.service
+        dst: /usr/lib/systemd/system/gexec-server.service
+        packager: deb
+      - src: packaging/systemd/server.env
+        dst: /etc/sysconfig/gexec-server
+        packager: rpm
+      - src: packaging/systemd/server.env
+        dst: /etc/default/gexec-server
+        packager: deb
+      - src: packaging/systemd/server.yaml
+        dst: /etc/gexec/server.yaml
+        type: config|noreplace
+      - src: packaging/systemd/auth.yaml
+        dst: /etc/gexec/auth.yaml
+        type: config|noreplace
+      - dst: /var/lib/gexec
+        type: dir
+  - id: runner
+    builds:
+      - runner
+    package_name: gexec-runner
+    file_name_template: "gexec-runner-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}-{{ . }}{{ end }}"
+    vendor: Gexec
+    homepage: https://gexec.eu
+    maintainer: Thomas Boerger <thomas@webhippie.de>
+    description: |-
+      Runner for the generic execution platform for Ansible/OpenTodu/Terraform
+    license: Apache 2.0
+    formats:
+      - deb
+      - rpm
+    dependencies:
+      - git
+    recommends:
+      - ansible
+    contents:
+      - src: packaging/systemd/runner.rpm.service
+        dst: /usr/lib/systemd/system/gexec-runner.service
+        packager: rpm
+      - src: packaging/systemd/runner.deb.service
+        dst: /usr/lib/systemd/system/gexec-runner.service
+        packager: deb
+      - src: packaging/systemd/runner.env
+        dst: /etc/sysconfig/gexec-runner
+        packager: rpm
+      - src: packaging/systemd/runner.env
+        dst: /etc/default/gexec-runner
+        packager: deb
+      - src: packaging/systemd/runner.yaml
+        dst: /etc/gexec/runner.yaml
+        type: config|noreplace
+      - dst: /var/lib/gexec
+        type: dir
+  - id: client
+    builds:
+      - client
+    package_name: gexec-client
+    file_name_template: "gexec-client-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}-{{ . }}{{ end }}"
+    vendor: Gexec
+    homepage: https://gexec.eu
+    maintainer: Thomas Boerger <thomas@webhippie.de>
+    description: |-
+      Client for the generic execution platform for Ansible/OpenTodu/Terraform
+    license: Apache 2.0
+    formats:
+      - deb
+      - rpm
+
+signs:
+  - id: archives
+    signature: "${artifact}.asc"
+    cmd: gpg2
+    artifacts: archive
+    args:
+      - --batch
+      - --armor
+      - --local-user
+      - A00EB86E74BD561BABA4F7877D7D72E3BCE73D47
+      - --output
+      - ${signature}
+      - --detach-sign
+      - ${artifact}
+  - id: packages
+    signature: "${artifact}.asc"
+    cmd: gpg2
+    artifacts: package
+    args:
+      - --batch
+      - --armor
+      - --local-user
+      - A00EB86E74BD561BABA4F7877D7D72E3BCE73D47
+      - --output
+      - ${signature}
+      - --detach-sign
+      - ${artifact}
+
+snapshot:
+  version_template: testing
+
+changelog:
+  disable: true
 
 checksum:
   disable: false
   split: true
-
-# TODO:
-# * https://goreleaser.com/customization/binary_sign/
-# * https://goreleaser.com/customization/nfpm/
-# * https://goreleaser.com/customization/docker/
-# * https://goreleaser.com/customization/docker_manifest/
-# * https://goreleaser.com/customization/release/
-# * https://goreleaser.com/customization/blob/
-# * https://goreleaser.com/customization/cloudsmith/
-# * https://goreleaser.com/customization/dockerhub/
-# * https://goreleaser.com/customization/changelog/
-# * https://goreleaser.com/customization/milestone/
-# * https://goreleaser.com/customization/announce/discord/
-# * https://goreleaser.com/customization/sbom/

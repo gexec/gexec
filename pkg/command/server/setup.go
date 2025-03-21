@@ -47,7 +47,7 @@ func setupConfig() {
 	if viper.GetString("config.file") != "" {
 		viper.SetConfigFile(viper.GetString("config.file"))
 	} else {
-		viper.SetConfigName("api")
+		viper.SetConfigName("server")
 		viper.AddConfigPath("/etc/gexec")
 		viper.AddConfigPath("$HOME/.gexec")
 		viper.AddConfigPath(".")

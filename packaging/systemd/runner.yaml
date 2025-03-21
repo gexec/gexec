@@ -1,0 +1,16 @@
+---
+metrics:
+  addr: 0.0.0.0:8000
+  token: ~
+  pprof: false
+
+logs:
+  level: info
+  pretty: true
+  color: true
+
+runner:
+  server: http://localhost:8080
+  token: ~
+
+...
