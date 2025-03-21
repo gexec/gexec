@@ -72,15 +72,15 @@ jobs:
       - name: Upload version
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          aws s3 sync dist/gexec-server* s3://dl.gexec.eu/server/${{ github.ref_name }}/
-          aws s3 sync dist/gexec-runner* s3://dl.gexec.eu/runner/${{ github.ref_name }}/
-          aws s3 sync dist/gexec-client* s3://dl.gexec.eu/client/${{ github.ref_name }}/
+          aws s3 sync --exclude "*" --include "gexec-server-*" dist s3://dl.gexec.eu/server/${{ github.ref_name }}/
+          aws s3 sync --exclude "*" --include "gexec-runner-*" dist s3://dl.gexec.eu/runner/${{ github.ref_name }}/
+          aws s3 sync --exclude "*" --include "gexec-client-*" dist s3://dl.gexec.eu/client/${{ github.ref_name }}/
 
       - name: Upload testing
         if: startsWith(github.ref, 'refs/heads/')
         run: |
-          aws s3 sync dist/gexec-server* s3://dl.gexec.eu/server/testing/
-          aws s3 sync dist/gexec-runner* s3://dl.gexec.eu/runner/testing/
-          aws s3 sync dist/gexec-client* s3://dl.gexec.eu/client/testing/
+          aws s3 sync --exclude "*" --include "gexec-server-*" dist s3://dl.gexec.eu/server/testing/
+          aws s3 sync --exclude "*" --include "gexec-runner-*" dist s3://dl.gexec.eu/runner/testing/
+          aws s3 sync --exclude "*" --include "gexec-client-*" dist s3://dl.gexec.eu/client/testing/
 
 ...
