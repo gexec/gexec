@@ -6,7 +6,7 @@
 > This project is in active development and does not provide any stable release
 > yet, you can expect breaking changes until our first real release!
 
-With Gexec we are building a generic execution platform for Ansible, OpenTodu
+With Gexec we are building a generic execution platform for Ansible, OpenTofu
 and Terraform. Besides that it should be possible to execute any kind of script
 which is supported by [Asdf][asdf] plugins. Some plugins are installed as part
 of the containers, if you are installing this project differently it is up to
