@@ -140,26 +140,27 @@ nfpms:
     recommends:
       - ansible
     contents:
-      - src: packaging/systemd/server.rpm.service
+      - src: packaging/systemd/server.service
         dst: /usr/lib/systemd/system/gexec-server.service
-        packager: rpm
-      - src: packaging/systemd/server.deb.service
-        dst: /usr/lib/systemd/system/gexec-server.service
-        packager: deb
       - src: packaging/systemd/server.env
         dst: /etc/sysconfig/gexec-server
         packager: rpm
       - src: packaging/systemd/server.env
         dst: /etc/default/gexec-server
         packager: deb
-      - src: packaging/systemd/server.yaml
+      - src: packaging/config/server.yaml
         dst: /etc/gexec/server.yaml
         type: config|noreplace
-      - src: packaging/systemd/auth.yaml
+      - src: packaging/config/auth.yaml
         dst: /etc/gexec/auth.yaml
         type: config|noreplace
       - dst: /var/lib/gexec
         type: dir
+    scripts:
+      preinstall: packaging/scripts/shared/preinstall.sh
+      postinstall: packaging/scripts/server/postinstall.sh
+      preremove: packaging/scripts/server/preremove.sh
+      postremove: packaging/scripts/shared/postremove.sh
   - id: runner
     ids:
       - runner
@@ -179,23 +180,24 @@ nfpms:
     recommends:
       - ansible
     contents:
-      - src: packaging/systemd/runner.rpm.service
+      - src: packaging/systemd/runner.service
         dst: /usr/lib/systemd/system/gexec-runner.service
-        packager: rpm
-      - src: packaging/systemd/runner.deb.service
-        dst: /usr/lib/systemd/system/gexec-runner.service
-        packager: deb
       - src: packaging/systemd/runner.env
         dst: /etc/sysconfig/gexec-runner
         packager: rpm
       - src: packaging/systemd/runner.env
         dst: /etc/default/gexec-runner
         packager: deb
-      - src: packaging/systemd/runner.yaml
+      - src: packaging/config/runner.yaml
         dst: /etc/gexec/runner.yaml
         type: config|noreplace
       - dst: /var/lib/gexec
         type: dir
+    scripts:
+      preinstall: packaging/scripts/shared/preinstall.sh
+      postinstall: packaging/scripts/runner/postinstall.sh
+      preremove: packaging/scripts/runner/preremove.sh
+      postremove: packaging/scripts/shared/postremove.sh
   - id: client
     ids:
       - client

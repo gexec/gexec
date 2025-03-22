@@ -1,20 +1,20 @@
 [Unit]
 Description=Gexec Server
 Documentation=https://gexec.eu
-Documentation=man:gexec-server --help
 
 Requires=network.target
-After=network.target syslog.target
+After=network.target
 
 [Service]
-EnvironmentFile=-/etc/default/gexec-server
+Type=simple
 User=gexec
 Group=gexec
+EnvironmentFile=-/etc/default/gexec-server
+EnvironmentFile=-/etc/sysconfig/gexec-server
 ExecStart=/usr/bin/gexec-server start $GEXEC_SERVER_ARGS
-ExecStop=/bin/kill -s QUIT $MAINPID
-ExecReload=/bin/kill -s HUP $MAINPID
+WorkingDirectory=/var/lib/gexec
 Restart=always
-RestartSec=3
+LimitNOFILE=65536
 
 [Install]
 WantedBy=multi-user.target

@@ -15,10 +15,11 @@ you to install and configure [Asdf][asdf].
 ## Install
 
 You can download prebuilt binaries from the [GitHub releases][releases] or from
-our [download site][downloads]. If you prefer to use containers you could use
-our images published on [GHCR][ghcr]. You are a Mac user? Just take a look at
-our [homebrew formula][homebrew]. If you need further guidance how to install
-this take a look at our [documentation][docs].
+our [download site][downloads]. Besides that we also prepared repositories for
+DEB and RPM packages which can be found at [Baltorepo][baltorepo]. If you prefer
+to use containers you could use our images published on [GHCR][ghcr]. You are a
+Mac user? Just take a look at our [homebrew formula][homebrew]. If you need
+further guidance how to install this take a look at our [documentation][docs].
 
 ## Build
 
@@ -102,6 +103,7 @@ Copyright (c) 2025 Thomas Boerger <thomas@webhippie.de>
 [asdf]: https://asdf-vm.com/
 [releases]: https://github.com/gexec/gexec/releases
 [downloads]: http://dl.gexec.eu
+[baltorepo]: https://gexec.baltorepo.com/stable/
 [ghcr]: https://github.com/orgs/gexec/packages
 [homebrew]: https://github.com/gexec/homebrew-gexec
 [docs]: https://gexec.eu
