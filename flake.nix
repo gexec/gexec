@@ -56,8 +56,6 @@
           devenv = {
             shells = {
               default = {
-                name = "gexec";
-
                 git-hooks = {
                   hooks = {
                     nixfmt-rfc-style = {
