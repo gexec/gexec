@@ -1,14 +1,10 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "github>gexec/.github//renovate/preset"
-  ],
+  "extends": ["github>gexec/.github//renovate/preset"],
   "packageRules": [
     {
-      "matchPackagePatterns": [
-        "^github.com/uptrace/bun/"
-      ],
-      "groupName": "github.com-uptrace-bun deps"
+      "groupName": "github.com-uptrace-bun deps",
+      "matchPackageNames": ["/^github.com/uptrace/bun//"]
     }
   ]
 }
