@@ -83,12 +83,13 @@
                   };
                   javascript = {
                     enable = true;
-                    package = pkgs.nodejs_20;
+                    package = pkgs.nodejs_22;
                   };
                 };
 
                 packages = with pkgs; [
                   go-task
+                  goreleaser
                   httpie
                   nixfmt-rfc-style
                   posting

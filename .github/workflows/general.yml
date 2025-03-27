@@ -37,8 +37,8 @@ jobs:
       - name: Run generate
         run: task fe:generate
 
-      # - name: Run lint
-      #   run: task fe:lint
+      - name: Run lint
+        run: task fe:lint
 
       - name: Run unittest
         run: task fe:test

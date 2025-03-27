@@ -29,12 +29,12 @@ branches:
       required_status_checks:
         strict: true
         contexts:
-          - frontend
           - server
           - runner
           - client
+          - frontend
+          - backend
       enforce_admins: false
-      required_linear_history: true
       restrictions:
         apps:
           - renovate

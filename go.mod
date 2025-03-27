@@ -532,7 +532,6 @@ require (
 tool (
 	github.com/golang/mock/mockgen
 	github.com/golangci/golangci-lint/cmd/golangci-lint
-	github.com/goreleaser/goreleaser/v2
 	github.com/mgechev/revive
 	github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen
 )
