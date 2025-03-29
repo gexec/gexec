@@ -12,8 +12,8 @@ repository:
 
   default_branch: master
 
-  allow_squash_merge: false
   allow_merge_commit: false
+  allow_squash_merge: true
   allow_rebase_merge: true
 
   allow_update_branch: true
@@ -108,29 +108,6 @@ rulesets:
       - actor_id: 12094995 # bots
         actor_type: Team
         bypass_mode: always
-
-branches:
-  - name: master
-    protection:
-      required_pull_request_reviews: null
-      required_status_checks:
-        strict: true
-        contexts:
-          - server
-          - runner
-          - client
-          - frontend
-          - backend
-      enforce_admins: false
-      restrictions:
-        apps:
-          - renovate
-          - gexec
-        users: []
-        teams:
-          - admins
-          - bots
-          - members
 
 teams:
   - name: admins
