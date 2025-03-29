@@ -22,6 +22,91 @@ repository:
   enable_automated_security_fixes: true
   enable_vulnerability_alerts: true
 
+rulesets:
+  - name: prevent destruction
+    target: branch
+    enforcement: active
+    conditions:
+      ref_name:
+        include:
+          - "~DEFAULT_BRANCH"
+        exclude: []
+    rules:
+      - type: required_linear_history
+      - type: deletion
+      - type: non_fast_forward
+
+
+  - name: check verification
+    target: branch
+    enforcement: active
+    conditions:
+      ref_name:
+        include:
+          - "~DEFAULT_BRANCH"
+        exclude: []
+    rules:
+      - type: required_status_checks
+        parameters:
+          strict_required_status_checks_policy: true
+          required_status_checks:
+            - context: server
+              integration_id: 15368
+            - context: runner
+              integration_id: 15368
+            - context: client
+              integration_id: 15368
+            - context: frontend
+              integration_id: 15368
+            - context: backend
+              integration_id: 15368
+      - type: code_scanning
+        parameters:
+          code_scanning_tools:
+            - tool: CodeQL
+              alerts_threshold: errors
+              security_alerts_threshold: high_or_higher
+    bypass_actors:
+      - actor_id: 1
+        actor_type: OrganizationAdmin
+        bypass_mode: always
+      - actor_id: 1130928 # gexec
+        actor_type: Integration
+        bypass_mode: always
+      - actor_id: 12094995 # bots
+        actor_type: Team
+        bypass_mode: always
+
+  - name: require reviewing
+    target: branch
+    enforcement: active
+    conditions:
+      ref_name:
+        include:
+          - "~DEFAULT_BRANCH"
+        exclude: []
+    rules:
+      - type: pull_request
+        parameters:
+          allowed_merge_methods:
+            - squash
+            - rebase
+          dismiss_stale_reviews_on_push: false
+          require_code_owner_review: false
+          require_last_push_approval: false
+          required_approving_review_count: 0
+          required_review_thread_resolution: false
+    bypass_actors:
+      - actor_id: 1
+        actor_type: OrganizationAdmin
+        bypass_mode: always
+      - actor_id: 1130928 # gexec
+        actor_type: Integration
+        bypass_mode: always
+      - actor_id: 12094995 # bots
+        actor_type: Team
+        bypass_mode: always
+
 branches:
   - name: master
     protection:
