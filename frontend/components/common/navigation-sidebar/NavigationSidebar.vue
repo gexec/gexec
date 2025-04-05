@@ -73,7 +73,7 @@ const usersInitials = computed(() => getInitials(unref(user).displayName))
               </SidebarMenuButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent
-              class="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+              class="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
               align="start"
               side="bottom"
               :side-offset="4"
@@ -177,7 +177,7 @@ const usersInitials = computed(() => getInitials(unref(user).displayName))
               </SidebarMenuButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent
-              class="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+              class="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
               side="bottom"
               align="end"
               :side-offset="4"
