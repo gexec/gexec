@@ -9,7 +9,7 @@ import (
 
 var (
 	rootCmd = &cobra.Command{
-		Use:           "gexec",
+		Use:           "gexec-server",
 		Short:         "Generic execution platform for Ansible and Terraform/OpenTofu",
 		Version:       version.String,
 		SilenceErrors: false,

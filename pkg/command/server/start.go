@@ -386,7 +386,7 @@ func serverAction(ccmd *cobra.Command, _ []string) {
 	}
 
 	registry := metrics.New(
-		metrics.WithNamespace("gexec_api"),
+		metrics.WithNamespace("gexec_server"),
 		metrics.WithToken(token),
 	)
 

@@ -32,13 +32,13 @@
     "port": "",
     "username": "",
     "password": "",
-    "name": "storage/gexec.sqlite3",
+    "name": "gexec.sqlite3",
     "options": {}
   },
   "upload": {
     "driver": "file",
     "endpoint": "",
-    "path": "storage/uploads/",
+    "path": "",
     "access": "",
     "secret": "",
     "bucket": "",
