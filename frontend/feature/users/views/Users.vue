@@ -1,3 +1,10 @@
+<script setup lang="ts">
+import UsersList from '../components/UsersList'
+import UsersProvider from '../providers/UsersProvider'
+</script>
+
 <template>
-  <h1>Users</h1>
+  <UsersProvider>
+    <UsersList />
+  </UsersProvider>
 </template>

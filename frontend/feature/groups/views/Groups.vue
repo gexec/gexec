@@ -1,3 +1,10 @@
+<script setup lang="ts">
+import GroupsList from '../components/GroupsList'
+import GroupsProvider from '../providers/GroupsProvider'
+</script>
+
 <template>
-  <h1>Groups</h1>
+  <GroupsProvider>
+    <GroupsList />
+  </GroupsProvider>
 </template>
