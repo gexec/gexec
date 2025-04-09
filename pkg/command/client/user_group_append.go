@@ -66,12 +66,7 @@ func userGroupAppendAction(ccmd *cobra.Command, _ []string, client *Client) erro
 
 	body := v1.AttachUserToGroupJSONRequestBody{
 		Group: userGroupAppendArgs.Group,
-	}
-
-	if groupUserAppendArgs.Perm != "" {
-		body.Perm = string(userGroupPerm(userGroupAppendArgs.Perm))
-	} else {
-		body.Perm = string(v1.UserGroupPermUser)
+		Perm:  string(userGroupPerm(userGroupAppendArgs.Perm)),
 	}
 
 	resp, err := client.AttachUserToGroupWithResponse(
