@@ -16,4 +16,24 @@ const (
   {{$name}} {{$Enum.TypeName}} = {{$Enum.ValueWrapper}}{{$value}}{{$Enum.ValueWrapper -}}
 {{end}}
 )
+
+var (
+	// Err{{$Enum.TypeName}} defines an error if an invalid value gets mapped.
+	Err{{$Enum.TypeName}} = fmt.Errorf("invalid type for {{$Enum.TypeName}}")
+
+	stringTo{{$Enum.TypeName}} = map[string]{{$Enum.TypeName}}{
+{{range $name, $value := $Enum.GetValues -}}
+		{{$Enum.ValueWrapper}}{{$value}}{{$Enum.ValueWrapper -}}: {{$name}},
+{{end -}}
+	}
+)
+
+// To{{$Enum.TypeName}} acts as a helper to map a string to the defined enum.
+func To{{$Enum.TypeName}}(val string) ({{$Enum.TypeName}}, error) {
+	if res, ok := stringTo{{$Enum.TypeName}}[val]; ok {
+		return res, nil
+	}
+
+	return {{$Enum.TypeName}}(""), Err{{$Enum.TypeName}}
+}
 {{end}}
