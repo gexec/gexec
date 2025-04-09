@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"strings"
 	"text/template"
 
 	v1 "github.com/gexec/gexec/pkg/api/v1"
@@ -39,12 +38,15 @@ func Handle(ccmd *cobra.Command, args []string, fn HandleFunc) {
 		os.Exit(1)
 	}
 
-	serverAddress := viper.GetString("server.address")
+	serverAddress, err := url.JoinPath(
+		viper.GetString("server.address"),
+		"api",
+		"v1",
+	)
 
-	if strings.HasSuffix(serverAddress, "/") {
-		serverAddress = fmt.Sprintf("%sv1", serverAddress)
-	} else {
-		serverAddress = fmt.Sprintf("%s/v1", serverAddress)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: Invalid server address, bad format?\n")
+		os.Exit(1)
 	}
 
 	server, err := url.Parse(

@@ -11,47 +11,48 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// tmplProfileShow represents a profile within details view.
-var tmplProfileShow = "Username: \x1b[33m{{ .Username }} \x1b[0m" + `
+// tmplUserList represents a row within user listing.
+var tmplUserList = "{{ range . }}Username: \x1b[33m{{ .Username }} \x1b[0m" + `
 ID: {{ .ID }}
 Email: {{ .Email }}
-Fullname: {{ .Fullname }}
-Active: {{ .Active }}
-Admin: {{ .Admin }}
-Created: {{ .CreatedAt }}
-Updated: {{ .UpdatedAt }}`
 
-type profileShowBind struct {
+{{ end -}}`
+
+type userListBind struct {
 	Format string
 }
 
 var (
-	profileShowCmd = &cobra.Command{
-		Use:   "show",
-		Short: "Show profile details",
+	userListCmd = &cobra.Command{
+		Use:   "list",
+		Short: "List all users",
 		Run: func(ccmd *cobra.Command, args []string) {
-			Handle(ccmd, args, profileShowAction)
+			Handle(ccmd, args, userListAction)
 		},
 		Args: cobra.NoArgs,
 	}
 
-	profileShowArgs = profileShowBind{}
+	userListArgs = userListBind{}
 )
 
 func init() {
-	profileCmd.AddCommand(profileShowCmd)
+	userCmd.AddCommand(userListCmd)
 
-	profileShowCmd.Flags().StringVar(
-		&profileShowArgs.Format,
+	userListCmd.Flags().StringVar(
+		&userListArgs.Format,
 		"format",
-		tmplProfileShow,
+		tmplUserList,
 		"Custom output format",
 	)
 }
 
-func profileShowAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	resp, err := client.ShowProfileWithResponse(
+func userListAction(ccmd *cobra.Command, _ []string, client *Client) error {
+	resp, err := client.ListUsersWithResponse(
 		ccmd.Context(),
+		&v1.ListUsersParams{
+			Limit:  v1.ToPtr(10000),
+			Offset: v1.ToPtr(0),
+		},
 	)
 
 	if err != nil {
@@ -65,7 +66,7 @@ func profileShowAction(ccmd *cobra.Command, _ []string, client *Client) error {
 	).Funcs(
 		basicFuncMap,
 	).Parse(
-		fmt.Sprintln(profileShowArgs.Format),
+		fmt.Sprintln(userListArgs.Format),
 	)
 
 	if err != nil {
@@ -74,9 +75,16 @@ func profileShowAction(ccmd *cobra.Command, _ []string, client *Client) error {
 
 	switch resp.StatusCode() {
 	case http.StatusOK:
+		records := resp.JSON200.Users
+
+		if len(records) == 0 {
+			fmt.Fprintln(os.Stderr, "Empty result")
+			return nil
+		}
+
 		if err := tmpl.Execute(
 			os.Stdout,
-			resp.JSON200,
+			records,
 		); err != nil {
 			return fmt.Errorf("failed to render template: %w", err)
 		}

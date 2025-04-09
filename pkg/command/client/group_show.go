@@ -11,47 +11,58 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// tmplProfileShow represents a profile within details view.
-var tmplProfileShow = "Username: \x1b[33m{{ .Username }} \x1b[0m" + `
+// tmplGroupShow represents a user within details view.
+var tmplGroupShow = "Slug: \x1b[33m{{ .Slug }} \x1b[0m" + `
 ID: {{ .ID }}
-Email: {{ .Email }}
-Fullname: {{ .Fullname }}
-Active: {{ .Active }}
-Admin: {{ .Admin }}
+Name: {{ .Name }}
 Created: {{ .CreatedAt }}
 Updated: {{ .UpdatedAt }}`
 
-type profileShowBind struct {
+type groupShowBind struct {
+	ID     string
 	Format string
 }
 
 var (
-	profileShowCmd = &cobra.Command{
+	groupShowCmd = &cobra.Command{
 		Use:   "show",
-		Short: "Show profile details",
+		Short: "Show a group",
 		Run: func(ccmd *cobra.Command, args []string) {
-			Handle(ccmd, args, profileShowAction)
+			Handle(ccmd, args, groupShowAction)
 		},
 		Args: cobra.NoArgs,
 	}
 
-	profileShowArgs = profileShowBind{}
+	groupShowArgs = groupShowBind{}
 )
 
 func init() {
-	profileCmd.AddCommand(profileShowCmd)
+	groupCmd.AddCommand(groupShowCmd)
 
-	profileShowCmd.Flags().StringVar(
-		&profileShowArgs.Format,
+	groupShowCmd.Flags().StringVarP(
+		&groupShowArgs.ID,
+		"id",
+		"i",
+		"",
+		"Group ID or slug",
+	)
+
+	groupShowCmd.Flags().StringVar(
+		&groupShowArgs.Format,
 		"format",
-		tmplProfileShow,
+		tmplGroupShow,
 		"Custom output format",
 	)
 }
 
-func profileShowAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	resp, err := client.ShowProfileWithResponse(
+func groupShowAction(ccmd *cobra.Command, _ []string, client *Client) error {
+	if groupShowArgs.ID == "" {
+		return fmt.Errorf("you must provide an ID or a slug")
+	}
+
+	resp, err := client.ShowGroupWithResponse(
 		ccmd.Context(),
+		groupShowArgs.ID,
 	)
 
 	if err != nil {
@@ -65,7 +76,7 @@ func profileShowAction(ccmd *cobra.Command, _ []string, client *Client) error {
 	).Funcs(
 		basicFuncMap,
 	).Parse(
-		fmt.Sprintln(profileShowArgs.Format),
+		fmt.Sprintln(groupShowArgs.Format),
 	)
 
 	if err != nil {
@@ -86,6 +97,12 @@ func profileShowAction(ccmd *cobra.Command, _ []string, client *Client) error {
 		}
 
 		return errors.New(http.StatusText(http.StatusForbidden))
+	case http.StatusNotFound:
+		if resp.JSON404 != nil {
+			return errors.New(v1.FromPtr(resp.JSON404.Message))
+		}
+
+		return errors.New(http.StatusText(http.StatusNotFound))
 	case http.StatusInternalServerError:
 		if resp.JSON500 != nil {
 			return errors.New(v1.FromPtr(resp.JSON500.Message))

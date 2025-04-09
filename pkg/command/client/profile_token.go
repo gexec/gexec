@@ -12,8 +12,7 @@ import (
 )
 
 // tmplProfileToken represents a permanent login token.
-var tmplProfileToken = "Token: \x1b[33m{{ .Token }} \x1b[0m" + `
-`
+var tmplProfileToken = "Token: \x1b[33m{{ .Token }} \x1b[0m"
 
 type profileTokenBind struct {
 	Format string
