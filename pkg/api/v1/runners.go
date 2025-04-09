@@ -109,6 +109,21 @@ func (a *API) CreateProjectRunner(w http.ResponseWriter, r *http.Request, _ Proj
 	project := a.ProjectFromContext(ctx)
 	body := &CreateProjectRunnerBody{}
 
+	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
+		log.Error().
+			Err(err).
+			Str("project", project.ID).
+			Str("action", "CreateProjectRunner").
+			Msg("Failed to decode request body")
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to decode request"),
+			Status:  ToPtr(http.StatusBadRequest),
+		})
+
+		return
+	}
+
 	record := &model.Runner{
 		ProjectID: project.ID,
 	}
@@ -316,7 +331,7 @@ func (a *API) UpdateProjectRunner(w http.ResponseWriter, r *http.Request, _ Proj
 func (a *API) DeleteProjectRunner(w http.ResponseWriter, r *http.Request, _ ProjectID, _ RunnerID) {
 	ctx := r.Context()
 	project := a.ProjectFromContext(ctx)
-	record := a.ProjectScheduleFromContext(ctx)
+	record := a.ProjectRunnerFromContext(ctx)
 
 	if err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
