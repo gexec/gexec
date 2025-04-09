@@ -928,7 +928,6 @@ func (s *Projects) DropGroup(ctx context.Context, params model.GroupProjectParam
 				Attrs: map[string]interface{}{
 					"group_id":      group.ID,
 					"group_display": group.Name,
-					"perm":          params.Perm,
 				},
 			},
 		)).
@@ -1158,8 +1157,8 @@ func (s *Projects) DropUser(ctx context.Context, params model.UserProjectParams)
 
 	q := s.client.handle.NewDelete().
 		Model((*model.UserProject)(nil)).
-		Where("project_id = ?", project.ID, user.ID).
-		Where("user_id = ?", project.ID, user.ID)
+		Where("project_id = ?", project.ID).
+		Where("user_id = ?", user.ID)
 
 	if _, err := q.Exec(ctx); err != nil {
 		return err
@@ -1178,7 +1177,6 @@ func (s *Projects) DropUser(ctx context.Context, params model.UserProjectParams)
 				Attrs: map[string]interface{}{
 					"user_id":      user.ID,
 					"user_display": user.Username,
-					"perm":         params.Perm,
 				},
 			},
 		)).
