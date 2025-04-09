@@ -2,6 +2,8 @@ package command
 
 import (
 	"html/template"
+	"strings"
+	"unicode"
 
 	"github.com/drone/funcmap"
 	"github.com/gexec/gexec/pkg/version"
@@ -30,7 +32,21 @@ var (
 	basicFuncMap = funcmap.Funcs
 
 	// globalFuncMap provides global template helper functions.
-	globalFuncMap = template.FuncMap{}
+	globalFuncMap = template.FuncMap{
+		"camelize": func(s string) (string, error) {
+			parts := strings.Split(s, "_")
+
+			for i, part := range parts {
+				if len(part) > 0 {
+					runes := []rune(part)
+					runes[0] = unicode.ToUpper(runes[0])
+					parts[i] = string(runes)
+				}
+			}
+
+			return strings.Join(parts, ""), nil
+		},
+	}
 )
 
 func init() {
@@ -39,16 +55,16 @@ func init() {
 	rootCmd.PersistentFlags().BoolP("help", "h", false, "Show the help, so what you see now")
 	rootCmd.PersistentFlags().BoolP("version", "v", false, "Print the current version of that tool")
 
-	rootCmd.PersistentFlags().StringP("server-address", "s", defaultServerAddress, "Server address")
+	rootCmd.PersistentFlags().String("server-address", defaultServerAddress, "Server address")
 	_ = viper.BindPFlag("server.address", rootCmd.PersistentFlags().Lookup("server-address"))
 
-	rootCmd.PersistentFlags().StringP("server-token", "t", "", "Server token")
+	rootCmd.PersistentFlags().String("server-token", "", "Server token")
 	_ = viper.BindPFlag("server.token", rootCmd.PersistentFlags().Lookup("server-token"))
 
-	rootCmd.PersistentFlags().StringP("server-username", "u", "", "Server username")
+	rootCmd.PersistentFlags().String("server-username", "", "Server username")
 	_ = viper.BindPFlag("server.username", rootCmd.PersistentFlags().Lookup("server-username"))
 
-	rootCmd.PersistentFlags().StringP("server-password", "p", "", "Server password")
+	rootCmd.PersistentFlags().String("server-password", "", "Server password")
 	_ = viper.BindPFlag("server.password", rootCmd.PersistentFlags().Lookup("server-password"))
 }
 
