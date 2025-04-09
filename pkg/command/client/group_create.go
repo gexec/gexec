@@ -56,7 +56,7 @@ func init() {
 }
 
 func groupCreateAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if groupUpdateArgs.Name == "" {
+	if groupCreateArgs.Name == "" {
 		return fmt.Errorf("you must provide a name")
 	}
 
