@@ -16,8 +16,8 @@ type groupUserListBind struct {
 	Format string
 }
 
-// tmplgroupUserList represents a row within group user listing.
-var tmplgroupUserList = "{{ range . }}Slug: \x1b[33m{{ .User.Username }} \x1b[0m" + `
+// tmplGroupUserList represents a row within group user listing.
+var tmplGroupUserList = "{{ range . }}Slug: \x1b[33m{{ .User.Username }} \x1b[0m" + `
 ID: {{ .User.ID }}
 Email: {{ .User.Email }}
 Perm: {{ .Perm }}
@@ -51,7 +51,7 @@ func init() {
 	groupUserListCmd.Flags().StringVar(
 		&groupUserListArgs.Format,
 		"format",
-		tmplgroupUserList,
+		tmplGroupUserList,
 		"Custom output format",
 	)
 }
