@@ -38,11 +38,50 @@ const (
 	Shell CredentialKind = "shell"
 )
 
+var (
+	// ErrCredentialKind defines an error if an invalid value gets mapped.
+	ErrCredentialKind = fmt.Errorf("invalid type for CredentialKind")
+
+	stringToCredentialKind = map[string]CredentialKind{
+		"empty": Empty,
+		"login": Login,
+		"shell": Shell,
+	}
+)
+
+// ToCredentialKind acts as a helper to map a string to the defined enum.
+func ToCredentialKind(val string) (CredentialKind, error) {
+	if res, ok := stringToCredentialKind[val]; ok {
+		return res, nil
+	}
+
+	return CredentialKind(""), ErrCredentialKind
+}
+
 // Defines values for EnvironmentSecretKind.
 const (
 	EnvironmentSecretKindEnv EnvironmentSecretKind = "env"
 	EnvironmentSecretKindVar EnvironmentSecretKind = "var"
 )
+
+var (
+	// ErrEnvironmentSecretKind defines an error if an invalid value gets mapped.
+	ErrEnvironmentSecretKind = fmt.Errorf("invalid type for EnvironmentSecretKind")
+
+	stringToEnvironmentSecretKind = map[string]EnvironmentSecretKind{
+		"env": EnvironmentSecretKindEnv,
+		"var": EnvironmentSecretKindVar,
+	}
+)
+
+// ToEnvironmentSecretKind acts as a helper to map a string to the defined enum.
+func ToEnvironmentSecretKind(val string) (EnvironmentSecretKind, error) {
+	if res, ok := stringToEnvironmentSecretKind[val]; ok {
+		return res, nil
+	}
+
+	return EnvironmentSecretKind(""), ErrEnvironmentSecretKind
+}
 
 // Defines values for EnvironmentValueKind.
 const (
@@ -50,12 +89,51 @@ const (
 	EnvironmentValueKindVar EnvironmentValueKind = "var"
 )
 
+var (
+	// ErrEnvironmentValueKind defines an error if an invalid value gets mapped.
+	ErrEnvironmentValueKind = fmt.Errorf("invalid type for EnvironmentValueKind")
+
+	stringToEnvironmentValueKind = map[string]EnvironmentValueKind{
+		"env": EnvironmentValueKindEnv,
+		"var": EnvironmentValueKindVar,
+	}
+)
+
+// ToEnvironmentValueKind acts as a helper to map a string to the defined enum.
+func ToEnvironmentValueKind(val string) (EnvironmentValueKind, error) {
+	if res, ok := stringToEnvironmentValueKind[val]; ok {
+		return res, nil
+	}
+
+	return EnvironmentValueKind(""), ErrEnvironmentValueKind
+}
+
 // Defines values for EventAction.
 const (
 	Create EventAction = "create"
 	Delete EventAction = "delete"
 	Update EventAction = "update"
 )
+
+var (
+	// ErrEventAction defines an error if an invalid value gets mapped.
+	ErrEventAction = fmt.Errorf("invalid type for EventAction")
+
+	stringToEventAction = map[string]EventAction{
+		"create": Create,
+		"delete": Delete,
+		"update": Update,
+	}
+)
+
+// ToEventAction acts as a helper to map a string to the defined enum.
+func ToEventAction(val string) (EventAction, error) {
+	if res, ok := stringToEventAction[val]; ok {
+		return res, nil
+	}
+
+	return EventAction(""), ErrEventAction
+}
 
 // Defines values for EventObjectType.
 const (
@@ -78,6 +156,40 @@ const (
 	EventObjectTypeUserProject  EventObjectType = "user_project"
 )
 
+var (
+	// ErrEventObjectType defines an error if an invalid value gets mapped.
+	ErrEventObjectType = fmt.Errorf("invalid type for EventObjectType")
+
+	stringToEventObjectType = map[string]EventObjectType{
+		"credential":    EventObjectTypeCredential,
+		"environment":   EventObjectTypeEnvironment,
+		"execution":     EventObjectTypeExecution,
+		"group":         EventObjectTypeGroup,
+		"group_project": EventObjectTypeGroupProject,
+		"group_user":    EventObjectTypeGroupUser,
+		"inventory":     EventObjectTypeInventory,
+		"project":       EventObjectTypeProject,
+		"project_group": EventObjectTypeProjectGroup,
+		"project_user":  EventObjectTypeProjectUser,
+		"repository":    EventObjectTypeRepository,
+		"runner":        EventObjectTypeRunner,
+		"schedule":      EventObjectTypeSchedule,
+		"template":      EventObjectTypeTemplate,
+		"user":          EventObjectTypeUser,
+		"user_group":    EventObjectTypeUserGroup,
+		"user_project":  EventObjectTypeUserProject,
+	}
+)
+
+// ToEventObjectType acts as a helper to map a string to the defined enum.
+func ToEventObjectType(val string) (EventObjectType, error) {
+	if res, ok := stringToEventObjectType[val]; ok {
+		return res, nil
+	}
+
+	return EventObjectType(""), ErrEventObjectType
+}
+
 // Defines values for GroupProjectPerm.
 const (
 	GroupProjectPermAdmin GroupProjectPerm = "admin"
@@ -85,11 +197,50 @@ const (
 	GroupProjectPermUser  GroupProjectPerm = "user"
 )
 
+var (
+	// ErrGroupProjectPerm defines an error if an invalid value gets mapped.
+	ErrGroupProjectPerm = fmt.Errorf("invalid type for GroupProjectPerm")
+
+	stringToGroupProjectPerm = map[string]GroupProjectPerm{
+		"admin": GroupProjectPermAdmin,
+		"owner": GroupProjectPermOwner,
+		"user":  GroupProjectPermUser,
+	}
+)
+
+// ToGroupProjectPerm acts as a helper to map a string to the defined enum.
+func ToGroupProjectPerm(val string) (GroupProjectPerm, error) {
+	if res, ok := stringToGroupProjectPerm[val]; ok {
+		return res, nil
+	}
+
+	return GroupProjectPerm(""), ErrGroupProjectPerm
+}
+
 // Defines values for InventoryKind.
 const (
 	File   InventoryKind = "file"
 	Static InventoryKind = "static"
 )
+
+var (
+	// ErrInventoryKind defines an error if an invalid value gets mapped.
+	ErrInventoryKind = fmt.Errorf("invalid type for InventoryKind")
+
+	stringToInventoryKind = map[string]InventoryKind{
+		"file":   File,
+		"static": Static,
+	}
+)
+
+// ToInventoryKind acts as a helper to map a string to the defined enum.
+func ToInventoryKind(val string) (InventoryKind, error) {
+	if res, ok := stringToInventoryKind[val]; ok {
+		return res, nil
+	}
+
+	return InventoryKind(""), ErrInventoryKind
+}
 
 // Defines values for TemplateSurveyKind.
 const (
@@ -99,11 +250,51 @@ const (
 	String TemplateSurveyKind = "string"
 )
 
+var (
+	// ErrTemplateSurveyKind defines an error if an invalid value gets mapped.
+	ErrTemplateSurveyKind = fmt.Errorf("invalid type for TemplateSurveyKind")
+
+	stringToTemplateSurveyKind = map[string]TemplateSurveyKind{
+		"enum":   Enum,
+		"number": Number,
+		"secret": Secret,
+		"string": String,
+	}
+)
+
+// ToTemplateSurveyKind acts as a helper to map a string to the defined enum.
+func ToTemplateSurveyKind(val string) (TemplateSurveyKind, error) {
+	if res, ok := stringToTemplateSurveyKind[val]; ok {
+		return res, nil
+	}
+
+	return TemplateSurveyKind(""), ErrTemplateSurveyKind
+}
+
 // Defines values for TemplateVaultKind.
 const (
 	Password TemplateVaultKind = "password"
 	Script   TemplateVaultKind = "script"
 )
+
+var (
+	// ErrTemplateVaultKind defines an error if an invalid value gets mapped.
+	ErrTemplateVaultKind = fmt.Errorf("invalid type for TemplateVaultKind")
+
+	stringToTemplateVaultKind = map[string]TemplateVaultKind{
+		"password": Password,
+		"script":   Script,
+	}
+)
+
+// ToTemplateVaultKind acts as a helper to map a string to the defined enum.
+func ToTemplateVaultKind(val string) (TemplateVaultKind, error) {
+	if res, ok := stringToTemplateVaultKind[val]; ok {
+		return res, nil
+	}
+
+	return TemplateVaultKind(""), ErrTemplateVaultKind
+}
 
 // Defines values for UserGroupPerm.
 const (
@@ -112,6 +303,26 @@ const (
 	UserGroupPermUser  UserGroupPerm = "user"
 )
 
+var (
+	// ErrUserGroupPerm defines an error if an invalid value gets mapped.
+	ErrUserGroupPerm = fmt.Errorf("invalid type for UserGroupPerm")
+
+	stringToUserGroupPerm = map[string]UserGroupPerm{
+		"admin": UserGroupPermAdmin,
+		"owner": UserGroupPermOwner,
+		"user":  UserGroupPermUser,
+	}
+)
+
+// ToUserGroupPerm acts as a helper to map a string to the defined enum.
+func ToUserGroupPerm(val string) (UserGroupPerm, error) {
+	if res, ok := stringToUserGroupPerm[val]; ok {
+		return res, nil
+	}
+
+	return UserGroupPerm(""), ErrUserGroupPerm
+}
+
 // Defines values for UserProjectPerm.
 const (
 	UserProjectPermAdmin UserProjectPerm = "admin"
@@ -119,11 +330,50 @@ const (
 	UserProjectPermUser  UserProjectPerm = "user"
 )
 
+var (
+	// ErrUserProjectPerm defines an error if an invalid value gets mapped.
+	ErrUserProjectPerm = fmt.Errorf("invalid type for UserProjectPerm")
+
+	stringToUserProjectPerm = map[string]UserProjectPerm{
+		"admin": UserProjectPermAdmin,
+		"owner": UserProjectPermOwner,
+		"user":  UserProjectPermUser,
+	}
+)
+
+// ToUserProjectPerm acts as a helper to map a string to the defined enum.
+func ToUserProjectPerm(val string) (UserProjectPerm, error) {
+	if res, ok := stringToUserProjectPerm[val]; ok {
+		return res, nil
+	}
+
+	return UserProjectPerm(""), ErrUserProjectPerm
+}
+
 // Defines values for SortOrderParam.
 const (
 	SortOrderParamAsc  SortOrderParam = "asc"
 	SortOrderParamDesc SortOrderParam = "desc"
 )
+
+var (
+	// ErrSortOrderParam defines an error if an invalid value gets mapped.
+	ErrSortOrderParam = fmt.Errorf("invalid type for SortOrderParam")
+
+	stringToSortOrderParam = map[string]SortOrderParam{
+		"asc":  SortOrderParamAsc,
+		"desc": SortOrderParamDesc,
+	}
+)
+
+// ToSortOrderParam acts as a helper to map a string to the defined enum.
+func ToSortOrderParam(val string) (SortOrderParam, error) {
+	if res, ok := stringToSortOrderParam[val]; ok {
+		return res, nil
+	}
+
+	return SortOrderParam(""), ErrSortOrderParam
+}
 
 // Defines values for ListGroupsParamsOrder.
 const (
@@ -131,11 +381,49 @@ const (
 	ListGroupsParamsOrderDesc ListGroupsParamsOrder = "desc"
 )
 
+var (
+	// ErrListGroupsParamsOrder defines an error if an invalid value gets mapped.
+	ErrListGroupsParamsOrder = fmt.Errorf("invalid type for ListGroupsParamsOrder")
+
+	stringToListGroupsParamsOrder = map[string]ListGroupsParamsOrder{
+		"asc":  ListGroupsParamsOrderAsc,
+		"desc": ListGroupsParamsOrderDesc,
+	}
+)
+
+// ToListGroupsParamsOrder acts as a helper to map a string to the defined enum.
+func ToListGroupsParamsOrder(val string) (ListGroupsParamsOrder, error) {
+	if res, ok := stringToListGroupsParamsOrder[val]; ok {
+		return res, nil
+	}
+
+	return ListGroupsParamsOrder(""), ErrListGroupsParamsOrder
+}
+
 // Defines values for ListGroupProjectsParamsOrder.
 const (
 	ListGroupProjectsParamsOrderAsc  ListGroupProjectsParamsOrder = "asc"
 	ListGroupProjectsParamsOrderDesc ListGroupProjectsParamsOrder = "desc"
 )
+
+var (
+	// ErrListGroupProjectsParamsOrder defines an error if an invalid value gets mapped.
+	ErrListGroupProjectsParamsOrder = fmt.Errorf("invalid type for ListGroupProjectsParamsOrder")
+
+	stringToListGroupProjectsParamsOrder = map[string]ListGroupProjectsParamsOrder{
+		"asc":  ListGroupProjectsParamsOrderAsc,
+		"desc": ListGroupProjectsParamsOrderDesc,
+	}
+)
+
+// ToListGroupProjectsParamsOrder acts as a helper to map a string to the defined enum.
+func ToListGroupProjectsParamsOrder(val string) (ListGroupProjectsParamsOrder, error) {
+	if res, ok := stringToListGroupProjectsParamsOrder[val]; ok {
+		return res, nil
+	}
+
+	return ListGroupProjectsParamsOrder(""), ErrListGroupProjectsParamsOrder
+}
 
 // Defines values for ListGroupUsersParamsOrder.
 const (
@@ -143,11 +431,49 @@ const (
 	ListGroupUsersParamsOrderDesc ListGroupUsersParamsOrder = "desc"
 )
 
+var (
+	// ErrListGroupUsersParamsOrder defines an error if an invalid value gets mapped.
+	ErrListGroupUsersParamsOrder = fmt.Errorf("invalid type for ListGroupUsersParamsOrder")
+
+	stringToListGroupUsersParamsOrder = map[string]ListGroupUsersParamsOrder{
+		"asc":  ListGroupUsersParamsOrderAsc,
+		"desc": ListGroupUsersParamsOrderDesc,
+	}
+)
+
+// ToListGroupUsersParamsOrder acts as a helper to map a string to the defined enum.
+func ToListGroupUsersParamsOrder(val string) (ListGroupUsersParamsOrder, error) {
+	if res, ok := stringToListGroupUsersParamsOrder[val]; ok {
+		return res, nil
+	}
+
+	return ListGroupUsersParamsOrder(""), ErrListGroupUsersParamsOrder
+}
+
 // Defines values for ListProjectsParamsOrder.
 const (
 	ListProjectsParamsOrderAsc  ListProjectsParamsOrder = "asc"
 	ListProjectsParamsOrderDesc ListProjectsParamsOrder = "desc"
 )
+
+var (
+	// ErrListProjectsParamsOrder defines an error if an invalid value gets mapped.
+	ErrListProjectsParamsOrder = fmt.Errorf("invalid type for ListProjectsParamsOrder")
+
+	stringToListProjectsParamsOrder = map[string]ListProjectsParamsOrder{
+		"asc":  ListProjectsParamsOrderAsc,
+		"desc": ListProjectsParamsOrderDesc,
+	}
+)
+
+// ToListProjectsParamsOrder acts as a helper to map a string to the defined enum.
+func ToListProjectsParamsOrder(val string) (ListProjectsParamsOrder, error) {
+	if res, ok := stringToListProjectsParamsOrder[val]; ok {
+		return res, nil
+	}
+
+	return ListProjectsParamsOrder(""), ErrListProjectsParamsOrder
+}
 
 // Defines values for ListProjectCredentialsParamsOrder.
 const (
@@ -155,11 +481,49 @@ const (
 	ListProjectCredentialsParamsOrderDesc ListProjectCredentialsParamsOrder = "desc"
 )
 
+var (
+	// ErrListProjectCredentialsParamsOrder defines an error if an invalid value gets mapped.
+	ErrListProjectCredentialsParamsOrder = fmt.Errorf("invalid type for ListProjectCredentialsParamsOrder")
+
+	stringToListProjectCredentialsParamsOrder = map[string]ListProjectCredentialsParamsOrder{
+		"asc":  ListProjectCredentialsParamsOrderAsc,
+		"desc": ListProjectCredentialsParamsOrderDesc,
+	}
+)
+
+// ToListProjectCredentialsParamsOrder acts as a helper to map a string to the defined enum.
+func ToListProjectCredentialsParamsOrder(val string) (ListProjectCredentialsParamsOrder, error) {
+	if res, ok := stringToListProjectCredentialsParamsOrder[val]; ok {
+		return res, nil
+	}
+
+	return ListProjectCredentialsParamsOrder(""), ErrListProjectCredentialsParamsOrder
+}
+
 // Defines values for ListProjectEnvironmentsParamsOrder.
 const (
 	ListProjectEnvironmentsParamsOrderAsc  ListProjectEnvironmentsParamsOrder = "asc"
 	ListProjectEnvironmentsParamsOrderDesc ListProjectEnvironmentsParamsOrder = "desc"
 )
+
+var (
+	// ErrListProjectEnvironmentsParamsOrder defines an error if an invalid value gets mapped.
+	ErrListProjectEnvironmentsParamsOrder = fmt.Errorf("invalid type for ListProjectEnvironmentsParamsOrder")
+
+	stringToListProjectEnvironmentsParamsOrder = map[string]ListProjectEnvironmentsParamsOrder{
+		"asc":  ListProjectEnvironmentsParamsOrderAsc,
+		"desc": ListProjectEnvironmentsParamsOrderDesc,
+	}
+)
+
+// ToListProjectEnvironmentsParamsOrder acts as a helper to map a string to the defined enum.
+func ToListProjectEnvironmentsParamsOrder(val string) (ListProjectEnvironmentsParamsOrder, error) {
+	if res, ok := stringToListProjectEnvironmentsParamsOrder[val]; ok {
+		return res, nil
+	}
+
+	return ListProjectEnvironmentsParamsOrder(""), ErrListProjectEnvironmentsParamsOrder
+}
 
 // Defines values for ListProjectExecutionsParamsOrder.
 const (
@@ -167,11 +531,49 @@ const (
 	ListProjectExecutionsParamsOrderDesc ListProjectExecutionsParamsOrder = "desc"
 )
 
+var (
+	// ErrListProjectExecutionsParamsOrder defines an error if an invalid value gets mapped.
+	ErrListProjectExecutionsParamsOrder = fmt.Errorf("invalid type for ListProjectExecutionsParamsOrder")
+
+	stringToListProjectExecutionsParamsOrder = map[string]ListProjectExecutionsParamsOrder{
+		"asc":  ListProjectExecutionsParamsOrderAsc,
+		"desc": ListProjectExecutionsParamsOrderDesc,
+	}
+)
+
+// ToListProjectExecutionsParamsOrder acts as a helper to map a string to the defined enum.
+func ToListProjectExecutionsParamsOrder(val string) (ListProjectExecutionsParamsOrder, error) {
+	if res, ok := stringToListProjectExecutionsParamsOrder[val]; ok {
+		return res, nil
+	}
+
+	return ListProjectExecutionsParamsOrder(""), ErrListProjectExecutionsParamsOrder
+}
+
 // Defines values for ListProjectGroupsParamsOrder.
 const (
 	ListProjectGroupsParamsOrderAsc  ListProjectGroupsParamsOrder = "asc"
 	ListProjectGroupsParamsOrderDesc ListProjectGroupsParamsOrder = "desc"
 )
+
+var (
+	// ErrListProjectGroupsParamsOrder defines an error if an invalid value gets mapped.
+	ErrListProjectGroupsParamsOrder = fmt.Errorf("invalid type for ListProjectGroupsParamsOrder")
+
+	stringToListProjectGroupsParamsOrder = map[string]ListProjectGroupsParamsOrder{
+		"asc":  ListProjectGroupsParamsOrderAsc,
+		"desc": ListProjectGroupsParamsOrderDesc,
+	}
+)
+
+// ToListProjectGroupsParamsOrder acts as a helper to map a string to the defined enum.
+func ToListProjectGroupsParamsOrder(val string) (ListProjectGroupsParamsOrder, error) {
+	if res, ok := stringToListProjectGroupsParamsOrder[val]; ok {
+		return res, nil
+	}
+
+	return ListProjectGroupsParamsOrder(""), ErrListProjectGroupsParamsOrder
+}
 
 // Defines values for ListProjectInventoriesParamsOrder.
 const (
@@ -179,11 +581,49 @@ const (
 	ListProjectInventoriesParamsOrderDesc ListProjectInventoriesParamsOrder = "desc"
 )
 
+var (
+	// ErrListProjectInventoriesParamsOrder defines an error if an invalid value gets mapped.
+	ErrListProjectInventoriesParamsOrder = fmt.Errorf("invalid type for ListProjectInventoriesParamsOrder")
+
+	stringToListProjectInventoriesParamsOrder = map[string]ListProjectInventoriesParamsOrder{
+		"asc":  ListProjectInventoriesParamsOrderAsc,
+		"desc": ListProjectInventoriesParamsOrderDesc,
+	}
+)
+
+// ToListProjectInventoriesParamsOrder acts as a helper to map a string to the defined enum.
+func ToListProjectInventoriesParamsOrder(val string) (ListProjectInventoriesParamsOrder, error) {
+	if res, ok := stringToListProjectInventoriesParamsOrder[val]; ok {
+		return res, nil
+	}
+
+	return ListProjectInventoriesParamsOrder(""), ErrListProjectInventoriesParamsOrder
+}
+
 // Defines values for ListProjectRepositoriesParamsOrder.
 const (
 	ListProjectRepositoriesParamsOrderAsc  ListProjectRepositoriesParamsOrder = "asc"
 	ListProjectRepositoriesParamsOrderDesc ListProjectRepositoriesParamsOrder = "desc"
 )
+
+var (
+	// ErrListProjectRepositoriesParamsOrder defines an error if an invalid value gets mapped.
+	ErrListProjectRepositoriesParamsOrder = fmt.Errorf("invalid type for ListProjectRepositoriesParamsOrder")
+
+	stringToListProjectRepositoriesParamsOrder = map[string]ListProjectRepositoriesParamsOrder{
+		"asc":  ListProjectRepositoriesParamsOrderAsc,
+		"desc": ListProjectRepositoriesParamsOrderDesc,
+	}
+)
+
+// ToListProjectRepositoriesParamsOrder acts as a helper to map a string to the defined enum.
+func ToListProjectRepositoriesParamsOrder(val string) (ListProjectRepositoriesParamsOrder, error) {
+	if res, ok := stringToListProjectRepositoriesParamsOrder[val]; ok {
+		return res, nil
+	}
+
+	return ListProjectRepositoriesParamsOrder(""), ErrListProjectRepositoriesParamsOrder
+}
 
 // Defines values for ListProjectRunnersParamsOrder.
 const (
@@ -191,11 +631,49 @@ const (
 	ListProjectRunnersParamsOrderDesc ListProjectRunnersParamsOrder = "desc"
 )
 
+var (
+	// ErrListProjectRunnersParamsOrder defines an error if an invalid value gets mapped.
+	ErrListProjectRunnersParamsOrder = fmt.Errorf("invalid type for ListProjectRunnersParamsOrder")
+
+	stringToListProjectRunnersParamsOrder = map[string]ListProjectRunnersParamsOrder{
+		"asc":  ListProjectRunnersParamsOrderAsc,
+		"desc": ListProjectRunnersParamsOrderDesc,
+	}
+)
+
+// ToListProjectRunnersParamsOrder acts as a helper to map a string to the defined enum.
+func ToListProjectRunnersParamsOrder(val string) (ListProjectRunnersParamsOrder, error) {
+	if res, ok := stringToListProjectRunnersParamsOrder[val]; ok {
+		return res, nil
+	}
+
+	return ListProjectRunnersParamsOrder(""), ErrListProjectRunnersParamsOrder
+}
+
 // Defines values for ListProjectSchedulesParamsOrder.
 const (
 	ListProjectSchedulesParamsOrderAsc  ListProjectSchedulesParamsOrder = "asc"
 	ListProjectSchedulesParamsOrderDesc ListProjectSchedulesParamsOrder = "desc"
 )
+
+var (
+	// ErrListProjectSchedulesParamsOrder defines an error if an invalid value gets mapped.
+	ErrListProjectSchedulesParamsOrder = fmt.Errorf("invalid type for ListProjectSchedulesParamsOrder")
+
+	stringToListProjectSchedulesParamsOrder = map[string]ListProjectSchedulesParamsOrder{
+		"asc":  ListProjectSchedulesParamsOrderAsc,
+		"desc": ListProjectSchedulesParamsOrderDesc,
+	}
+)
+
+// ToListProjectSchedulesParamsOrder acts as a helper to map a string to the defined enum.
+func ToListProjectSchedulesParamsOrder(val string) (ListProjectSchedulesParamsOrder, error) {
+	if res, ok := stringToListProjectSchedulesParamsOrder[val]; ok {
+		return res, nil
+	}
+
+	return ListProjectSchedulesParamsOrder(""), ErrListProjectSchedulesParamsOrder
+}
 
 // Defines values for ListProjectTemplatesParamsOrder.
 const (
@@ -203,11 +681,49 @@ const (
 	ListProjectTemplatesParamsOrderDesc ListProjectTemplatesParamsOrder = "desc"
 )
 
+var (
+	// ErrListProjectTemplatesParamsOrder defines an error if an invalid value gets mapped.
+	ErrListProjectTemplatesParamsOrder = fmt.Errorf("invalid type for ListProjectTemplatesParamsOrder")
+
+	stringToListProjectTemplatesParamsOrder = map[string]ListProjectTemplatesParamsOrder{
+		"asc":  ListProjectTemplatesParamsOrderAsc,
+		"desc": ListProjectTemplatesParamsOrderDesc,
+	}
+)
+
+// ToListProjectTemplatesParamsOrder acts as a helper to map a string to the defined enum.
+func ToListProjectTemplatesParamsOrder(val string) (ListProjectTemplatesParamsOrder, error) {
+	if res, ok := stringToListProjectTemplatesParamsOrder[val]; ok {
+		return res, nil
+	}
+
+	return ListProjectTemplatesParamsOrder(""), ErrListProjectTemplatesParamsOrder
+}
+
 // Defines values for ListProjectUsersParamsOrder.
 const (
 	ListProjectUsersParamsOrderAsc  ListProjectUsersParamsOrder = "asc"
 	ListProjectUsersParamsOrderDesc ListProjectUsersParamsOrder = "desc"
 )
+
+var (
+	// ErrListProjectUsersParamsOrder defines an error if an invalid value gets mapped.
+	ErrListProjectUsersParamsOrder = fmt.Errorf("invalid type for ListProjectUsersParamsOrder")
+
+	stringToListProjectUsersParamsOrder = map[string]ListProjectUsersParamsOrder{
+		"asc":  ListProjectUsersParamsOrderAsc,
+		"desc": ListProjectUsersParamsOrderDesc,
+	}
+)
+
+// ToListProjectUsersParamsOrder acts as a helper to map a string to the defined enum.
+func ToListProjectUsersParamsOrder(val string) (ListProjectUsersParamsOrder, error) {
+	if res, ok := stringToListProjectUsersParamsOrder[val]; ok {
+		return res, nil
+	}
+
+	return ListProjectUsersParamsOrder(""), ErrListProjectUsersParamsOrder
+}
 
 // Defines values for ListGlobalRunnersParamsOrder.
 const (
@@ -215,11 +731,49 @@ const (
 	ListGlobalRunnersParamsOrderDesc ListGlobalRunnersParamsOrder = "desc"
 )
 
+var (
+	// ErrListGlobalRunnersParamsOrder defines an error if an invalid value gets mapped.
+	ErrListGlobalRunnersParamsOrder = fmt.Errorf("invalid type for ListGlobalRunnersParamsOrder")
+
+	stringToListGlobalRunnersParamsOrder = map[string]ListGlobalRunnersParamsOrder{
+		"asc":  ListGlobalRunnersParamsOrderAsc,
+		"desc": ListGlobalRunnersParamsOrderDesc,
+	}
+)
+
+// ToListGlobalRunnersParamsOrder acts as a helper to map a string to the defined enum.
+func ToListGlobalRunnersParamsOrder(val string) (ListGlobalRunnersParamsOrder, error) {
+	if res, ok := stringToListGlobalRunnersParamsOrder[val]; ok {
+		return res, nil
+	}
+
+	return ListGlobalRunnersParamsOrder(""), ErrListGlobalRunnersParamsOrder
+}
+
 // Defines values for ListUsersParamsOrder.
 const (
 	ListUsersParamsOrderAsc  ListUsersParamsOrder = "asc"
 	ListUsersParamsOrderDesc ListUsersParamsOrder = "desc"
 )
+
+var (
+	// ErrListUsersParamsOrder defines an error if an invalid value gets mapped.
+	ErrListUsersParamsOrder = fmt.Errorf("invalid type for ListUsersParamsOrder")
+
+	stringToListUsersParamsOrder = map[string]ListUsersParamsOrder{
+		"asc":  ListUsersParamsOrderAsc,
+		"desc": ListUsersParamsOrderDesc,
+	}
+)
+
+// ToListUsersParamsOrder acts as a helper to map a string to the defined enum.
+func ToListUsersParamsOrder(val string) (ListUsersParamsOrder, error) {
+	if res, ok := stringToListUsersParamsOrder[val]; ok {
+		return res, nil
+	}
+
+	return ListUsersParamsOrder(""), ErrListUsersParamsOrder
+}
 
 // Defines values for ListUserGroupsParamsOrder.
 const (
@@ -227,11 +781,49 @@ const (
 	ListUserGroupsParamsOrderDesc ListUserGroupsParamsOrder = "desc"
 )
 
+var (
+	// ErrListUserGroupsParamsOrder defines an error if an invalid value gets mapped.
+	ErrListUserGroupsParamsOrder = fmt.Errorf("invalid type for ListUserGroupsParamsOrder")
+
+	stringToListUserGroupsParamsOrder = map[string]ListUserGroupsParamsOrder{
+		"asc":  ListUserGroupsParamsOrderAsc,
+		"desc": ListUserGroupsParamsOrderDesc,
+	}
+)
+
+// ToListUserGroupsParamsOrder acts as a helper to map a string to the defined enum.
+func ToListUserGroupsParamsOrder(val string) (ListUserGroupsParamsOrder, error) {
+	if res, ok := stringToListUserGroupsParamsOrder[val]; ok {
+		return res, nil
+	}
+
+	return ListUserGroupsParamsOrder(""), ErrListUserGroupsParamsOrder
+}
+
 // Defines values for ListUserProjectsParamsOrder.
 const (
 	Asc  ListUserProjectsParamsOrder = "asc"
 	Desc ListUserProjectsParamsOrder = "desc"
 )
+
+var (
+	// ErrListUserProjectsParamsOrder defines an error if an invalid value gets mapped.
+	ErrListUserProjectsParamsOrder = fmt.Errorf("invalid type for ListUserProjectsParamsOrder")
+
+	stringToListUserProjectsParamsOrder = map[string]ListUserProjectsParamsOrder{
+		"asc":  Asc,
+		"desc": Desc,
+	}
+)
+
+// ToListUserProjectsParamsOrder acts as a helper to map a string to the defined enum.
+func ToListUserProjectsParamsOrder(val string) (ListUserProjectsParamsOrder, error) {
+	if res, ok := stringToListUserProjectsParamsOrder[val]; ok {
+		return res, nil
+	}
+
+	return ListUserProjectsParamsOrder(""), ErrListUserProjectsParamsOrder
+}
 
 // AuthToken defines model for AuthToken.
 type AuthToken struct {
