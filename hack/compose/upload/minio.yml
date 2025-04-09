@@ -8,7 +8,7 @@ services:
     environment:
       - GEXEC_UPLOAD_DRIVER=s3
       - GEXEC_UPLOAD_ENDPOINT=minio:9000
-      - GEXEC_UPLOAD_BUCKET=gopad
+      - GEXEC_UPLOAD_BUCKET=gexec
       - GEXEC_UPLOAD_REGION=us-east-1
       - GEXEC_UPLOAD_ACCESS=minioadmin
       - GEXEC_UPLOAD_SECRET=minioadmin

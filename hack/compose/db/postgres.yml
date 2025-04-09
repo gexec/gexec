@@ -9,9 +9,9 @@ services:
       - GEXEC_DATABASE_DRIVER=postgres
       - GEXEC_DATABASE_ADDRESS=db
       - GEXEC_DATABASE_PORT=5432
-      - GEXEC_DATABASE_USERNAME=gopad
-      - GEXEC_DATABASE_PASSWORD=gopad
-      - GEXEC_DATABASE_NAME=gopad
+      - GEXEC_DATABASE_USERNAME=gexec
+      - GEXEC_DATABASE_PASSWORD=gexec
+      - GEXEC_DATABASE_NAME=gexec
     depends_on:
       - db
 
@@ -19,8 +19,8 @@ services:
     image: postgres:14.3
     restart: always
     environment:
-      - POSTGRES_USER=gopad
-      - POSTGRES_PASSWORD=gopad
-      - POSTGRES_DB=gopad
+      - POSTGRES_USER=gexec
+      - POSTGRES_PASSWORD=gexec
+      - POSTGRES_DB=gexec
     volumes:
       - postgres:/var/lib/postgresql

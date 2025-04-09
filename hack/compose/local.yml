@@ -6,9 +6,9 @@ services:
     restart: always
     environment:
       - MARIADB_ROOT_PASSWORD=root
-      - MARIADB_USER=gopad
-      - MARIADB_PASSWORD=gopad
-      - MARIADB_DATABASE=gopad
+      - MARIADB_USER=gexec
+      - MARIADB_PASSWORD=gexec
+      - MARIADB_DATABASE=gexec
     volumes:
       - mariadb:/var/lib/mysql
     ports:
@@ -18,9 +18,9 @@ services:
     image: postgres:14.3
     restart: always
     environment:
-      - POSTGRES_USER=gopad
-      - POSTGRES_PASSWORD=gopad
-      - POSTGRES_DB=gopad
+      - POSTGRES_USER=gexec
+      - POSTGRES_PASSWORD=gexec
+      - POSTGRES_DB=gexec
     volumes:
       - postgres:/var/lib/postgresql
     ports:
