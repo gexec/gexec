@@ -261,7 +261,7 @@ func serverAction(ccmd *cobra.Command, _ []string) {
 		Fields(uploads.Info()).
 		Msg("Preparing uploads")
 
-	defer uploads.Close()
+	defer func() { _ = uploads.Close() }()
 
 	storage, err := store.NewStore(
 		cfg.Database,
@@ -282,7 +282,7 @@ func serverAction(ccmd *cobra.Command, _ []string) {
 		Fields(storage.Info()).
 		Msg("Preparing database")
 
-	defer storage.Close()
+	defer func() { _, _ = storage.Close() }()
 
 	if val, err := backoff.Retry(
 		ccmd.Context(),
