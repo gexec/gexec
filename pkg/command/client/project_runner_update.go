@@ -12,11 +12,11 @@ import (
 )
 
 type projectRunnerUpdateBind struct {
-	Project string
-	ID      string
-	Slug    string
-	Name    string
-	Format  string
+	ProjectID string
+	RunnerID  string
+	Slug      string
+	Name      string
+	Format    string
 }
 
 var (
@@ -35,18 +35,16 @@ var (
 func init() {
 	projectRunnerCmd.AddCommand(projectRunnerUpdateCmd)
 
-	projectRunnerUpdateCmd.Flags().StringVarP(
-		&projectRunnerUpdateArgs.Project,
-		"project",
-		"p",
+	projectRunnerUpdateCmd.Flags().StringVar(
+		&projectRunnerUpdateArgs.ProjectID,
+		"project-id",
 		"",
 		"Project ID or slug",
 	)
 
-	projectRunnerUpdateCmd.Flags().StringVarP(
-		&projectRunnerUpdateArgs.ID,
-		"id",
-		"i",
+	projectRunnerUpdateCmd.Flags().StringVar(
+		&projectRunnerUpdateArgs.RunnerID,
+		"runner-id",
 		"",
 		"Runner ID or slug",
 	)
@@ -74,12 +72,12 @@ func init() {
 }
 
 func projectRunnerUpdateAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if projectRunnerUpdateArgs.Project == "" {
+	if projectRunnerUpdateArgs.ProjectID == "" {
 		return fmt.Errorf("you must provide a project ID or a slug")
 	}
 
-	if projectRunnerUpdateArgs.ID == "" {
-		return fmt.Errorf("you must provide an ID or a slug")
+	if projectRunnerUpdateArgs.RunnerID == "" {
+		return fmt.Errorf("you must provide a runner ID or a slug")
 	}
 
 	body := v1.UpdateProjectRunnerJSONRequestBody{}
@@ -116,8 +114,8 @@ func projectRunnerUpdateAction(ccmd *cobra.Command, _ []string, client *Client) 
 
 	resp, err := client.UpdateProjectRunnerWithResponse(
 		ccmd.Context(),
-		projectRunnerUpdateArgs.Project,
-		projectRunnerUpdateArgs.ID,
+		projectRunnerUpdateArgs.ProjectID,
+		projectRunnerUpdateArgs.RunnerID,
 		body,
 	)
 

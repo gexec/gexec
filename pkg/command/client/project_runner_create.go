@@ -12,10 +12,10 @@ import (
 )
 
 type projectRunnerCreateBind struct {
-	Project string
-	Slug    string
-	Name    string
-	Format  string
+	ProjectID string
+	Slug      string
+	Name      string
+	Format    string
 }
 
 var (
@@ -34,10 +34,9 @@ var (
 func init() {
 	projectRunnerCmd.AddCommand(projectRunnerCreateCmd)
 
-	projectRunnerCreateCmd.Flags().StringVarP(
-		&projectRunnerCreateArgs.Project,
-		"project",
-		"p",
+	projectRunnerCreateCmd.Flags().StringVar(
+		&projectRunnerCreateArgs.ProjectID,
+		"project-id",
 		"",
 		"Project ID or slug",
 	)
@@ -65,7 +64,7 @@ func init() {
 }
 
 func projectRunnerCreateAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if projectRunnerCreateArgs.Project == "" {
+	if projectRunnerCreateArgs.ProjectID == "" {
 		return fmt.Errorf("you must provide a project ID or a slug")
 	}
 
@@ -107,7 +106,7 @@ func projectRunnerCreateAction(ccmd *cobra.Command, _ []string, client *Client) 
 
 	resp, err := client.CreateProjectRunnerWithResponse(
 		ccmd.Context(),
-		projectRunnerCreateArgs.Project,
+		projectRunnerCreateArgs.ProjectID,
 		body,
 	)
 

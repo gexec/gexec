@@ -11,8 +11,8 @@ import (
 )
 
 type groupUserRemoveBind struct {
-	ID   string
-	User string
+	GroupID string
+	UserID  string
 }
 
 var (
@@ -31,36 +31,35 @@ var (
 func init() {
 	groupUserCmd.AddCommand(groupUserRemoveCmd)
 
-	groupUserRemoveCmd.Flags().StringVarP(
-		&groupUserRemoveArgs.ID,
-		"id",
-		"i",
+	groupUserRemoveCmd.Flags().StringVar(
+		&groupUserRemoveArgs.GroupID,
+		"group-id",
 		"",
 		"Group ID or slug",
 	)
 
 	groupUserRemoveCmd.Flags().StringVar(
-		&groupUserRemoveArgs.User,
-		"user",
+		&groupUserRemoveArgs.UserID,
+		"user-id",
 		"",
 		"User ID or slug",
 	)
 }
 
 func groupUserRemoveAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if groupUserRemoveArgs.ID == "" {
-		return fmt.Errorf("you must provide an ID or a slug")
+	if groupUserRemoveArgs.GroupID == "" {
+		return fmt.Errorf("you must provide a group ID or a slug")
 	}
 
-	if groupUserRemoveArgs.User == "" {
+	if groupUserRemoveArgs.UserID == "" {
 		return fmt.Errorf("you must provide a user ID or a slug")
 	}
 
 	resp, err := client.DeleteGroupFromUserWithResponse(
 		ccmd.Context(),
-		groupUserRemoveArgs.ID,
+		groupUserRemoveArgs.GroupID,
 		v1.DeleteGroupFromUserJSONRequestBody{
-			User: groupUserRemoveArgs.User,
+			User: groupUserRemoveArgs.UserID,
 		},
 	)
 

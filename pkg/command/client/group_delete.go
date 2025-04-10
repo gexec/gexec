@@ -11,13 +11,13 @@ import (
 )
 
 type groupDeleteBind struct {
-	ID string
+	GroupID string
 }
 
 var (
 	groupDeleteCmd = &cobra.Command{
 		Use:   "delete",
-		Short: "Delete an group",
+		Short: "Delete a group",
 		Run: func(ccmd *cobra.Command, args []string) {
 			Handle(ccmd, args, groupDeleteAction)
 		},
@@ -30,23 +30,22 @@ var (
 func init() {
 	groupCmd.AddCommand(groupDeleteCmd)
 
-	groupDeleteCmd.Flags().StringVarP(
-		&groupDeleteArgs.ID,
-		"id",
-		"i",
+	groupDeleteCmd.Flags().StringVar(
+		&groupDeleteArgs.GroupID,
+		"group-id",
 		"",
 		"Group ID or slug",
 	)
 }
 
 func groupDeleteAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if groupDeleteArgs.ID == "" {
-		return fmt.Errorf("you must provide an ID or a slug")
+	if groupDeleteArgs.GroupID == "" {
+		return fmt.Errorf("you must provide a group ID or a slug")
 	}
 
 	resp, err := client.DeleteGroupWithResponse(
 		ccmd.Context(),
-		groupDeleteArgs.ID,
+		groupDeleteArgs.GroupID,
 	)
 
 	if err != nil {
@@ -62,6 +61,12 @@ func groupDeleteAction(ccmd *cobra.Command, _ []string, client *Client) error {
 		}
 
 		return errors.New(http.StatusText(http.StatusForbidden))
+	case http.StatusBadRequest:
+		if resp.JSON400 != nil {
+			return errors.New(v1.FromPtr(resp.JSON400.Message))
+		}
+
+		return errors.New(http.StatusText(http.StatusBadRequest))
 	case http.StatusNotFound:
 		if resp.JSON404 != nil {
 			return errors.New(v1.FromPtr(resp.JSON404.Message))

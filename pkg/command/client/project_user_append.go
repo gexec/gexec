@@ -11,9 +11,9 @@ import (
 )
 
 type projectUserAppendBind struct {
-	ID   string
-	User string
-	Perm string
+	ProjectID string
+	UserID    string
+	Perm      string
 }
 
 var (
@@ -32,17 +32,16 @@ var (
 func init() {
 	projectUserCmd.AddCommand(projectUserAppendCmd)
 
-	projectUserAppendCmd.Flags().StringVarP(
-		&projectUserAppendArgs.ID,
-		"id",
-		"i",
+	projectUserAppendCmd.Flags().StringVar(
+		&projectUserAppendArgs.ProjectID,
+		"project-id",
 		"",
 		"Project ID or slug",
 	)
 
 	projectUserAppendCmd.Flags().StringVar(
-		&projectUserAppendArgs.User,
-		"user",
+		&projectUserAppendArgs.UserID,
+		"user-id",
 		"",
 		"User ID or slug",
 	)
@@ -56,22 +55,22 @@ func init() {
 }
 
 func projectUserAppendAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if projectUserAppendArgs.ID == "" {
-		return fmt.Errorf("you must provide an ID or a slug")
+	if projectUserAppendArgs.ProjectID == "" {
+		return fmt.Errorf("you must provide a project ID or a slug")
 	}
 
-	if projectUserAppendArgs.User == "" {
+	if projectUserAppendArgs.UserID == "" {
 		return fmt.Errorf("you must provide a user ID or a slug")
 	}
 
 	body := v1.AttachProjectToUserJSONRequestBody{
-		User: projectUserAppendArgs.User,
+		User: projectUserAppendArgs.UserID,
 		Perm: string(projectUserPerm(projectUserAppendArgs.Perm)),
 	}
 
 	resp, err := client.AttachProjectToUserWithResponse(
 		ccmd.Context(),
-		projectUserAppendArgs.ID,
+		projectUserAppendArgs.ProjectID,
 		body,
 	)
 

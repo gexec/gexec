@@ -11,9 +11,9 @@ import (
 )
 
 type userGroupPermitBind struct {
-	ID    string
-	Group string
-	Perm  string
+	UserID  string
+	GroupID string
+	Perm    string
 }
 
 var (
@@ -32,17 +32,16 @@ var (
 func init() {
 	userGroupCmd.AddCommand(userGroupPermitCmd)
 
-	userGroupPermitCmd.Flags().StringVarP(
-		&userGroupPermitArgs.ID,
-		"id",
-		"i",
+	userGroupPermitCmd.Flags().StringVar(
+		&userGroupPermitArgs.UserID,
+		"user-id",
 		"",
 		"User ID or slug",
 	)
 
 	userGroupPermitCmd.Flags().StringVar(
-		&userGroupPermitArgs.Group,
-		"group",
+		&userGroupPermitArgs.GroupID,
+		"group-id",
 		"",
 		"Group ID or slug",
 	)
@@ -56,11 +55,11 @@ func init() {
 }
 
 func userGroupPermitAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if userGroupPermitArgs.ID == "" {
+	if userGroupPermitArgs.UserID == "" {
 		return fmt.Errorf("you must provide an ID or a slug")
 	}
 
-	if userGroupPermitArgs.Group == "" {
+	if userGroupPermitArgs.GroupID == "" {
 		return fmt.Errorf("you must provide a group ID or a slug")
 	}
 
@@ -69,13 +68,13 @@ func userGroupPermitAction(ccmd *cobra.Command, _ []string, client *Client) erro
 	}
 
 	body := v1.PermitUserGroupJSONRequestBody{
-		Group: userGroupPermitArgs.Group,
+		Group: userGroupPermitArgs.GroupID,
 		Perm:  string(userGroupPerm(userGroupPermitArgs.Perm)),
 	}
 
 	resp, err := client.PermitUserGroupWithResponse(
 		ccmd.Context(),
-		userGroupPermitArgs.ID,
+		userGroupPermitArgs.UserID,
 		body,
 	)
 

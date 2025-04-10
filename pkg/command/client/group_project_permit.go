@@ -10,67 +10,71 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type groupUserAppendBind struct {
-	GroupID string
-	UserID  string
-	Perm    string
+type groupProjectPermitBind struct {
+	GroupID   string
+	ProjectID string
+	Perm      string
 }
 
 var (
-	groupUserAppendCmd = &cobra.Command{
-		Use:   "append",
-		Short: "Append user to group",
+	groupProjectPermitCmd = &cobra.Command{
+		Use:   "permit",
+		Short: "Permit project for group",
 		Run: func(ccmd *cobra.Command, args []string) {
-			Handle(ccmd, args, groupUserAppendAction)
+			Handle(ccmd, args, groupProjectPermitAction)
 		},
 		Args: cobra.NoArgs,
 	}
 
-	groupUserAppendArgs = groupUserAppendBind{}
+	groupProjectPermitArgs = groupProjectPermitBind{}
 )
 
 func init() {
-	groupUserCmd.AddCommand(groupUserAppendCmd)
+	groupProjectCmd.AddCommand(groupProjectPermitCmd)
 
-	groupUserAppendCmd.Flags().StringVar(
-		&groupUserAppendArgs.GroupID,
+	groupProjectPermitCmd.Flags().StringVar(
+		&groupProjectPermitArgs.GroupID,
 		"group-id",
 		"",
 		"Group ID or slug",
 	)
 
-	groupUserAppendCmd.Flags().StringVar(
-		&groupUserAppendArgs.UserID,
-		"user-id",
+	groupProjectPermitCmd.Flags().StringVar(
+		&groupProjectPermitArgs.ProjectID,
+		"project-id",
 		"",
-		"User ID or slug",
+		"Project ID or slug",
 	)
 
-	groupUserAppendCmd.Flags().StringVar(
-		&groupUserAppendArgs.Perm,
+	groupProjectPermitCmd.Flags().StringVar(
+		&groupProjectPermitArgs.Perm,
 		"perm",
 		"",
-		"Role for the user",
+		"Role for the project",
 	)
 }
 
-func groupUserAppendAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if groupUserAppendArgs.GroupID == "" {
+func groupProjectPermitAction(ccmd *cobra.Command, _ []string, client *Client) error {
+	if groupProjectPermitArgs.GroupID == "" {
 		return fmt.Errorf("you must provide a group ID or a slug")
 	}
 
-	if groupUserAppendArgs.UserID == "" {
-		return fmt.Errorf("you must provide a user ID or a slug")
+	if groupProjectPermitArgs.ProjectID == "" {
+		return fmt.Errorf("you must provide a project ID or a slug")
 	}
 
-	body := v1.AttachGroupToUserJSONRequestBody{
-		User: groupUserAppendArgs.UserID,
-		Perm: string(groupUserPerm(groupUserAppendArgs.Perm)),
+	if groupProjectPermitArgs.Perm == "" {
+		return fmt.Errorf("you must provide a a permission level like user, admin or owner")
 	}
 
-	resp, err := client.AttachGroupToUserWithResponse(
+	body := v1.PermitGroupProjectJSONRequestBody{
+		Project: groupProjectPermitArgs.ProjectID,
+		Perm:    string(groupProjectPerm(groupProjectPermitArgs.Perm)),
+	}
+
+	resp, err := client.PermitGroupProjectWithResponse(
 		ccmd.Context(),
-		groupUserAppendArgs.GroupID,
+		groupProjectPermitArgs.GroupID,
 		body,
 	)
 

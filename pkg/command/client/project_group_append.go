@@ -11,9 +11,9 @@ import (
 )
 
 type projectGroupAppendBind struct {
-	ID    string
-	Group string
-	Perm  string
+	ProjectID string
+	GroupID   string
+	Perm      string
 }
 
 var (
@@ -32,17 +32,16 @@ var (
 func init() {
 	projectGroupCmd.AddCommand(projectGroupAppendCmd)
 
-	projectGroupAppendCmd.Flags().StringVarP(
-		&projectGroupAppendArgs.ID,
-		"id",
-		"i",
+	projectGroupAppendCmd.Flags().StringVar(
+		&projectGroupAppendArgs.ProjectID,
+		"project-id",
 		"",
 		"Project ID or slug",
 	)
 
 	projectGroupAppendCmd.Flags().StringVar(
-		&projectGroupAppendArgs.Group,
-		"group",
+		&projectGroupAppendArgs.GroupID,
+		"group-id",
 		"",
 		"Group ID or slug",
 	)
@@ -56,22 +55,22 @@ func init() {
 }
 
 func projectGroupAppendAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if projectGroupAppendArgs.ID == "" {
-		return fmt.Errorf("you must provide an ID or a slug")
+	if projectGroupAppendArgs.ProjectID == "" {
+		return fmt.Errorf("you must provide a project ID or a slug")
 	}
 
-	if projectGroupAppendArgs.Group == "" {
+	if projectGroupAppendArgs.GroupID == "" {
 		return fmt.Errorf("you must provide a group ID or a slug")
 	}
 
 	body := v1.AttachProjectToGroupJSONRequestBody{
-		Group: projectGroupAppendArgs.Group,
+		Group: projectGroupAppendArgs.GroupID,
 		Perm:  string(projectGroupPerm(projectGroupPermitArgs.Perm)),
 	}
 
 	resp, err := client.AttachProjectToGroupWithResponse(
 		ccmd.Context(),
-		projectGroupAppendArgs.ID,
+		projectGroupAppendArgs.ProjectID,
 		body,
 	)
 

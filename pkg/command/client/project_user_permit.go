@@ -11,9 +11,9 @@ import (
 )
 
 type projectUserPermitBind struct {
-	ID   string
-	User string
-	Perm string
+	ProjectID string
+	UserID    string
+	Perm      string
 }
 
 var (
@@ -32,17 +32,16 @@ var (
 func init() {
 	projectUserCmd.AddCommand(projectUserPermitCmd)
 
-	projectUserPermitCmd.Flags().StringVarP(
-		&projectUserPermitArgs.ID,
-		"id",
-		"i",
+	projectUserPermitCmd.Flags().StringVar(
+		&projectUserPermitArgs.ProjectID,
+		"project-id",
 		"",
 		"Project ID or slug",
 	)
 
 	projectUserPermitCmd.Flags().StringVar(
-		&projectUserPermitArgs.User,
-		"user",
+		&projectUserPermitArgs.UserID,
+		"user-id",
 		"",
 		"User ID or slug",
 	)
@@ -56,11 +55,11 @@ func init() {
 }
 
 func projectUserPermitAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if projectUserPermitArgs.ID == "" {
-		return fmt.Errorf("you must provide an ID or a slug")
+	if projectUserPermitArgs.ProjectID == "" {
+		return fmt.Errorf("you must provide a project ID or a slug")
 	}
 
-	if projectUserPermitArgs.User == "" {
+	if projectUserPermitArgs.UserID == "" {
 		return fmt.Errorf("you must provide a user ID or a slug")
 	}
 
@@ -69,13 +68,13 @@ func projectUserPermitAction(ccmd *cobra.Command, _ []string, client *Client) er
 	}
 
 	body := v1.PermitProjectUserJSONRequestBody{
-		User: projectUserPermitArgs.User,
+		User: projectUserPermitArgs.UserID,
 		Perm: string(projectUserPerm(projectUserPermitArgs.Perm)),
 	}
 
 	resp, err := client.PermitProjectUserWithResponse(
 		ccmd.Context(),
-		projectUserPermitArgs.ID,
+		projectUserPermitArgs.ProjectID,
 		body,
 	)
 

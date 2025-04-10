@@ -11,8 +11,8 @@ import (
 )
 
 type projectUserRemoveBind struct {
-	ID   string
-	User string
+	ProjectID string
+	UserID    string
 }
 
 var (
@@ -31,36 +31,35 @@ var (
 func init() {
 	projectUserCmd.AddCommand(projectUserRemoveCmd)
 
-	projectUserRemoveCmd.Flags().StringVarP(
-		&projectUserRemoveArgs.ID,
+	projectUserRemoveCmd.Flags().StringVar(
+		&projectUserRemoveArgs.ProjectID,
 		"id",
-		"i",
 		"",
 		"Project ID or slug",
 	)
 
 	projectUserRemoveCmd.Flags().StringVar(
-		&projectUserRemoveArgs.User,
-		"user",
+		&projectUserRemoveArgs.UserID,
+		"user-id",
 		"",
 		"User ID or slug",
 	)
 }
 
 func projectUserRemoveAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if projectUserRemoveArgs.ID == "" {
-		return fmt.Errorf("you must provide an ID or a slug")
+	if projectUserRemoveArgs.ProjectID == "" {
+		return fmt.Errorf("you must provide a project ID or a slug")
 	}
 
-	if projectUserRemoveArgs.User == "" {
+	if projectUserRemoveArgs.UserID == "" {
 		return fmt.Errorf("you must provide a user ID or a slug")
 	}
 
 	resp, err := client.DeleteProjectFromUserWithResponse(
 		ccmd.Context(),
-		projectUserRemoveArgs.ID,
+		projectUserRemoveArgs.ProjectID,
 		v1.DeleteProjectFromUserJSONRequestBody{
-			User: projectUserRemoveArgs.User,
+			User: projectUserRemoveArgs.UserID,
 		},
 	)
 

@@ -11,59 +11,59 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type userGroupListBind struct {
+type userProjectListBind struct {
 	UserID string
 	Format string
 }
 
-// tmplUserGroupList represents a row within user group listing.
-var tmplUserGroupList = "{{ range . }}Slug: \x1b[33m{{ .Group.Slug }} \x1b[0m" + `
-ID: {{ .Group.ID }}
-Name: {{ .Group.Name }}
+// tmplUserProjectList represents a row within user project listing.
+var tmplUserProjectList = "{{ range . }}Slug: \x1b[33m{{ .Project.Slug }} \x1b[0m" + `
+ID: {{ .Project.ID }}
+Name: {{ .Project.Name }}
 Perm: {{ .Perm }}
 
 {{ end -}}`
 
 var (
-	userGroupListCmd = &cobra.Command{
+	userProjectListCmd = &cobra.Command{
 		Use:   "list",
-		Short: "List assigned groups for a user",
+		Short: "List assigned projects for a user",
 		Run: func(ccmd *cobra.Command, args []string) {
-			Handle(ccmd, args, userGroupListAction)
+			Handle(ccmd, args, userProjectListAction)
 		},
 		Args: cobra.NoArgs,
 	}
 
-	userGroupListArgs = userGroupListBind{}
+	userProjectListArgs = userProjectListBind{}
 )
 
 func init() {
-	userGroupCmd.AddCommand(userGroupListCmd)
+	userProjectCmd.AddCommand(userProjectListCmd)
 
-	userGroupListCmd.Flags().StringVar(
-		&userGroupListArgs.UserID,
+	userProjectListCmd.Flags().StringVar(
+		&userProjectListArgs.UserID,
 		"user-id",
 		"",
 		"User ID or slug",
 	)
 
-	userGroupListCmd.Flags().StringVar(
-		&userGroupListArgs.Format,
+	userProjectListCmd.Flags().StringVar(
+		&userProjectListArgs.Format,
 		"format",
-		tmplUserGroupList,
+		tmplUserProjectList,
 		"Custom output format",
 	)
 }
 
-func userGroupListAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if userGroupListArgs.UserID == "" {
+func userProjectListAction(ccmd *cobra.Command, _ []string, client *Client) error {
+	if userProjectListArgs.UserID == "" {
 		return fmt.Errorf("you must provide a user ID or a slug")
 	}
 
-	resp, err := client.ListUserGroupsWithResponse(
+	resp, err := client.ListUserProjectsWithResponse(
 		ccmd.Context(),
-		userGroupListArgs.UserID,
-		&v1.ListUserGroupsParams{
+		userProjectListArgs.UserID,
+		&v1.ListUserProjectsParams{
 			Limit:  v1.ToPtr(10000),
 			Offset: v1.ToPtr(0),
 		},
@@ -80,7 +80,7 @@ func userGroupListAction(ccmd *cobra.Command, _ []string, client *Client) error 
 	).Funcs(
 		basicFuncMap,
 	).Parse(
-		fmt.Sprintln(userGroupListArgs.Format),
+		fmt.Sprintln(userProjectListArgs.Format),
 	)
 
 	if err != nil {
@@ -89,7 +89,7 @@ func userGroupListAction(ccmd *cobra.Command, _ []string, client *Client) error 
 
 	switch resp.StatusCode() {
 	case http.StatusOK:
-		records := resp.JSON200.Groups
+		records := resp.JSON200.Projects
 
 		if len(records) == 0 {
 			fmt.Fprintln(os.Stderr, "Empty result")

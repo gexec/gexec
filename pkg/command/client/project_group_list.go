@@ -12,8 +12,8 @@ import (
 )
 
 type projectGroupListBind struct {
-	ID     string
-	Format string
+	ProjectID string
+	Format    string
 }
 
 // tmplProjectGroupList represents a row within project group listing.
@@ -40,10 +40,9 @@ var (
 func init() {
 	projectGroupCmd.AddCommand(projectGroupListCmd)
 
-	projectGroupListCmd.Flags().StringVarP(
-		&projectGroupListArgs.ID,
-		"id",
-		"i",
+	projectGroupListCmd.Flags().StringVar(
+		&projectGroupListArgs.ProjectID,
+		"project-id",
 		"",
 		"Project ID or slug",
 	)
@@ -57,13 +56,13 @@ func init() {
 }
 
 func projectGroupListAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if projectGroupListArgs.ID == "" {
-		return fmt.Errorf("you must provide an ID or a slug")
+	if projectGroupListArgs.ProjectID == "" {
+		return fmt.Errorf("you must provide a project ID or a slug")
 	}
 
 	resp, err := client.ListProjectGroupsWithResponse(
 		ccmd.Context(),
-		projectGroupListArgs.ID,
+		projectGroupListArgs.ProjectID,
 		&v1.ListProjectGroupsParams{
 			Limit:  v1.ToPtr(10000),
 			Offset: v1.ToPtr(0),

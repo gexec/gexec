@@ -12,8 +12,8 @@ import (
 )
 
 type projectEventListBind struct {
-	Project string
-	Format  string
+	ProjectID string
+	Format    string
 }
 
 // tmplProjectEventList represents a row within project event listing.
@@ -48,10 +48,9 @@ var (
 func init() {
 	projectEventCmd.AddCommand(projectEventListCmd)
 
-	projectEventListCmd.Flags().StringVarP(
-		&projectEventListArgs.Project,
+	projectEventListCmd.Flags().StringVar(
+		&projectEventListArgs.ProjectID,
 		"project",
-		"p",
 		"",
 		"Project ID or slug",
 	)
@@ -65,13 +64,13 @@ func init() {
 }
 
 func projectEventListAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if projectEventListArgs.Project == "" {
+	if projectEventListArgs.ProjectID == "" {
 		return fmt.Errorf("you must provide a project ID or a slug")
 	}
 
 	resp, err := client.ListProjectEventsWithResponse(
 		ccmd.Context(),
-		projectEventListArgs.Project,
+		projectEventListArgs.ProjectID,
 		&v1.ListProjectEventsParams{
 			Limit:  v1.ToPtr(10000),
 			Offset: v1.ToPtr(0),

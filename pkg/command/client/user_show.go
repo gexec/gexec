@@ -22,7 +22,7 @@ Created: {{ .CreatedAt }}
 Updated: {{ .UpdatedAt }}`
 
 type userShowBind struct {
-	ID     string
+	UserID string
 	Format string
 }
 
@@ -42,10 +42,9 @@ var (
 func init() {
 	userCmd.AddCommand(userShowCmd)
 
-	userShowCmd.Flags().StringVarP(
-		&userShowArgs.ID,
-		"id",
-		"i",
+	userShowCmd.Flags().StringVar(
+		&userShowArgs.UserID,
+		"user-id",
 		"",
 		"User ID or slug",
 	)
@@ -59,13 +58,13 @@ func init() {
 }
 
 func userShowAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if userShowArgs.ID == "" {
-		return fmt.Errorf("you must provide an ID or a slug")
+	if userShowArgs.UserID == "" {
+		return fmt.Errorf("you must provide a user ID or a slug")
 	}
 
 	resp, err := client.ShowUserWithResponse(
 		ccmd.Context(),
-		userShowArgs.ID,
+		userShowArgs.UserID,
 	)
 
 	if err != nil {

@@ -11,62 +11,61 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type userGroupListBind struct {
-	UserID string
-	Format string
+// tmplRunnerShow represents a project runner within details view.
+var tmplRunnerShow = "Slug: \x1b[33m{{ .Slug }} \x1b[0m" + `
+ID: {{ .ID }}
+Name: {{ .Name }}
+{{ with .Project- }}
+Project: {{ .Name }}
+{{ end -}}
+Token: {{ .Token }}
+Created: {{ .CreatedAt }}
+Updated: {{ .UpdatedAt }}`
+
+type runnerShowBind struct {
+	RunnerID string
+	Format   string
 }
 
-// tmplUserGroupList represents a row within user group listing.
-var tmplUserGroupList = "{{ range . }}Slug: \x1b[33m{{ .Group.Slug }} \x1b[0m" + `
-ID: {{ .Group.ID }}
-Name: {{ .Group.Name }}
-Perm: {{ .Perm }}
-
-{{ end -}}`
-
 var (
-	userGroupListCmd = &cobra.Command{
-		Use:   "list",
-		Short: "List assigned groups for a user",
+	runnerShowCmd = &cobra.Command{
+		Use:   "show",
+		Short: "Show a runner",
 		Run: func(ccmd *cobra.Command, args []string) {
-			Handle(ccmd, args, userGroupListAction)
+			Handle(ccmd, args, runnerShowAction)
 		},
 		Args: cobra.NoArgs,
 	}
 
-	userGroupListArgs = userGroupListBind{}
+	runnerShowArgs = runnerShowBind{}
 )
 
 func init() {
-	userGroupCmd.AddCommand(userGroupListCmd)
+	runnerCmd.AddCommand(runnerShowCmd)
 
-	userGroupListCmd.Flags().StringVar(
-		&userGroupListArgs.UserID,
-		"user-id",
+	runnerShowCmd.Flags().StringVar(
+		&runnerShowArgs.RunnerID,
+		"runner-id",
 		"",
-		"User ID or slug",
+		"Runner ID or slug",
 	)
 
-	userGroupListCmd.Flags().StringVar(
-		&userGroupListArgs.Format,
+	runnerShowCmd.Flags().StringVar(
+		&runnerShowArgs.Format,
 		"format",
-		tmplUserGroupList,
+		tmplRunnerShow,
 		"Custom output format",
 	)
 }
 
-func userGroupListAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if userGroupListArgs.UserID == "" {
-		return fmt.Errorf("you must provide a user ID or a slug")
+func runnerShowAction(ccmd *cobra.Command, _ []string, client *Client) error {
+	if runnerShowArgs.RunnerID == "" {
+		return fmt.Errorf("you must provide a runner ID or a slug")
 	}
 
-	resp, err := client.ListUserGroupsWithResponse(
+	resp, err := client.ShowGlobalRunnerWithResponse(
 		ccmd.Context(),
-		userGroupListArgs.UserID,
-		&v1.ListUserGroupsParams{
-			Limit:  v1.ToPtr(10000),
-			Offset: v1.ToPtr(0),
-		},
+		runnerShowArgs.RunnerID,
 	)
 
 	if err != nil {
@@ -80,7 +79,7 @@ func userGroupListAction(ccmd *cobra.Command, _ []string, client *Client) error 
 	).Funcs(
 		basicFuncMap,
 	).Parse(
-		fmt.Sprintln(userGroupListArgs.Format),
+		fmt.Sprintln(runnerShowArgs.Format),
 	)
 
 	if err != nil {
@@ -89,16 +88,9 @@ func userGroupListAction(ccmd *cobra.Command, _ []string, client *Client) error 
 
 	switch resp.StatusCode() {
 	case http.StatusOK:
-		records := resp.JSON200.Groups
-
-		if len(records) == 0 {
-			fmt.Fprintln(os.Stderr, "Empty result")
-			return nil
-		}
-
 		if err := tmpl.Execute(
 			os.Stdout,
-			records,
+			resp.JSON200,
 		); err != nil {
 			return fmt.Errorf("failed to render template: %w", err)
 		}

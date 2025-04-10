@@ -11,59 +11,48 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type userGroupListBind struct {
-	UserID string
+type runnerListBind struct {
 	Format string
 }
 
-// tmplUserGroupList represents a row within user group listing.
-var tmplUserGroupList = "{{ range . }}Slug: \x1b[33m{{ .Group.Slug }} \x1b[0m" + `
-ID: {{ .Group.ID }}
-Name: {{ .Group.Name }}
-Perm: {{ .Perm }}
+// tmplRunnerList represents a row within project runner listing.
+var tmplRunnerList = "{{ range . }}Slug: \x1b[33m{{ .Slug }} \x1b[0m" + `
+ID: {{ .ID }}
+Name: {{ .Name }}
+{{ with .Project -}}
+Project: {{ .Name }}
+{{ end -}}
 
 {{ end -}}`
 
 var (
-	userGroupListCmd = &cobra.Command{
+	runnerListCmd = &cobra.Command{
 		Use:   "list",
-		Short: "List assigned groups for a user",
+		Short: "List all runners",
 		Run: func(ccmd *cobra.Command, args []string) {
-			Handle(ccmd, args, userGroupListAction)
+			Handle(ccmd, args, runnerListAction)
 		},
 		Args: cobra.NoArgs,
 	}
 
-	userGroupListArgs = userGroupListBind{}
+	runnerListArgs = runnerListBind{}
 )
 
 func init() {
-	userGroupCmd.AddCommand(userGroupListCmd)
+	runnerCmd.AddCommand(runnerListCmd)
 
-	userGroupListCmd.Flags().StringVar(
-		&userGroupListArgs.UserID,
-		"user-id",
-		"",
-		"User ID or slug",
-	)
-
-	userGroupListCmd.Flags().StringVar(
-		&userGroupListArgs.Format,
+	runnerListCmd.Flags().StringVar(
+		&runnerListArgs.Format,
 		"format",
-		tmplUserGroupList,
+		tmplRunnerList,
 		"Custom output format",
 	)
 }
 
-func userGroupListAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if userGroupListArgs.UserID == "" {
-		return fmt.Errorf("you must provide a user ID or a slug")
-	}
-
-	resp, err := client.ListUserGroupsWithResponse(
+func runnerListAction(ccmd *cobra.Command, _ []string, client *Client) error {
+	resp, err := client.ListGlobalRunnersWithResponse(
 		ccmd.Context(),
-		userGroupListArgs.UserID,
-		&v1.ListUserGroupsParams{
+		&v1.ListGlobalRunnersParams{
 			Limit:  v1.ToPtr(10000),
 			Offset: v1.ToPtr(0),
 		},
@@ -80,7 +69,7 @@ func userGroupListAction(ccmd *cobra.Command, _ []string, client *Client) error 
 	).Funcs(
 		basicFuncMap,
 	).Parse(
-		fmt.Sprintln(userGroupListArgs.Format),
+		fmt.Sprintln(runnerListArgs.Format),
 	)
 
 	if err != nil {
@@ -89,7 +78,7 @@ func userGroupListAction(ccmd *cobra.Command, _ []string, client *Client) error 
 
 	switch resp.StatusCode() {
 	case http.StatusOK:
-		records := resp.JSON200.Groups
+		records := resp.JSON200.Runners
 
 		if len(records) == 0 {
 			fmt.Fprintln(os.Stderr, "Empty result")
@@ -108,12 +97,6 @@ func userGroupListAction(ccmd *cobra.Command, _ []string, client *Client) error 
 		}
 
 		return errors.New(http.StatusText(http.StatusForbidden))
-	case http.StatusNotFound:
-		if resp.JSON404 != nil {
-			return errors.New(v1.FromPtr(resp.JSON404.Message))
-		}
-
-		return errors.New(http.StatusText(http.StatusNotFound))
 	case http.StatusInternalServerError:
 		if resp.JSON500 != nil {
 			return errors.New(v1.FromPtr(resp.JSON500.Message))

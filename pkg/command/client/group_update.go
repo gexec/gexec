@@ -12,16 +12,16 @@ import (
 )
 
 type groupUpdateBind struct {
-	ID     string
-	Slug   string
-	Name   string
-	Format string
+	GroupID string
+	Slug    string
+	Name    string
+	Format  string
 }
 
 var (
 	groupUpdateCmd = &cobra.Command{
 		Use:   "update",
-		Short: "Update an group",
+		Short: "Update a group",
 		Run: func(ccmd *cobra.Command, args []string) {
 			Handle(ccmd, args, groupUpdateAction)
 		},
@@ -34,10 +34,9 @@ var (
 func init() {
 	groupCmd.AddCommand(groupUpdateCmd)
 
-	groupUpdateCmd.Flags().StringVarP(
-		&groupUpdateArgs.ID,
-		"id",
-		"i",
+	groupUpdateCmd.Flags().StringVar(
+		&groupUpdateArgs.GroupID,
+		"group-id",
 		"",
 		"Group ID or slug",
 	)
@@ -65,8 +64,8 @@ func init() {
 }
 
 func groupUpdateAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if groupUpdateArgs.ID == "" {
-		return fmt.Errorf("you must provide an ID or a slug")
+	if groupUpdateArgs.GroupID == "" {
+		return fmt.Errorf("you must provide a group ID or a slug")
 	}
 
 	body := v1.UpdateGroupJSONRequestBody{}
@@ -103,7 +102,7 @@ func groupUpdateAction(ccmd *cobra.Command, _ []string, client *Client) error {
 
 	resp, err := client.UpdateGroupWithResponse(
 		ccmd.Context(),
-		groupUpdateArgs.ID,
+		groupUpdateArgs.GroupID,
 		body,
 	)
 

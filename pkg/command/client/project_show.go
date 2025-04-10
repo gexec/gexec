@@ -19,8 +19,8 @@ Created: {{ .CreatedAt }}
 Updated: {{ .UpdatedAt }}`
 
 type projectShowBind struct {
-	ID     string
-	Format string
+	ProjectID string
+	Format    string
 }
 
 var (
@@ -39,10 +39,9 @@ var (
 func init() {
 	projectCmd.AddCommand(projectShowCmd)
 
-	projectShowCmd.Flags().StringVarP(
-		&projectShowArgs.ID,
-		"id",
-		"i",
+	projectShowCmd.Flags().StringVar(
+		&projectShowArgs.ProjectID,
+		"project-id",
 		"",
 		"Project ID or slug",
 	)
@@ -56,13 +55,13 @@ func init() {
 }
 
 func projectShowAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if projectShowArgs.ID == "" {
-		return fmt.Errorf("you must provide an ID or a slug")
+	if projectShowArgs.ProjectID == "" {
+		return fmt.Errorf("you must provide a project ID or a slug")
 	}
 
 	resp, err := client.ShowProjectWithResponse(
 		ccmd.Context(),
-		projectShowArgs.ID,
+		projectShowArgs.ProjectID,
 	)
 
 	if err != nil {

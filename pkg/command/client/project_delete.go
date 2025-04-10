@@ -11,7 +11,7 @@ import (
 )
 
 type projectDeleteBind struct {
-	ID string
+	ProjectID string
 }
 
 var (
@@ -30,23 +30,22 @@ var (
 func init() {
 	projectCmd.AddCommand(projectDeleteCmd)
 
-	projectDeleteCmd.Flags().StringVarP(
-		&projectDeleteArgs.ID,
-		"id",
-		"i",
+	projectDeleteCmd.Flags().StringVar(
+		&projectDeleteArgs.ProjectID,
+		"project-id",
 		"",
 		"Project ID or slug",
 	)
 }
 
 func projectDeleteAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if projectDeleteArgs.ID == "" {
-		return fmt.Errorf("you must provide an ID or a slug")
+	if projectDeleteArgs.ProjectID == "" {
+		return fmt.Errorf("you must provide a project ID or a slug")
 	}
 
 	resp, err := client.DeleteProjectWithResponse(
 		ccmd.Context(),
-		projectDeleteArgs.ID,
+		projectDeleteArgs.ProjectID,
 	)
 
 	if err != nil {
@@ -62,6 +61,12 @@ func projectDeleteAction(ccmd *cobra.Command, _ []string, client *Client) error 
 		}
 
 		return errors.New(http.StatusText(http.StatusForbidden))
+	case http.StatusBadRequest:
+		if resp.JSON400 != nil {
+			return errors.New(v1.FromPtr(resp.JSON400.Message))
+		}
+
+		return errors.New(http.StatusText(http.StatusBadRequest))
 	case http.StatusNotFound:
 		if resp.JSON404 != nil {
 			return errors.New(v1.FromPtr(resp.JSON404.Message))

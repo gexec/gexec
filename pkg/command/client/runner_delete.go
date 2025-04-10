@@ -10,55 +10,43 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type projectRunnerDeleteBind struct {
-	ProjectID string
-	RunnerID  string
+type runnerDeleteBind struct {
+	RunnerID string
 }
 
 var (
-	projectRunnerDeleteCmd = &cobra.Command{
+	runnerDeleteCmd = &cobra.Command{
 		Use:   "delete",
-		Short: "Delete a project runner",
+		Short: "Delete a runner",
 		Run: func(ccmd *cobra.Command, args []string) {
-			Handle(ccmd, args, projectRunnerDeleteAction)
+			Handle(ccmd, args, runnerDeleteAction)
 		},
 		Args: cobra.NoArgs,
 	}
 
-	projectRunnerDeleteArgs = projectRunnerDeleteBind{}
+	runnerDeleteArgs = runnerDeleteBind{}
 )
 
 func init() {
-	projectRunnerCmd.AddCommand(projectRunnerDeleteCmd)
+	runnerCmd.AddCommand(runnerDeleteCmd)
 
-	projectRunnerDeleteCmd.Flags().StringVar(
-		&projectRunnerDeleteArgs.ProjectID,
-		"project-id",
-		"",
-		"Project ID or slug",
-	)
-
-	projectRunnerDeleteCmd.Flags().StringVar(
-		&projectRunnerDeleteArgs.RunnerID,
+	runnerDeleteCmd.Flags().StringVarP(
+		&runnerDeleteArgs.RunnerID,
 		"runner-id",
+		"i",
 		"",
 		"Runner ID or slug",
 	)
 }
 
-func projectRunnerDeleteAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if projectRunnerDeleteArgs.ProjectID == "" {
-		return fmt.Errorf("you must provide a project ID or a slug")
+func runnerDeleteAction(ccmd *cobra.Command, _ []string, client *Client) error {
+	if runnerDeleteArgs.RunnerID == "" {
+		return fmt.Errorf("you must provide an ID or a slug")
 	}
 
-	if projectRunnerDeleteArgs.RunnerID == "" {
-		return fmt.Errorf("you must provide a runner ID or a slug")
-	}
-
-	resp, err := client.DeleteProjectRunnerWithResponse(
+	resp, err := client.DeleteGlobalRunnerWithResponse(
 		ccmd.Context(),
-		projectRunnerDeleteArgs.ProjectID,
-		projectRunnerDeleteArgs.RunnerID,
+		runnerDeleteArgs.RunnerID,
 	)
 
 	if err != nil {

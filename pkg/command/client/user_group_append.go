@@ -11,9 +11,9 @@ import (
 )
 
 type userGroupAppendBind struct {
-	ID    string
-	Group string
-	Perm  string
+	UserID  string
+	GroupID string
+	Perm    string
 }
 
 var (
@@ -32,17 +32,16 @@ var (
 func init() {
 	userGroupCmd.AddCommand(userGroupAppendCmd)
 
-	userGroupAppendCmd.Flags().StringVarP(
-		&userGroupAppendArgs.ID,
-		"id",
-		"i",
+	userGroupAppendCmd.Flags().StringVar(
+		&userGroupAppendArgs.UserID,
+		"user-id",
 		"",
 		"User ID or slug",
 	)
 
 	userGroupAppendCmd.Flags().StringVar(
-		&userGroupAppendArgs.Group,
-		"group",
+		&userGroupAppendArgs.GroupID,
+		"group-id",
 		"",
 		"Group ID or slug",
 	)
@@ -56,22 +55,22 @@ func init() {
 }
 
 func userGroupAppendAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if userGroupAppendArgs.ID == "" {
-		return fmt.Errorf("you must provide an ID or a slug")
+	if userGroupAppendArgs.UserID == "" {
+		return fmt.Errorf("you must provide a user ID or a slug")
 	}
 
-	if userGroupAppendArgs.Group == "" {
+	if userGroupAppendArgs.GroupID == "" {
 		return fmt.Errorf("you must provide a group ID or a slug")
 	}
 
 	body := v1.AttachUserToGroupJSONRequestBody{
-		Group: userGroupAppendArgs.Group,
+		Group: userGroupAppendArgs.GroupID,
 		Perm:  string(userGroupPerm(userGroupAppendArgs.Perm)),
 	}
 
 	resp, err := client.AttachUserToGroupWithResponse(
 		ccmd.Context(),
-		userGroupAppendArgs.ID,
+		userGroupAppendArgs.UserID,
 		body,
 	)
 
