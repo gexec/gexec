@@ -10,68 +10,57 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type groupUserAppendBind struct {
-	GroupID string
-	UserID  string
-	Perm    string
+type userProjectRemoveBind struct {
+	UserID    string
+	ProjectID string
 }
 
 var (
-	groupUserAppendCmd = &cobra.Command{
-		Use:   "append",
-		Short: "Append user to group",
+	userProjectRemoveCmd = &cobra.Command{
+		Use:   "remove",
+		Short: "Remove project from user",
 		Run: func(ccmd *cobra.Command, args []string) {
-			Handle(ccmd, args, groupUserAppendAction)
+			Handle(ccmd, args, userProjectRemoveAction)
 		},
 		Args: cobra.NoArgs,
 	}
 
-	groupUserAppendArgs = groupUserAppendBind{}
+	userProjectRemoveArgs = userProjectRemoveBind{}
 )
 
 func init() {
-	groupUserCmd.AddCommand(groupUserAppendCmd)
+	userProjectCmd.AddCommand(userProjectRemoveCmd)
 
-	groupUserAppendCmd.Flags().StringVar(
-		&groupUserAppendArgs.GroupID,
-		"group-id",
-		"",
-		"Group ID or slug",
-	)
-
-	groupUserAppendCmd.Flags().StringVar(
-		&groupUserAppendArgs.UserID,
+	userProjectRemoveCmd.Flags().StringVar(
+		&userProjectRemoveArgs.UserID,
 		"user-id",
 		"",
 		"User ID or slug",
 	)
 
-	groupUserAppendCmd.Flags().StringVar(
-		&groupUserAppendArgs.Perm,
-		"perm",
+	userProjectRemoveCmd.Flags().StringVar(
+		&userProjectRemoveArgs.ProjectID,
+		"project-id",
 		"",
-		"Role for the user",
+		"Project ID or slug",
 	)
 }
 
-func groupUserAppendAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if groupUserAppendArgs.GroupID == "" {
-		return fmt.Errorf("you must provide a group ID or a slug")
-	}
-
-	if groupUserAppendArgs.UserID == "" {
+func userProjectRemoveAction(ccmd *cobra.Command, _ []string, client *Client) error {
+	if userProjectRemoveArgs.UserID == "" {
 		return fmt.Errorf("you must provide a user ID or a slug")
 	}
 
-	body := v1.AttachGroupToUserJSONRequestBody{
-		User: groupUserAppendArgs.UserID,
-		Perm: string(groupUserPerm(groupUserAppendArgs.Perm)),
+	if userProjectRemoveArgs.ProjectID == "" {
+		return fmt.Errorf("you must provide a project ID or a slug")
 	}
 
-	resp, err := client.AttachGroupToUserWithResponse(
+	resp, err := client.DeleteUserFromProjectWithResponse(
 		ccmd.Context(),
-		groupUserAppendArgs.GroupID,
-		body,
+		userProjectRemoveArgs.UserID,
+		v1.DeleteUserFromProjectJSONRequestBody{
+			Project: userProjectRemoveArgs.ProjectID,
+		},
 	)
 
 	if err != nil {
@@ -81,8 +70,6 @@ func groupUserAppendAction(ccmd *cobra.Command, _ []string, client *Client) erro
 	switch resp.StatusCode() {
 	case http.StatusOK:
 		fmt.Fprintln(os.Stderr, v1.FromPtr(resp.JSON200.Message))
-	case http.StatusUnprocessableEntity:
-		return validationError(resp.JSON422)
 	case http.StatusPreconditionFailed:
 		return errors.New(v1.FromPtr(resp.JSON412.Message))
 	case http.StatusForbidden:

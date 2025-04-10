@@ -11,9 +11,9 @@ import (
 )
 
 type projectGroupPermitBind struct {
-	ID    string
-	Group string
-	Perm  string
+	ProjectID string
+	GroupID   string
+	Perm      string
 }
 
 var (
@@ -32,17 +32,16 @@ var (
 func init() {
 	projectGroupCmd.AddCommand(projectGroupPermitCmd)
 
-	projectGroupPermitCmd.Flags().StringVarP(
-		&projectGroupPermitArgs.ID,
-		"id",
-		"i",
+	projectGroupPermitCmd.Flags().StringVar(
+		&projectGroupPermitArgs.ProjectID,
+		"project-id",
 		"",
 		"Project ID or slug",
 	)
 
 	projectGroupPermitCmd.Flags().StringVar(
-		&projectGroupPermitArgs.Group,
-		"group",
+		&projectGroupPermitArgs.GroupID,
+		"group-id",
 		"",
 		"Group ID or slug",
 	)
@@ -56,11 +55,11 @@ func init() {
 }
 
 func projectGroupPermitAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if projectGroupPermitArgs.ID == "" {
-		return fmt.Errorf("you must provide an ID or a slug")
+	if projectGroupPermitArgs.ProjectID == "" {
+		return fmt.Errorf("you must provide a project ID or a slug")
 	}
 
-	if projectGroupPermitArgs.Group == "" {
+	if projectGroupPermitArgs.GroupID == "" {
 		return fmt.Errorf("you must provide a group ID or a slug")
 	}
 
@@ -69,13 +68,13 @@ func projectGroupPermitAction(ccmd *cobra.Command, _ []string, client *Client) e
 	}
 
 	body := v1.PermitProjectGroupJSONRequestBody{
-		Group: projectGroupPermitArgs.Group,
+		Group: projectGroupPermitArgs.GroupID,
 		Perm:  string(projectGroupPerm(projectGroupPermitArgs.Perm)),
 	}
 
 	resp, err := client.PermitProjectGroupWithResponse(
 		ccmd.Context(),
-		projectGroupPermitArgs.ID,
+		projectGroupPermitArgs.ProjectID,
 		body,
 	)
 

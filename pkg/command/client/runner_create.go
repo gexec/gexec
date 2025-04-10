@@ -11,72 +11,77 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type projectUpdateBind struct {
-	ProjectID string
-	Slug      string
-	Name      string
-	Format    string
+type runnerCreateBind struct {
+	Project string
+	Slug    string
+	Name    string
+	Format  string
 }
 
 var (
-	projectUpdateCmd = &cobra.Command{
-		Use:   "update",
-		Short: "Update an project",
+	runnerCreateCmd = &cobra.Command{
+		Use:   "create",
+		Short: "Create a runner",
 		Run: func(ccmd *cobra.Command, args []string) {
-			Handle(ccmd, args, projectUpdateAction)
+			Handle(ccmd, args, runnerCreateAction)
 		},
 		Args: cobra.NoArgs,
 	}
 
-	projectUpdateArgs = projectUpdateBind{}
+	runnerCreateArgs = runnerCreateBind{}
 )
 
 func init() {
-	projectCmd.AddCommand(projectUpdateCmd)
+	runnerCmd.AddCommand(runnerCreateCmd)
 
-	projectUpdateCmd.Flags().StringVar(
-		&projectUpdateArgs.ProjectID,
-		"id",
+	runnerCreateCmd.Flags().StringVar(
+		&runnerCreateArgs.Project,
+		"project",
 		"",
-		"Project ID or slug",
+		"Project for runner",
 	)
 
-	projectUpdateCmd.Flags().StringVar(
-		&projectUpdateArgs.Slug,
+	runnerCreateCmd.Flags().StringVar(
+		&runnerCreateArgs.Slug,
 		"slug",
 		"",
-		"Slug for project",
+		"Slug for runner",
 	)
 
-	projectUpdateCmd.Flags().StringVar(
-		&projectUpdateArgs.Name,
+	runnerCreateCmd.Flags().StringVar(
+		&runnerCreateArgs.Name,
 		"name",
 		"",
-		"Name for project",
+		"Name for runner",
 	)
 
-	projectUpdateCmd.Flags().StringVar(
-		&projectUpdateArgs.Format,
+	runnerCreateCmd.Flags().StringVar(
+		&runnerCreateArgs.Format,
 		"format",
-		tmplProjectShow,
+		tmplRunnerShow,
 		"Custom output format",
 	)
 }
 
-func projectUpdateAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if projectUpdateArgs.ProjectID == "" {
-		return fmt.Errorf("you must provide a project ID or a slug")
+func runnerCreateAction(ccmd *cobra.Command, _ []string, client *Client) error {
+	if runnerCreateArgs.Name == "" {
+		return fmt.Errorf("you must provide a name")
 	}
 
-	body := v1.UpdateProjectJSONRequestBody{}
+	body := v1.CreateGlobalRunnerJSONRequestBody{}
 	changed := false
 
-	if val := projectUpdateArgs.Slug; val != "" {
+	if val := runnerCreateArgs.Project; val != "" {
+		body.ProjectID = v1.ToPtr(val)
+		changed = true
+	}
+
+	if val := runnerCreateArgs.Slug; val != "" {
 		body.Slug = v1.ToPtr(val)
 		changed = true
 	}
 
-	if val := projectUpdateArgs.Name; val != "" {
+	if val := runnerCreateArgs.Name; val != "" {
 		body.Name = v1.ToPtr(val)
 		changed = true
 	}
@@ -93,16 +98,15 @@ func projectUpdateAction(ccmd *cobra.Command, _ []string, client *Client) error 
 	).Funcs(
 		basicFuncMap,
 	).Parse(
-		fmt.Sprintln(projectUpdateArgs.Format),
+		fmt.Sprintln(runnerCreateArgs.Format),
 	)
 
 	if err != nil {
 		return fmt.Errorf("failed to process template: %w", err)
 	}
 
-	resp, err := client.UpdateProjectWithResponse(
+	resp, err := client.CreateGlobalRunnerWithResponse(
 		ccmd.Context(),
-		projectUpdateArgs.ProjectID,
 		body,
 	)
 
@@ -120,18 +124,18 @@ func projectUpdateAction(ccmd *cobra.Command, _ []string, client *Client) error 
 		}
 	case http.StatusUnprocessableEntity:
 		return validationError(resp.JSON422)
+	case http.StatusBadRequest:
+		if resp.JSON400 != nil {
+			return errors.New(v1.FromPtr(resp.JSON400.Message))
+		}
+
+		return errors.New(http.StatusText(http.StatusBadRequest))
 	case http.StatusForbidden:
 		if resp.JSON403 != nil {
 			return errors.New(v1.FromPtr(resp.JSON403.Message))
 		}
 
 		return errors.New(http.StatusText(http.StatusForbidden))
-	case http.StatusNotFound:
-		if resp.JSON404 != nil {
-			return errors.New(v1.FromPtr(resp.JSON404.Message))
-		}
-
-		return errors.New(http.StatusText(http.StatusNotFound))
 	case http.StatusInternalServerError:
 		if resp.JSON500 != nil {
 			return errors.New(v1.FromPtr(resp.JSON500.Message))

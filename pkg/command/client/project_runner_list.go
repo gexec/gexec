@@ -12,8 +12,8 @@ import (
 )
 
 type projectRunnerListBind struct {
-	Project string
-	Format  string
+	ProjectID string
+	Format    string
 }
 
 // tmplProjectRunnerList represents a row within project runner listing.
@@ -39,10 +39,9 @@ var (
 func init() {
 	projectRunnerCmd.AddCommand(projectRunnerListCmd)
 
-	projectRunnerListCmd.Flags().StringVarP(
-		&projectRunnerListArgs.Project,
-		"project",
-		"p",
+	projectRunnerListCmd.Flags().StringVar(
+		&projectRunnerListArgs.ProjectID,
+		"project-id",
 		"",
 		"Project ID or slug",
 	)
@@ -56,13 +55,13 @@ func init() {
 }
 
 func projectRunnerListAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if projectRunnerListArgs.Project == "" {
+	if projectRunnerListArgs.ProjectID == "" {
 		return fmt.Errorf("you must provide a project ID or a slug")
 	}
 
 	resp, err := client.ListProjectRunnersWithResponse(
 		ccmd.Context(),
-		projectRunnerListArgs.Project,
+		projectRunnerListArgs.ProjectID,
 		&v1.ListProjectRunnersParams{
 			Limit:  v1.ToPtr(10000),
 			Offset: v1.ToPtr(0),

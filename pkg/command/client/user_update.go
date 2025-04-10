@@ -12,7 +12,7 @@ import (
 )
 
 type userUpdateBind struct {
-	ID       string
+	UserID   string
 	Username string
 	Password string
 	Email    string
@@ -40,10 +40,9 @@ var (
 func init() {
 	userCmd.AddCommand(userUpdateCmd)
 
-	userUpdateCmd.Flags().StringVarP(
-		&userUpdateArgs.ID,
-		"id",
-		"i",
+	userUpdateCmd.Flags().StringVar(
+		&userUpdateArgs.UserID,
+		"user-id",
 		"",
 		"User ID or slug",
 	)
@@ -113,8 +112,8 @@ func init() {
 }
 
 func userUpdateAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if userUpdateArgs.ID == "" {
-		return fmt.Errorf("you must provide an ID or a slug")
+	if userUpdateArgs.UserID == "" {
+		return fmt.Errorf("you must provide a user ID or a slug")
 	}
 
 	body := v1.UpdateUserJSONRequestBody{}
@@ -181,7 +180,7 @@ func userUpdateAction(ccmd *cobra.Command, _ []string, client *Client) error {
 
 	resp, err := client.UpdateUserWithResponse(
 		ccmd.Context(),
-		userUpdateArgs.ID,
+		userUpdateArgs.UserID,
 		body,
 	)
 

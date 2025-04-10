@@ -12,8 +12,8 @@ import (
 )
 
 type groupUserListBind struct {
-	ID     string
-	Format string
+	GroupID string
+	Format  string
 }
 
 // tmplGroupUserList represents a row within group user listing.
@@ -40,10 +40,9 @@ var (
 func init() {
 	groupUserCmd.AddCommand(groupUserListCmd)
 
-	groupUserListCmd.Flags().StringVarP(
-		&groupUserListArgs.ID,
-		"id",
-		"i",
+	groupUserListCmd.Flags().StringVar(
+		&groupUserListArgs.GroupID,
+		"group-id",
 		"",
 		"Group ID or slug",
 	)
@@ -57,13 +56,13 @@ func init() {
 }
 
 func groupUserListAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if groupUserListArgs.ID == "" {
-		return fmt.Errorf("you must provide an ID or a slug")
+	if groupUserListArgs.GroupID == "" {
+		return fmt.Errorf("you must provide a group ID or a slug")
 	}
 
 	resp, err := client.ListGroupUsersWithResponse(
 		ccmd.Context(),
-		groupUserListArgs.ID,
+		groupUserListArgs.GroupID,
 		&v1.ListGroupUsersParams{
 			Limit:  v1.ToPtr(10000),
 			Offset: v1.ToPtr(0),

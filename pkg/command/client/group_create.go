@@ -20,7 +20,7 @@ type groupCreateBind struct {
 var (
 	groupCreateCmd = &cobra.Command{
 		Use:   "create",
-		Short: "Create an group",
+		Short: "Create a group",
 		Run: func(ccmd *cobra.Command, args []string) {
 			Handle(ccmd, args, groupCreateAction)
 		},

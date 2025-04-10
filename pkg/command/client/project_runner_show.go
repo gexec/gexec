@@ -20,9 +20,9 @@ Created: {{ .CreatedAt }}
 Updated: {{ .UpdatedAt }}`
 
 type projectRunnerShowBind struct {
-	Project string
-	ID      string
-	Format  string
+	ProjectID string
+	RunnerID  string
+	Format    string
 }
 
 var (
@@ -41,18 +41,16 @@ var (
 func init() {
 	projectRunnerCmd.AddCommand(projectRunnerShowCmd)
 
-	projectRunnerShowCmd.Flags().StringVarP(
-		&projectRunnerShowArgs.Project,
-		"project",
-		"p",
+	projectRunnerShowCmd.Flags().StringVar(
+		&projectRunnerShowArgs.ProjectID,
+		"project-id",
 		"",
 		"Project ID or slug",
 	)
 
-	projectRunnerShowCmd.Flags().StringVarP(
-		&projectRunnerShowArgs.ID,
-		"id",
-		"i",
+	projectRunnerShowCmd.Flags().StringVar(
+		&projectRunnerShowArgs.RunnerID,
+		"runner-id",
 		"",
 		"Runner ID or slug",
 	)
@@ -66,18 +64,18 @@ func init() {
 }
 
 func projectRunnerShowAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if projectRunnerShowArgs.Project == "" {
+	if projectRunnerShowArgs.ProjectID == "" {
 		return fmt.Errorf("you must provide a project ID or a slug")
 	}
 
-	if projectRunnerShowArgs.ID == "" {
-		return fmt.Errorf("you must provide an ID or a slug")
+	if projectRunnerShowArgs.RunnerID == "" {
+		return fmt.Errorf("you must provide a runner ID or a slug")
 	}
 
 	resp, err := client.ShowProjectRunnerWithResponse(
 		ccmd.Context(),
-		projectRunnerShowArgs.Project,
-		projectRunnerShowArgs.ID,
+		projectRunnerShowArgs.ProjectID,
+		projectRunnerShowArgs.RunnerID,
 	)
 
 	if err != nil {

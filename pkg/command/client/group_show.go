@@ -13,14 +13,14 @@ import (
 
 // tmplGroupShow represents a user within details view.
 var tmplGroupShow = "Slug: \x1b[33m{{ .Slug }} \x1b[0m" + `
-ID: {{ .ID }}
+ID: {{ .GroupID }}
 Name: {{ .Name }}
 Created: {{ .CreatedAt }}
 Updated: {{ .UpdatedAt }}`
 
 type groupShowBind struct {
-	ID     string
-	Format string
+	GroupID string
+	Format  string
 }
 
 var (
@@ -39,10 +39,9 @@ var (
 func init() {
 	groupCmd.AddCommand(groupShowCmd)
 
-	groupShowCmd.Flags().StringVarP(
-		&groupShowArgs.ID,
-		"id",
-		"i",
+	groupShowCmd.Flags().StringVar(
+		&groupShowArgs.GroupID,
+		"group-id",
 		"",
 		"Group ID or slug",
 	)
@@ -56,13 +55,13 @@ func init() {
 }
 
 func groupShowAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if groupShowArgs.ID == "" {
-		return fmt.Errorf("you must provide an ID or a slug")
+	if groupShowArgs.GroupID == "" {
+		return fmt.Errorf("you must provide a group ID or a slug")
 	}
 
 	resp, err := client.ShowGroupWithResponse(
 		ccmd.Context(),
-		groupShowArgs.ID,
+		groupShowArgs.GroupID,
 	)
 
 	if err != nil {

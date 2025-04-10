@@ -111,9 +111,9 @@ func WithBasicAuth(username, password string) v1.RequestEditorFn {
 }
 
 var tmplValidationError = `{{ .Message }}
-{{ range $validation := .Errors }}
+{{ range $validation := .Errors -}}
 * {{ $validation.Field }}: {{ $validation.Message }}
-{{ end }}
+{{ end -}}
 `
 
 func validationError(notification *v1.Notification) error {

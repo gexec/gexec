@@ -10,67 +10,67 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type groupUserAppendBind struct {
-	GroupID string
-	UserID  string
-	Perm    string
+type groupProjectAppendBind struct {
+	GroupID   string
+	ProjectID string
+	Perm      string
 }
 
 var (
-	groupUserAppendCmd = &cobra.Command{
+	groupProjectAppendCmd = &cobra.Command{
 		Use:   "append",
-		Short: "Append user to group",
+		Short: "Append project to group",
 		Run: func(ccmd *cobra.Command, args []string) {
-			Handle(ccmd, args, groupUserAppendAction)
+			Handle(ccmd, args, groupProjectAppendAction)
 		},
 		Args: cobra.NoArgs,
 	}
 
-	groupUserAppendArgs = groupUserAppendBind{}
+	groupProjectAppendArgs = groupProjectAppendBind{}
 )
 
 func init() {
-	groupUserCmd.AddCommand(groupUserAppendCmd)
+	groupProjectCmd.AddCommand(groupProjectAppendCmd)
 
-	groupUserAppendCmd.Flags().StringVar(
-		&groupUserAppendArgs.GroupID,
+	groupProjectAppendCmd.Flags().StringVar(
+		&groupProjectAppendArgs.GroupID,
 		"group-id",
 		"",
 		"Group ID or slug",
 	)
 
-	groupUserAppendCmd.Flags().StringVar(
-		&groupUserAppendArgs.UserID,
-		"user-id",
+	groupProjectAppendCmd.Flags().StringVar(
+		&groupProjectAppendArgs.ProjectID,
+		"project-id",
 		"",
-		"User ID or slug",
+		"Project ID or slug",
 	)
 
-	groupUserAppendCmd.Flags().StringVar(
-		&groupUserAppendArgs.Perm,
+	groupProjectAppendCmd.Flags().StringVar(
+		&groupProjectAppendArgs.Perm,
 		"perm",
 		"",
-		"Role for the user",
+		"Role for the project",
 	)
 }
 
-func groupUserAppendAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if groupUserAppendArgs.GroupID == "" {
+func groupProjectAppendAction(ccmd *cobra.Command, _ []string, client *Client) error {
+	if groupProjectAppendArgs.GroupID == "" {
 		return fmt.Errorf("you must provide a group ID or a slug")
 	}
 
-	if groupUserAppendArgs.UserID == "" {
-		return fmt.Errorf("you must provide a user ID or a slug")
+	if groupProjectAppendArgs.ProjectID == "" {
+		return fmt.Errorf("you must provide a project ID or a slug")
 	}
 
-	body := v1.AttachGroupToUserJSONRequestBody{
-		User: groupUserAppendArgs.UserID,
-		Perm: string(groupUserPerm(groupUserAppendArgs.Perm)),
+	body := v1.AttachGroupToProjectJSONRequestBody{
+		Project: groupProjectAppendArgs.ProjectID,
+		Perm:    string(groupProjectPerm(groupProjectAppendArgs.Perm)),
 	}
 
-	resp, err := client.AttachGroupToUserWithResponse(
+	resp, err := client.AttachGroupToProjectWithResponse(
 		ccmd.Context(),
-		groupUserAppendArgs.GroupID,
+		groupProjectAppendArgs.GroupID,
 		body,
 	)
 

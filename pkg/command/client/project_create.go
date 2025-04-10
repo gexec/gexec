@@ -21,7 +21,7 @@ type projectCreateBind struct {
 var (
 	projectCreateCmd = &cobra.Command{
 		Use:   "create",
-		Short: "Create an project",
+		Short: "Create a project",
 		Run: func(ccmd *cobra.Command, args []string) {
 			Handle(ccmd, args, projectCreateAction)
 		},

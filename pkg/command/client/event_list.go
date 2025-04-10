@@ -11,59 +11,57 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type userGroupListBind struct {
-	UserID string
+type eventListBind struct {
 	Format string
 }
 
-// tmplUserGroupList represents a row within user group listing.
-var tmplUserGroupList = "{{ range . }}Slug: \x1b[33m{{ .Group.Slug }} \x1b[0m" + `
-ID: {{ .Group.ID }}
-Name: {{ .Group.Name }}
-Perm: {{ .Perm }}
-
+// tmplEventList represents a row within event listing.
+var tmplEventList = "{{ range . }}Created: \x1b[33m{{ .CreatedAt }} \x1b[0m" + `
+{{ with .ProjectDisplay -}}
+Project: {{ . }}
+{{ end -}}
+{{ with .UserDisplay -}}
+User: {{ . }}
+{{ end -}}
+{{ with .ObjectDisplay -}}
+Object: {{ . }}
+{{ end -}}
+Action: {{ .Action }}
+{{ with .Attrs -}}
+{{ range $key, $val := . -}}
+{{ $key | camelize }}: {{ $val }}
+{{ end -}}
+{{ end }}
 {{ end -}}`
 
 var (
-	userGroupListCmd = &cobra.Command{
+	eventListCmd = &cobra.Command{
 		Use:   "list",
-		Short: "List assigned groups for a user",
+		Short: "List all events",
 		Run: func(ccmd *cobra.Command, args []string) {
-			Handle(ccmd, args, userGroupListAction)
+			Handle(ccmd, args, eventListAction)
 		},
 		Args: cobra.NoArgs,
 	}
 
-	userGroupListArgs = userGroupListBind{}
+	eventListArgs = eventListBind{}
 )
 
 func init() {
-	userGroupCmd.AddCommand(userGroupListCmd)
+	eventCmd.AddCommand(eventListCmd)
 
-	userGroupListCmd.Flags().StringVar(
-		&userGroupListArgs.UserID,
-		"user-id",
-		"",
-		"User ID or slug",
-	)
-
-	userGroupListCmd.Flags().StringVar(
-		&userGroupListArgs.Format,
+	eventListCmd.Flags().StringVar(
+		&eventListArgs.Format,
 		"format",
-		tmplUserGroupList,
+		tmplEventList,
 		"Custom output format",
 	)
 }
 
-func userGroupListAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if userGroupListArgs.UserID == "" {
-		return fmt.Errorf("you must provide a user ID or a slug")
-	}
-
-	resp, err := client.ListUserGroupsWithResponse(
+func eventListAction(ccmd *cobra.Command, _ []string, client *Client) error {
+	resp, err := client.ListGlobalEventsWithResponse(
 		ccmd.Context(),
-		userGroupListArgs.UserID,
-		&v1.ListUserGroupsParams{
+		&v1.ListGlobalEventsParams{
 			Limit:  v1.ToPtr(10000),
 			Offset: v1.ToPtr(0),
 		},
@@ -80,7 +78,7 @@ func userGroupListAction(ccmd *cobra.Command, _ []string, client *Client) error 
 	).Funcs(
 		basicFuncMap,
 	).Parse(
-		fmt.Sprintln(userGroupListArgs.Format),
+		fmt.Sprintln(eventListArgs.Format),
 	)
 
 	if err != nil {
@@ -89,7 +87,7 @@ func userGroupListAction(ccmd *cobra.Command, _ []string, client *Client) error 
 
 	switch resp.StatusCode() {
 	case http.StatusOK:
-		records := resp.JSON200.Groups
+		records := resp.JSON200.Events
 
 		if len(records) == 0 {
 			fmt.Fprintln(os.Stderr, "Empty result")
@@ -108,12 +106,6 @@ func userGroupListAction(ccmd *cobra.Command, _ []string, client *Client) error 
 		}
 
 		return errors.New(http.StatusText(http.StatusForbidden))
-	case http.StatusNotFound:
-		if resp.JSON404 != nil {
-			return errors.New(v1.FromPtr(resp.JSON404.Message))
-		}
-
-		return errors.New(http.StatusText(http.StatusNotFound))
 	case http.StatusInternalServerError:
 		if resp.JSON500 != nil {
 			return errors.New(v1.FromPtr(resp.JSON500.Message))

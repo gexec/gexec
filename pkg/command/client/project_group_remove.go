@@ -11,8 +11,8 @@ import (
 )
 
 type projectGroupRemoveBind struct {
-	ID    string
-	Group string
+	ProjectID string
+	GroupID   string
 }
 
 var (
@@ -31,36 +31,35 @@ var (
 func init() {
 	projectGroupCmd.AddCommand(projectGroupRemoveCmd)
 
-	projectGroupRemoveCmd.Flags().StringVarP(
-		&projectGroupRemoveArgs.ID,
-		"id",
-		"i",
+	projectGroupRemoveCmd.Flags().StringVar(
+		&projectGroupRemoveArgs.ProjectID,
+		"project-id",
 		"",
 		"Project ID or slug",
 	)
 
 	projectGroupRemoveCmd.Flags().StringVar(
-		&projectGroupRemoveArgs.Group,
-		"group",
+		&projectGroupRemoveArgs.GroupID,
+		"group-id",
 		"",
 		"Group ID or slug",
 	)
 }
 
 func projectGroupRemoveAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if projectGroupRemoveArgs.ID == "" {
-		return fmt.Errorf("you must provide an ID or a slug")
+	if projectGroupRemoveArgs.ProjectID == "" {
+		return fmt.Errorf("you must provide a project ID or a slug")
 	}
 
-	if projectGroupRemoveArgs.Group == "" {
+	if projectGroupRemoveArgs.GroupID == "" {
 		return fmt.Errorf("you must provide a group ID or a slug")
 	}
 
 	resp, err := client.DeleteProjectFromGroupWithResponse(
 		ccmd.Context(),
-		projectGroupRemoveArgs.ID,
+		projectGroupRemoveArgs.ProjectID,
 		v1.DeleteProjectFromGroupJSONRequestBody{
-			Group: projectGroupRemoveArgs.Group,
+			Group: projectGroupRemoveArgs.GroupID,
 		},
 	)
 
