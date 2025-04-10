@@ -11,12 +11,12 @@ async function loadUsers() {
 
   const { data, error } = await listUsers({
     query: {
-        // search: '',
-        sort: 'username',
-        order: 'asc',
-        limit: 1000,
-        offset: 0,
-     },
+      // search: '',
+      sort: 'username',
+      order: 'asc',
+      limit: 1000,
+      offset: 0,
+    },
   })
 
   if (error) {

@@ -57,7 +57,7 @@ const routes = [
   {
     path: '/:pathMatch(.*)*',
     name: 'notfound',
-    component: NotFound
+    component: NotFound,
   },
 ]
 
@@ -73,22 +73,32 @@ router.beforeEach(async (to) => {
   if (!unref(authStore.isAuthenticated) && to.path === '/') {
     return {
       name: 'signin',
-      query: { redirect: to.fullPath }
+      query: { redirect: to.fullPath },
     }
   }
 
-  if (to.meta.auth && !unref(authStore.isAuthenticated) && to.name !== 'signin') {
+  if (
+    to.meta.auth &&
+    !unref(authStore.isAuthenticated) &&
+    to.name !== 'signin'
+  ) {
     return {
-      name: "signin",
-      query: { redirect: to.fullPath }
-    };
+      name: 'signin',
+      query: { redirect: to.fullPath },
+    }
   }
 
-  if (unref(authStore.isAuthenticated) && !unref(projectsStore.projects).length) {
+  if (
+    unref(authStore.isAuthenticated) &&
+    !unref(projectsStore.projects).length
+  ) {
     await projectsStore.loadProjects()
   }
 
-  if (unref(authStore.isAuthenticated) && Object.hasOwn(to.params, 'project_slug')) {
+  if (
+    unref(authStore.isAuthenticated) &&
+    Object.hasOwn(to.params, 'project_slug')
+  ) {
     const project = unref(projectsStore.projects).find(
       (project) => project.slug === to.params.project_slug
     )

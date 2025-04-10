@@ -43,12 +43,12 @@ const columns: ColumnDef<User>[] = [
   {
     accessorKey: 'active',
     header: 'Active',
-    cell: ({ row }) => row.getValue('active') ? 'Yes' : 'No',
+    cell: ({ row }) => (row.getValue('active') ? 'Yes' : 'No'),
   },
   {
     accessorKey: 'admin',
     header: 'Admin',
-    cell: ({ row }) => row.getValue('admin') ? 'Yes' : 'No',
+    cell: ({ row }) => (row.getValue('admin') ? 'Yes' : 'No'),
   },
   {
     accessorKey: 'created_at',

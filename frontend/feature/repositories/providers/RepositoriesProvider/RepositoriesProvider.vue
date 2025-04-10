@@ -3,10 +3,7 @@ import type { Repository } from '../../../../client'
 import { ref } from 'vue'
 import { provideRepositoriesContext } from './context'
 import { useProjectsStore } from '@/feature/projects/store/projects'
-import {
-  listProjectRepositories,
-  type Notification,
-} from '../../../../client'
+import { listProjectRepositories, type Notification } from '../../../../client'
 
 const projectsStore = useProjectsStore()
 
