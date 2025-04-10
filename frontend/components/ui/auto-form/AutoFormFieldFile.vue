@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import type { FieldProps } from './interface'
 import { Button } from '@/components/ui/button'
-import { FormControl, FormDescription, FormField, FormItem, FormMessage } from '@/components/ui/form'
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormMessage,
+} from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { TrashIcon } from 'lucide-vue-next'
 import { ref } from 'vue'
@@ -40,14 +46,19 @@ async function parseFileAsString(file: File | undefined): Promise<string> {
             type="file"
             v-bind="{ ...config?.inputProps }"
             :disabled="config?.inputProps?.disabled ?? disabled"
-            @change="async (ev: InputEvent) => {
-              const file = (ev.target as HTMLInputElement).files?.[0]
-              inputFile = file
-              const parsed = await parseFileAsString(file)
-              slotProps.componentField.onInput(parsed)
-            }"
+            @change="
+              async (ev: InputEvent) => {
+                const file = (ev.target as HTMLInputElement).files?.[0]
+                inputFile = file
+                const parsed = await parseFileAsString(file)
+                slotProps.componentField.onInput(parsed)
+              }
+            "
           />
-          <div v-else class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-transparent pl-3 pr-1 py-1 text-sm shadow-xs transition-colors">
+          <div
+            v-else
+            class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-transparent pl-3 pr-1 py-1 text-sm shadow-xs transition-colors"
+          >
             <p>{{ inputFile?.name }}</p>
             <Button
               :size="'icon'"
@@ -55,10 +66,12 @@ async function parseFileAsString(file: File | undefined): Promise<string> {
               class="h-[26px] w-[26px]"
               aria-label="Remove file"
               type="button"
-              @click="() => {
-                inputFile = undefined
-                slotProps.componentField.onInput(undefined)
-              }"
+              @click="
+                () => {
+                  inputFile = undefined
+                  slotProps.componentField.onInput(undefined)
+                }
+              "
             >
               <TrashIcon :size="16" />
             </Button>

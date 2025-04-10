@@ -9,7 +9,7 @@ import { createPinia } from 'pinia'
 import { useAuthStore } from './feature/auth/store/auth'
 
 import { client } from './client/client.gen'
-client.setConfig({ baseUrl: '/api/v1', })
+client.setConfig({ baseUrl: '/api/v1' })
 
 const app = createApp(App)
 const pinia = createPinia()

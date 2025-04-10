@@ -11,12 +11,12 @@ async function loadGroups() {
 
   const { data, error } = await listGroups({
     query: {
-        // search: '',
-        sort: 'name',
-        order: 'asc',
-        limit: 1000,
-        offset: 0,
-     },
+      // search: '',
+      sort: 'name',
+      order: 'asc',
+      limit: 1000,
+      offset: 0,
+    },
   })
 
   if (error) {

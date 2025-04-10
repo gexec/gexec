@@ -40,12 +40,7 @@ const formSchema = toTypedSchema(
   })
 )
 
-const {
-  handleSubmit,
-  isSubmitting,
-  isValidating,
-  setFieldError,
-} = useForm({
+const { handleSubmit, isSubmitting, isValidating, setFieldError } = useForm({
   validationSchema: formSchema,
   initialValues: {
     active: true,
@@ -136,7 +131,11 @@ const onSubmit = handleSubmit(async (values) => {
           <FormItem>
             <FormLabel>Password</FormLabel>
             <FormControl>
-              <Input type="password" autocomplete="off" v-bind="componentField" />
+              <Input
+                type="password"
+                autocomplete="off"
+                v-bind="componentField"
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
