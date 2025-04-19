@@ -9,12 +9,12 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
+	"log/slog"
 	"math/big"
 	"net"
 	"os"
 	"time"
 
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -84,9 +84,10 @@ func genCertAction(_ *cobra.Command, _ []string) {
 	priv, err := parseEcdsaCurve()
 
 	if err != nil {
-		log.Error().
-			Err(err).
-			Msg("Failed to gen private key")
+		slog.Error(
+			"Failed to gen private key",
+			slog.Any("error", err),
+		)
 
 		os.Exit(1)
 	}
@@ -97,9 +98,10 @@ func genCertAction(_ *cobra.Command, _ []string) {
 	serialNumber, err := buildSerialNumber()
 
 	if err != nil {
-		log.Error().
-			Err(err).
-			Msg("Failed to gen serial number")
+		slog.Error(
+			"Failed to gen serial number",
+			slog.Any("error", err),
+		)
 
 		os.Exit(1)
 	}
@@ -141,9 +143,10 @@ func genCertAction(_ *cobra.Command, _ []string) {
 	)
 
 	if err != nil {
-		log.Error().
-			Err(err).
-			Msg("Failed to create certificate")
+		slog.Error(
+			"Failed to create certificate",
+			slog.Any("error", err),
+		)
 
 		os.Exit(1)
 	}
@@ -155,10 +158,11 @@ func genCertAction(_ *cobra.Command, _ []string) {
 	)
 
 	if err != nil {
-		log.Error().
-			Err(err).
-			Str("cert", viper.GetString("output.cert")).
-			Msg("Failed to open cert file")
+		slog.Error(
+			"Failed to open cert file",
+			slog.Any("error", err),
+			slog.String("cert", viper.GetString("output.cert")),
+		)
 
 		os.Exit(1)
 	}
@@ -167,18 +171,20 @@ func genCertAction(_ *cobra.Command, _ []string) {
 		crt,
 		publicEncodeBlock(der),
 	); err != nil {
-		log.Error().
-			Err(err).
-			Msg("Failed to encode cert")
+		slog.Error(
+			"Failed to encode cert",
+			slog.Any("error", err),
+		)
 
 		os.Exit(1)
 	}
 
 	if err := crt.Close(); err != nil {
-		log.Error().
-			Err(err).
-			Str("cert", viper.GetString("output.cert")).
-			Msg("Failed to close cert file")
+		slog.Error(
+			"Failed to close cert file",
+			slog.Any("error", err),
+			slog.String("cert", viper.GetString("output.cert")),
+		)
 
 		os.Exit(1)
 	}
@@ -190,10 +196,11 @@ func genCertAction(_ *cobra.Command, _ []string) {
 	)
 
 	if err != nil {
-		log.Error().
-			Err(err).
-			Str("key", viper.GetString("output.key")).
-			Msg("Failed to open key file")
+		slog.Error(
+			"Failed to open key file",
+			slog.Any("error", err),
+			slog.String("key", viper.GetString("output.key")),
+		)
 
 		os.Exit(1)
 	}
@@ -202,26 +209,29 @@ func genCertAction(_ *cobra.Command, _ []string) {
 		key,
 		privateEncodeBlock(priv),
 	); err != nil {
-		log.Error().
-			Err(err).
-			Msg("Failed to encode key")
+		slog.Error(
+			"Failed to encode key",
+			slog.Any("error", err),
+		)
 
 		os.Exit(1)
 	}
 
 	if err := key.Close(); err != nil {
-		log.Error().
-			Err(err).
-			Str("key", viper.GetString("output.key")).
-			Msg("Failed to close key file")
+		slog.Error(
+			"Failed to close key file",
+			slog.Any("error", err),
+			slog.String("key", viper.GetString("output.key")),
+		)
 
 		os.Exit(1)
 	}
 
-	log.Info().
-		Str("cert", viper.GetString("output.cert")).
-		Str("key", viper.GetString("output.key")).
-		Msg("Successfully generated")
+	slog.Info(
+		"Successfully generated",
+		slog.String("cert", viper.GetString("output.cert")),
+		slog.String("key", viper.GetString("output.key")),
+	)
 }
 
 func parseEcdsaCurve() (interface{}, error) {
@@ -271,9 +281,10 @@ func privateEncodeBlock(priv interface{}) *pem.Block {
 		b, err := x509.MarshalECPrivateKey(k)
 
 		if err != nil {
-			log.Error().
-				Err(err).
-				Msg("unable to marshal ECDSA key")
+			slog.Error(
+				"Unable to marshal ECDSA key",
+				slog.Any("error", err),
+			)
 		}
 
 		return &pem.Block{

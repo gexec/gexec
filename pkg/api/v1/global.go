@@ -2,6 +2,7 @@ package v1
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/gexec/gexec/pkg/middleware/current"
@@ -9,7 +10,6 @@ import (
 	"github.com/gexec/gexec/pkg/secret"
 	"github.com/gexec/gexec/pkg/validate"
 	"github.com/go-chi/render"
-	"github.com/rs/zerolog/log"
 )
 
 // ListGlobalEvents implements the v1.ServerInterface.
@@ -35,10 +35,11 @@ func (a *API) ListGlobalEvents(w http.ResponseWriter, r *http.Request, params Li
 	)
 
 	if err != nil {
-		log.Error().
-			Err(err).
-			Str("action", "ListGlobalEvents").
-			Msg("Failed to load events")
+		slog.Error(
+			"Failed to load events",
+			slog.Any("error", err),
+			slog.String("action", "ListGlobalEvents"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to load events"),
@@ -92,10 +93,11 @@ func (a *API) ListGlobalRunners(w http.ResponseWriter, r *http.Request, params L
 	)
 
 	if err != nil {
-		log.Error().
-			Err(err).
-			Str("action", "ListGlobalRunners").
-			Msg("Failed to load runners")
+		slog.Error(
+			"Failed to load runners",
+			slog.Any("error", err),
+			slog.String("action", "ListGlobalRunners"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to load runners"),
@@ -108,10 +110,11 @@ func (a *API) ListGlobalRunners(w http.ResponseWriter, r *http.Request, params L
 	payload := make([]Runner, len(records))
 	for id, record := range records {
 		if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-			log.Error().
-				Err(err).
-				Str("action", "ListGlobalRunners").
-				Msg("Failed to decrypt secrets")
+			slog.Error(
+				"Failed to decrypt secrets",
+				slog.Any("error", err),
+				slog.String("action", "ListGlobalRunners"),
+			)
 
 			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to decrypt secrets"),
@@ -148,10 +151,11 @@ func (a *API) CreateGlobalRunner(w http.ResponseWriter, r *http.Request) {
 	body := &CreateGlobalRunnerBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("action", "CreateGlobalRunner").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("action", "CreateGlobalRunner"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -184,10 +188,11 @@ func (a *API) CreateGlobalRunner(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("action", "CreateGlobalRunner").
-			Msg("Failed to encrypt secrets")
+		slog.Error(
+			"Failed to encrypt secrets",
+			slog.Any("error", err),
+			slog.String("action", "CreateGlobalRunner"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to encrypt secrets"),
@@ -226,10 +231,11 @@ func (a *API) CreateGlobalRunner(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("action", "CreateGlobalRunner").
-			Msg("Failed to create runner")
+		slog.Error(
+			"Failed to create runner",
+			slog.Any("error", err),
+			slog.String("action", "CreateGlobalRunner"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to create runner"),
@@ -251,11 +257,12 @@ func (a *API) UpdateGlobalRunner(w http.ResponseWriter, r *http.Request, _ Runne
 	body := &UpdateGlobalRunnerBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("runner", record.ID).
-			Str("action", "UpdateGlobalRunner").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("action", "UpdateGlobalRunner"),
+			slog.String("runner", record.ID),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -266,11 +273,12 @@ func (a *API) UpdateGlobalRunner(w http.ResponseWriter, r *http.Request, _ Runne
 	}
 
 	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("runner", record.ID).
-			Str("action", "UpdateGlobalRunner").
-			Msg("Failed to decrypt secrets")
+		slog.Error(
+			"Failed to decrypt secrets",
+			slog.Any("error", err),
+			slog.String("action", "UpdateGlobalRunner"),
+			slog.String("runner", record.ID),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decrypt runners"),
@@ -301,11 +309,12 @@ func (a *API) UpdateGlobalRunner(w http.ResponseWriter, r *http.Request, _ Runne
 	}
 
 	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("runner", record.ID).
-			Str("action", "UpdateGlobalRunner").
-			Msg("Failed to encrypt secrets")
+		slog.Error(
+			"Failed to encrypt secrets",
+			slog.Any("error", err),
+			slog.String("action", "UpdateGlobalRunner"),
+			slog.String("runner", record.ID),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to encrypt secrets"),
@@ -344,11 +353,12 @@ func (a *API) UpdateGlobalRunner(w http.ResponseWriter, r *http.Request, _ Runne
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("runner", record.ID).
-			Str("action", "UpdateGlobalRunner").
-			Msg("Failed to update runner")
+		slog.Error(
+			"Failed to update runner",
+			slog.Any("error", err),
+			slog.String("action", "UpdateGlobalRunner"),
+			slog.String("runner", record.ID),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to update runner"),
@@ -375,11 +385,12 @@ func (a *API) DeleteGlobalRunner(w http.ResponseWriter, r *http.Request, _ Runne
 		&model.Project{},
 		record.ID,
 	); err != nil {
-		log.Error().
-			Err(err).
-			Str("action", "DeletGlobalRunner").
-			Str("runner", record.ID).
-			Msg("Failed to delete runner")
+		slog.Error(
+			"Failed to delete runner",
+			slog.Any("error", err),
+			slog.String("action", "DeletGlobalRunner"),
+			slog.String("runner", record.ID),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to delete runner"),

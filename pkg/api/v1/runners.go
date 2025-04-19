@@ -2,6 +2,7 @@ package v1
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/gexec/gexec/pkg/middleware/current"
@@ -9,7 +10,6 @@ import (
 	"github.com/gexec/gexec/pkg/secret"
 	"github.com/gexec/gexec/pkg/validate"
 	"github.com/go-chi/render"
-	"github.com/rs/zerolog/log"
 )
 
 // ListProjectRunners implements the v1.ServerInterface.
@@ -33,11 +33,12 @@ func (a *API) ListProjectRunners(w http.ResponseWriter, r *http.Request, _ Proje
 	)
 
 	if err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("action", "ListProjectRunners").
-			Msg("Failed to load runners")
+		slog.Error(
+			"Failed to load runners",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("action", "ListProjectRunners"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to load runners"),
@@ -50,11 +51,12 @@ func (a *API) ListProjectRunners(w http.ResponseWriter, r *http.Request, _ Proje
 	payload := make([]Runner, len(records))
 	for id, record := range records {
 		if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-			log.Error().
-				Err(err).
-				Str("project", project.ID).
-				Str("action", "ListProjectRunners").
-				Msg("Failed to decrypt secrets")
+			slog.Error(
+				"Failed to decrypt secrets",
+				slog.Any("error", err),
+				slog.String("project", project.ID),
+				slog.String("action", "ListProjectRunners"),
+			)
 
 			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to decrypt secrets"),
@@ -83,12 +85,13 @@ func (a *API) ShowProjectRunner(w http.ResponseWriter, r *http.Request, _ Projec
 	record := a.ProjectRunnerFromContext(ctx)
 
 	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("runner", record.ID).
-			Str("action", "ShowProjectRunner").
-			Msg("Failed to decrypt secrets")
+		slog.Error(
+			"Failed to decrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("runner", project.ID),
+			slog.String("action", "ShowProjectRunner"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decrypt secrets"),
@@ -110,11 +113,12 @@ func (a *API) CreateProjectRunner(w http.ResponseWriter, r *http.Request, _ Proj
 	body := &CreateProjectRunnerBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("action", "CreateProjectRunner").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("action", "CreateProjectRunner"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -145,11 +149,12 @@ func (a *API) CreateProjectRunner(w http.ResponseWriter, r *http.Request, _ Proj
 	}
 
 	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("action", "CreateProjectRunner").
-			Msg("Failed to encrypt secrets")
+		slog.Error(
+			"Failed to encrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("action", "CreateProjectRunner"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to encrypt secrets"),
@@ -188,11 +193,12 @@ func (a *API) CreateProjectRunner(w http.ResponseWriter, r *http.Request, _ Proj
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("action", "CreateProjectRunner").
-			Msg("Failed to create runner")
+		slog.Error(
+			"Failed to create runner",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("action", "CreateProjectRunner"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to create runner"),
@@ -215,12 +221,13 @@ func (a *API) UpdateProjectRunner(w http.ResponseWriter, r *http.Request, _ Proj
 	body := &UpdateProjectRunnerBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("runner", record.ID).
-			Str("action", "UpdateProjectRunner").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("runner", record.ID),
+			slog.String("action", "UpdateProjectRunner"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -231,12 +238,13 @@ func (a *API) UpdateProjectRunner(w http.ResponseWriter, r *http.Request, _ Proj
 	}
 
 	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("runner", record.ID).
-			Str("action", "UpdateProjectRunner").
-			Msg("Failed to decrypt secrets")
+		slog.Error(
+			"Failed to decrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("runner", project.ID),
+			slog.String("action", "UpdateProjectRunner"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decrypt runners"),
@@ -263,12 +271,13 @@ func (a *API) UpdateProjectRunner(w http.ResponseWriter, r *http.Request, _ Proj
 	}
 
 	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("runner", record.ID).
-			Str("action", "UpdateProjectRunner").
-			Msg("Failed to encrypt secrets")
+		slog.Error(
+			"Failed to encrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("runner", record.ID),
+			slog.String("action", "UpdateProjectRunner"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to encrypt secrets"),
@@ -307,12 +316,13 @@ func (a *API) UpdateProjectRunner(w http.ResponseWriter, r *http.Request, _ Proj
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("runner", record.ID).
-			Str("action", "UpdateProjectRunner").
-			Msg("Failed to update runner")
+		slog.Error(
+			"Failed to update runner",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("runner", record.ID),
+			slog.String("action", "UpdateProjectRunner"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to update runner"),
@@ -340,12 +350,13 @@ func (a *API) DeleteProjectRunner(w http.ResponseWriter, r *http.Request, _ Proj
 		project,
 		record.ID,
 	); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("runner", record.ID).
-			Str("action", "DeletProjectRunner").
-			Msg("Failed to delete runner")
+		slog.Error(
+			"Failed to delete runner",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("runner", record.ID),
+			slog.String("action", "DeleteProjectRunner"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Status:  ToPtr(http.StatusBadRequest),

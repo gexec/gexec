@@ -3,6 +3,7 @@ package v1
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -16,7 +17,6 @@ import (
 	"github.com/gexec/gexec/pkg/token"
 	"github.com/gexec/gexec/pkg/upload"
 	"github.com/go-chi/render"
-	"github.com/rs/zerolog/log"
 )
 
 //go:generate go tool github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=config.yaml ../../../openapi/v1.yaml
@@ -106,10 +106,10 @@ func (a *API) Authentication(ctx context.Context, input *openapi3filter.Authenti
 	scheme := input.SecuritySchemeName
 	operation := input.RequestValidationInput.Route.Operation.OperationID
 
-	logger := log.With().
-		Str("scheme", scheme).
-		Str("operation", operation).
-		Logger()
+	logger := slog.With(
+		slog.String("scheme", scheme),
+		slog.String("operation", operation),
+	)
 
 	switch scheme {
 	case "Header":
@@ -138,17 +138,19 @@ func (a *API) Authentication(ctx context.Context, input *openapi3filter.Authenti
 		)
 
 		if err != nil {
-			logger.Error().
-				Err(err).
-				Str("user", t.Ident).
-				Msg("Failed to find user")
+			logger.Error(
+				"Failed to find user",
+				slog.Any("error", err),
+				slog.String("user", t.Ident),
+			)
 
 			return fmt.Errorf("failed to find user")
 		}
 
-		logger.Trace().
-			Str("user", t.Login).
-			Msg("Authentication")
+		logger.Debug(
+			"Authentication",
+			slog.String("user", t.Login),
+		)
 
 		authenticating = user
 
@@ -183,17 +185,19 @@ func (a *API) Authentication(ctx context.Context, input *openapi3filter.Authenti
 		)
 
 		if err != nil {
-			logger.Error().
-				Err(err).
-				Str("user", t.Ident).
-				Msg("Failed to find user")
+			logger.Error(
+				"Failed to find user",
+				slog.Any("error", err),
+				slog.String("user", t.Ident),
+			)
 
 			return fmt.Errorf("failed to find user")
 		}
 
-		logger.Trace().
-			Str("user", t.Login).
-			Msg("Authentication")
+		logger.Debug(
+			"Authentication",
+			slog.String("user", t.Login),
+		)
 
 		authenticating = user
 
@@ -211,17 +215,19 @@ func (a *API) Authentication(ctx context.Context, input *openapi3filter.Authenti
 		)
 
 		if err != nil {
-			logger.Error().
-				Err(err).
-				Str("user", username).
-				Msg("Wrong credentials")
+			logger.Error(
+				"Wrong credentials",
+				slog.Any("error", err),
+				slog.String("user", username),
+			)
 
 			return fmt.Errorf("wrong credentials")
 		}
 
-		logger.Trace().
-			Str("user", username).
-			Msg("Authentication")
+		logger.Debug(
+			"Authentication",
+			slog.String("user", username),
+		)
 
 		authenticating = user
 
@@ -229,10 +235,10 @@ func (a *API) Authentication(ctx context.Context, input *openapi3filter.Authenti
 		return fmt.Errorf("unknown security scheme: %s", scheme)
 	}
 
-	log.Trace().
-		Str("username", authenticating.Username).
-		Str("operation", operation).
-		Msg("Authenticated")
+	logger.Debug(
+		"Authenticated",
+		slog.String("user", authenticating.Username),
+	)
 
 	current.SetUser(
 		input.RequestValidationInput.Request.Context(),

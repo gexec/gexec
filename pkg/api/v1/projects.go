@@ -3,6 +3,7 @@ package v1
 import (
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/gexec/gexec/pkg/middleware/current"
@@ -10,7 +11,6 @@ import (
 	"github.com/gexec/gexec/pkg/store"
 	"github.com/gexec/gexec/pkg/validate"
 	"github.com/go-chi/render"
-	"github.com/rs/zerolog/log"
 )
 
 // ListProjects implements the v1.ServerInterface.
@@ -32,10 +32,11 @@ func (a *API) ListProjects(w http.ResponseWriter, r *http.Request, params ListPr
 	)
 
 	if err != nil {
-		log.Error().
-			Err(err).
-			Str("action", "ListProjects").
-			Msg("Failed to load projects")
+		slog.Error(
+			"Failed to load projects",
+			slog.Any("error", err),
+			slog.String("action", "ListProjects"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to load projects"),
@@ -74,10 +75,11 @@ func (a *API) CreateProject(w http.ResponseWriter, r *http.Request) {
 	body := &CreateProjectBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("action", "CreateProject").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("action", "CreateProject"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -129,10 +131,11 @@ func (a *API) CreateProject(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("action", "CreateProject").
-			Msg("Failed to create project")
+		slog.Error(
+			"Failed to create project",
+			slog.Any("error", err),
+			slog.String("action", "CreateProject"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to create project"),
@@ -154,11 +157,12 @@ func (a *API) UpdateProject(w http.ResponseWriter, r *http.Request, _ ProjectID)
 	body := &UpdateProjectBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", record.ID).
-			Str("action", "UpdateProject").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("project", record.ID),
+			slog.String("action", "UpdateProject"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -204,11 +208,12 @@ func (a *API) UpdateProject(w http.ResponseWriter, r *http.Request, _ ProjectID)
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("project", record.ID).
-			Str("action", "UpdateProject").
-			Msg("Failed to update project")
+		slog.Error(
+			"Failed to update project",
+			slog.Any("error", err),
+			slog.String("project", record.ID),
+			slog.String("action", "UpdateProject"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to update project"),
@@ -234,11 +239,12 @@ func (a *API) DeleteProject(w http.ResponseWriter, r *http.Request, _ ProjectID)
 		ctx,
 		record.ID,
 	); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", record.ID).
-			Str("action", "DeletProject").
-			Msg("Failed to delete project")
+		slog.Error(
+			"Failed to delete project",
+			slog.Any("error", err),
+			slog.String("project", record.ID),
+			slog.String("action", "DeleteProject"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to delete project"),
@@ -277,11 +283,12 @@ func (a *API) ListProjectGroups(w http.ResponseWriter, r *http.Request, _ Projec
 	)
 
 	if err != nil {
-		log.Error().
-			Err(err).
-			Str("project", record.ID).
-			Str("action", "ListProjectGroups").
-			Msg("Failed to load project groups")
+		slog.Error(
+			"Failed to load project groups",
+			slog.Any("error", err),
+			slog.String("project", record.ID),
+			slog.String("action", "ListProjectGroups"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to load project groups"),
@@ -312,11 +319,12 @@ func (a *API) AttachProjectToGroup(w http.ResponseWriter, r *http.Request, _ Pro
 	body := &ProjectGroupPermBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("user", record.ID).
-			Str("action", "AttachProjectToGroup").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("project", record.ID),
+			slog.String("action", "AttachProjectToGroup"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -383,12 +391,13 @@ func (a *API) AttachProjectToGroup(w http.ResponseWriter, r *http.Request, _ Pro
 			})
 		}
 
-		log.Error().
-			Err(err).
-			Str("project", record.ID).
-			Str("group", body.Group).
-			Str("action", "AttachProjectToGroup").
-			Msg("Failed to attach project to group")
+		slog.Error(
+			"Failed to attach project to group",
+			slog.Any("error", err),
+			slog.String("project", record.ID),
+			slog.String("group", body.Group),
+			slog.String("action", "AttachProjectToGroup"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to attach project to group"),
@@ -411,11 +420,12 @@ func (a *API) PermitProjectGroup(w http.ResponseWriter, r *http.Request, _ Proje
 	body := &ProjectGroupPermBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", record.ID).
-			Str("action", "PermitProjectGroup").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("project", record.ID),
+			slog.String("action", "PermitProjectGroup"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -475,12 +485,13 @@ func (a *API) PermitProjectGroup(w http.ResponseWriter, r *http.Request, _ Proje
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("project", record.ID).
-			Str("group", body.Group).
-			Str("action", "PermitProjectGroup").
-			Msg("Failed to update project group perms")
+		slog.Error(
+			"Failed to update project group perms",
+			slog.Any("error", err),
+			slog.String("project", record.ID),
+			slog.String("group", body.Group),
+			slog.String("action", "PermitProjectGroup"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Successfully updated project group perms"),
@@ -503,11 +514,12 @@ func (a *API) DeleteProjectFromGroup(w http.ResponseWriter, r *http.Request, _ P
 	body := &ProjectGroupPermBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", record.ID).
-			Str("action", "DeleteProjectFromGroup").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("project", record.ID),
+			slog.String("action", "DeleteProjectFromGroup"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -553,12 +565,13 @@ func (a *API) DeleteProjectFromGroup(w http.ResponseWriter, r *http.Request, _ P
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("project", record.ID).
-			Str("group", body.Group).
-			Str("action", "DeleteProjectFromGroup").
-			Msg("Failed to drop project from group")
+		slog.Error(
+			"Failed to drop project from group",
+			slog.Any("error", err),
+			slog.String("project", record.ID),
+			slog.String("group", body.Group),
+			slog.String("action", "DeleteProjectFromGroup"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to drop project from group"),
@@ -597,11 +610,12 @@ func (a *API) ListProjectUsers(w http.ResponseWriter, r *http.Request, _ Project
 	)
 
 	if err != nil {
-		log.Error().
-			Err(err).
-			Str("project", record.ID).
-			Str("action", "ListProjectUsers").
-			Msg("Failed to load project users")
+		slog.Error(
+			"Failed to load project users",
+			slog.Any("error", err),
+			slog.String("project", record.ID),
+			slog.String("action", "ListProjectUsers"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to load project users"),
@@ -632,11 +646,12 @@ func (a *API) AttachProjectToUser(w http.ResponseWriter, r *http.Request, _ Proj
 	body := &ProjectUserPermBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", record.ID).
-			Str("action", "AttachProjectToUser").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("project", record.ID),
+			slog.String("action", "AttachProjectToUser"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -705,12 +720,13 @@ func (a *API) AttachProjectToUser(w http.ResponseWriter, r *http.Request, _ Proj
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("action", "AttachProjectToUser").
-			Str("project", record.ID).
-			Str("user", body.User).
-			Msg("Failed to attach project to user")
+		slog.Error(
+			"Failed to attach project to user",
+			slog.Any("error", err),
+			slog.String("project", record.ID),
+			slog.String("user", body.User),
+			slog.String("action", "AttachProjectToUser"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to attach project to user"),
@@ -733,11 +749,12 @@ func (a *API) PermitProjectUser(w http.ResponseWriter, r *http.Request, _ Projec
 	body := &ProjectUserPermBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", record.ID).
-			Str("action", "PermitProjectUser").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("project", record.ID),
+			slog.String("action", "PermitProjectUser"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -797,12 +814,13 @@ func (a *API) PermitProjectUser(w http.ResponseWriter, r *http.Request, _ Projec
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("action", "PermitProjectUser").
-			Str("project", record.ID).
-			Str("user", body.User).
-			Msg("Failed to update project user perms")
+		slog.Error(
+			"Failed to update project user perms",
+			slog.Any("error", err),
+			slog.String("project", record.ID),
+			slog.String("user", body.User),
+			slog.String("action", "PermitProjectUser"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to update project user perms"),
@@ -825,11 +843,12 @@ func (a *API) DeleteProjectFromUser(w http.ResponseWriter, r *http.Request, _ Pr
 	body := &ProjectUserPermBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", record.ID).
-			Str("action", "DeleteProjectFromUser").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("project", record.ID),
+			slog.String("action", "DeleteProjectFromUser"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -875,12 +894,13 @@ func (a *API) DeleteProjectFromUser(w http.ResponseWriter, r *http.Request, _ Pr
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("action", "DeleteProjectFromUser").
-			Str("project", record.ID).
-			Str("user", body.User).
-			Msg("Failed to drop project from user")
+		slog.Error(
+			"Failed to drop project from user",
+			slog.Any("error", err),
+			slog.String("project", record.ID),
+			slog.String("user", body.User),
+			slog.String("action", "DeleteProjectFromUser"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Status:  ToPtr(http.StatusUnprocessableEntity),

@@ -2,13 +2,13 @@ package v1
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/gexec/gexec/pkg/middleware/current"
 	"github.com/gexec/gexec/pkg/model"
 	"github.com/gexec/gexec/pkg/validate"
 	"github.com/go-chi/render"
-	"github.com/rs/zerolog/log"
 )
 
 // ListProjectExecutions implements the v1.ServerInterface.
@@ -32,11 +32,12 @@ func (a *API) ListProjectExecutions(w http.ResponseWriter, r *http.Request, _ Pr
 	)
 
 	if err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("action", "ListProjectExecutions").
-			Msg("Failed to load executions")
+		slog.Error(
+			"Failed to load executions",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("action", "ListProjectExecutions"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to load executions"),
@@ -49,11 +50,12 @@ func (a *API) ListProjectExecutions(w http.ResponseWriter, r *http.Request, _ Pr
 	payload := make([]Execution, len(records))
 	for id, record := range records {
 		if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-			log.Error().
-				Err(err).
-				Str("project", project.ID).
-				Str("action", "ListProjectExecutions").
-				Msg("Failed to decrypt secrets")
+			slog.Error(
+				"Failed to decrypt secrets",
+				slog.Any("error", err),
+				slog.String("project", project.ID),
+				slog.String("action", "ListProjectExecutions"),
+			)
 
 			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to decrypt secrets"),
@@ -82,12 +84,13 @@ func (a *API) ShowProjectExecution(w http.ResponseWriter, r *http.Request, _ Pro
 	record := a.ProjectExecutionFromContext(ctx)
 
 	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("execution", record.ID).
-			Str("action", "ShowProjectExecution").
-			Msg("Failed to decrypt secrets")
+		slog.Error(
+			"Failed to decrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("execution", project.ID),
+			slog.String("action", "ShowProjectExecution"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decrypt secrets"),
@@ -109,11 +112,12 @@ func (a *API) CreateProjectExecution(w http.ResponseWriter, r *http.Request, _ P
 	body := &CreateProjectExecutionBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("action", "CreateProjectExecution").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("action", "CreateProjectExecution"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -132,11 +136,12 @@ func (a *API) CreateProjectExecution(w http.ResponseWriter, r *http.Request, _ P
 	}
 
 	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("action", "CreateProjectExecution").
-			Msg("Failed to encrypt secrets")
+		slog.Error(
+			"Failed to encrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("action", "CreateProjectExecution"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to encrypt secrets"),
@@ -175,11 +180,12 @@ func (a *API) CreateProjectExecution(w http.ResponseWriter, r *http.Request, _ P
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("action", "CreateProjectExecution").
-			Msg("Failed to create execution")
+		slog.Error(
+			"Failed to create execution",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("action", "CreateProjectExecutions"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to create execution"),
@@ -207,12 +213,13 @@ func (a *API) DeleteProjectExecution(w http.ResponseWriter, r *http.Request, _ P
 		project,
 		record.ID,
 	); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("execution", record.ID).
-			Str("action", "DeleteProjectExecution").
-			Msg("Failed to delete execution")
+		slog.Error(
+			"Failed to delete execution",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("execution", record.ID),
+			slog.String("action", "DeleteProjectExecution"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to delete execution"),
@@ -241,12 +248,13 @@ func (a *API) PurgeProjectExecution(w http.ResponseWriter, r *http.Request, _ Pr
 		project,
 		record.ID,
 	); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("execution", record.ID).
-			Str("action", "PurgeProjectExecution").
-			Msg("Failed to purge execution")
+		slog.Error(
+			"Failed to purge execution",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("execution", record.ID),
+			slog.String("action", "PurgeProjectExecution"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to purge execution"),
@@ -277,12 +285,13 @@ func (a *API) OutputProjectExecution(w http.ResponseWriter, r *http.Request, _ P
 	)
 
 	if err != nil {
-		log.Error().
-			Err(err).
-			Str("project", record.ID).
-			Str("execution", record.ID).
-			Str("action", "OutputProjectExecution").
-			Msg("Failed to load output")
+		slog.Error(
+			"Failed to load output",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("execution", record.ID),
+			slog.String("action", "OutputProjectExecution"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to load output"),

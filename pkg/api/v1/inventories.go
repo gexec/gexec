@@ -2,13 +2,13 @@ package v1
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/gexec/gexec/pkg/middleware/current"
 	"github.com/gexec/gexec/pkg/model"
 	"github.com/gexec/gexec/pkg/validate"
 	"github.com/go-chi/render"
-	"github.com/rs/zerolog/log"
 )
 
 // ListProjectInventories implements the v1.ServerInterface.
@@ -32,11 +32,12 @@ func (a *API) ListProjectInventories(w http.ResponseWriter, r *http.Request, _ P
 	)
 
 	if err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("action", "ListProjectInventories").
-			Msg("Failed to load inventories")
+		slog.Error(
+			"Failed to load inventories",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("action", "ListProjectInventories"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to load inventories"),
@@ -49,11 +50,12 @@ func (a *API) ListProjectInventories(w http.ResponseWriter, r *http.Request, _ P
 	payload := make([]Inventory, len(records))
 	for id, record := range records {
 		if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-			log.Error().
-				Err(err).
-				Str("project", project.ID).
-				Str("action", "ListProjectInventories").
-				Msg("Failed to decrypt secrets")
+			slog.Error(
+				"Failed to decrypt secrets",
+				slog.Any("error", err),
+				slog.String("project", project.ID),
+				slog.String("action", "ListProjectInventories"),
+			)
 
 			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to decrypt secrets"),
@@ -82,12 +84,13 @@ func (a *API) ShowProjectInventory(w http.ResponseWriter, r *http.Request, _ Pro
 	record := a.ProjectInventoryFromContext(ctx)
 
 	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("inventory", record.ID).
-			Str("action", "ShowProjectInventory").
-			Msg("Failed to decrypt secrets")
+		slog.Error(
+			"Failed to decrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("inventory", project.ID),
+			slog.String("action", "ShowProjectInventory"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decrypt secrets"),
@@ -109,11 +112,12 @@ func (a *API) CreateProjectInventory(w http.ResponseWriter, r *http.Request, _ P
 	body := &CreateProjectInventoryBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("action", "CreateProjectInventory").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("action", "CreateProjectInventory"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -156,11 +160,12 @@ func (a *API) CreateProjectInventory(w http.ResponseWriter, r *http.Request, _ P
 	}
 
 	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("action", "CreateProjectIntenvory").
-			Msg("Failed to encrypt secrets")
+		slog.Error(
+			"Failed to encrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("action", "CreateProjectIntenvory"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to encrypt secrets"),
@@ -199,11 +204,12 @@ func (a *API) CreateProjectInventory(w http.ResponseWriter, r *http.Request, _ P
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("action", "CreateProjectInventory").
-			Msg("Failed to create inventory")
+		slog.Error(
+			"Failed to create inventory",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("action", "CreateProjectInventory"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to create inventory"),
@@ -226,12 +232,13 @@ func (a *API) UpdateProjectInventory(w http.ResponseWriter, r *http.Request, _ P
 	body := &UpdateProjectInventoryBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("inventory", record.ID).
-			Str("action", "UpdateProjectInventory").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("inventory", record.ID),
+			slog.String("action", "UpdateProjectInventory"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -242,15 +249,16 @@ func (a *API) UpdateProjectInventory(w http.ResponseWriter, r *http.Request, _ P
 	}
 
 	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("inventory", record.ID).
-			Str("action", "UpdateProjectIntenvory").
-			Msg("Failed to decrypt secrets")
+		slog.Error(
+			"Failed to decrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("inventory", project.ID),
+			slog.String("action", "UpdateProjectInventory"),
+		)
 
 		a.RenderNotify(w, r, Notification{
-			Message: ToPtr("Failed to decrypt credentials"),
+			Message: ToPtr("Failed to decrypt secrets"),
 			Status:  ToPtr(http.StatusInternalServerError),
 		})
 
@@ -286,12 +294,13 @@ func (a *API) UpdateProjectInventory(w http.ResponseWriter, r *http.Request, _ P
 	}
 
 	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("inventory", record.ID).
-			Str("action", "UpdateProjectIntenvoryl").
-			Msg("Failed to encrypt secrets")
+		slog.Error(
+			"Failed to encrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("inventory", record.ID),
+			slog.String("action", "UpdateProjectIntenvory"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to encrypt secrets"),
@@ -330,12 +339,13 @@ func (a *API) UpdateProjectInventory(w http.ResponseWriter, r *http.Request, _ P
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("inventory", record.ID).
-			Str("action", "UpdateProjectInventory").
-			Msg("Failed to update inventory")
+		slog.Error(
+			"Failed to update inventory",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("inventory", record.ID),
+			slog.String("action", "UpdateProjectInventory"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to update inventory"),
@@ -363,12 +373,13 @@ func (a *API) DeleteProjectInventory(w http.ResponseWriter, r *http.Request, _ P
 		project,
 		record.ID,
 	); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("inventory", record.ID).
-			Str("action", "DeletProjectInventory").
-			Msg("Failed to delete inventory")
+		slog.Error(
+			"Failed to delete inventory",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("inventory", record.ID),
+			slog.String("action", "DeletProjectInventory"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Status:  ToPtr(http.StatusBadRequest),

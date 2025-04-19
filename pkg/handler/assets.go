@@ -2,11 +2,11 @@ package handler
 
 import (
 	"io/fs"
+	"log/slog"
 	"net/http"
 	"path"
 
 	"github.com/gexec/gexec/pkg/frontend"
-	"github.com/rs/zerolog/log"
 )
 
 // Assets provides an handler to read all assets from embedded frontend.
@@ -17,10 +17,11 @@ func (h *Handler) Assets() http.Handler {
 	)
 
 	if err != nil {
-		log.Warn().
-			Err(err).
-			Str("handler", "assets").
-			Msg("Failed to load assets")
+		slog.Error(
+			"Failed to load assets",
+			slog.Any("error", err),
+			slog.String("handler", "assets"),
+		)
 	}
 
 	return http.StripPrefix(

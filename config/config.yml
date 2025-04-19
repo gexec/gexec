@@ -17,7 +17,6 @@ metrics:
 logs:
   level: info
   pretty: true
-  color: true
 
 cleanup:
   enabled: true

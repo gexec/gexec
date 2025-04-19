@@ -382,7 +382,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 			environment3 := &model.Environment{
 				ProjectID: record.ID,
 				Slug:      "staging",
-				Name:      "Stating",
+				Name:      "Staging",
 			}
 
 			if err := environment3.SerializeSecret(s.client.encrypt.Passphrase); err != nil {

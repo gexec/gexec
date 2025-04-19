@@ -44,10 +44,6 @@ func init() {
 	rootCmd.PersistentFlags().Bool("log-pretty", true, "Enable pretty logging")
 	viper.SetDefault("log.pretty", true)
 	_ = viper.BindPFlag("log.pretty", rootCmd.PersistentFlags().Lookup("log-pretty"))
-
-	rootCmd.PersistentFlags().Bool("log-color", true, "Enable colored logging")
-	viper.SetDefault("log.color", true)
-	_ = viper.BindPFlag("log.color", rootCmd.PersistentFlags().Lookup("log-color"))
 }
 
 // Run parses the command line arguments and executes the program.

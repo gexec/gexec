@@ -278,7 +278,6 @@ func (s *Inventories) validate(ctx context.Context, record *model.Inventory, _ b
 
 	if err := validation.Validate(
 		record.RepositoryID,
-		validation.Required,
 		validation.By(s.client.Repositories.ValidateExists(ctx, record.ProjectID)),
 	); err != nil {
 		errs.Errors = append(errs.Errors, validate.Error{

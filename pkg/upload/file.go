@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -22,10 +23,11 @@ type FileUpload struct {
 }
 
 // Info prepares some informational message about the handler.
-func (u *FileUpload) Info() map[string]interface{} {
-	result := make(map[string]interface{})
-	result["driver"] = "file"
-	result["path"] = u.path
+func (u *FileUpload) Info() []any {
+	result := []any{
+		slog.String("driver", "file"),
+		slog.String("path", u.path),
+	}
 
 	return result
 }

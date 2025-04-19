@@ -2,10 +2,10 @@ package command
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -36,9 +36,10 @@ func healthAction(_ *cobra.Command, _ []string) {
 	)
 
 	if err != nil {
-		log.Error().
-			Err(err).
-			Msg("Failed to request health check")
+		slog.Error(
+			"Failed to request health check",
+			slog.Any("error", err),
+		)
 
 		os.Exit(1)
 	}
@@ -46,14 +47,16 @@ func healthAction(_ *cobra.Command, _ []string) {
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != 200 {
-		log.Error().
-			Int("code", resp.StatusCode).
-			Msg("Health seems to be in bad state")
+		slog.Error(
+			"HEalth seems to be in bad state",
+			slog.Int("code", resp.StatusCode),
+		)
 
 		os.Exit(1)
 	}
 
-	log.Debug().
-		Int("code", resp.StatusCode).
-		Msg("Health check seems to be fine")
+	slog.Debug(
+		"Health check seems to be fine",
+		slog.Int("code", resp.StatusCode),
+	)
 }

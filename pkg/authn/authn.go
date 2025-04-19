@@ -3,11 +3,11 @@ package authn
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gexec/gexec/pkg/config"
 	"github.com/gexec/gexec/pkg/secret"
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/endpoints"
@@ -116,14 +116,15 @@ func New(opts ...Option) (*Authn, error) {
 }
 
 func entraidProvider(cfg config.AuthProvider) (*Provider, error) {
-	logger := log.With().
-		Str("service", "provider").
-		Str("provider", "entraid").
-		Str("name", cfg.Name).
-		Logger()
+	logger := slog.With(
+		slog.String("service", "provider"),
+		slog.String("provider", "entraid"),
+		slog.String("name", cfg.Name),
+	)
 
-	logger.Info().
-		Msg("Registering auth provider")
+	logger.Info(
+		"Registering auth provider",
+	)
 
 	p := &Provider{
 		Config: &cfg,
@@ -179,14 +180,15 @@ func entraidProvider(cfg config.AuthProvider) (*Provider, error) {
 }
 
 func googleProvider(cfg config.AuthProvider) (*Provider, error) {
-	logger := log.With().
-		Str("service", "provider").
-		Str("provider", "google").
-		Str("name", cfg.Name).
-		Logger()
+	logger := slog.With(
+		slog.String("service", "provider"),
+		slog.String("provider", "google"),
+		slog.String("name", cfg.Name),
+	)
 
-	logger.Info().
-		Msg("Registering auth provider")
+	logger.Info(
+		"Registering auth provider",
+	)
 
 	p := &Provider{
 		Config: &cfg,
@@ -236,14 +238,15 @@ func googleProvider(cfg config.AuthProvider) (*Provider, error) {
 }
 
 func githubProvider(cfg config.AuthProvider) (*Provider, error) {
-	logger := log.With().
-		Str("service", "provider").
-		Str("provider", "github").
-		Str("name", cfg.Name).
-		Logger()
+	logger := slog.With(
+		slog.String("service", "provider"),
+		slog.String("provider", "github"),
+		slog.String("name", cfg.Name),
+	)
 
-	logger.Info().
-		Msg("Registering auth provider")
+	logger.Info(
+		"Registering auth provider",
+	)
 
 	p := &Provider{
 		Config: &cfg,
@@ -310,14 +313,15 @@ func githubProvider(cfg config.AuthProvider) (*Provider, error) {
 }
 
 func giteaProvider(cfg config.AuthProvider) (*Provider, error) {
-	logger := log.With().
-		Str("service", "provider").
-		Str("provider", "gitea").
-		Str("name", cfg.Name).
-		Logger()
+	logger := slog.With(
+		slog.String("service", "provider"),
+		slog.String("provider", "gitea"),
+		slog.String("name", cfg.Name),
+	)
 
-	logger.Info().
-		Msg("Registering auth provider")
+	logger.Info(
+		"Registering auth provider",
+	)
 
 	p := &Provider{
 		Config: &cfg,
@@ -379,14 +383,15 @@ func giteaProvider(cfg config.AuthProvider) (*Provider, error) {
 }
 
 func gitlabProvider(cfg config.AuthProvider) (*Provider, error) {
-	logger := log.With().
-		Str("service", "provider").
-		Str("provider", "gitlab").
-		Str("name", cfg.Name).
-		Logger()
+	logger := slog.With(
+		slog.String("service", "provider"),
+		slog.String("provider", "gitlab"),
+		slog.String("name", cfg.Name),
+	)
 
-	logger.Info().
-		Msg("Registering auth provider")
+	logger.Info(
+		"Registering auth provider",
+	)
 
 	p := &Provider{
 		Config: &cfg,
@@ -451,14 +456,15 @@ func gitlabProvider(cfg config.AuthProvider) (*Provider, error) {
 }
 
 func oidcProvider(cfg config.AuthProvider) (*Provider, error) {
-	logger := log.With().
-		Str("service", "provider").
-		Str("provider", "oidc").
-		Str("name", cfg.Name).
-		Logger()
+	logger := slog.With(
+		slog.String("service", "provider"),
+		slog.String("provider", "oidc"),
+		slog.String("name", cfg.Name),
+	)
 
-	logger.Info().
-		Msg("Registering auth provider")
+	logger.Info(
+		"Registering auth provider",
+	)
 
 	p := &Provider{
 		Config: &cfg,

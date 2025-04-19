@@ -16,7 +16,7 @@ var (
 
 // Upload provides the interface for the upload implementations.
 type Upload interface {
-	Info() map[string]interface{}
+	Info() []any
 	Prepare() (Upload, error)
 	Close() error
 	Upload(context.Context, string, *bytes.Buffer) error

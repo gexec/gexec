@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/url"
 	"strconv"
 	"strings"
@@ -14,14 +15,13 @@ import (
 	"github.com/gexec/gexec/pkg/migrations"
 	"github.com/gexec/gexec/pkg/model"
 	"github.com/gexec/gexec/pkg/upload"
-	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/mysqldialect"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"github.com/uptrace/bun/driver/pgdriver"
 	"github.com/uptrace/bun/driver/sqliteshim"
-	"github.com/uptrace/bun/extra/bunzerolog"
+	"github.com/uptrace/bun/extra/bunslog"
 	"github.com/uptrace/bun/migrate"
 
 	// generally import the mysql driver.
@@ -158,21 +158,31 @@ func (s *Store) Admin(username, password, email string) error {
 }
 
 // Info returns some basic db informations.
-func (s *Store) Info() map[string]interface{} {
-	result := make(map[string]interface{})
-	result["driver"] = s.driver
-	result["database"] = s.database
+func (s *Store) Info() []any {
+	result := []any{
+		slog.String("driver", s.driver),
+		slog.String("database", s.database),
+	}
 
 	if s.host != "" {
-		result["host"] = s.host
+		result = append(
+			result,
+			slog.String("host", s.host),
+		)
 	}
 
 	if s.port != "" {
-		result["port"] = s.port
+		result = append(
+			result,
+			slog.String("port", s.port),
+		)
 	}
 
 	if s.username != "" {
-		result["username"] = s.username
+		result = append(
+			result,
+			slog.String("username", s.username),
+		)
 	}
 
 	return result
@@ -208,11 +218,11 @@ func (s *Store) Open() (bool, error) {
 	}
 
 	s.handle.AddQueryHook(
-		bunzerolog.NewQueryHook(
-			bunzerolog.WithQueryLogLevel(zerolog.TraceLevel),
-			bunzerolog.WithSlowQueryLogLevel(zerolog.WarnLevel),
-			bunzerolog.WithErrorQueryLogLevel(zerolog.ErrorLevel),
-			bunzerolog.WithSlowQueryThreshold(3*time.Second),
+		bunslog.NewQueryHook(
+			bunslog.WithQueryLogLevel(slog.LevelDebug),
+			bunslog.WithSlowQueryLogLevel(slog.LevelWarn),
+			bunslog.WithErrorQueryLogLevel(slog.LevelError),
+			bunslog.WithSlowQueryThreshold(3*time.Second),
 		),
 	)
 

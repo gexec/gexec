@@ -2,6 +2,7 @@ package router
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"path"
 	"time"
@@ -23,8 +24,6 @@ import (
 	"github.com/go-chi/render"
 	oamw "github.com/go-openapi/runtime/middleware"
 	cgmw "github.com/oapi-codegen/nethttp-middleware"
-	"github.com/rs/zerolog/hlog"
-	"github.com/rs/zerolog/log"
 )
 
 // Server initializes the routing of the server.
@@ -37,28 +36,40 @@ func Server(
 ) *chi.Mux {
 	mux := chi.NewRouter()
 
-	mux.Use(hlog.NewHandler(log.Logger))
-	mux.Use(hlog.RemoteAddrHandler("ip"))
-	mux.Use(hlog.URLHandler("path"))
-	mux.Use(hlog.MethodHandler("method"))
-	mux.Use(hlog.RequestIDHandler("request_id", "Request-Id"))
-
-	mux.Use(hlog.AccessHandler(func(r *http.Request, status, size int, duration time.Duration) {
-		hlog.FromRequest(r).Debug().
-			Int("status", status).
-			Int("size", size).
-			Dur("duration", duration).
-			Msg("Accesslog")
-	}))
-
-	mux.Use(render.SetContentType(render.ContentTypeJSON))
 	mux.Use(middleware.Timeout(60 * time.Second))
+	mux.Use(middleware.RequestID)
 	mux.Use(middleware.RealIP)
 	mux.Use(middleware.Recoverer)
 	mux.Use(header.Version)
 	mux.Use(header.Cache)
 	mux.Use(header.Secure)
 	mux.Use(header.Options)
+
+	mux.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+			start := time.Now()
+
+			defer func() {
+				duration := time.Since(start)
+
+				slog.Debug(
+					"",
+					slog.Duration("duration", duration),
+					slog.String("ip", r.RemoteAddr),
+					slog.String("method", r.Method),
+					slog.String("path", r.URL.Path),
+					slog.String("request_id", middleware.GetReqID(r.Context())),
+					slog.Int("size", ww.BytesWritten()),
+					slog.Int("status", ww.Status()),
+				)
+			}()
+
+			next.ServeHTTP(ww, r)
+		})
+	})
+
+	mux.Use(render.SetContentType(render.ContentTypeJSON))
 	mux.Use(current.Middleware)
 
 	mux.Route(cfg.Server.Root, func(root chi.Router) {
@@ -81,9 +92,10 @@ func Server(
 			).Server()
 
 			if err != nil {
-				log.Error().
-					Err(err).
-					Msg("Failed to linitialize scim server")
+				slog.Error(
+					"Failed to linitialize scim server",
+					slog.Any("error", err),
+				)
 			}
 
 			root.Mount("/api/scim/v2", srv)
@@ -93,10 +105,11 @@ func Server(
 			swagger, err := v1.GetSwagger()
 
 			if err != nil {
-				log.Error().
-					Err(err).
-					Str("version", "v1").
-					Msg("Failed to load openapi spec")
+				slog.Error(
+					"Failed to load openapi spec",
+					slog.Any("error", err),
+					slog.String("version", "v1"),
+				)
 			}
 
 			swagger.Servers = openapi3.Servers{
@@ -504,7 +517,9 @@ func Metrics(
 	mux := chi.NewRouter()
 
 	mux.Use(middleware.Timeout(60 * time.Second))
+	mux.Use(middleware.RequestID)
 	mux.Use(middleware.RealIP)
+	mux.Use(middleware.Recoverer)
 	mux.Use(header.Version)
 	mux.Use(header.Cache)
 	mux.Use(header.Secure)

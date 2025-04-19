@@ -2,13 +2,13 @@ package v1
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/gexec/gexec/pkg/middleware/current"
 	"github.com/gexec/gexec/pkg/model"
 	"github.com/gexec/gexec/pkg/validate"
 	"github.com/go-chi/render"
-	"github.com/rs/zerolog/log"
 )
 
 // ListProjectCredentials implements the v1.ServerInterface.
@@ -32,11 +32,12 @@ func (a *API) ListProjectCredentials(w http.ResponseWriter, r *http.Request, _ P
 	)
 
 	if err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("action", "ListProjectCredentials").
-			Msg("Failed to load credentials")
+		slog.Error(
+			"Failed to load credentials",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("action", "ListProjectCredentials"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to load credentials"),
@@ -49,11 +50,12 @@ func (a *API) ListProjectCredentials(w http.ResponseWriter, r *http.Request, _ P
 	payload := make([]Credential, len(records))
 	for id, record := range records {
 		if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-			log.Error().
-				Err(err).
-				Str("project", project.ID).
-				Str("action", "ListProjectCredentials").
-				Msg("Failed to decrypt secrets")
+			slog.Error(
+				"Failed to decrypt secrets",
+				slog.Any("error", err),
+				slog.String("project", project.ID),
+				slog.String("action", "ListProjectCredentials"),
+			)
 
 			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to decrypt secrets"),
@@ -82,12 +84,13 @@ func (a *API) ShowProjectCredential(w http.ResponseWriter, r *http.Request, _ Pr
 	record := a.ProjectCredentialFromContext(ctx)
 
 	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("credential", record.ID).
-			Str("action", "ShowProjectCredential").
-			Msg("Failed to decrypt secrets")
+		slog.Error(
+			"Failed to decrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("credential", project.ID),
+			slog.String("action", "ShowProjectCredential"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decrypt secrets"),
@@ -109,11 +112,12 @@ func (a *API) CreateProjectCredential(w http.ResponseWriter, r *http.Request, _ 
 	body := &CreateProjectCredentialBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("action", "CreateProjectCredential").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("action", "CreateProjectCredential"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -171,11 +175,12 @@ func (a *API) CreateProjectCredential(w http.ResponseWriter, r *http.Request, _ 
 	}
 
 	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("action", "CreateProjectCredential").
-			Msg("Failed to encrypt secrets")
+		slog.Error(
+			"Failed to encrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("action", "CreateProjectCredential"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to encrypt secrets"),
@@ -214,14 +219,32 @@ func (a *API) CreateProjectCredential(w http.ResponseWriter, r *http.Request, _ 
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("action", "CreateProjectCredential").
-			Msg("Failed to create credential")
+		slog.Error(
+			"Failed to create credential",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("action", "CreateProjectCredential"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to create credential"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		})
+
+		return
+	}
+
+	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
+		slog.Error(
+			"Failed to decrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("credential", project.ID),
+			slog.String("action", "CreateProjectCredential"),
+		)
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to decrypt secrets"),
 			Status:  ToPtr(http.StatusInternalServerError),
 		})
 
@@ -241,12 +264,13 @@ func (a *API) UpdateProjectCredential(w http.ResponseWriter, r *http.Request, _ 
 	body := &UpdateProjectCredentialBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("credential", record.ID).
-			Str("action", "UpdateProjectCredential").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("credential", record.ID),
+			slog.String("action", "UpdateProjectCredential"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -257,15 +281,16 @@ func (a *API) UpdateProjectCredential(w http.ResponseWriter, r *http.Request, _ 
 	}
 
 	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("credential", record.ID).
-			Str("action", "UpdateProjectCredential").
-			Msg("Failed to decrypt secrets")
+		slog.Error(
+			"Failed to decrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("credential", project.ID),
+			slog.String("action", "UpdateProjectCredential"),
+		)
 
 		a.RenderNotify(w, r, Notification{
-			Message: ToPtr("Failed to decrypt credentials"),
+			Message: ToPtr("Failed to decrypt secrets"),
 			Status:  ToPtr(http.StatusInternalServerError),
 		})
 
@@ -323,12 +348,13 @@ func (a *API) UpdateProjectCredential(w http.ResponseWriter, r *http.Request, _ 
 	}
 
 	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("credential", record.ID).
-			Str("action", "UpdateProjectCredential").
-			Msg("Failed to encrypt secrets")
+		slog.Error(
+			"Failed to encrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("credential", record.ID),
+			slog.String("action", "UpdateProjectCredential"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to encrypt secrets"),
@@ -367,15 +393,33 @@ func (a *API) UpdateProjectCredential(w http.ResponseWriter, r *http.Request, _ 
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("credential", record.ID).
-			Str("action", "UpdateProjectCredential").
-			Msg("Failed to update credential")
+		slog.Error(
+			"Failed to update credential",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("credential", record.ID),
+			slog.String("action", "UpdateProjectCredential"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to update credential"),
+			Status:  ToPtr(http.StatusInternalServerError),
+		})
+
+		return
+	}
+
+	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
+		slog.Error(
+			"Failed to decrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("credential", project.ID),
+			slog.String("action", "UpdateProjectCredential"),
+		)
+
+		a.RenderNotify(w, r, Notification{
+			Message: ToPtr("Failed to decrypt secrets"),
 			Status:  ToPtr(http.StatusInternalServerError),
 		})
 
@@ -400,12 +444,13 @@ func (a *API) DeleteProjectCredential(w http.ResponseWriter, r *http.Request, _ 
 		project,
 		record.ID,
 	); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("credential", record.ID).
-			Str("action", "DeletProjectCredential").
-			Msg("Failed to delete credential")
+		slog.Error(
+			"Failed to delete credential",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("credential", record.ID),
+			slog.String("action", "DeletProjectCredential"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to delete credential"),

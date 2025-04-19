@@ -2,14 +2,13 @@ package scim
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/elimity-com/scim"
 	"github.com/elimity-com/scim/optional"
 	"github.com/elimity-com/scim/schema"
 	"github.com/gexec/gexec/pkg/config"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"github.com/uptrace/bun"
 )
 
@@ -26,7 +25,6 @@ func New(opts ...Option) *Scim {
 		root:   options.Root,
 		config: options.Config,
 		store:  options.Store,
-		logger: log.With().Str("service", "scim").Logger(),
 	}
 }
 
@@ -35,7 +33,6 @@ type Scim struct {
 	root   string
 	config config.Scim
 	store  *bun.DB
-	logger zerolog.Logger
 }
 
 // Server returns the server which can be mounted into an existing mux.
@@ -179,7 +176,10 @@ func (s *Scim) usersHandler() *userHandlers {
 	return &userHandlers{
 		config: s.config,
 		store:  s.store,
-		logger: s.logger.With().Str("type", "users").Logger(),
+		logger: slog.With(
+			slog.String("service", "scim"),
+			slog.String("type", "users"),
+		),
 	}
 }
 
@@ -187,6 +187,9 @@ func (s *Scim) groupsHandler() *groupHandlers {
 	return &groupHandlers{
 		config: s.config,
 		store:  s.store,
-		logger: s.logger.With().Str("type", "groups").Logger(),
+		logger: slog.With(
+			slog.String("service", "scim"),
+			slog.String("type", "groups"),
+		),
 	}
 }

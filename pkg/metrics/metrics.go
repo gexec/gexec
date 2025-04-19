@@ -3,13 +3,13 @@ package metrics
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/gexec/gexec/pkg/version"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -92,6 +92,7 @@ type Logger struct{}
 
 // Println is used by the prometheus http handler to serve the registry.
 func (Logger) Println(v ...interface{}) {
-	log.Error().
-		Msg(fmt.Sprintln(v...))
+	slog.Error(
+		fmt.Sprintln(v...),
+	)
 }

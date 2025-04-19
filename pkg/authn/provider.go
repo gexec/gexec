@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/Machiel/slugify"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gexec/gexec/pkg/config"
-	"github.com/rs/zerolog"
 	"golang.org/x/oauth2"
 )
 
@@ -19,7 +19,7 @@ type Provider struct {
 	OAuth2   *oauth2.Config
 	OpenID   *oidc.Provider
 	Verifier *oidc.IDTokenVerifier
-	Logger   zerolog.Logger
+	Logger   *slog.Logger
 }
 
 // Claims tries to map all provider claims properly to the wrapper model.
@@ -150,17 +150,19 @@ func (p *Provider) extractOidcUser(attrs map[string]interface{}) (*User, error) 
 		if typed, typeOk := val.(string); typeOk {
 			user.Ident = typed
 		} else {
-			p.Logger.Warn().
-				Str("attr", "ident").
-				Str("mapping", "sub").
-				Str("type", fmt.Sprintf("%T", val)).
-				Msg("Failed to convert attr")
+			p.Logger.Warn(
+				"Failed to convert attr",
+				slog.String("attr", "ident"),
+				slog.String("mapping", "sub"),
+				slog.String("type", fmt.Sprintf("%T", val)),
+			)
 		}
 	} else {
-		p.Logger.Warn().
-			Str("attr", "ident").
-			Str("mapping", "sub").
-			Msg("Failed to fetch attr")
+		p.Logger.Warn(
+			"Failed to fetch attr",
+			slog.String("attr", "ident"),
+			slog.String("mapping", "sub"),
+		)
 	}
 
 	if p.Config.Mappings.Login != "" {
@@ -168,17 +170,19 @@ func (p *Provider) extractOidcUser(attrs map[string]interface{}) (*User, error) 
 			if typed, typeOk := val.(string); typeOk {
 				user.Login = typed
 			} else {
-				p.Logger.Warn().
-					Str("attr", "login").
-					Str("mapping", p.Config.Mappings.Login).
-					Str("type", fmt.Sprintf("%T", val)).
-					Msg("Failed to convert attr")
+				p.Logger.Warn(
+					"Failed to convert attr",
+					slog.String("attr", "login"),
+					slog.String("mapping", p.Config.Mappings.Login),
+					slog.String("type", fmt.Sprintf("%T", val)),
+				)
 			}
 		} else {
-			p.Logger.Warn().
-				Str("attr", "login").
-				Str("mapping", p.Config.Mappings.Login).
-				Msg("Failed to fetch attr")
+			p.Logger.Warn(
+				"Failed to fetch attr",
+				slog.String("attr", "login"),
+				slog.String("mapping", p.Config.Mappings.Login),
+			)
 		}
 	}
 
@@ -187,17 +191,19 @@ func (p *Provider) extractOidcUser(attrs map[string]interface{}) (*User, error) 
 			if typed, typeOk := val.(string); typeOk {
 				user.Name = typed
 			} else {
-				p.Logger.Warn().
-					Str("attr", "name").
-					Str("mapping", p.Config.Mappings.Name).
-					Str("type", fmt.Sprintf("%T", val)).
-					Msg("Failed to convert attr")
+				p.Logger.Warn(
+					"Failed to convert attr",
+					slog.String("attr", "name"),
+					slog.String("mapping", p.Config.Mappings.Name),
+					slog.String("type", fmt.Sprintf("%T", val)),
+				)
 			}
 		} else {
-			p.Logger.Warn().
-				Str("attr", "name").
-				Str("mapping", p.Config.Mappings.Name).
-				Msg("Failed to fetch attr")
+			p.Logger.Warn(
+				"Failed to fetch attr",
+				slog.String("attr", "name"),
+				slog.String("mapping", p.Config.Mappings.Name),
+			)
 		}
 	}
 
@@ -206,17 +212,19 @@ func (p *Provider) extractOidcUser(attrs map[string]interface{}) (*User, error) 
 			if typed, typeOk := val.(string); typeOk {
 				user.Email = typed
 			} else {
-				p.Logger.Warn().
-					Str("attr", "email").
-					Str("mapping", p.Config.Mappings.Email).
-					Str("type", fmt.Sprintf("%T", val)).
-					Msg("Failed to convert attr")
+				p.Logger.Warn(
+					"Failed to convert attr",
+					slog.String("attr", "email"),
+					slog.String("mapping", p.Config.Mappings.Email),
+					slog.String("type", fmt.Sprintf("%T", val)),
+				)
 			}
 		} else {
-			p.Logger.Warn().
-				Str("attr", "email").
-				Str("mapping", p.Config.Mappings.Email).
-				Msg("Failed to fetch attr")
+			p.Logger.Warn(
+				"Failed to fetch attr",
+				slog.String("attr", "email"),
+				slog.String("mapping", p.Config.Mappings.Email),
+			)
 		}
 	}
 
@@ -229,17 +237,19 @@ func (p *Provider) extractOidcUser(attrs map[string]interface{}) (*User, error) 
 				}
 				user.Roles = result
 			} else {
-				p.Logger.Warn().
-					Str("attr", "roles").
-					Str("mapping", p.Config.Mappings.Role).
-					Str("type", fmt.Sprintf("%T", val)).
-					Msg("Failed to convert attr")
+				p.Logger.Warn(
+					"Failed to convert attr",
+					slog.String("attr", "roles"),
+					slog.String("mapping", p.Config.Mappings.Role),
+					slog.String("type", fmt.Sprintf("%T", val)),
+				)
 			}
 		} else {
-			p.Logger.Warn().
-				Str("attr", "roles").
-				Str("mapping", p.Config.Mappings.Role).
-				Msg("Failed to fetch attr")
+			p.Logger.Warn(
+				"Failed to fetch attr",
+				slog.String("attr", "roles"),
+				slog.String("mapping", p.Config.Mappings.Role),
+			)
 		}
 	}
 
@@ -255,60 +265,68 @@ func (p *Provider) extractEntraidUser(attrs map[string]interface{}) (*User, erro
 		if typed, typeOk := val.(string); typeOk {
 			user.Ident = typed
 		} else {
-			p.Logger.Warn().
-				Str("attr", "ident").
-				Str("type", fmt.Sprintf("%T", val)).
-				Msg("Failed to convert attr")
+			p.Logger.Warn(
+				"Failed to convert attr",
+				slog.String("attr", "ident"),
+				slog.String("type", fmt.Sprintf("%T", val)),
+			)
 		}
 	} else {
-		p.Logger.Warn().
-			Str("attr", "ident").
-			Msg("Failed to fetch attr")
+		p.Logger.Warn(
+			"Failed to fetch attr",
+			slog.String("attr", "ident"),
+		)
 	}
 
 	if val, ok := user.Raw["displayName"]; ok {
 		if typed, typeOk := val.(string); typeOk {
 			user.Login = slugify.Slugify(typed)
 		} else {
-			p.Logger.Warn().
-				Str("attr", "login").
-				Str("type", fmt.Sprintf("%T", val)).
-				Msg("Failed to convert attr")
+			p.Logger.Warn(
+				"Failed to convert attr",
+				slog.String("attr", "login"),
+				slog.String("type", fmt.Sprintf("%T", val)),
+			)
 		}
 	} else {
-		p.Logger.Warn().
-			Str("attr", "login").
-			Msg("Failed to fetch attr")
+		p.Logger.Warn(
+			"Failed to fetch attr",
+			slog.String("attr", "login"),
+		)
 	}
 
 	if val, ok := user.Raw["displayName"]; ok {
 		if typed, typeOk := val.(string); typeOk {
 			user.Name = typed
 		} else {
-			p.Logger.Warn().
-				Str("attr", "name").
-				Str("type", fmt.Sprintf("%T", val)).
-				Msg("Failed to convert attr")
+			p.Logger.Warn(
+				"Failed to convert attr",
+				slog.String("attr", "name"),
+				slog.String("type", fmt.Sprintf("%T", val)),
+			)
 		}
 	} else {
-		p.Logger.Warn().
-			Str("attr", "name").
-			Msg("Failed to fetch attr")
+		p.Logger.Warn(
+			"Failed to fetch attr",
+			slog.String("attr", "name"),
+		)
 	}
 
 	if val, ok := user.Raw["mail"]; ok {
 		if typed, typeOk := val.(string); typeOk {
 			user.Email = typed
 		} else {
-			p.Logger.Warn().
-				Str("attr", "email").
-				Str("type", fmt.Sprintf("%T", val)).
-				Msg("Failed to convert attr")
+			p.Logger.Warn(
+				"Failed to convert attr",
+				slog.String("attr", "email"),
+				slog.String("type", fmt.Sprintf("%T", val)),
+			)
 		}
 	} else {
-		p.Logger.Warn().
-			Str("attr", "email").
-			Msg("Failed to fetch attr")
+		p.Logger.Warn(
+			"Failed to fetch attr",
+			slog.String("attr", "email"),
+		)
 	}
 
 	return user, nil
@@ -323,60 +341,68 @@ func (p *Provider) extractGoogleUser(attrs map[string]interface{}) (*User, error
 		if typed, typeOk := val.(string); typeOk {
 			user.Ident = typed
 		} else {
-			p.Logger.Warn().
-				Str("attr", "ident").
-				Str("type", fmt.Sprintf("%T", val)).
-				Msg("Failed to convert attr")
+			p.Logger.Warn(
+				"Failed to convert attr",
+				slog.String("attr", "ident"),
+				slog.String("type", fmt.Sprintf("%T", val)),
+			)
 		}
 	} else {
-		p.Logger.Warn().
-			Str("attr", "ident").
-			Msg("Failed to fetch attr")
+		p.Logger.Warn(
+			"Failed to fetch attr",
+			slog.String("attr", "ident"),
+		)
 	}
 
 	if val, ok := user.Raw["name"]; ok {
 		if typed, typeOk := val.(string); typeOk {
 			user.Login = slugify.Slugify(typed)
 		} else {
-			p.Logger.Warn().
-				Str("attr", "login").
-				Str("type", fmt.Sprintf("%T", val)).
-				Msg("Failed to convert attr")
+			p.Logger.Warn(
+				"Failed to convert attr",
+				slog.String("attr", "login"),
+				slog.String("type", fmt.Sprintf("%T", val)),
+			)
 		}
 	} else {
-		p.Logger.Warn().
-			Str("attr", "login").
-			Msg("Failed to fetch attr")
+		p.Logger.Warn(
+			"Failed to fetch attr",
+			slog.String("attr", "login"),
+		)
 	}
 
 	if val, ok := user.Raw["name"]; ok {
 		if typed, typeOk := val.(string); typeOk {
 			user.Name = typed
 		} else {
-			p.Logger.Warn().
-				Str("attr", "name").
-				Str("type", fmt.Sprintf("%T", val)).
-				Msg("Failed to convert attr")
+			p.Logger.Warn(
+				"Failed to convert attr",
+				slog.String("attr", "name"),
+				slog.String("type", fmt.Sprintf("%T", val)),
+			)
 		}
 	} else {
-		p.Logger.Warn().
-			Str("attr", "name").
-			Msg("Failed to fetch attr")
+		p.Logger.Warn(
+			"Failed to fetch attr",
+			slog.String("attr", "name"),
+		)
 	}
 
 	if val, ok := user.Raw["email"]; ok {
 		if typed, typeOk := val.(string); typeOk {
 			user.Email = typed
 		} else {
-			p.Logger.Warn().
-				Str("attr", "email").
-				Str("type", fmt.Sprintf("%T", val)).
-				Msg("Failed to convert attr")
+			p.Logger.Warn(
+				"Failed to convert attr",
+				slog.String("attr", "email"),
+				slog.String("type", fmt.Sprintf("%T", val)),
+			)
 		}
 	} else {
-		p.Logger.Warn().
-			Str("attr", "email").
-			Msg("Failed to fetch attr")
+		p.Logger.Warn(
+			"Failed to fetch attr",
+			slog.String("attr", "email"),
+		)
 	}
 
 	return user, nil
@@ -391,60 +417,68 @@ func (p *Provider) extractGiteaUser(attrs map[string]interface{}) (*User, error)
 		if typed, typeOk := val.(string); typeOk {
 			user.Ident = typed
 		} else {
-			p.Logger.Warn().
-				Str("attr", "ident").
-				Str("type", fmt.Sprintf("%T", val)).
-				Msg("Failed to convert attr")
+			p.Logger.Warn(
+				"Failed to convert attr",
+				slog.String("attr", "ident"),
+				slog.String("type", fmt.Sprintf("%T", val)),
+			)
 		}
 	} else {
-		p.Logger.Warn().
-			Str("attr", "ident").
-			Msg("Failed to fetch attr")
+		p.Logger.Warn(
+			"Failed to fetch attr",
+			slog.String("attr", "ident"),
+		)
 	}
 
 	if val, ok := user.Raw["preferred_username"]; ok {
 		if typed, typeOk := val.(string); typeOk {
 			user.Login = typed
 		} else {
-			p.Logger.Warn().
-				Str("attr", "login").
-				Str("type", fmt.Sprintf("%T", val)).
-				Msg("Failed to convert attr")
+			p.Logger.Warn(
+				"Failed to convert attr",
+				slog.String("attr", "login"),
+				slog.String("type", fmt.Sprintf("%T", val)),
+			)
 		}
 	} else {
-		p.Logger.Warn().
-			Str("attr", "login").
-			Msg("Failed to fetch attr")
+		p.Logger.Warn(
+			"Failed to fetch attr",
+			slog.String("attr", "login"),
+		)
 	}
 
 	if val, ok := user.Raw["name"]; ok {
 		if typed, typeOk := val.(string); typeOk {
 			user.Name = typed
 		} else {
-			p.Logger.Warn().
-				Str("attr", "name").
-				Str("type", fmt.Sprintf("%T", val)).
-				Msg("Failed to convert attr")
+			p.Logger.Warn(
+				"Failed to convert attr",
+				slog.String("attr", "name"),
+				slog.String("type", fmt.Sprintf("%T", val)),
+			)
 		}
 	} else {
-		p.Logger.Warn().
-			Str("attr", "name").
-			Msg("Failed to fetch attr")
+		p.Logger.Warn(
+			"Failed to fetch attr",
+			slog.String("attr", "name"),
+		)
 	}
 
 	if val, ok := user.Raw["email"]; ok {
 		if typed, typeOk := val.(string); typeOk {
 			user.Email = typed
 		} else {
-			p.Logger.Warn().
-				Str("attr", "email").
-				Str("type", fmt.Sprintf("%T", val)).
-				Msg("Failed to convert attr")
+			p.Logger.Warn(
+				"Failed to convert attr",
+				slog.String("attr", "email"),
+				slog.String("type", fmt.Sprintf("%T", val)),
+			)
 		}
 	} else {
-		p.Logger.Warn().
-			Str("attr", "email").
-			Msg("Failed to fetch attr")
+		p.Logger.Warn(
+			"Failed to fetch attr",
+			slog.String("attr", "email"),
+		)
 	}
 
 	return user, nil
@@ -459,60 +493,68 @@ func (p *Provider) extractGitlabUser(attrs map[string]interface{}) (*User, error
 		if typed, typeOk := val.(float64); typeOk {
 			user.Ident = fmt.Sprintf("%d", int64(typed))
 		} else {
-			p.Logger.Warn().
-				Str("attr", "ident").
-				Str("type", fmt.Sprintf("%T", val)).
-				Msg("Failed to convert attr")
+			p.Logger.Warn(
+				"Failed to convert attr",
+				slog.String("attr", "ident"),
+				slog.String("type", fmt.Sprintf("%T", val)),
+			)
 		}
 	} else {
-		p.Logger.Warn().
-			Str("attr", "ident").
-			Msg("Failed to fetch attr")
+		p.Logger.Warn(
+			"Failed to fetch attr",
+			slog.String("attr", "ident"),
+		)
 	}
 
 	if val, ok := user.Raw["username"]; ok {
 		if typed, typeOk := val.(string); typeOk {
 			user.Login = typed
 		} else {
-			p.Logger.Warn().
-				Str("attr", "login").
-				Str("type", fmt.Sprintf("%T", val)).
-				Msg("Failed to convert attr")
+			p.Logger.Warn(
+				"Failed to convert attr",
+				slog.String("attr", "login"),
+				slog.String("type", fmt.Sprintf("%T", val)),
+			)
 		}
 	} else {
-		p.Logger.Warn().
-			Str("attr", "login").
-			Msg("Failed to fetch attr")
+		p.Logger.Warn(
+			"Failed to fetch attr",
+			slog.String("attr", "login"),
+		)
 	}
 
 	if val, ok := user.Raw["name"]; ok {
 		if typed, typeOk := val.(string); typeOk {
 			user.Name = typed
 		} else {
-			p.Logger.Warn().
-				Str("attr", "name").
-				Str("type", fmt.Sprintf("%T", val)).
-				Msg("Failed to convert attr")
+			p.Logger.Warn(
+				"Failed to convert attr",
+				slog.String("attr", "name"),
+				slog.String("type", fmt.Sprintf("%T", val)),
+			)
 		}
 	} else {
-		p.Logger.Warn().
-			Str("attr", "name").
-			Msg("Failed to fetch attr")
+		p.Logger.Warn(
+			"Failed to fetch attr",
+			slog.String("attr", "name"),
+		)
 	}
 
 	if val, ok := user.Raw["email"]; ok {
 		if typed, typeOk := val.(string); typeOk {
 			user.Email = typed
 		} else {
-			p.Logger.Warn().
-				Str("attr", "email").
-				Str("type", fmt.Sprintf("%T", val)).
-				Msg("Failed to convert attr")
+			p.Logger.Warn(
+				"Failed to convert attr",
+				slog.String("attr", "email"),
+				slog.String("type", fmt.Sprintf("%T", val)),
+			)
 		}
 	} else {
-		p.Logger.Warn().
-			Str("attr", "email").
-			Msg("Failed to fetch attr")
+		p.Logger.Warn(
+			"Failed to fetch attr",
+			slog.String("attr", "email"),
+		)
 	}
 
 	return user, nil
@@ -527,45 +569,51 @@ func (p *Provider) extractGithubUser(attrs map[string]interface{}) (*User, error
 		if typed, typeOk := val.(float64); typeOk {
 			user.Ident = fmt.Sprintf("%d", int64(typed))
 		} else {
-			p.Logger.Warn().
-				Str("attr", "ident").
-				Str("type", fmt.Sprintf("%T", val)).
-				Msg("Failed to convert attr")
+			p.Logger.Warn(
+				"Failed to convert attr",
+				slog.String("attr", "ident"),
+				slog.String("type", fmt.Sprintf("%T", val)),
+			)
 		}
 	} else {
-		p.Logger.Warn().
-			Str("attr", "ident").
-			Msg("Failed to fetch attr")
+		p.Logger.Warn(
+			"Failed to fetch attr",
+			slog.String("attr", "ident"),
+		)
 	}
 
 	if val, ok := user.Raw["login"]; ok {
 		if typed, typeOk := val.(string); typeOk {
 			user.Login = typed
 		} else {
-			p.Logger.Warn().
-				Str("attr", "login").
-				Str("type", fmt.Sprintf("%T", val)).
-				Msg("Failed to convert attr")
+			p.Logger.Warn(
+				"Failed to convert attr",
+				slog.String("attr", "login"),
+				slog.String("type", fmt.Sprintf("%T", val)),
+			)
 		}
 	} else {
-		p.Logger.Warn().
-			Str("attr", "login").
-			Msg("Failed to fetch attr")
+		p.Logger.Warn(
+			"Failed to fetch attr",
+			slog.String("attr", "login"),
+		)
 	}
 
 	if val, ok := user.Raw["name"]; ok {
 		if typed, typeOk := val.(string); typeOk {
 			user.Name = typed
 		} else {
-			p.Logger.Warn().
-				Str("attr", "name").
-				Str("type", fmt.Sprintf("%T", val)).
-				Msg("Failed to convert attr")
+			p.Logger.Warn(
+				"Failed to convert attr",
+				slog.String("attr", "name"),
+				slog.String("type", fmt.Sprintf("%T", val)),
+			)
 		}
 	} else {
-		p.Logger.Warn().
-			Str("attr", "name").
-			Msg("Failed to fetch attr")
+		p.Logger.Warn(
+			"Failed to fetch attr",
+			slog.String("attr", "name"),
+		)
 	}
 
 	if val, ok := user.Raw["email"]; ok {
@@ -573,17 +621,19 @@ func (p *Provider) extractGithubUser(attrs map[string]interface{}) (*User, error
 			if typed, typeOk := val.(string); typeOk {
 				user.Email = typed
 			} else {
-				p.Logger.Warn().
-					Str("attr", "email").
-					Str("type", fmt.Sprintf("%T", val)).
-					Msg("Failed to convert attr")
+				p.Logger.Warn(
+					"Failed to convert attr",
+					slog.String("attr", "email"),
+					slog.String("type", fmt.Sprintf("%T", val)),
+				)
 			}
 		}
 	} else {
 		if user.Raw["email"] != nil {
-			p.Logger.Warn().
-				Str("attr", "email").
-				Msg("Failed to fetch attr")
+			p.Logger.Warn(
+				"Failed to fetch attr",
+				slog.String("attr", "email"),
+			)
 		}
 	}
 

@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 	"path"
 	"strings"
@@ -17,7 +18,6 @@ import (
 	"github.com/gexec/gexec/pkg/token"
 	"github.com/go-chi/render"
 	"github.com/gobwas/glob"
-	"github.com/rs/zerolog/log"
 	"golang.org/x/oauth2"
 )
 
@@ -26,9 +26,10 @@ func (a *API) RequestProvider(w http.ResponseWriter, r *http.Request, providerPa
 	provider, ok := a.identity.Providers[providerParam]
 
 	if !ok {
-		log.Error().
-			Str("provider", providerParam).
-			Msg("Failed to detect provider")
+		slog.Error(
+			"Failed to detect provider",
+			slog.String("provider", providerParam),
+		)
 
 		render.Status(r, http.StatusPreconditionFailed)
 		render.HTML(w, r, templates.String(
@@ -76,9 +77,10 @@ func (a *API) CallbackProvider(w http.ResponseWriter, r *http.Request, providerP
 	provider, ok := a.identity.Providers[providerParam]
 
 	if !ok {
-		log.Error().
-			Str("provider", providerParam).
-			Msg("Failed to detect provider")
+		slog.Error(
+			"Failed to detect provider",
+			slog.String("provider", providerParam),
+		)
 
 		render.Status(r, http.StatusPreconditionFailed)
 		render.HTML(w, r, templates.String(
@@ -108,10 +110,11 @@ func (a *API) CallbackProvider(w http.ResponseWriter, r *http.Request, providerP
 	)
 
 	if err != nil {
-		log.Error().
-			Err(err).
-			Str("provider", providerParam).
-			Msg("Failed to exchange token")
+		slog.Error(
+			"Failed to exchange token",
+			slog.Any("error", err),
+			slog.String("provider", providerParam),
+		)
 
 		render.Status(r, http.StatusPreconditionFailed)
 		render.HTML(w, r, templates.String(
@@ -135,10 +138,11 @@ func (a *API) CallbackProvider(w http.ResponseWriter, r *http.Request, providerP
 	)
 
 	if err != nil {
-		log.Error().
-			Err(err).
-			Str("provider", providerParam).
-			Msg("Failed to parse claims")
+		slog.Error(
+			"Failed to parse claims",
+			slog.Any("error", err),
+			slog.String("provider", providerParam),
+		)
 
 		render.Status(r, http.StatusPreconditionFailed)
 		render.HTML(w, r, templates.String(
@@ -167,11 +171,12 @@ func (a *API) CallbackProvider(w http.ResponseWriter, r *http.Request, providerP
 	)
 
 	if err != nil {
-		log.Error().
-			Err(err).
-			Str("provider", providerParam).
-			Str("username", external.Login).
-			Msg("Failed to create user")
+		slog.Error(
+			"Failed to create user",
+			slog.Any("error", err),
+			slog.String("provider", providerParam),
+			slog.String("username", external.Login),
+		)
 
 		render.Status(r, http.StatusPreconditionFailed)
 		render.HTML(w, r, templates.String(
@@ -189,13 +194,14 @@ func (a *API) CallbackProvider(w http.ResponseWriter, r *http.Request, providerP
 		return
 	}
 
-	log.Debug().
-		Str("provider", providerParam).
-		Str("username", user.Username).
-		Str("uid", user.ID).
-		Str("email", user.Email).
-		Str("external", external.Ident).
-		Msg("Authenticated")
+	slog.Debug(
+		"Authenticated",
+		slog.String("provider", providerParam),
+		slog.String("username", user.Username),
+		slog.String("uid", user.ID),
+		slog.String("email", user.Email),
+		slog.String("external", external.Ident),
+	)
 
 	redirect, err := a.storage.Users.CreateRedirectToken(
 		r.Context(),
@@ -203,11 +209,12 @@ func (a *API) CallbackProvider(w http.ResponseWriter, r *http.Request, providerP
 	)
 
 	if err != nil {
-		log.Error().
-			Err(err).
-			Str("username", user.Username).
-			Str("uid", user.ID).
-			Msg("Failed to generate a token")
+		slog.Error(
+			"Failed to generate a token",
+			slog.Any("error", err),
+			slog.String("username", user.Username),
+			slog.String("uid", user.ID),
+		)
 
 		render.Status(r, http.StatusPreconditionFailed)
 		render.HTML(w, r, templates.String(
@@ -225,11 +232,12 @@ func (a *API) CallbackProvider(w http.ResponseWriter, r *http.Request, providerP
 		return
 	}
 
-	log.Info().
-		Str("username", user.Username).
-		Str("uid", user.ID).
-		Str("token", redirect.Token).
-		Msg("Successfully generated token")
+	slog.Info(
+		"Successfully generated token",
+		slog.String("username", user.Username),
+		slog.String("uid", user.ID),
+		slog.String("token", redirect.Token),
+	)
 
 	w.Header().Set(
 		"Location",
@@ -283,9 +291,10 @@ func (a *API) RedirectAuth(w http.ResponseWriter, r *http.Request) {
 	body := &RedirectAuthBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -310,10 +319,11 @@ func (a *API) RedirectAuth(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("token", body.Token).
-			Msg("Failed to validate token")
+		slog.Error(
+			"Failed to validate token",
+			slog.Any("error", err),
+			slog.String("token", body.Token),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to validate token"),
@@ -329,10 +339,11 @@ func (a *API) RedirectAuth(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
-		log.Error().
-			Err(err).
-			Str("token", body.Token).
-			Msg("Failed to authenticate")
+		slog.Error(
+			"Failed to authenticate",
+			slog.Any("error", err),
+			slog.String("token", body.Token),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to authenticate user"),
@@ -353,10 +364,11 @@ func (a *API) RedirectAuth(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
-		log.Error().
-			Err(err).
-			Str("token", body.Token).
-			Msg("Failed to generate a token")
+		slog.Error(
+			"Failed to generate a token",
+			slog.Any("error", err),
+			slog.String("token", body.Token),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to generate a token"),
@@ -370,10 +382,11 @@ func (a *API) RedirectAuth(w http.ResponseWriter, r *http.Request) {
 		r.Context(),
 		redirect.Token,
 	); err != nil {
-		log.Error().
-			Err(err).
-			Str("token", body.Token).
-			Msg("Failed to cleanup redirect")
+		slog.Error(
+			"Failed to cleanup redirect",
+			slog.Any("error", err),
+			slog.String("token", body.Token),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to cleanup redirect"),
@@ -393,9 +406,10 @@ func (a *API) LoginAuth(w http.ResponseWriter, r *http.Request) {
 	body := &LoginAuthBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -430,10 +444,11 @@ func (a *API) LoginAuth(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("username", body.Username).
-			Msg("Failed to authenticate")
+		slog.Error(
+			"Failed to authenticate",
+			slog.Any("error", err),
+			slog.String("username", body.Username),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to authenticate user"),
@@ -454,10 +469,11 @@ func (a *API) LoginAuth(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
-		log.Error().
-			Err(err).
-			Str("username", body.Username).
-			Msg("Failed to generate a token")
+		slog.Error(
+			"Failed to generate a token",
+			slog.Any("error", err),
+			slog.String("username", body.Username),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to generate a token"),
@@ -489,12 +505,13 @@ func (a *API) RefreshAuth(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
-		log.Error().
-			Err(err).
-			Str("action", "RefreshAuth").
-			Str("username", principal.Username).
-			Str("uid", principal.ID).
-			Msg("Failed to generate a token")
+		slog.Error(
+			"Failed to generate a token",
+			slog.Any("error", err),
+			slog.String("action", "RefreshAuth"),
+			slog.String("username", principal.Username),
+			slog.String("uid", principal.ID),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to generate a token"),
@@ -544,10 +561,11 @@ func detectAdminFor(provider *authn.Provider, external *authn.User) bool {
 		g, err := glob.Compile(email)
 
 		if err != nil {
-			log.Error().
-				Str("provider", provider.Config.Name).
-				Str("glob", email).
-				Msg("Failed to compile email glob")
+			slog.Error(
+				"Failed to compile email glob",
+				slog.String("provider", provider.Config.Name),
+				slog.String("glob", email),
+			)
 
 			continue
 		}

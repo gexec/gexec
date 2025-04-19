@@ -27,13 +27,13 @@ require (
 	github.com/gobwas/glob v0.2.3
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/golang/mock v1.6.0
+	github.com/jeffry-luqman/zlog v0.0.3
 	github.com/joho/godotenv v1.5.1
 	github.com/oapi-codegen/nethttp-middleware v1.1.1
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/oklog/run v1.1.0
 	github.com/prometheus/client_golang v1.22.0
 	github.com/rrivera/identicon v0.0.0-20240116195454-d5ba35832c0d
-	github.com/rs/zerolog v1.34.0
 	github.com/scim2/filter-parser/v2 v2.2.0
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
@@ -44,6 +44,7 @@ require (
 	github.com/uptrace/bun/dialect/sqlitedialect v1.2.11
 	github.com/uptrace/bun/driver/pgdriver v1.2.11
 	github.com/uptrace/bun/driver/sqliteshim v1.2.11
+	github.com/uptrace/bun/extra/bunslog v1.2.11
 	github.com/whilp/git-urls v1.0.0
 	golang.org/x/crypto v0.37.0
 	golang.org/x/oauth2 v0.29.0
@@ -233,7 +234,6 @@ require (
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
-	github.com/rs/xid v1.6.0 // indirect
 	github.com/ryancurrah/gomodguard v1.4.1 // indirect
 	github.com/ryanrolds/sqlclosecheck v0.5.1 // indirect
 	github.com/sagikazarmark/locafero v0.7.0 // indirect

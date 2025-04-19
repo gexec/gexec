@@ -1,12 +1,12 @@
 package handler
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/gexec/gexec/pkg/manifest"
 	"github.com/gexec/gexec/pkg/templates"
 	"github.com/go-chi/render"
-	"github.com/rs/zerolog/log"
 )
 
 // Index renders the template for embedded frontend.
@@ -15,10 +15,11 @@ func (h *Handler) Index() http.HandlerFunc {
 		m, err := manifest.Read(h.config)
 
 		if err != nil {
-			log.Warn().
-				Err(err).
-				Str("handler", "manifest").
-				Msg("Failed to load manifest")
+			slog.Error(
+				"Failed to load manifest",
+				slog.Any("error", err),
+				slog.String("handler", "index"),
+			)
 
 			http.Error(
 				w,

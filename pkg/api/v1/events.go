@@ -1,12 +1,12 @@
 package v1
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/gexec/gexec/pkg/middleware/current"
 	"github.com/gexec/gexec/pkg/model"
 	"github.com/go-chi/render"
-	"github.com/rs/zerolog/log"
 )
 
 // ListProjectEvents implements the v1.ServerInterface.
@@ -33,11 +33,12 @@ func (a *API) ListProjectEvents(w http.ResponseWriter, r *http.Request, _ Projec
 	)
 
 	if err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("action", "ListProjectEvents").
-			Msg("Failed to load events")
+		slog.Error(
+			"Failed to load events",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("action", "ListProjectEvents"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to load events"),

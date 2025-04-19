@@ -79,10 +79,10 @@ func (mr *MockUploadMockRecorder) Handler(arg0 interface{}) *gomock.Call {
 }
 
 // Info mocks base method.
-func (m *MockUpload) Info() map[string]interface{} {
+func (m *MockUpload) Info() []any {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Info")
-	ret0, _ := ret[0].(map[string]interface{})
+	ret0, _ := ret[0].([]any)
 	return ret0
 }
 

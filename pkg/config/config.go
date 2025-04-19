@@ -31,7 +31,6 @@ type Metrics struct {
 type Logs struct {
 	Level  string `mapstructure:"level"`
 	Pretty bool   `mapstructure:"pretty"`
-	Color  bool   `mapstructure:"color"`
 }
 
 // Cleanup defines the cleanup process configuration.

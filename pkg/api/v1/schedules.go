@@ -2,13 +2,13 @@ package v1
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/gexec/gexec/pkg/middleware/current"
 	"github.com/gexec/gexec/pkg/model"
 	"github.com/gexec/gexec/pkg/validate"
 	"github.com/go-chi/render"
-	"github.com/rs/zerolog/log"
 )
 
 // ListProjectSchedules implements the v1.ServerInterface.
@@ -32,11 +32,12 @@ func (a *API) ListProjectSchedules(w http.ResponseWriter, r *http.Request, _ Pro
 	)
 
 	if err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("action", "ListProjectSchedules").
-			Msg("Failed to load schedules")
+		slog.Error(
+			"Failed to load schedules",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("action", "ListProjectSchedules"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to load schedules"),
@@ -49,11 +50,12 @@ func (a *API) ListProjectSchedules(w http.ResponseWriter, r *http.Request, _ Pro
 	payload := make([]Schedule, len(records))
 	for id, record := range records {
 		if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-			log.Error().
-				Err(err).
-				Str("project", project.ID).
-				Str("action", "ListProjectSchedules").
-				Msg("Failed to decrypt secrets")
+			slog.Error(
+				"Failed to decrypt secrets",
+				slog.Any("error", err),
+				slog.String("project", project.ID),
+				slog.String("action", "ListProjectSchedules"),
+			)
 
 			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to decrypt secrets"),
@@ -82,12 +84,13 @@ func (a *API) ShowProjectSchedule(w http.ResponseWriter, r *http.Request, _ Proj
 	record := a.ProjectScheduleFromContext(ctx)
 
 	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("schedule", record.ID).
-			Str("action", "ShowProjectSchedule").
-			Msg("Failed to decrypt secrets")
+		slog.Error(
+			"Failed to decrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("schedule", project.ID),
+			slog.String("action", "ShowProjectSchedule"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decrypt secrets"),
@@ -109,11 +112,12 @@ func (a *API) CreateProjectSchedule(w http.ResponseWriter, r *http.Request, _ Pr
 	body := &CreateProjectScheduleBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("action", "CreateProjectSchedule").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("action", "CreateProjectSchedule"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -148,11 +152,12 @@ func (a *API) CreateProjectSchedule(w http.ResponseWriter, r *http.Request, _ Pr
 	}
 
 	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("action", "CreateProjectSchedule").
-			Msg("Failed to encrypt secrets")
+		slog.Error(
+			"Failed to encrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("action", "CreateProjectSchedule"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to encrypt secrets"),
@@ -191,11 +196,12 @@ func (a *API) CreateProjectSchedule(w http.ResponseWriter, r *http.Request, _ Pr
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("action", "CreateProjectSchedule").
-			Msg("Failed to create schedule")
+		slog.Error(
+			"Failed to create schedule",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("action", "CreateProjectSchedule"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to create schedule"),
@@ -218,12 +224,13 @@ func (a *API) UpdateProjectSchedule(w http.ResponseWriter, r *http.Request, _ Pr
 	body := &UpdateProjectScheduleBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("schedule", record.ID).
-			Str("action", "UpdateProjectSchedule").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("schedule", record.ID),
+			slog.String("action", "UpdateProjectSchedule"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -234,15 +241,16 @@ func (a *API) UpdateProjectSchedule(w http.ResponseWriter, r *http.Request, _ Pr
 	}
 
 	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("schedule", record.ID).
-			Str("action", "UpdateProjectSchedule").
-			Msg("Failed to decrypt secrets")
+		slog.Error(
+			"Failed to decrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("schedule", project.ID),
+			slog.String("action", "UpdateProjectSchedule"),
+		)
 
 		a.RenderNotify(w, r, Notification{
-			Message: ToPtr("Failed to decrypt credentials"),
+			Message: ToPtr("Failed to decrypt secrets"),
 			Status:  ToPtr(http.StatusInternalServerError),
 		})
 
@@ -270,12 +278,13 @@ func (a *API) UpdateProjectSchedule(w http.ResponseWriter, r *http.Request, _ Pr
 	}
 
 	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("schedule", record.ID).
-			Str("action", "UpdateProjectSchedule").
-			Msg("Failed to encrypt secrets")
+		slog.Error(
+			"Failed to encrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("schedule", record.ID),
+			slog.String("action", "UpdateProjectSchedule"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to encrypt secrets"),
@@ -314,12 +323,13 @@ func (a *API) UpdateProjectSchedule(w http.ResponseWriter, r *http.Request, _ Pr
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("schedule", record.ID).
-			Str("action", "UpdateProjectSchedule").
-			Msg("Failed to update schedule")
+		slog.Error(
+			"Failed to update schedule",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("schedule", record.ID),
+			slog.String("action", "UpdateProjectSchedule"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to update schedule"),
@@ -347,12 +357,13 @@ func (a *API) DeleteProjectSchedule(w http.ResponseWriter, r *http.Request, _ Pr
 		project,
 		record.ID,
 	); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("schedule", record.ID).
-			Str("action", "DeletProjectSchedule").
-			Msg("Failed to delete schedule")
+		slog.Error(
+			"Failed to delete schedule",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("schedule", record.ID),
+			slog.String("action", "DeletProjectSchedule"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to delete schedule"),

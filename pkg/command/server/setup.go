@@ -1,42 +1,55 @@
 package command
 
 import (
+	"log/slog"
 	"os"
 	"strings"
 
 	"github.com/gexec/gexec/pkg/config"
 	"github.com/gexec/gexec/pkg/upload"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
+	"github.com/jeffry-luqman/zlog"
 	"github.com/spf13/viper"
 )
 
 func setupLogger() error {
+	var (
+		lvl slog.LevelVar
+	)
+
 	switch strings.ToLower(viper.GetString("log.level")) {
 	case "panic":
-		zerolog.SetGlobalLevel(zerolog.PanicLevel)
+		lvl.Set(slog.LevelError)
 	case "fatal":
-		zerolog.SetGlobalLevel(zerolog.FatalLevel)
+		lvl.Set(slog.LevelError)
 	case "error":
-		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
+		lvl.Set(slog.LevelError)
 	case "warn":
-		zerolog.SetGlobalLevel(zerolog.WarnLevel)
+		lvl.Set(slog.LevelWarn)
 	case "info":
-		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+		lvl.Set(slog.LevelInfo)
 	case "debug":
-		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+		lvl.Set(slog.LevelDebug)
 	case "trace":
-		zerolog.SetGlobalLevel(zerolog.TraceLevel)
+		lvl.Set(slog.LevelDebug)
 	default:
-		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+		lvl.Set(slog.LevelInfo)
 	}
 
 	if viper.GetBool("log.pretty") {
-		log.Logger = log.Output(
-			zerolog.ConsoleWriter{
-				Out:     os.Stderr,
-				NoColor: !viper.GetBool("log.color"),
-			},
+		zlog.HandlerOptions = &slog.HandlerOptions{
+			Level: &lvl,
+		}
+
+		slog.SetDefault(
+			zlog.New(),
+		)
+	} else {
+		slog.SetDefault(
+			slog.New(
+				slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+					Level: &lvl,
+				}),
+			),
 		)
 	}
 
@@ -58,31 +71,36 @@ func setupConfig() {
 	viper.AutomaticEnv()
 
 	if err := readConfig(); err != nil {
-		log.Error().
-			Err(err).
-			Msg("Failed to read config file")
+		slog.Error(
+			"Failed to read config file",
+			slog.Any("error", err),
+		)
 	}
 
 	if err := viper.Unmarshal(cfg); err != nil {
-		log.Error().
-			Err(err).
-			Msg("Failed to parse config file")
+		slog.Error(
+			"Failed to parse config file",
+			slog.Any("error", err),
+		)
 	}
 
 	{
 		passphrase, err := config.Value(cfg.Encrypt.Passphrase)
 
 		if err != nil {
-			log.Fatal().
-				Err(err).
-				Msg("Failed to parse encrypt passphrase secret")
+			slog.Error(
+				"Failed to parse encrypt passphrase secret",
+				slog.Any("error", err),
+			)
 
 			os.Exit(1)
 		}
 
 		if len(passphrase) != 32 {
-			log.Fatal().
-				Msg("Encryption passphrase got to be 32 chars")
+			slog.Error(
+				"Encryption passphrase got to be 32 chars",
+				slog.Any("error", err),
+			)
 
 			os.Exit(1)
 		}

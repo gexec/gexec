@@ -3,12 +3,12 @@ package v1
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/gexec/gexec/pkg/model"
 	"github.com/gexec/gexec/pkg/store"
 	"github.com/go-chi/chi/v5"
-	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -50,11 +50,12 @@ func (a *API) ProjectToContext(next http.Handler) http.Handler {
 				return
 			}
 
-			log.Error().
-				Err(err).
-				Str("action", "ProjectToContext").
-				Str("project", id).
-				Msg("Failed to load project")
+			slog.Error(
+				"Failed to load project",
+				slog.Any("error", err),
+				slog.String("action", "ProjectToContext"),
+				slog.String("project", id),
+			)
 
 			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to load project"),
@@ -118,12 +119,13 @@ func (a *API) ProjectExecutionToContext(next http.Handler) http.Handler {
 				return
 			}
 
-			log.Error().
-				Err(err).
-				Str("action", "ProjectExecutionToContext").
-				Str("project", project.ID).
-				Str("execution", id).
-				Msg("Failed to load execution")
+			slog.Error(
+				"Failed to load execution",
+				slog.Any("error", err),
+				slog.String("action", "ProjectExecutionToContext"),
+				slog.String("project", project.ID),
+				slog.String("execution", id),
+			)
 
 			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to load execution"),
@@ -187,12 +189,13 @@ func (a *API) ProjectScheduleToContext(next http.Handler) http.Handler {
 				return
 			}
 
-			log.Error().
-				Err(err).
-				Str("action", "ProjectScheduleToContext").
-				Str("project", project.ID).
-				Str("schedule", id).
-				Msg("Failed to load schedule")
+			slog.Error(
+				"Failed to load schedule",
+				slog.Any("error", err),
+				slog.String("action", "ProjectScheduleToContext"),
+				slog.String("project", project.ID),
+				slog.String("schedule", id),
+			)
 
 			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to load schedule"),
@@ -256,12 +259,13 @@ func (a *API) ProjectRunnerToContext(next http.Handler) http.Handler {
 				return
 			}
 
-			log.Error().
-				Err(err).
-				Str("action", "ProjectRunnerToContext").
-				Str("project", project.ID).
-				Str("runner", id).
-				Msg("Failed to load runner")
+			slog.Error(
+				"Failed to load runner",
+				slog.Any("error", err),
+				slog.String("action", "ProjectRunnerToContext"),
+				slog.String("project", project.ID),
+				slog.String("runner", id),
+			)
 
 			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to load runner"),
@@ -325,12 +329,13 @@ func (a *API) ProjectCredentialToContext(next http.Handler) http.Handler {
 				return
 			}
 
-			log.Error().
-				Err(err).
-				Str("action", "ProjectCredentialToContext").
-				Str("project", project.ID).
-				Str("credential", id).
-				Msg("Failed to load credential")
+			slog.Error(
+				"Failed to load credential",
+				slog.Any("error", err),
+				slog.String("action", "ProjectCredentialToContext"),
+				slog.String("project", project.ID),
+				slog.String("credential", id),
+			)
 
 			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to load credential"),
@@ -394,12 +399,13 @@ func (a *API) ProjectInventoryToContext(next http.Handler) http.Handler {
 				return
 			}
 
-			log.Error().
-				Err(err).
-				Str("action", "ProjectInventoryToContext").
-				Str("project", project.ID).
-				Str("inventory", id).
-				Msg("Failed to load inventory")
+			slog.Error(
+				"Failed to load inventory",
+				slog.Any("error", err),
+				slog.String("action", "ProjectInventoryToContext"),
+				slog.String("project", project.ID),
+				slog.String("inventory", id),
+			)
 
 			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to load inventory"),
@@ -463,12 +469,13 @@ func (a *API) ProjectRepositoryToContext(next http.Handler) http.Handler {
 				return
 			}
 
-			log.Error().
-				Err(err).
-				Str("action", "ProjectRepositoryToContext").
-				Str("project", project.ID).
-				Str("repository", id).
-				Msg("Failed to load repository")
+			slog.Error(
+				"Failed to load repository",
+				slog.Any("error", err),
+				slog.String("action", "ProjectRepositoryToContext"),
+				slog.String("project", project.ID),
+				slog.String("repository", id),
+			)
 
 			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to load repository"),
@@ -532,12 +539,13 @@ func (a *API) ProjectEnvironmentToContext(next http.Handler) http.Handler {
 				return
 			}
 
-			log.Error().
-				Err(err).
-				Str("action", "ProjectEnvironmentToContext").
-				Str("project", project.ID).
-				Str("environment", id).
-				Msg("Failed to load environment")
+			slog.Error(
+				"Failed to load environment",
+				slog.Any("error", err),
+				slog.String("action", "ProjectEnvironmentToContext"),
+				slog.String("project", project.ID),
+				slog.String("environment", id),
+			)
 
 			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to load environment"),
@@ -611,13 +619,14 @@ func (a *API) ProjectEnvironmentSecretToContext(next http.Handler) http.Handler 
 				return
 			}
 
-			log.Error().
-				Err(err).
-				Str("action", "ProjectEnvironmentSecretToContext").
-				Str("project", project.ID).
-				Str("environment", environment.ID).
-				Str("secret", id).
-				Msg("Failed to load environment secret")
+			slog.Error(
+				"Failed to load environment secret",
+				slog.Any("error", err),
+				slog.String("action", "ProjectEnvironmentSecretToContext"),
+				slog.String("project", project.ID),
+				slog.String("environment", environment.ID),
+				slog.String("secret", id),
+			)
 
 			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to load environment secret"),
@@ -691,13 +700,14 @@ func (a *API) ProjectEnvironmentValueToContext(next http.Handler) http.Handler {
 				return
 			}
 
-			log.Error().
-				Err(err).
-				Str("action", "ProjectEnvironmentValueToContext").
-				Str("project", project.ID).
-				Str("environment", environment.ID).
-				Str("value", id).
-				Msg("Failed to load environment value")
+			slog.Error(
+				"Failed to load environment value",
+				slog.Any("error", err),
+				slog.String("action", "ProjectEnvironmentValueToContext"),
+				slog.String("project", project.ID),
+				slog.String("environment", environment.ID),
+				slog.String("value", id),
+			)
 
 			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to load environment value"),
@@ -761,12 +771,13 @@ func (a *API) ProjectTemplateToContext(next http.Handler) http.Handler {
 				return
 			}
 
-			log.Error().
-				Err(err).
-				Str("action", "ProjectTemplateToContext").
-				Str("project", project.ID).
-				Str("template", id).
-				Msg("Failed to load template")
+			slog.Error(
+				"Failed to load template",
+				slog.Any("error", err),
+				slog.String("action", "ProjectTemplateToContext"),
+				slog.String("project", project.ID),
+				slog.String("template", id),
+			)
 
 			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to load template"),
@@ -840,13 +851,14 @@ func (a *API) ProjectTemplateSurveyToContext(next http.Handler) http.Handler {
 				return
 			}
 
-			log.Error().
-				Err(err).
-				Str("action", "ProjectTemplateSurveyToContext").
-				Str("project", project.ID).
-				Str("template", template.ID).
-				Str("survey", id).
-				Msg("Failed to load template survey")
+			slog.Error(
+				"Failed to load template survey",
+				slog.Any("error", err),
+				slog.String("action", "ProjectTemplateSurveyToContext"),
+				slog.String("project", project.ID),
+				slog.String("template", template.ID),
+				slog.String("survey", id),
+			)
 
 			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to load template survey"),
@@ -920,13 +932,14 @@ func (a *API) ProjectTemplateVaultToContext(next http.Handler) http.Handler {
 				return
 			}
 
-			log.Error().
-				Err(err).
-				Str("action", "ProjectTemplateVaultToContext").
-				Str("project", project.ID).
-				Str("template", template.ID).
-				Str("vault", id).
-				Msg("Failed to load template vault")
+			slog.Error(
+				"Failed to load template vault",
+				slog.Any("error", err),
+				slog.String("action", "ProjectTemplateVaultToContext"),
+				slog.String("project", project.ID),
+				slog.String("template", template.ID),
+				slog.String("vault", id),
+			)
 
 			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to load template vault"),
@@ -979,11 +992,12 @@ func (a *API) GlobalRunnerToContext(next http.Handler) http.Handler {
 				return
 			}
 
-			log.Error().
-				Err(err).
-				Str("action", "GlobalRunnerToContext").
-				Str("runner", id).
-				Msg("Failed to load runner")
+			slog.Error(
+				"Failed to load runner",
+				slog.Any("error", err),
+				slog.String("action", "GlobalRunnerToContext"),
+				slog.String("runner", id),
+			)
 
 			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to load runner"),
@@ -1035,11 +1049,12 @@ func (a *API) GroupToContext(next http.Handler) http.Handler {
 				return
 			}
 
-			log.Error().
-				Err(err).
-				Str("action", "GroupToContext").
-				Str("group", id).
-				Msg("Failed to load group")
+			slog.Error(
+				"Failed to load group",
+				slog.Any("error", err),
+				slog.String("action", "GroupToContext"),
+				slog.String("group", id),
+			)
 
 			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to load group"),
@@ -1091,11 +1106,12 @@ func (a *API) UserToContext(next http.Handler) http.Handler {
 				return
 			}
 
-			log.Error().
-				Err(err).
-				Str("action", "UserToContext").
-				Str("user", id).
-				Msg("Failed to load user")
+			slog.Error(
+				"Failed to load user",
+				slog.Any("error", err),
+				slog.String("action", "UserToContext"),
+				slog.String("user", id),
+			)
 
 			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to load user"),

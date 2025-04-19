@@ -148,6 +148,17 @@ tasks:
       REVISION:
         sh: git rev-parse --short HEAD
 
+  watch:client:
+    desc: Run reloading development client
+    cmds:
+      - task: build:client
+    watch: true
+    method: none
+    sources:
+      - 'cmd/**/*.go'
+      - 'pkg/**/*.go'
+      - 'pkg/**/*.tmpl'
+
   watch:server:
     desc: Run reloading development server
     cmds:

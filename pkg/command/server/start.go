@@ -2,6 +2,7 @@ package command
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,7 +16,6 @@ import (
 	"github.com/gexec/gexec/pkg/secret"
 	"github.com/gexec/gexec/pkg/store"
 	"github.com/oklog/run"
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -240,9 +240,10 @@ func serverAction(ccmd *cobra.Command, _ []string) {
 	)
 
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Msg("Failed to setup identity")
+		slog.Error(
+			"Failed to setup identity",
+			slog.Any("error", err),
+		)
 
 		os.Exit(1)
 	}
@@ -250,16 +251,18 @@ func serverAction(ccmd *cobra.Command, _ []string) {
 	uploads, err := setupUploads(cfg)
 
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Msg("Failed to setup uploads")
+		slog.Error(
+			"Failed to setup uploads",
+			slog.Any("error", err),
+		)
 
 		os.Exit(1)
 	}
 
-	log.Info().
-		Fields(uploads.Info()).
-		Msg("Preparing uploads")
+	slog.Info(
+		"Preparing uploads",
+		uploads.Info()...,
+	)
 
 	defer func() { _ = uploads.Close() }()
 
@@ -271,16 +274,18 @@ func serverAction(ccmd *cobra.Command, _ []string) {
 	)
 
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Msg("Failed to setup database")
+		slog.Error(
+			"Failed to setup database",
+			slog.Any("error", err),
+		)
 
 		os.Exit(1)
 	}
 
-	log.Info().
-		Fields(storage.Info()).
-		Msg("Preparing database")
+	slog.Info(
+		"Preparing database",
+		storage.Info()...,
+	)
 
 	defer func() { _, _ = storage.Close() }()
 
@@ -289,15 +294,17 @@ func serverAction(ccmd *cobra.Command, _ []string) {
 		storage.Open,
 		backoff.WithBackOff(backoff.NewExponentialBackOff()),
 		backoff.WithNotify(func(err error, dur time.Duration) {
-			log.Warn().
-				Err(err).
-				Dur("retry", dur).
-				Msg("Database open failed")
+			slog.Warn(
+				"Database open failed",
+				slog.Any("error", err),
+				slog.Duration("retry", dur),
+			)
 		}),
 	); err != nil || !val {
-		log.Fatal().
-			Err(err).
-			Msg("Giving up to connect to db")
+		slog.Error(
+			"Giving up to connect to db",
+			slog.Any("error", err),
+		)
 
 		os.Exit(1)
 	}
@@ -307,32 +314,36 @@ func serverAction(ccmd *cobra.Command, _ []string) {
 		storage.Ping,
 		backoff.WithBackOff(backoff.NewExponentialBackOff()),
 		backoff.WithNotify(func(err error, dur time.Duration) {
-			log.Warn().
-				Err(err).
-				Dur("retry", dur).
-				Msg("Database ping failed")
+			slog.Warn(
+				"Database ping failed",
+				slog.Any("error", err),
+				slog.Duration("retry", dur),
+			)
 		}),
 	); err != nil || !val {
-		log.Fatal().
-			Err(err).
-			Msg("Giving up to ping the db")
+		slog.Error(
+			"Giving up to ping the db",
+			slog.Any("error", err),
+		)
 
 		os.Exit(1)
 	}
 
 	if _, err := storage.Migrate(ccmd.Context()); err != nil {
-		log.Fatal().
-			Err(err).
-			Msg("Failed to migrate database")
+		slog.Error(
+			"Failed to migrate database",
+			slog.Any("error", err),
+		)
 	}
 
 	if cfg.Admin.Create {
 		username, err := config.Value(cfg.Admin.Username)
 
 		if err != nil {
-			log.Fatal().
-				Err(err).
-				Msg("Failed to parse admin username secret")
+			slog.Error(
+				"Failed to parse admin username secret",
+				slog.Any("error", err),
+			)
 
 			os.Exit(1)
 		}
@@ -340,9 +351,10 @@ func serverAction(ccmd *cobra.Command, _ []string) {
 		password, err := config.Value(cfg.Admin.Password)
 
 		if err != nil {
-			log.Fatal().
-				Err(err).
-				Msg("Failed to parse admin password secret")
+			slog.Error(
+				"Failed to parse admin password secret",
+				slog.Any("error", err),
+			)
 
 			os.Exit(1)
 		}
@@ -350,9 +362,10 @@ func serverAction(ccmd *cobra.Command, _ []string) {
 		email, err := config.Value(cfg.Admin.Email)
 
 		if err != nil {
-			log.Fatal().
-				Err(err).
-				Msg("Failed to parse admin email secret")
+			slog.Error(
+				"Failed to parse admin email secret",
+				slog.Any("error", err),
+			)
 
 			os.Exit(1)
 		}
@@ -362,25 +375,28 @@ func serverAction(ccmd *cobra.Command, _ []string) {
 			password,
 			email,
 		); err != nil {
-			log.Warn().
-				Err(err).
-				Str("username", username).
-				Str("email", email).
-				Msg("Failed to create admin")
+			slog.Warn(
+				"Failed to create admin",
+				slog.Any("error", err),
+				slog.String("username", username),
+				slog.String("email", email),
+			)
 		} else {
-			log.Info().
-				Str("username", username).
-				Str("email", email).
-				Msg("Admin successfully stored")
+			slog.Info(
+				"Admin successfully stored",
+				slog.String("username", username),
+				slog.String("email", email),
+			)
 		}
 	}
 
 	token, err := config.Value(cfg.Metrics.Token)
 
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Msg("Failed to parse metrics token secret")
+		slog.Error(
+			"Failed to parse metrics token secret",
+			slog.Any("error", err),
+		)
 
 		os.Exit(1)
 	}
@@ -407,9 +423,10 @@ func serverAction(ccmd *cobra.Command, _ []string) {
 		}
 
 		gr.Add(func() error {
-			log.Info().
-				Str("addr", cfg.Server.Addr).
-				Msg("Starting application server")
+			slog.Info(
+				"Starting application server",
+				slog.String("addr", cfg.Server.Addr),
+			)
 
 			if cfg.Server.Cert != "" && cfg.Server.Key != "" {
 				return server.ListenAndServeTLS(
@@ -424,16 +441,18 @@ func serverAction(ccmd *cobra.Command, _ []string) {
 			defer cancel()
 
 			if err := server.Shutdown(ctx); err != nil {
-				log.Error().
-					Err(err).
-					Msg("Failed to shutdown application gracefully")
+				slog.Error(
+					"Failed to shutdown application gracefully",
+					slog.Any("error", err),
+				)
 
 				return
 			}
 
-			log.Info().
-				Err(reason).
-				Msg("Shutdown application gracefully")
+			slog.Info(
+				"Shutdown application gracefully",
+				slog.Any("reason", reason),
+			)
 		})
 	}
 
@@ -449,9 +468,10 @@ func serverAction(ccmd *cobra.Command, _ []string) {
 		}
 
 		gr.Add(func() error {
-			log.Info().
-				Str("addr", cfg.Metrics.Addr).
-				Msg("Starting metrics server")
+			slog.Info(
+				"Starting metrics server",
+				slog.String("addr", cfg.Metrics.Addr),
+			)
 
 			return server.ListenAndServe()
 		}, func(reason error) {
@@ -459,16 +479,18 @@ func serverAction(ccmd *cobra.Command, _ []string) {
 			defer cancel()
 
 			if err := server.Shutdown(ctx); err != nil {
-				log.Error().
-					Err(err).
-					Msg("Failed to shutdown metrics gracefully")
+				slog.Error(
+					"Failed to shutdown metrics gracefully",
+					slog.Any("error", err),
+				)
 
 				return
 			}
 
-			log.Info().
-				Err(reason).
-				Msg("Metrics shutdown gracefully")
+			slog.Info(
+				"Metrics shutdown gracefully",
+				slog.Any("reason", reason),
+			)
 		})
 	}
 
@@ -479,26 +501,30 @@ func serverAction(ccmd *cobra.Command, _ []string) {
 		gr.Add(func() error {
 			defer ticker.Stop()
 
-			log.Info().
-				Str("interval", cfg.Cleanup.Interval.String()).
-				Msg("Starting periodic cleanup")
+			slog.Info(
+				"Starting periodic cleanup",
+				slog.Duration("interval", cfg.Cleanup.Interval),
+			)
 
 			for {
 				select {
 				case <-ticker.C:
-					log.Debug().
-						Msg("Running periodic cleanup")
+					slog.Debug(
+						"Running periodic cleanup",
+					)
 
 					if err := storage.Users.CleanupRedirectTokens(
 						context.Background(),
 					); err != nil {
-						log.Error().
-							Err(err).
-							Msg("Failed to cleanup redirect tokens")
+						slog.Error(
+							"Failed to cleanup redirect tokens",
+							slog.Any("error", err),
+						)
 					}
 				case <-stop:
-					log.Info().
-						Msg("Shutdown periodic cleanup")
+					slog.Info(
+						"Shutdown periodic cleanup",
+					)
 
 					return nil
 				}

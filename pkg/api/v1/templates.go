@@ -2,13 +2,13 @@ package v1
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/gexec/gexec/pkg/middleware/current"
 	"github.com/gexec/gexec/pkg/model"
 	"github.com/gexec/gexec/pkg/validate"
 	"github.com/go-chi/render"
-	"github.com/rs/zerolog/log"
 )
 
 // ListProjectTemplates implements the v1.ServerInterface.
@@ -32,11 +32,12 @@ func (a *API) ListProjectTemplates(w http.ResponseWriter, r *http.Request, _ Pro
 	)
 
 	if err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("action", "ListProjectTemplates").
-			Msg("Failed to load templates")
+		slog.Error(
+			"Failed to load templates",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("action", "ListProjectTemplates"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to load templates"),
@@ -49,11 +50,12 @@ func (a *API) ListProjectTemplates(w http.ResponseWriter, r *http.Request, _ Pro
 	payload := make([]Template, len(records))
 	for id, record := range records {
 		if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-			log.Error().
-				Err(err).
-				Str("project", project.ID).
-				Str("action", "ListProjectTemplates").
-				Msg("Failed to decrypt secrets")
+			slog.Error(
+				"Failed to decrypt secrets",
+				slog.Any("error", err),
+				slog.String("project", project.ID),
+				slog.String("action", "ListProjectTemplates"),
+			)
 
 			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to decrypt secrets"),
@@ -82,12 +84,13 @@ func (a *API) ShowProjectTemplate(w http.ResponseWriter, r *http.Request, _ Proj
 	record := a.ProjectTemplateFromContext(ctx)
 
 	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("template", record.ID).
-			Str("action", "ShowProjectTemplate").
-			Msg("Failed to decrypt secrets")
+		slog.Error(
+			"Failed to decrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("template", project.ID),
+			slog.String("action", "ShowProjectTemplate"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decrypt secrets"),
@@ -109,11 +112,12 @@ func (a *API) CreateProjectTemplate(w http.ResponseWriter, r *http.Request, _ Pr
 	body := &CreateProjectTemplateBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("action", "CreateProjectTemplate").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("action", "CreateProjectTemplate"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -250,11 +254,12 @@ func (a *API) CreateProjectTemplate(w http.ResponseWriter, r *http.Request, _ Pr
 	}
 
 	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("action", "CreateProjectTemplate").
-			Msg("Failed to encrypt secrets")
+		slog.Error(
+			"Failed to encrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("action", "CreateProjectTemplate"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to encrypt secrets"),
@@ -293,11 +298,12 @@ func (a *API) CreateProjectTemplate(w http.ResponseWriter, r *http.Request, _ Pr
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("action", "CreateProjectTemplate").
-			Msg("Failed to create template")
+		slog.Error(
+			"Failed to create template",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("action", "CreateProjectTemplate"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to create template"),
@@ -320,12 +326,13 @@ func (a *API) UpdateProjectTemplate(w http.ResponseWriter, r *http.Request, _ Pr
 	body := &UpdateProjectTemplateBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("template", record.ID).
-			Str("action", "UpdateProjectTemplate").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("template", record.ID),
+			slog.String("action", "UpdateProjectTemplate"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -336,15 +343,16 @@ func (a *API) UpdateProjectTemplate(w http.ResponseWriter, r *http.Request, _ Pr
 	}
 
 	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("action", "UpdateProjectTemplate").
-			Str("project", project.ID).
-			Str("template", record.ID).
-			Msg("Failed to decrypt secrets")
+		slog.Error(
+			"Failed to decrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("template", record.ID),
+			slog.String("action", "UpdateProjectTemplate"),
+		)
 
 		a.RenderNotify(w, r, Notification{
-			Message: ToPtr("Failed to decrypt credentials"),
+			Message: ToPtr("Failed to decrypt secrets"),
 			Status:  ToPtr(http.StatusInternalServerError),
 		})
 
@@ -482,12 +490,13 @@ func (a *API) UpdateProjectTemplate(w http.ResponseWriter, r *http.Request, _ Pr
 	}
 
 	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("template", record.ID).
-			Str("action", "UpdateProjectTemplate").
-			Msg("Failed to encrypt secrets")
+		slog.Error(
+			"Failed to encrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("template", record.ID),
+			slog.String("action", "UpdateProjectTemplate"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to encrypt secrets"),
@@ -526,12 +535,13 @@ func (a *API) UpdateProjectTemplate(w http.ResponseWriter, r *http.Request, _ Pr
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("template", record.ID).
-			Str("action", "UpdateProjectTemplate").
-			Msg("Failed to update template")
+		slog.Error(
+			"Failed to update template",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("template", record.ID),
+			slog.String("action", "UpdateProjectTemplate"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to update template"),
@@ -559,12 +569,13 @@ func (a *API) DeleteProjectTemplate(w http.ResponseWriter, r *http.Request, _ Pr
 		project,
 		record.ID,
 	); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("template", record.ID).
-			Str("action", "DeletProjectTemplate").
-			Msg("Failed to delete template")
+		slog.Error(
+			"Failed to delete template",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("template", record.ID),
+			slog.String("action", "DeletProjectTemplate"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to delete template"),
@@ -588,12 +599,13 @@ func (a *API) CreateProjectTemplateSurvey(w http.ResponseWriter, r *http.Request
 	body := &CreateProjectTemplateSurveyBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("template", record.ID).
-			Str("action", "CreateProjectTemplateSurvey").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("template", record.ID),
+			slog.String("action", "CreateProjectTemplateSurvey"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -646,12 +658,13 @@ func (a *API) CreateProjectTemplateSurvey(w http.ResponseWriter, r *http.Request
 	}
 
 	if err := child.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("template", record.ID).
-			Str("action", "CreateProjectTemplateSurvey").
-			Msg("Failed to encrypt secrets")
+		slog.Error(
+			"Failed to encrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("template", record.ID),
+			slog.String("action", "CreateProjectTemplateSurvey"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to encrypt secrets"),
@@ -690,12 +703,13 @@ func (a *API) CreateProjectTemplateSurvey(w http.ResponseWriter, r *http.Request
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("template", record.ID).
-			Str("action", "CreateProjectTemplateSurvey").
-			Msg("Failed to create template survey")
+		slog.Error(
+			"Failed to create template survey",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("template", record.ID),
+			slog.String("action", "CreateProjectTemplateSurvey"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to create template survey"),
@@ -706,12 +720,13 @@ func (a *API) CreateProjectTemplateSurvey(w http.ResponseWriter, r *http.Request
 	}
 
 	if err := child.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("template", record.ID).
-			Str("action", "CreateProjectTemplateSurvey").
-			Msg("Failed to decrypt secrets")
+		slog.Error(
+			"Failed to decrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("template", project.ID),
+			slog.String("action", "CreateProjectTemplateSurvey"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decrypt secrets"),
@@ -735,13 +750,14 @@ func (a *API) UpdateProjectTemplateSurvey(w http.ResponseWriter, r *http.Request
 	body := &UpdateProjectTemplateSurveyBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("template", record.ID).
-			Str("survey", child.ID).
-			Str("action", "UpdateProjectTemplateSurvey").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("template", record.ID),
+			slog.String("survey", child.ID),
+			slog.String("action", "UpdateProjectTemplateSurvey"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -752,16 +768,17 @@ func (a *API) UpdateProjectTemplateSurvey(w http.ResponseWriter, r *http.Request
 	}
 
 	if err := child.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("template", record.ID).
-			Str("survey", child.ID).
-			Str("action", "UpdateProjectTemplateSurvey").
-			Msg("Failed to decrypt secrets")
+		slog.Error(
+			"Failed to decrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("template", record.ID),
+			slog.String("survey", child.ID),
+			slog.String("action", "UpdateProjectTemplateSurvey"),
+		)
 
 		a.RenderNotify(w, r, Notification{
-			Message: ToPtr("Failed to decrypt credentials"),
+			Message: ToPtr("Failed to decrypt secrets"),
 			Status:  ToPtr(http.StatusInternalServerError),
 		})
 
@@ -807,13 +824,14 @@ func (a *API) UpdateProjectTemplateSurvey(w http.ResponseWriter, r *http.Request
 	}
 
 	if err := child.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("template", record.ID).
-			Str("survey", child.ID).
-			Str("action", "UpdateProjectTemplateSurvey").
-			Msg("Failed to encrypt secrets")
+		slog.Error(
+			"Failed to encrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("template", record.ID),
+			slog.String("survey", child.ID),
+			slog.String("action", "UpdateProjectTemplateSurvey"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to encrypt secrets"),
@@ -852,13 +870,14 @@ func (a *API) UpdateProjectTemplateSurvey(w http.ResponseWriter, r *http.Request
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("template", record.ID).
-			Str("survey", child.ID).
-			Str("action", "UpdateProjectTemplateSurvey").
-			Msg("Failed to update template survey")
+		slog.Error(
+			"Failed to update template survey",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("template", record.ID),
+			slog.String("survey", child.ID),
+			slog.String("action", "UpdateProjectTemplateSurvey"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to update template survey"),
@@ -869,16 +888,17 @@ func (a *API) UpdateProjectTemplateSurvey(w http.ResponseWriter, r *http.Request
 	}
 
 	if err := child.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("template", record.ID).
-			Str("survey", child.ID).
-			Str("action", "UpdateProjectTemplateSurvey").
-			Msg("Failed to decrypt secrets")
+		slog.Error(
+			"Failed to decrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("template", record.ID),
+			slog.String("survey", child.ID),
+			slog.String("action", "UpdateProjectTemplateSurvey"),
+		)
 
 		a.RenderNotify(w, r, Notification{
-			Message: ToPtr("Failed to decrypt credentials"),
+			Message: ToPtr("Failed to decrypt secrets"),
 			Status:  ToPtr(http.StatusInternalServerError),
 		})
 
@@ -904,13 +924,14 @@ func (a *API) DeleteProjectTemplateSurvey(w http.ResponseWriter, r *http.Request
 		record,
 		child.ID,
 	); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("template", record.ID).
-			Str("survey", child.ID).
-			Str("action", "DeletProjectTemplateSurvey").
-			Msg("Failed to delete template")
+		slog.Error(
+			"Failed to delete template survey",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("template", record.ID),
+			slog.String("survey", child.ID),
+			slog.String("action", "DeletProjectTemplateSurvey"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Status:  ToPtr(http.StatusBadRequest),
@@ -934,12 +955,13 @@ func (a *API) CreateProjectTemplateVault(w http.ResponseWriter, r *http.Request,
 	body := &CreateProjectTemplateVaultBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("template", record.ID).
-			Str("action", "CreateProjectTemplateVault").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("template", record.ID),
+			slog.String("action", "CreateProjectTemplateVault"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -970,12 +992,13 @@ func (a *API) CreateProjectTemplateVault(w http.ResponseWriter, r *http.Request,
 	}
 
 	if err := child.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("template", record.ID).
-			Str("action", "CreateProjectTemplateVault").
-			Msg("Failed to encrypt secrets")
+		slog.Error(
+			"Failed to encrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("template", record.ID),
+			slog.String("action", "CreateProjectTemplateVault"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to encrypt secrets"),
@@ -1014,12 +1037,13 @@ func (a *API) CreateProjectTemplateVault(w http.ResponseWriter, r *http.Request,
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("template", record.ID).
-			Str("action", "CreateProjectTemplateVault").
-			Msg("Failed to create template vault")
+		slog.Error(
+			"Failed to create template vault",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("template", record.ID),
+			slog.String("action", "CreateProjectTemplateVault"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to create template vault"),
@@ -1030,12 +1054,13 @@ func (a *API) CreateProjectTemplateVault(w http.ResponseWriter, r *http.Request,
 	}
 
 	if err := child.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("template", record.ID).
-			Str("action", "CreateProjectTemplateVault").
-			Msg("Failed to decrypt secrets")
+		slog.Error(
+			"Failed to decrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("template", project.ID),
+			slog.String("action", "CreateProjectTemplateVault"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decrypt secrets"),
@@ -1059,13 +1084,14 @@ func (a *API) UpdateProjectTemplateVault(w http.ResponseWriter, r *http.Request,
 	body := &UpdateProjectTemplateVaultBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("template", record.ID).
-			Str("vault", child.ID).
-			Str("action", "UpdateProjectTemplateVault").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("template", record.ID),
+			slog.String("vault", child.ID),
+			slog.String("action", "UpdateProjectTemplateVault"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -1076,16 +1102,17 @@ func (a *API) UpdateProjectTemplateVault(w http.ResponseWriter, r *http.Request,
 	}
 
 	if err := child.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("template", record.ID).
-			Str("vault", child.ID).
-			Str("action", "UpdateProjectTemplateVault").
-			Msg("Failed to decrypt secrets")
+		slog.Error(
+			"Failed to decrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("template", record.ID),
+			slog.String("vault", child.ID),
+			slog.String("action", "UpdateProjectTemplateVault"),
+		)
 
 		a.RenderNotify(w, r, Notification{
-			Message: ToPtr("Failed to decrypt credentials"),
+			Message: ToPtr("Failed to decrypt secrets"),
 			Status:  ToPtr(http.StatusInternalServerError),
 		})
 
@@ -1109,13 +1136,14 @@ func (a *API) UpdateProjectTemplateVault(w http.ResponseWriter, r *http.Request,
 	}
 
 	if err := child.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("template", record.ID).
-			Str("vault", child.ID).
-			Str("action", "UpdateProjectTemplateVault").
-			Msg("Failed to encrypt secrets")
+		slog.Error(
+			"Failed to encrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("template", record.ID),
+			slog.String("vault", child.ID),
+			slog.String("action", "UpdateProjectTemplateVault"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to encrypt secrets"),
@@ -1154,13 +1182,14 @@ func (a *API) UpdateProjectTemplateVault(w http.ResponseWriter, r *http.Request,
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("template", record.ID).
-			Str("vault", child.ID).
-			Str("action", "UpdateProjectTemplateVault").
-			Msg("Failed to update template vault")
+		slog.Error(
+			"Failed to update template vault",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("template", record.ID),
+			slog.String("vault", child.ID),
+			slog.String("action", "UpdateProjectTemplateVault"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to update template vault"),
@@ -1171,16 +1200,17 @@ func (a *API) UpdateProjectTemplateVault(w http.ResponseWriter, r *http.Request,
 	}
 
 	if err := child.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("template", record.ID).
-			Str("vault", child.ID).
-			Str("action", "UpdateProjectTemplateVault").
-			Msg("Failed to decrypt secrets")
+		slog.Error(
+			"Failed to decrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("template", record.ID),
+			slog.String("vault", child.ID),
+			slog.String("action", "UpdateProjectTemplateVault"),
+		)
 
 		a.RenderNotify(w, r, Notification{
-			Message: ToPtr("Failed to decrypt credentials"),
+			Message: ToPtr("Failed to decrypt secrets"),
 			Status:  ToPtr(http.StatusInternalServerError),
 		})
 
@@ -1206,13 +1236,14 @@ func (a *API) DeleteProjectTemplateVault(w http.ResponseWriter, r *http.Request,
 		record,
 		child.ID,
 	); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("template", record.ID).
-			Str("vault", child.ID).
-			Str("action", "DeletProjectTemplateVault").
-			Msg("Failed to delete template")
+		slog.Error(
+			"Failed to delete template vault",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("template", record.ID),
+			slog.String("vault", child.ID),
+			slog.String("action", "DeletProjectTemplateVault"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Status:  ToPtr(http.StatusBadRequest),

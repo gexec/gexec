@@ -2,6 +2,7 @@ package command
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -11,7 +12,6 @@ import (
 	"github.com/gexec/gexec/pkg/metrics"
 	"github.com/gexec/gexec/pkg/router"
 	"github.com/oklog/run"
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -59,9 +59,10 @@ func serverAction(_ *cobra.Command, _ []string) {
 	token, err := config.Value(cfg.Metrics.Token)
 
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Msg("Failed to parse metrics token secret")
+		slog.Error(
+			"Failed to parse metrics token secret",
+			slog.Any("error", err),
+		)
 
 		os.Exit(1)
 	}
@@ -85,9 +86,10 @@ func serverAction(_ *cobra.Command, _ []string) {
 		}
 
 		gr.Add(func() error {
-			log.Info().
-				Str("addr", cfg.Metrics.Addr).
-				Msg("Starting metrics server")
+			slog.Info(
+				"Starting metrics server",
+				slog.String("addr", cfg.Metrics.Addr),
+			)
 
 			return server.ListenAndServe()
 		}, func(reason error) {
@@ -95,16 +97,18 @@ func serverAction(_ *cobra.Command, _ []string) {
 			defer cancel()
 
 			if err := server.Shutdown(ctx); err != nil {
-				log.Error().
-					Err(err).
-					Msg("Failed to shutdown metrics gracefully")
+				slog.Error(
+					"Failed to shutdown metrics gracefully",
+					slog.Any("error", err),
+				)
 
 				return
 			}
 
-			log.Info().
-				Err(reason).
-				Msg("Metrics shutdown gracefully")
+			slog.Info(
+				"Metrics shutdown gracefully",
+				slog.Any("reason", reason),
+			)
 		})
 	}
 

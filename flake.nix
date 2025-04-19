@@ -100,7 +100,6 @@
 
                   GEXEC_LOG_LEVEL = "debug";
                   GEXEC_LOG_PRETTY = "true";
-                  GEXEC_LOG_COLOR = "true";
 
                   GEXEC_TOKEN_SECRET = "Fpu9YldPhWM9fn9KcL4R7JT1";
                   GEXEC_TOKEN_EXPIRE = "1h";
@@ -117,6 +116,9 @@
                   GEXEC_ADMIN_USERNAME = "admin";
                   GEXEC_ADMIN_PASSWORD = "p455w0rd";
                   GEXEC_ADMIN_EMAIL = "gexec@webhippie.de";
+
+                  GEXEC_SERVER_USERNAME = "admin";
+                  GEXEC_SERVER_PASSWORD = "p455w0rd";
                 };
 
                 services = {
@@ -175,7 +177,7 @@
 
                     process-compose = {
                       environment = [
-                        "CONSOLE_SERVER_HOST=http://localhost:5173"
+                        "GEXEC_SERVER_HOST=http://localhost:5173"
                       ];
 
                       readiness_probe = {

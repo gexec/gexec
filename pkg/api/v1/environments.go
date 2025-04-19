@@ -2,13 +2,13 @@ package v1
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/gexec/gexec/pkg/middleware/current"
 	"github.com/gexec/gexec/pkg/model"
 	"github.com/gexec/gexec/pkg/validate"
 	"github.com/go-chi/render"
-	"github.com/rs/zerolog/log"
 )
 
 // ListProjectEnvironments implements the v1.ServerInterface.
@@ -32,11 +32,12 @@ func (a *API) ListProjectEnvironments(w http.ResponseWriter, r *http.Request, _ 
 	)
 
 	if err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("action", "ListProjectEnvironments").
-			Msg("Failed to load environments")
+		slog.Error(
+			"Failed to load environments",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("action", "ListProjectEnvironments"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to load environments"),
@@ -49,11 +50,12 @@ func (a *API) ListProjectEnvironments(w http.ResponseWriter, r *http.Request, _ 
 	payload := make([]Environment, len(records))
 	for id, record := range records {
 		if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-			log.Error().
-				Err(err).
-				Str("project", project.ID).
-				Str("action", "ListProjectEnvironments").
-				Msg("Failed to decrypt secrets")
+			slog.Error(
+				"Failed to decrypt secrets",
+				slog.Any("error", err),
+				slog.String("project", project.ID),
+				slog.String("action", "ListProjectEnvironments"),
+			)
 
 			a.RenderNotify(w, r, Notification{
 				Message: ToPtr("Failed to decrypt secrets"),
@@ -82,12 +84,13 @@ func (a *API) ShowProjectEnvironment(w http.ResponseWriter, r *http.Request, _ P
 	record := a.ProjectEnvironmentFromContext(ctx)
 
 	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("environment", record.ID).
-			Str("action", "ShowProjectEnvironment").
-			Msg("Failed to decrypt secrets")
+		slog.Error(
+			"Failed to decrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("environment", record.ID),
+			slog.String("action", "ShowProjectEnvironment"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decrypt secrets"),
@@ -109,11 +112,12 @@ func (a *API) CreateProjectEnvironment(w http.ResponseWriter, r *http.Request, _
 	body := &CreateProjectEnvironmentBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("action", "CreateProjectEnvironment").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("action", "CreateProjectEnvironment"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -180,11 +184,12 @@ func (a *API) CreateProjectEnvironment(w http.ResponseWriter, r *http.Request, _
 	}
 
 	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("action", "CreateProjectEnvironment").
-			Msg("Failed to encrypt secrets")
+		slog.Error(
+			"Failed to encrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("action", "CreateProjectEnvironment"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to encrypt secrets"),
@@ -223,11 +228,12 @@ func (a *API) CreateProjectEnvironment(w http.ResponseWriter, r *http.Request, _
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("action", "CreateProjectEnvironment").
-			Msg("Failed to create environment")
+		slog.Error(
+			"Failed to create environment",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("action", "CreateProjectEnvironment"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to create environment"),
@@ -250,12 +256,13 @@ func (a *API) UpdateProjectEnvironment(w http.ResponseWriter, r *http.Request, _
 	body := &UpdateProjectEnvironmentBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("environment", record.ID).
-			Str("action", "UpdateProjectEnvironment").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("environment", record.ID),
+			slog.String("action", "UpdateProjectEnvironment"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -266,15 +273,16 @@ func (a *API) UpdateProjectEnvironment(w http.ResponseWriter, r *http.Request, _
 	}
 
 	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("environment", record.ID).
-			Str("action", "UpdateProjectEnvironment").
-			Msg("Failed to decrypt secrets")
+		slog.Error(
+			"Failed to decrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("environment", record.ID),
+			slog.String("action", "UpdateProjectEnvironment"),
+		)
 
 		a.RenderNotify(w, r, Notification{
-			Message: ToPtr("Failed to decrypt credentials"),
+			Message: ToPtr("Failed to decrypt secrets"),
 			Status:  ToPtr(http.StatusInternalServerError),
 		})
 
@@ -342,12 +350,13 @@ func (a *API) UpdateProjectEnvironment(w http.ResponseWriter, r *http.Request, _
 	}
 
 	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("environment", record.ID).
-			Str("action", "UpdateProjectEnvironment").
-			Msg("Failed to encrypt secrets")
+		slog.Error(
+			"Failed to encrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("environment", record.ID),
+			slog.String("action", "UpdateProjectEnvironment"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to encrypt secrets"),
@@ -386,12 +395,13 @@ func (a *API) UpdateProjectEnvironment(w http.ResponseWriter, r *http.Request, _
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("environment", record.ID).
-			Str("action", "UpdateProjectEnvironment").
-			Msg("Failed to update environment")
+		slog.Error(
+			"Failed to update environment",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("environment", record.ID),
+			slog.String("action", "UpdateProjectEnvironment"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to update environment"),
@@ -419,12 +429,13 @@ func (a *API) DeleteProjectEnvironment(w http.ResponseWriter, r *http.Request, _
 		project,
 		record.ID,
 	); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("environment", record.ID).
-			Str("action", "DeletProjectEnvironment").
-			Msg("Failed to delete environment")
+		slog.Error(
+			"Failed to delete environment",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("environment", record.ID),
+			slog.String("action", "DeleteProjectEnvironment"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to delete environment"),
@@ -448,12 +459,13 @@ func (a *API) CreateProjectEnvironmentSecret(w http.ResponseWriter, r *http.Requ
 	body := &CreateProjectEnvironmentSecretBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("environment", record.ID).
-			Str("action", "CreateProjectEnvironmentSecret").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("environment", record.ID),
+			slog.String("action", "CreateProjectEnvironmentSecret"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -480,12 +492,13 @@ func (a *API) CreateProjectEnvironmentSecret(w http.ResponseWriter, r *http.Requ
 	}
 
 	if err := child.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("environment", record.ID).
-			Str("action", "CreateProjectEnvironmentSecret").
-			Msg("Failed to encrypt secrets")
+		slog.Error(
+			"Failed to encrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("environment", record.ID),
+			slog.String("action", "CreateProjectEnvironmentSecret"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to encrypt secrets"),
@@ -524,12 +537,13 @@ func (a *API) CreateProjectEnvironmentSecret(w http.ResponseWriter, r *http.Requ
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("environment", record.ID).
-			Str("action", "CreateProjectEnvironmentSecret").
-			Msg("Failed to create environment secret")
+		slog.Error(
+			"Failed to create environment secret",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("environment", record.ID),
+			slog.String("action", "CreateProjectEnvironmentSecret"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to create environment secret"),
@@ -540,16 +554,17 @@ func (a *API) CreateProjectEnvironmentSecret(w http.ResponseWriter, r *http.Requ
 	}
 
 	if err := child.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("environment", record.ID).
-			Str("secret", child.ID).
-			Str("action", "CreateProjectEnvironmentSecret").
-			Msg("Failed to decrypt secrets")
+		slog.Error(
+			"Failed to decrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("environment", record.ID),
+			slog.String("secret", child.ID),
+			slog.String("action", "CreateProjectEnvironmentSecret"),
+		)
 
 		a.RenderNotify(w, r, Notification{
-			Message: ToPtr("Failed to decrypt credentials"),
+			Message: ToPtr("Failed to decrypt secrets"),
 			Status:  ToPtr(http.StatusInternalServerError),
 		})
 
@@ -570,13 +585,14 @@ func (a *API) UpdateProjectEnvironmentSecret(w http.ResponseWriter, r *http.Requ
 	body := &UpdateProjectEnvironmentSecretBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("environment", record.ID).
-			Str("secret", child.ID).
-			Str("action", "UpdateProjectEnvironmentSecret").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("environment", record.ID),
+			slog.String("secret", child.ID),
+			slog.String("action", "UpdateProjectEnvironmentSecret"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -587,16 +603,17 @@ func (a *API) UpdateProjectEnvironmentSecret(w http.ResponseWriter, r *http.Requ
 	}
 
 	if err := child.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("environment", record.ID).
-			Str("secret", child.ID).
-			Str("action", "UpdateProjectEnvironmentSecret").
-			Msg("Failed to decrypt secrets")
+		slog.Error(
+			"Failed to decrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("environment", record.ID),
+			slog.String("secret", child.ID),
+			slog.String("action", "UpdateProjectEnvironmentSecret"),
+		)
 
 		a.RenderNotify(w, r, Notification{
-			Message: ToPtr("Failed to decrypt credentials"),
+			Message: ToPtr("Failed to decrypt secrets"),
 			Status:  ToPtr(http.StatusInternalServerError),
 		})
 
@@ -616,13 +633,14 @@ func (a *API) UpdateProjectEnvironmentSecret(w http.ResponseWriter, r *http.Requ
 	}
 
 	if err := child.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("environment", record.ID).
-			Str("secret", child.ID).
-			Str("action", "UpdateProjectEnvironmentSecret").
-			Msg("Failed to encrypt secrets")
+		slog.Error(
+			"Failed to encrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("environment", record.ID),
+			slog.String("secret", child.ID),
+			slog.String("action", "UpdateProjectEnvironmentSecret"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to encrypt secrets"),
@@ -661,13 +679,14 @@ func (a *API) UpdateProjectEnvironmentSecret(w http.ResponseWriter, r *http.Requ
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("environment", record.ID).
-			Str("secret", child.ID).
-			Str("action", "UpdateProjectEnvironmentSecret").
-			Msg("Failed to update environment secret")
+		slog.Error(
+			"Failed to update environment secret",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("environment", record.ID),
+			slog.String("secret", child.ID),
+			slog.String("action", "UpdateProjectEnvironmentSecret"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to update environment secret"),
@@ -678,16 +697,17 @@ func (a *API) UpdateProjectEnvironmentSecret(w http.ResponseWriter, r *http.Requ
 	}
 
 	if err := child.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("environment", record.ID).
-			Str("secret", child.ID).
-			Str("action", "UpdateProjectEnvironmentSecret").
-			Msg("Failed to decrypt secrets")
+		slog.Error(
+			"Failed to decrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("environment", record.ID),
+			slog.String("secret", child.ID),
+			slog.String("action", "UpdateProjectEnvironmentSecret"),
+		)
 
 		a.RenderNotify(w, r, Notification{
-			Message: ToPtr("Failed to decrypt credentials"),
+			Message: ToPtr("Failed to decrypt secrets"),
 			Status:  ToPtr(http.StatusInternalServerError),
 		})
 
@@ -713,13 +733,14 @@ func (a *API) DeleteProjectEnvironmentSecret(w http.ResponseWriter, r *http.Requ
 		record,
 		child.ID,
 	); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("environment", record.ID).
-			Str("secret", child.ID).
-			Str("action", "DeleteProjectEnvironmentSecret").
-			Msg("Failed to delete environment secret")
+		slog.Error(
+			"Failed to delete environment secret",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("environment", record.ID),
+			slog.String("secret", child.ID),
+			slog.String("action", "DeleteProjectEnvironmentSecret"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Status:  ToPtr(http.StatusBadRequest),
@@ -743,12 +764,13 @@ func (a *API) CreateProjectEnvironmentValue(w http.ResponseWriter, r *http.Reque
 	body := &CreateProjectEnvironmentValueBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("environment", record.ID).
-			Str("action", "CreateProjectEnvironmentValue").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("environment", record.ID),
+			slog.String("action", "CreateProjectEnvironmentValue"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -775,12 +797,13 @@ func (a *API) CreateProjectEnvironmentValue(w http.ResponseWriter, r *http.Reque
 	}
 
 	if err := child.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("environment", record.ID).
-			Str("action", "CreateProjectEnvironmentValue").
-			Msg("Failed to encrypt secrets")
+		slog.Error(
+			"Failed to encrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("environment", record.ID),
+			slog.String("action", "CreateProjectEnvironmentValue"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to encrypt secrets"),
@@ -819,12 +842,13 @@ func (a *API) CreateProjectEnvironmentValue(w http.ResponseWriter, r *http.Reque
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("environment", record.ID).
-			Str("action", "CreateProjectEnvironmentValue").
-			Msg("Failed to create environment value")
+		slog.Error(
+			"Failed to create environment value",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("environment", record.ID),
+			slog.String("action", "CreateProjectEnvironmentValue"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to create environment value"),
@@ -835,16 +859,17 @@ func (a *API) CreateProjectEnvironmentValue(w http.ResponseWriter, r *http.Reque
 	}
 
 	if err := child.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("environment", record.ID).
-			Str("value", child.ID).
-			Str("action", "CreateProjectEnvironmentValue").
-			Msg("Failed to decrypt secrets")
+		slog.Error(
+			"Failed to decrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("environment", record.ID),
+			slog.String("value", child.ID),
+			slog.String("action", "CreateProjectEnvironmentValue"),
+		)
 
 		a.RenderNotify(w, r, Notification{
-			Message: ToPtr("Failed to decrypt credentials"),
+			Message: ToPtr("Failed to decrypt secrets"),
 			Status:  ToPtr(http.StatusInternalServerError),
 		})
 
@@ -865,13 +890,14 @@ func (a *API) UpdateProjectEnvironmentValue(w http.ResponseWriter, r *http.Reque
 	body := &UpdateProjectEnvironmentValueBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("environment", record.ID).
-			Str("value", child.ID).
-			Str("action", "UpdateProjectEnvironmentValue").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("environment", record.ID),
+			slog.String("value", child.ID),
+			slog.String("action", "UpdateProjectEnvironmentValue"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -882,16 +908,17 @@ func (a *API) UpdateProjectEnvironmentValue(w http.ResponseWriter, r *http.Reque
 	}
 
 	if err := child.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("environment", record.ID).
-			Str("value", child.ID).
-			Str("action", "UpdateProjectEnvironmentValue").
-			Msg("Failed to decrypt secrets")
+		slog.Error(
+			"Failed to decrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("environment", record.ID),
+			slog.String("value", child.ID),
+			slog.String("action", "UpdateProjectEnvironmentValue"),
+		)
 
 		a.RenderNotify(w, r, Notification{
-			Message: ToPtr("Failed to decrypt credentials"),
+			Message: ToPtr("Failed to decrypt secrets"),
 			Status:  ToPtr(http.StatusInternalServerError),
 		})
 
@@ -911,13 +938,14 @@ func (a *API) UpdateProjectEnvironmentValue(w http.ResponseWriter, r *http.Reque
 	}
 
 	if err := child.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("environment", record.ID).
-			Str("value", child.ID).
-			Str("action", "UpdateProjectEnvironmentValue").
-			Msg("Failed to encrypt secrets")
+		slog.Error(
+			"Failed to encrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("environment", record.ID),
+			slog.String("value", child.ID),
+			slog.String("action", "UpdateProjectEnvironmentValue"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to encrypt secrets"),
@@ -956,13 +984,14 @@ func (a *API) UpdateProjectEnvironmentValue(w http.ResponseWriter, r *http.Reque
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("environment", record.ID).
-			Str("value", child.ID).
-			Str("action", "UpdateProjectEnvironmentValue").
-			Msg("Failed to update environment value")
+		slog.Error(
+			"Failed to update environment value",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("environment", record.ID),
+			slog.String("value", child.ID),
+			slog.String("action", "UpdateProjectEnvironmentValue"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to update environment value"),
@@ -973,16 +1002,17 @@ func (a *API) UpdateProjectEnvironmentValue(w http.ResponseWriter, r *http.Reque
 	}
 
 	if err := child.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("environment", record.ID).
-			Str("value", child.ID).
-			Str("action", "UpdateProjectEnvironmentValue").
-			Msg("Failed to decrypt secrets")
+		slog.Error(
+			"Failed to decrypt secrets",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("environment", record.ID),
+			slog.String("value", child.ID),
+			slog.String("action", "UpdateProjectEnvironmentValue"),
+		)
 
 		a.RenderNotify(w, r, Notification{
-			Message: ToPtr("Failed to decrypt credentials"),
+			Message: ToPtr("Failed to decrypt secrets"),
 			Status:  ToPtr(http.StatusInternalServerError),
 		})
 
@@ -1008,13 +1038,14 @@ func (a *API) DeleteProjectEnvironmentValue(w http.ResponseWriter, r *http.Reque
 		record,
 		child.ID,
 	); err != nil {
-		log.Error().
-			Err(err).
-			Str("project", project.ID).
-			Str("environment", record.ID).
-			Str("value", child.ID).
-			Str("action", "DeletProjectEnvironmentValue").
-			Msg("Failed to delete environment")
+		slog.Error(
+			"Failed to delete environment value",
+			slog.Any("error", err),
+			slog.String("project", project.ID),
+			slog.String("environment", record.ID),
+			slog.String("value", child.ID),
+			slog.String("action", "DeleteProjectEnvironmentValue"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to delete environment value"),

@@ -2,6 +2,7 @@ package v1
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -10,7 +11,6 @@ import (
 	"github.com/gexec/gexec/pkg/token"
 	"github.com/gexec/gexec/pkg/validate"
 	"github.com/go-chi/render"
-	"github.com/rs/zerolog/log"
 )
 
 // TokenProfile implements the v1.ServerInterface.
@@ -30,12 +30,13 @@ func (a *API) TokenProfile(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
-		log.Error().
-			Err(err).
-			Str("action", "TokenProfile").
-			Str("username", principal.Username).
-			Str("uid", principal.ID).
-			Msg("Failed to generate a token")
+		slog.Error(
+			"Failed to generate a token",
+			slog.Any("error", err),
+			slog.String("username", principal.Username),
+			slog.String("uid", principal.ID),
+			slog.String("action", "TokenProfile"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to generate a token"),
@@ -65,13 +66,20 @@ func (a *API) ShowProfile(w http.ResponseWriter, r *http.Request) {
 
 // UpdateProfile implements the v1.ServerInterface.
 func (a *API) UpdateProfile(w http.ResponseWriter, r *http.Request) {
+	record := current.GetUser(
+		r.Context(),
+	)
+
 	body := &UpdateProfileBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		log.Error().
-			Err(err).
-			Str("action", "UpdateProfile").
-			Msg("Failed to decode request body")
+		slog.Error(
+			"Failed to decode request body",
+			slog.Any("error", err),
+			slog.String("username", record.Username),
+			slog.String("uid", record.ID),
+			slog.String("action", "UpdateProfile"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to decode request"),
@@ -80,10 +88,6 @@ func (a *API) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-
-	record := current.GetUser(
-		r.Context(),
-	)
 
 	if body.Username != nil {
 		record.Username = FromPtr(body.Username)
@@ -127,11 +131,13 @@ func (a *API) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		log.Error().
-			Err(err).
-			Str("user", record.ID).
-			Str("action", "UpdateProfile").
-			Msg("Failed to update profile")
+		slog.Error(
+			"Failed to update profile",
+			slog.Any("error", err),
+			slog.String("username", record.Username),
+			slog.String("uid", record.ID),
+			slog.String("action", "UpdateProfile"),
+		)
 
 		a.RenderNotify(w, r, Notification{
 			Message: ToPtr("Failed to update profile"),

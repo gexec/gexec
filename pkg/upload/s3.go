@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"path"
@@ -37,15 +38,16 @@ type S3Upload struct {
 }
 
 // Info prepares some informational message about the handler.
-func (u *S3Upload) Info() map[string]interface{} {
-	result := make(map[string]interface{})
-	result["driver"] = "s3"
-	result["endpoint"] = u.endpoint
-	result["path"] = u.path
-	result["bucket"] = u.bucket
-	result["region"] = u.region
-	result["pathstyle"] = u.pathstyle
-	result["proxy"] = u.proxy
+func (u *S3Upload) Info() []any {
+	result := []any{
+		slog.String("driver", "s3"),
+		slog.String("endpoint", u.endpoint),
+		slog.String("path", u.path),
+		slog.String("bucket", u.bucket),
+		slog.String("region", u.region),
+		slog.Bool("pathstyle", u.pathstyle),
+		slog.Bool("proxy", u.proxy),
+	}
 
 	return result
 }

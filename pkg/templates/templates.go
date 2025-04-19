@@ -5,6 +5,7 @@ import (
 	"embed"
 	"html/template"
 	"io"
+	"log/slog"
 	"os"
 	"path"
 	"path/filepath"
@@ -12,7 +13,6 @@ import (
 
 	"github.com/drone/funcmap"
 	"github.com/gexec/gexec/pkg/config"
-	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -30,10 +30,11 @@ func String(cfg *config.Config, name string, data any) string {
 		name,
 		data,
 	); err != nil {
-		log.Warn().
-			Err(err).
-			Str("file", name).
-			Msg("failed to parse template content")
+		slog.Error(
+			"Failed to parse template content",
+			slog.Any("error", err),
+			slog.String("file", name),
+		)
 	}
 
 	return buffer.String()
@@ -49,10 +50,11 @@ func Reader(cfg *config.Config, name string, data any) io.Reader {
 		name,
 		data,
 	); err != nil {
-		log.Warn().
-			Err(err).
-			Str("file", name).
-			Msg("failed to parse template content")
+		slog.Error(
+			"Failed to parse template content",
+			slog.Any("error", err),
+			slog.String("file", name),
+		)
 	}
 
 	return bytes.NewReader(
@@ -74,18 +76,20 @@ func Load(cfg *config.Config) *template.Template {
 	)
 
 	if err != nil {
-		log.Warn().
-			Err(err).
-			Msg("Failed to get builtin template list")
+		slog.Warn(
+			"Failed to get builtin template list",
+			slog.Any("error", err),
+		)
 	} else {
 		for _, name := range files {
 			file, err := assets.ReadFile(name)
 
 			if err != nil {
-				log.Warn().
-					Err(err).
-					Str("file", name).
-					Msg("Failed to read builtin template")
+				slog.Error(
+					"Failed to read builtin template",
+					slog.Any("error", err),
+					slog.String("file", name),
+				)
 			}
 
 			if _, err := tpls.New(
@@ -94,10 +98,11 @@ func Load(cfg *config.Config) *template.Template {
 					"files/",
 				),
 			).Parse(string(file)); err != nil {
-				log.Warn().
-					Err(err).
-					Str("file", name).
-					Msg("Failed to parse builtin template")
+				slog.Error(
+					"Failed to parse builtin template",
+					slog.Any("error", err),
+					slog.String("file", name),
+				)
 			}
 		}
 	}
@@ -131,10 +136,11 @@ func Load(cfg *config.Config) *template.Template {
 				file, err := os.ReadFile(name)
 
 				if err != nil {
-					log.Warn().
-						Err(err).
-						Str("file", name).
-						Msg("Failed to read custom template")
+					slog.Error(
+						"Failed to read custom template",
+						slog.Any("error", err),
+						slog.String("file", name),
+					)
 				}
 
 				tplName := strings.TrimPrefix(
@@ -146,15 +152,17 @@ func Load(cfg *config.Config) *template.Template {
 				)
 
 				if _, err := tpls.New(tplName).Parse(string(file)); err != nil {
-					log.Warn().
-						Err(err).
-						Str("file", name).
-						Msg("Failed to parse custom template")
+					slog.Error(
+						"Failed to parse custom template",
+						slog.Any("error", err),
+						slog.String("file", name),
+					)
 				}
 			}
 		} else {
-			log.Warn().
-				Msg("Custom templates directory doesn't exist")
+			slog.Warn(
+				"Custom template directory does not exist",
+			)
 		}
 	}
 

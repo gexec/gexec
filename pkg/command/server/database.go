@@ -2,13 +2,13 @@ package command
 
 import (
 	"context"
+	"log/slog"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/cenkalti/backoff/v5"
 	"github.com/gexec/gexec/pkg/store"
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -116,15 +116,17 @@ func dbCleanupAction(ccmd *cobra.Command, _ []string) {
 	if err := storage.Users.CleanupRedirectTokens(
 		context.Background(),
 	); err != nil {
-		log.Error().
-			Err(err).
-			Msg("Failed to cleanup redirect tokens")
+		slog.Error(
+			"Failed to cleanup redirect tokens",
+			slog.Any("error", err),
+		)
 
 		os.Exit(1)
 	}
 
-	log.Info().
-		Msg("Finished cleanup task")
+	slog.Info(
+		"Finished cleanup task",
+	)
 }
 
 func dbMigrateAction(ccmd *cobra.Command, _ []string) {
@@ -134,19 +136,22 @@ func dbMigrateAction(ccmd *cobra.Command, _ []string) {
 	group, err := storage.Migrate(ccmd.Context())
 
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Msg("Failed to migrate database")
+		slog.Error(
+			"Failed to migrate database",
+			slog.Any("error", err),
+		)
 
 		os.Exit(1)
 	}
 
 	if group.IsZero() {
-		log.Info().
-			Msg("Noting to migrate")
+		slog.Info(
+			"Nothing to migrate",
+		)
 	} else {
-		log.Debug().
-			Msg("Finished migrate")
+		slog.Info(
+			"Finished migrate",
+		)
 	}
 }
 
@@ -157,19 +162,22 @@ func dbRollbackAction(ccmd *cobra.Command, _ []string) {
 	group, err := storage.Rollback(ccmd.Context())
 
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Msg("Failed to rollback database")
+		slog.Error(
+			"Failed to rollback database",
+			slog.Any("error", err),
+		)
 
 		os.Exit(1)
 	}
 
 	if group.IsZero() {
-		log.Info().
-			Msg("Noting to rollback")
+		slog.Info(
+			"Nothing to rollback",
+		)
 	} else {
-		log.Debug().
-			Msg("Finished rollback")
+		slog.Info(
+			"Finished rollback",
+		)
 	}
 }
 
@@ -182,23 +190,26 @@ func dbLockAction(ccmd *cobra.Command, _ []string) {
 	)
 
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Msg("Failed to init migrator")
+		slog.Error(
+			"Failed to init migrator",
+			slog.Any("error", err),
+		)
 
 		os.Exit(1)
 	}
 
 	if err := migrator.Lock(ccmd.Context()); err != nil {
-		log.Fatal().
-			Err(err).
-			Msg("Failed to lock database")
+		slog.Error(
+			"Failed to lock database",
+			slog.Any("error", err),
+		)
 
 		os.Exit(1)
 	}
 
-	log.Debug().
-		Msg("Finished locking")
+	slog.Debug(
+		"Finished locking",
+	)
 }
 
 func dbUnlockAction(ccmd *cobra.Command, _ []string) {
@@ -210,23 +221,26 @@ func dbUnlockAction(ccmd *cobra.Command, _ []string) {
 	)
 
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Msg("Failed to init migrator")
+		slog.Error(
+			"Failed to init migrator",
+			slog.Any("error", err),
+		)
 
 		os.Exit(1)
 	}
 
 	if err := migrator.Unlock(ccmd.Context()); err != nil {
-		log.Fatal().
-			Err(err).
-			Msg("Failed to unlock database")
+		slog.Error(
+			"Failed to unlock database",
+			slog.Any("error", err),
+		)
 
 		os.Exit(1)
 	}
 
-	log.Debug().
-		Msg("Finished unlocking")
+	slog.Debug(
+		"Finished unlocking",
+	)
 }
 
 func dbStatusAction(ccmd *cobra.Command, _ []string) {
@@ -238,9 +252,10 @@ func dbStatusAction(ccmd *cobra.Command, _ []string) {
 	)
 
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Msg("Failed to init migrator")
+		slog.Error(
+			"Failed to init migrator",
+			slog.Any("error", err),
+		)
 
 		os.Exit(1)
 	}
@@ -250,9 +265,10 @@ func dbStatusAction(ccmd *cobra.Command, _ []string) {
 	)
 
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Msg("Failed to check migrations")
+		slog.Error(
+			"Failed to check migrations",
+			slog.Any("error", err),
+		)
 
 		os.Exit(1)
 	}
@@ -269,10 +285,11 @@ func dbStatusAction(ccmd *cobra.Command, _ []string) {
 		applied = append(applied, row.String())
 	}
 
-	log.Info().
-		Strs("pending", pending).
-		Strs("applied", applied).
-		Msg("Migrations")
+	slog.Info(
+		"Migrations",
+		slog.Any("pending", pending),
+		slog.Any("applied", applied),
+	)
 }
 
 func dbCreateAction(ccmd *cobra.Command, args []string) {
@@ -284,9 +301,10 @@ func dbCreateAction(ccmd *cobra.Command, args []string) {
 	)
 
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Msg("Failed to init migrator")
+		slog.Error(
+			"Failed to init migrator",
+			slog.Any("error", err),
+		)
 
 		os.Exit(1)
 	}
@@ -300,17 +318,19 @@ func dbCreateAction(ccmd *cobra.Command, args []string) {
 	)
 
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Msg("Failed to generate migration")
+		slog.Error(
+			"Failed to generate migration",
+			slog.Any("error", err),
+		)
 
 		os.Exit(1)
 	}
 
-	log.Info().
-		Str("name", m.Name).
-		Str("path", m.Path).
-		Msg("Finished generating")
+	slog.Info(
+		"Finished generating",
+		slog.String("name", m.Name),
+		slog.String("path", m.Path),
+	)
 }
 
 func prepareStorage(ctx context.Context) *store.Store {
@@ -322,31 +342,35 @@ func prepareStorage(ctx context.Context) *store.Store {
 	)
 
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Msg("Failed to setup database")
+		slog.Error(
+			"Failed to setup database",
+			slog.Any("error", err),
+		)
 
 		os.Exit(1)
 	}
 
-	log.Info().
-		Fields(storage.Info()).
-		Msg("Preparing database")
+	slog.Info(
+		"Preparing database",
+		storage.Info()...,
+	)
 
 	if val, err := backoff.Retry(
 		ctx,
 		storage.Open,
 		backoff.WithBackOff(backoff.NewExponentialBackOff()),
 		backoff.WithNotify(func(err error, dur time.Duration) {
-			log.Warn().
-				Err(err).
-				Dur("retry", dur).
-				Msg("Database open failed")
+			slog.Warn(
+				"Database open failed",
+				slog.Any("error", err),
+				slog.Duration("retry", dur),
+			)
 		}),
 	); err != nil || !val {
-		log.Fatal().
-			Err(err).
-			Msg("Giving up to connect to db")
+		slog.Error(
+			"Giving up to connect to db",
+			slog.Any("error", err),
+		)
 
 		os.Exit(1)
 	}
@@ -356,15 +380,17 @@ func prepareStorage(ctx context.Context) *store.Store {
 		storage.Ping,
 		backoff.WithBackOff(backoff.NewExponentialBackOff()),
 		backoff.WithNotify(func(err error, dur time.Duration) {
-			log.Warn().
-				Err(err).
-				Dur("retry", dur).
-				Msg("Database ping failed")
+			slog.Warn(
+				"Database ping failed",
+				slog.Any("error", err),
+				slog.Duration("retry", dur),
+			)
 		}),
 	); err != nil || !val {
-		log.Fatal().
-			Err(err).
-			Msg("Giving up to ping the db")
+		slog.Error(
+			"Giving up to ping the db",
+			slog.Any("error", err),
+		)
 
 		os.Exit(1)
 	}

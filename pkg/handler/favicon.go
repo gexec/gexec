@@ -2,10 +2,10 @@ package handler
 
 import (
 	"io"
+	"log/slog"
 	"net/http"
 
 	"github.com/gexec/gexec/pkg/frontend"
-	"github.com/rs/zerolog/log"
 )
 
 // Favicon returns the favicon for embedded frontend.
@@ -14,10 +14,11 @@ func (h *Handler) Favicon() http.HandlerFunc {
 		file, err := frontend.Load(h.config).Open("favicon.svg")
 
 		if err != nil {
-			log.Warn().
-				Err(err).
-				Str("handler", "favicon").
-				Msg("Failed to load favicon")
+			slog.Error(
+				"Failed to load favicon",
+				slog.Any("error", err),
+				slog.String("handler", "favicon"),
+			)
 
 			http.Error(
 				w,
@@ -32,10 +33,11 @@ func (h *Handler) Favicon() http.HandlerFunc {
 		stat, err := file.Stat()
 
 		if err != nil {
-			log.Warn().
-				Err(err).
-				Str("handler", "favicon").
-				Msg("Failed to stat favicon")
+			slog.Error(
+				"Failed to stat favicon",
+				slog.Any("error", err),
+				slog.String("handler", "assets"),
+			)
 
 			http.Error(
 				w,

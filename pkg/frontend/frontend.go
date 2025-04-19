@@ -3,11 +3,11 @@ package frontend
 import (
 	"embed"
 	"io/fs"
+	"log/slog"
 	"os"
 	"path"
 
 	"github.com/gexec/gexec/pkg/config"
-	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -52,8 +52,9 @@ func (c Chained) Open(origPath string) (fs.File, error) {
 				return f, nil
 			}
 		} else {
-			log.Warn().
-				Msg("Custom frontend directory doesn't exist")
+			slog.Warn(
+				"Custom frontend directory does not exist",
+			)
 		}
 	}
 

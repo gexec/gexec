@@ -16,8 +16,7 @@
   },
   "logs": {
     "level": "info",
-    "pretty": true,
-    "color": true
+    "pretty": true
   },
   "cleanup": {
     "enabled": true,

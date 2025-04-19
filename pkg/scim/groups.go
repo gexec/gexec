@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -15,7 +16,6 @@ import (
 	"github.com/elimity-com/scim/optional"
 	"github.com/gexec/gexec/pkg/config"
 	"github.com/gexec/gexec/pkg/model"
-	"github.com/rs/zerolog"
 	"github.com/scim2/filter-parser/v2"
 	"github.com/uptrace/bun"
 )
@@ -29,7 +29,7 @@ var (
 type groupHandlers struct {
 	config config.Scim
 	store  *bun.DB
-	logger zerolog.Logger
+	logger *slog.Logger
 }
 
 // GetAll implements the SCIM v2 server interface for groups.
@@ -65,9 +65,10 @@ func (gs *groupHandlers) GetAll(r *http.Request, params scim.ListRequestParams) 
 			return result, nil
 		}
 
-		gs.logger.Error().
-			Err(err).
-			Msg("Failed to count all")
+		gs.logger.Error(
+			"Failed to count all",
+			slog.Any("error", err),
+		)
 
 		return result, err
 	}
@@ -94,9 +95,10 @@ func (gs *groupHandlers) GetAll(r *http.Request, params scim.ListRequestParams) 
 				return result, nil
 			}
 
-			gs.logger.Error().
-				Err(err).
-				Msg("Failed to fetch all")
+			gs.logger.Error(
+				"Failed to fetch all",
+				slog.Any("error", err),
+			)
 
 			return result, err
 		}
@@ -134,10 +136,11 @@ func (gs *groupHandlers) Get(r *http.Request, id string) (scim.Resource, error) 
 			return scim.Resource{}, serrors.ScimErrorResourceNotFound(id)
 		}
 
-		gs.logger.Error().
-			Err(err).
-			Str("id", id).
-			Msg("Failed to fetch group")
+		gs.logger.Error(
+			"Failed to fetch group",
+			slog.Any("error", err),
+			slog.String("id", id),
+		)
 
 		return scim.Resource{}, err
 	}
@@ -175,10 +178,11 @@ func (gs *groupHandlers) Create(r *http.Request, attributes scim.ResourceAttribu
 		Model(record).
 		Where("name = ? OR scim = ?", displayName, externalID).
 		Scan(r.Context()); err != nil && err != sql.ErrNoRows {
-		gs.logger.Error().
-			Err(err).
-			Str("group", displayName).
-			Msg("Failed to check if group exists")
+		gs.logger.Error(
+			"Failed to check if group exists",
+			slog.Any("error", err),
+			slog.String("group", displayName),
+		)
 
 		return scim.Resource{}, err
 	}
@@ -189,17 +193,19 @@ func (gs *groupHandlers) Create(r *http.Request, attributes scim.ResourceAttribu
 	if record.ID == "" {
 		record.Slug = gs.slugify(r.Context(), displayName, record.ID)
 
-		gs.logger.Debug().
-			Str("group", record.Name).
-			Msg("Creating new group")
+		gs.logger.Debug(
+			"Creating new group",
+			slog.String("group", record.Name),
+		)
 
 		if _, err := gs.store.NewInsert().
 			Model(record).
 			Exec(r.Context()); err != nil {
-			gs.logger.Error().
-				Err(err).
-				Str("group", record.Name).
-				Msg("Failed to create group")
+			gs.logger.Error(
+				"Failed to create group",
+				slog.Any("error", err),
+				slog.String("group", record.Name),
+			)
 
 			return scim.Resource{}, err
 		}
@@ -208,10 +214,11 @@ func (gs *groupHandlers) Create(r *http.Request, attributes scim.ResourceAttribu
 			Model(record).
 			Where("id = ?", record.ID).
 			Exec(r.Context()); err != nil {
-			gs.logger.Error().
-				Err(err).
-				Str("group", record.Name).
-				Msg("Failed to update group")
+			gs.logger.Error(
+				"Failed to update group",
+				slog.Any("error", err),
+				slog.String("group", record.Name),
+			)
 
 			return scim.Resource{}, err
 		}
@@ -254,10 +261,11 @@ func (gs *groupHandlers) Replace(r *http.Request, id string, attributes scim.Res
 			return scim.Resource{}, serrors.ScimErrorResourceNotFound(id)
 		}
 
-		gs.logger.Error().
-			Err(err).
-			Str("id", id).
-			Msg("Failed to fetch group")
+		gs.logger.Error(
+			"Failed to fetch group",
+			slog.Any("error", err),
+			slog.String("id", id),
+		)
 
 		return scim.Resource{}, err
 	}
@@ -269,10 +277,11 @@ func (gs *groupHandlers) Replace(r *http.Request, id string, attributes scim.Res
 		Model(record).
 		Where("id = ?", record.ID).
 		Exec(r.Context()); err != nil {
-		gs.logger.Error().
-			Err(err).
-			Str("id", id).
-			Msg("Failed to update group")
+		gs.logger.Error(
+			"Failed to update group",
+			slog.Any("error", err),
+			slog.String("id", id),
+		)
 
 		return scim.Resource{}, err
 	}
@@ -304,10 +313,11 @@ func (gs *groupHandlers) Patch(r *http.Request, id string, operations []scim.Pat
 			return scim.Resource{}, serrors.ScimErrorResourceNotFound(id)
 		}
 
-		gs.logger.Error().
-			Err(err).
-			Str("id", id).
-			Msg("Failed to fetch group")
+		gs.logger.Error(
+			"Failed to fetch group",
+			slog.Any("error", err),
+			slog.String("id", id),
+		)
 
 		return scim.Resource{}, err
 	}
@@ -325,46 +335,54 @@ func (gs *groupHandlers) Patch(r *http.Request, id string, operations []scim.Pat
 									Model((*model.UserGroup)(nil)).
 									Where("group_id = ? AND user_id = ?", record.ID, v.(string)).
 									Exec(r.Context()); err != nil {
-									gs.logger.Error().
-										Err(err).
-										Str("group", record.Name).
-										Str("user", v.(string)).
-										Msg("Failed to delete member")
+									gs.logger.Error(
+										"Failed to delete member",
+										slog.Any("error", err),
+										slog.String("group", record.Name),
+										slog.String("user", v.(string)),
+									)
 
 									return scim.Resource{}, err
 								}
 							} else {
-								gs.logger.Error().
-									Str("method", "patch").
-									Str("id", id).
-									Str("operation", op).
-									Str("path", "members").
-									Msgf("Failed to convert member: %v", vs)
+								gs.logger.Error(
+									"Failed to convert member",
+									slog.String("method", "patch"),
+									slog.String("id", id),
+									slog.String("operation", op),
+									slog.String("path", "members"),
+									slog.Any("value", vs),
+								)
 							}
 						} else {
-							gs.logger.Error().
-								Str("method", "patch").
-								Str("id", id).
-								Str("operation", op).
-								Str("path", "members").
-								Msgf("Failed to convert values: %v", i)
+							gs.logger.Error(
+								"Failed to convert values",
+								slog.String("method", "patch"),
+								slog.String("id", id),
+								slog.String("operation", op),
+								slog.String("path", "members"),
+								slog.Any("value", i),
+							)
 						}
 					}
 				} else {
-					gs.logger.Error().
-						Str("method", "patch").
-						Str("id", id).
-						Str("operation", op).
-						Str("path", "members").
-						Msgf("Failed to convert interface: %v", operation.Value)
+					gs.logger.Error(
+						"Failed to convert interface",
+						slog.String("method", "patch"),
+						slog.String("id", id),
+						slog.String("operation", op),
+						slog.String("path", "members"),
+						slog.Any("value", operation.Value),
+					)
 				}
 			default:
-				gs.logger.Error().
-					Str("method", "patch").
-					Str("id", id).
-					Str("operation", op).
-					Str("path", operation.Path.String()).
-					Msg("Unknown path")
+				gs.logger.Error(
+					"Unknown path",
+					slog.String("method", "patch"),
+					slog.String("id", id),
+					slog.String("operation", op),
+					slog.String("path", operation.Path.String()),
+				)
 
 				return scim.Resource{}, fmt.Errorf(
 					"unknown path: %s",
@@ -388,11 +406,12 @@ func (gs *groupHandlers) Patch(r *http.Request, id string, operations []scim.Pat
 										continue
 									}
 
-									gs.logger.Error().
-										Err(err).
-										Str("group", record.Name).
-										Str("user", v.(string)).
-										Msg("Failed to fetch user")
+									gs.logger.Error(
+										"Failed to fetch user",
+										slog.Any("error", err),
+										slog.String("group", record.Name),
+										slog.String("user", v.(string)),
+									)
 
 									return scim.Resource{}, err
 								}
@@ -403,20 +422,22 @@ func (gs *groupHandlers) Patch(r *http.Request, id string, operations []scim.Pat
 									Exists(r.Context())
 
 								if err != nil {
-									gs.logger.Error().
-										Err(err).
-										Str("group", record.Name).
-										Str("user", user.Username).
-										Msg("Failed to check member")
+									gs.logger.Error(
+										"Failed to check member",
+										slog.Any("error", err),
+										slog.String("group", record.Name),
+										slog.String("user", user.Username),
+									)
 
 									return scim.Resource{}, err
 								}
 
 								if exists {
-									gs.logger.Debug().
-										Str("group", record.Name).
-										Str("user", user.Username).
-										Msg("Member already exists")
+									gs.logger.Debug(
+										"Member already exists",
+										slog.String("group", record.Name),
+										slog.String("user", user.Username),
+									)
 
 									continue
 								}
@@ -427,46 +448,54 @@ func (gs *groupHandlers) Patch(r *http.Request, id string, operations []scim.Pat
 										UserID:  user.ID,
 										Perm:    "owner",
 									}).Exec(r.Context()); err != nil {
-									gs.logger.Error().
-										Err(err).
-										Str("group", record.Name).
-										Str("user", user.Username).
-										Msg("Failed to append member")
+									gs.logger.Error(
+										"Failed to append member",
+										slog.Any("error", err),
+										slog.String("group", record.Name),
+										slog.String("user", user.Username),
+									)
 
 									return scim.Resource{}, err
 								}
 							} else {
-								gs.logger.Error().
-									Str("method", "patch").
-									Str("id", id).
-									Str("operation", op).
-									Str("path", "members").
-									Msgf("Failed to convert member: %v", vs)
+								gs.logger.Error(
+									"Failed to convert member",
+									slog.String("method", "patch"),
+									slog.String("id", id),
+									slog.String("operation", op),
+									slog.String("path", "members"),
+									slog.Any("value", vs),
+								)
 							}
 						} else {
-							gs.logger.Error().
-								Str("method", "patch").
-								Str("id", id).
-								Str("operation", op).
-								Str("path", "members").
-								Msgf("Failed to convert values: %v", i)
+							gs.logger.Error(
+								"Failed to convert values",
+								slog.String("method", "patch"),
+								slog.String("id", id),
+								slog.String("operation", op),
+								slog.String("path", "members"),
+								slog.Any("value", i),
+							)
 						}
 					}
 				} else {
-					gs.logger.Error().
-						Str("method", "patch").
-						Str("id", id).
-						Str("operation", op).
-						Str("path", "members").
-						Msgf("Failed to convert interface: %v", operation.Value)
+					gs.logger.Error(
+						"Failed to convert interface",
+						slog.String("method", "patch"),
+						slog.String("id", id),
+						slog.String("operation", op),
+						slog.String("path", "members"),
+						slog.Any("value", operation.Value),
+					)
 				}
 			default:
-				gs.logger.Error().
-					Str("method", "patch").
-					Str("id", id).
-					Str("operation", op).
-					Str("path", operation.Path.String()).
-					Msg("Unknown path")
+				gs.logger.Error(
+					"Unknown path",
+					slog.String("method", "patch"),
+					slog.String("id", id),
+					slog.String("operation", op),
+					slog.String("path", operation.Path.String()),
+				)
 
 				return scim.Resource{}, fmt.Errorf(
 					"unknown path: %s",
@@ -474,11 +503,12 @@ func (gs *groupHandlers) Patch(r *http.Request, id string, operations []scim.Pat
 				)
 			}
 		default:
-			gs.logger.Error().
-				Str("method", "patch").
-				Str("id", id).
-				Str("operation", op).
-				Msg("Unknown operation")
+			gs.logger.Error(
+				"Unknown operation",
+				slog.String("method", "patch"),
+				slog.String("id", id),
+				slog.String("operation", op),
+			)
 
 			return scim.Resource{}, fmt.Errorf(
 				"unknown operation: %s",
@@ -508,10 +538,11 @@ func (gs *groupHandlers) Delete(r *http.Request, id string) error {
 		Model((*model.Group)(nil)).
 		Where("id = ?", id).
 		Exec(r.Context()); err != nil {
-		gs.logger.Error().
-			Err(err).
-			Str("id", id).
-			Msg("Failed to delete group")
+		gs.logger.Error(
+			"Failed to delete group",
+			slog.Any("error", err),
+			slog.String("id", id),
+		)
 
 		return err
 	}
@@ -559,9 +590,10 @@ func (gs *groupHandlers) filter(expr filter.Expression, db *bun.SelectQuery) *bu
 	case *filter.AttributeExpression:
 		return gs.handleAttributeExpression(e, db)
 	default:
-		gs.logger.Error().
-			Str("type", fmt.Sprintf("%T", e)).
-			Msg("Unsupported expression type for group filter")
+		gs.logger.Error(
+			"Unsupported expression type for group filter",
+			slog.String("type", fmt.Sprintf("%T", e)),
+		)
 	}
 
 	return db
@@ -572,9 +604,10 @@ func (gs *groupHandlers) handleAttributeExpression(e *filter.AttributeExpression
 	column, ok := groupAttributeMapping[scimAttr]
 
 	if !ok {
-		gs.logger.Error().
-			Str("attribute", scimAttr).
-			Msg("Attribute is not mapped for groups")
+		gs.logger.Error(
+			"Attribute is not mapped for groups",
+			slog.String("attribute", scimAttr),
+		)
 
 		return db
 	}
@@ -601,9 +634,10 @@ func (gs *groupHandlers) handleAttributeExpression(e *filter.AttributeExpression
 	case "le":
 		return db.Where("? <= ?", bun.Ident(column), value)
 	default:
-		gs.logger.Error().
-			Str("operator", operator).
-			Msgf("Unsupported attribute operator for group filter")
+		gs.logger.Error(
+			"Unsupported attribute operator for group filter",
+			slog.String("operator", operator),
+		)
 	}
 
 	return db

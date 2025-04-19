@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -13,7 +14,6 @@ import (
 	"github.com/gexec/gexec/pkg/config"
 	"github.com/gexec/gexec/pkg/model"
 	"github.com/gexec/gexec/pkg/secret"
-	"github.com/rs/zerolog"
 	"github.com/scim2/filter-parser/v2"
 	"github.com/uptrace/bun"
 )
@@ -30,7 +30,7 @@ var (
 type userHandlers struct {
 	config config.Scim
 	store  *bun.DB
-	logger zerolog.Logger
+	logger *slog.Logger
 }
 
 // GetAll implements the SCIM v2 server interface for users.
@@ -66,9 +66,10 @@ func (us *userHandlers) GetAll(r *http.Request, params scim.ListRequestParams) (
 			return result, nil
 		}
 
-		us.logger.Error().
-			Err(err).
-			Msg("Failed to count all")
+		us.logger.Error(
+			"Failed to count all",
+			slog.Any("error", err),
+		)
 
 		return result, err
 	}
@@ -95,9 +96,10 @@ func (us *userHandlers) GetAll(r *http.Request, params scim.ListRequestParams) (
 				return result, nil
 			}
 
-			us.logger.Error().
-				Err(err).
-				Msg("Failed to fetch all")
+			us.logger.Error(
+				"Failed to fetch all",
+				slog.Any("error", err),
+			)
 
 			return result, err
 		}
@@ -137,10 +139,11 @@ func (us *userHandlers) Get(r *http.Request, id string) (scim.Resource, error) {
 			return scim.Resource{}, serrors.ScimErrorResourceNotFound(id)
 		}
 
-		us.logger.Error().
-			Err(err).
-			Str("id", id).
-			Msg("Failed to fetch user")
+		us.logger.Error(
+			"Failed to fetch user",
+			slog.Any("error", err),
+			slog.String("id", id),
+		)
 
 		return scim.Resource{}, err
 	}
@@ -193,17 +196,21 @@ func (us *userHandlers) Create(r *http.Request, attributes scim.ResourceAttribut
 						email = vs["value"].(string)
 					}
 				} else {
-					us.logger.Error().
-						Str("method", "create").
-						Str("path", "emails").
-						Msgf("Failed to convert email: %v", i)
+					us.logger.Error(
+						"Failed to convert email",
+						slog.String("method", "create"),
+						slog.String("path", "emails"),
+						slog.Any("value", i),
+					)
 				}
 			}
 		} else {
-			us.logger.Error().
-				Str("method", "create").
-				Str("path", "emails").
-				Msgf("Failed to convert interface: %v", val)
+			us.logger.Error(
+				"Failed to convert interface",
+				slog.String("method", "create"),
+				slog.String("path", "emails"),
+				slog.Any("value", val),
+			)
 		}
 	}
 
@@ -213,10 +220,11 @@ func (us *userHandlers) Create(r *http.Request, attributes scim.ResourceAttribut
 		Model(record).
 		Where("username = ? OR scim = ?", userName, externalID).
 		Scan(r.Context()); err != nil && err != sql.ErrNoRows {
-		us.logger.Error().
-			Err(err).
-			Str("user", userName).
-			Msg("Failed to check if user exists")
+		us.logger.Error(
+			"Failed to check if user exists",
+			slog.Any("error", err),
+			slog.String("user", userName),
+		)
 
 		return scim.Resource{}, err
 	}
@@ -230,17 +238,19 @@ func (us *userHandlers) Create(r *http.Request, attributes scim.ResourceAttribut
 	if record.ID == "" {
 		record.Password = secret.Generate(32)
 
-		us.logger.Debug().
-			Str("user", record.Username).
-			Msg("Creating new user")
+		us.logger.Debug(
+			"Creating new user",
+			slog.String("user", record.Username),
+		)
 
 		if _, err := us.store.NewInsert().
 			Model(record).
 			Exec(r.Context()); err != nil {
-			us.logger.Error().
-				Err(err).
-				Str("user", record.Username).
-				Msg("Failed to create user")
+			us.logger.Error(
+				"Failed to create user",
+				slog.Any("error", err),
+				slog.String("user", record.Username),
+			)
 
 			return scim.Resource{}, err
 		}
@@ -249,10 +259,11 @@ func (us *userHandlers) Create(r *http.Request, attributes scim.ResourceAttribut
 			Model(record).
 			Where("id = ?", record.ID).
 			Exec(r.Context()); err != nil {
-			us.logger.Error().
-				Err(err).
-				Str("user", record.Username).
-				Msg("Failed to update user")
+			us.logger.Error(
+				"Failed to update user",
+				slog.Any("error", err),
+				slog.String("user", record.Username),
+			)
 
 			return scim.Resource{}, err
 		}
@@ -306,17 +317,21 @@ func (us *userHandlers) Replace(r *http.Request, id string, attributes scim.Reso
 						email = vs["value"].(string)
 					}
 				} else {
-					us.logger.Error().
-						Str("method", "create").
-						Str("path", "emails").
-						Msgf("Failed to convert email: %v", i)
+					us.logger.Error(
+						"Failed to convert email",
+						slog.String("method", "create"),
+						slog.String("path", "emails"),
+						slog.Any("value", i),
+					)
 				}
 			}
 		} else {
-			us.logger.Error().
-				Str("method", "create").
-				Str("path", "emails").
-				Msgf("Failed to convert interface: %v", val)
+			us.logger.Error(
+				"Failed to convert interface",
+				slog.String("method", "create"),
+				slog.String("path", "emails"),
+				slog.Any("value", val),
+			)
 		}
 	}
 
@@ -330,10 +345,11 @@ func (us *userHandlers) Replace(r *http.Request, id string, attributes scim.Reso
 			return scim.Resource{}, serrors.ScimErrorResourceNotFound(id)
 		}
 
-		us.logger.Error().
-			Err(err).
-			Str("id", id).
-			Msg("Failed to fetch user")
+		us.logger.Error(
+			"Failed to fetch user",
+			slog.Any("error", err),
+			slog.String("id", id),
+		)
 
 		return scim.Resource{}, err
 	}
@@ -348,10 +364,11 @@ func (us *userHandlers) Replace(r *http.Request, id string, attributes scim.Reso
 		Model(record).
 		Where("id = ?", record.ID).
 		Exec(r.Context()); err != nil {
-		us.logger.Error().
-			Err(err).
-			Str("id", id).
-			Msg("Failed to update user")
+		us.logger.Error(
+			"Failed to update user",
+			slog.Any("error", err),
+			slog.String("id", id),
+		)
 
 		return scim.Resource{}, err
 	}
@@ -385,10 +402,11 @@ func (us *userHandlers) Patch(r *http.Request, id string, operations []scim.Patc
 			return scim.Resource{}, serrors.ScimErrorResourceNotFound(id)
 		}
 
-		us.logger.Error().
-			Err(err).
-			Str("id", id).
-			Msg("Failed to fetch user")
+		us.logger.Error(
+			"Failed to fetch user",
+			slog.Any("error", err),
+			slog.String("id", id),
+		)
 
 		return scim.Resource{}, err
 	}
@@ -396,11 +414,12 @@ func (us *userHandlers) Patch(r *http.Request, id string, operations []scim.Patc
 	for _, operation := range operations {
 		switch op := operation.Op; op {
 		default:
-			us.logger.Error().
-				Str("method", "patch").
-				Str("id", id).
-				Str("operation", op).
-				Msg("Unknown operation")
+			us.logger.Error(
+				"Unknown operation",
+				slog.String("method", "patch"),
+				slog.String("id", id),
+				slog.String("operation", op),
+			)
 
 			return scim.Resource{}, fmt.Errorf(
 				"unknown operation: %s",
@@ -432,10 +451,11 @@ func (us *userHandlers) Delete(r *http.Request, id string) error {
 		Model((*model.User)(nil)).
 		Where("id = ?", id).
 		Exec(r.Context()); err != nil {
-		us.logger.Error().
-			Err(err).
-			Str("id", id).
-			Msg("Failed to delete user")
+		us.logger.Error(
+			"Failed to delete user",
+			slog.Any("error", err),
+			slog.String("id", id),
+		)
 
 		return err
 	}
@@ -448,9 +468,10 @@ func (us *userHandlers) filter(expr filter.Expression, db *bun.SelectQuery) *bun
 	case *filter.AttributeExpression:
 		return us.handleAttributeExpression(e, db)
 	default:
-		us.logger.Error().
-			Str("type", fmt.Sprintf("%T", e)).
-			Msg("Unsupported expression type for user filter")
+		us.logger.Error(
+			"Unsupported expression type for user filter",
+			slog.String("type", fmt.Sprintf("%T", e)),
+		)
 	}
 
 	return db
@@ -461,9 +482,10 @@ func (us *userHandlers) handleAttributeExpression(e *filter.AttributeExpression,
 	column, ok := userAttributeMapping[scimAttr]
 
 	if !ok {
-		us.logger.Error().
-			Str("attribute", scimAttr).
-			Msg("Attribute is not mapped for users")
+		us.logger.Error(
+			"Attribute is not mapped for users",
+			slog.String("attribute", scimAttr),
+		)
 
 		return db
 	}
@@ -490,9 +512,10 @@ func (us *userHandlers) handleAttributeExpression(e *filter.AttributeExpression,
 	case "le":
 		return db.Where("? <= ?", bun.Ident(column), value)
 	default:
-		us.logger.Error().
-			Str("operator", operator).
-			Msgf("Unsupported attribute operator for user filter")
+		us.logger.Error(
+			"Unsupported attribute operator for user filter",
+			slog.String("operator", operator),
+		)
 	}
 
 	return db

@@ -1,11 +1,11 @@
 package handler
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/gexec/gexec/pkg/manifest"
 	"github.com/go-chi/render"
-	"github.com/rs/zerolog/log"
 )
 
 // Manifest renders the manifest from embedded frontend.
@@ -14,10 +14,11 @@ func (h *Handler) Manifest() http.HandlerFunc {
 		m, err := manifest.Read(h.config)
 
 		if err != nil {
-			log.Warn().
-				Err(err).
-				Str("handler", "manifest").
-				Msg("Failed to load manifest")
+			slog.Error(
+				"Failed to load manifest",
+				slog.Any("error", err),
+				slog.String("handler", "manifest"),
+			)
 
 			http.Error(
 				w,
