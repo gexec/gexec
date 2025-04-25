@@ -28,7 +28,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/golang/mock v1.6.0
 	github.com/joho/godotenv v1.5.1
-	github.com/oapi-codegen/nethttp-middleware v1.0.2
+	github.com/oapi-codegen/nethttp-middleware v1.1.1
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/oklog/run v1.1.0
 	github.com/prometheus/client_golang v1.22.0
