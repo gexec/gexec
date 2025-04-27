@@ -16,7 +16,7 @@ func init() {
 			ProjectID   string    `bun:"type:varchar(20)"`
 			TemplateID  string    `bun:"type:varchar(20)"`
 			Status      string    `bun:"type:varchar(255)"`
-			Playbook    string    `bun:"type:varchar(255)"`
+			Path        string    `bun:"type:varchar(255)"`
 			Environment string    `bun:"type:varchar(255)"`
 			Secret      string    `bun:"type:varchar(255)"`
 			Limit       string    `bun:"type:varchar(255)"`

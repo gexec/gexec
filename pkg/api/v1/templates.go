@@ -159,8 +159,8 @@ func (a *API) CreateProjectTemplate(w http.ResponseWriter, r *http.Request, _ Pr
 		incoming.Description = FromPtr(body.Description)
 	}
 
-	if body.Playbook != nil {
-		incoming.Playbook = FromPtr(body.Playbook)
+	if body.Path != nil {
+		incoming.Path = FromPtr(body.Path)
 	}
 
 	if body.Arguments != nil {
@@ -385,8 +385,8 @@ func (a *API) UpdateProjectTemplate(w http.ResponseWriter, r *http.Request, _ Pr
 		incoming.Description = FromPtr(body.Description)
 	}
 
-	if body.Playbook != nil {
-		incoming.Playbook = FromPtr(body.Playbook)
+	if body.Path != nil {
+		incoming.Path = FromPtr(body.Path)
 	}
 
 	if body.Arguments != nil {
@@ -1277,7 +1277,7 @@ func (a *API) convertTemplate(record *model.Template) Template {
 		Slug:          ToPtr(record.Slug),
 		Name:          ToPtr(record.Name),
 		Description:   ToPtr(record.Description),
-		Playbook:      ToPtr(record.Playbook),
+		Path:          ToPtr(record.Path),
 		Arguments:     ToPtr(record.Arguments),
 		Limit:         ToPtr(record.Limit),
 		Executor:      ToPtr(record.Executor),

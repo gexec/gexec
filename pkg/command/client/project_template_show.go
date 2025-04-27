@@ -31,8 +31,8 @@ Environment: {{ .ID }} {{ .Slug }}
 {{ with .Description -}}
 Description: {{ . }}
 {{ end -}}
-{{ with .Playbook -}}
-Playbook: {{ . }}
+{{ with .Path -}}
+Path: {{ . }}
 {{ end -}}
 {{ with .Arguments -}}
 Arguments: {{ . }}

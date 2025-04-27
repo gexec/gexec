@@ -61,7 +61,7 @@ type Execution struct {
 	Template    *Template       `bun:"rel:belongs-to,join:template_id=id"`
 	Name        string          `bun:"-"`
 	Status      ExecutionStatus `bun:"type:varchar(255)"`
-	Playbook    string          `bun:"type:varchar(255)"`
+	Path        string          `bun:"type:varchar(255)"`
 	Environment string          `bun:"type:varchar(255)"`
 	Secret      string          `bun:"type:varchar(255)"`
 	Limit       string          `bun:"type:varchar(255)"`

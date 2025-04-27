@@ -20,7 +20,7 @@ type projectTemplateUpdateBind struct {
 	Slug             string
 	Name             string
 	Description      string
-	Playbook         string
+	Path             string
 	Arguments        string
 	Limit            string
 	Branch           string
@@ -102,10 +102,10 @@ func init() {
 	)
 
 	projectTemplateUpdateCmd.Flags().StringVar(
-		&projectTemplateUpdateArgs.Playbook,
-		"playbook",
+		&projectTemplateUpdateArgs.Path,
+		"path",
 		"",
-		"Playbook for project template",
+		"Path for project template",
 	)
 
 	projectTemplateUpdateCmd.Flags().StringVar(
@@ -193,8 +193,8 @@ func projectTemplateUpdateAction(ccmd *cobra.Command, _ []string, client *Client
 		changed = true
 	}
 
-	if val := projectTemplateUpdateArgs.Playbook; val != "" {
-		body.Playbook = v1.ToPtr(val)
+	if val := projectTemplateUpdateArgs.Path; val != "" {
+		body.Path = v1.ToPtr(val)
 		changed = true
 	}
 

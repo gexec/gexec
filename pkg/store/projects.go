@@ -556,7 +556,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) (*model.Pr
 				Name:          "Ping Site",
 				Description:   "This template pings the website to provide real world example of using Gexec.",
 				Executor:      "ansible",
-				Playbook:      "ansible/ping.yml",
+				Path:          "ansible/ping.yml",
 			}
 
 			if err := template1.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
@@ -578,7 +578,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) (*model.Pr
 				Name:          "OpenTofu File",
 				Description:   "This template simply creates a file in the workspace with OpenTofu.",
 				Executor:      "opentofu",
-				Playbook:      "terraform/",
+				Path:          "terraform/",
 			}
 
 			if err := template2.SerializeSecret(s.client.encrypt.Passphrase); err != nil {
@@ -600,7 +600,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) (*model.Pr
 				Name:          "Terraform File",
 				Description:   "This template simply creates a file in the workspace with Terraform.",
 				Executor:      "terraform",
-				Playbook:      "terraform/",
+				Path:          "terraform/",
 			}
 
 			if err := template3.SerializeSecret(s.client.encrypt.Passphrase); err != nil {

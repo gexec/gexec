@@ -3236,7 +3236,7 @@ components:
                 type: "string"
                 x-omitempty: true
                 x-nullable: true
-              playbook:
+              path:
                 type: "string"
                 x-omitempty: true
                 x-nullable: true
@@ -3307,7 +3307,7 @@ components:
                 type: "string"
                 x-omitempty: true
                 x-nullable: true
-              playbook:
+              path:
                 type: "string"
                 x-omitempty: true
                 x-nullable: true
@@ -5054,7 +5054,7 @@ components:
           type: "string"
         description:
           type: "string"
-        playbook:
+        path:
           type: "string"
         arguments:
           type: "string"
@@ -5250,7 +5250,7 @@ components:
           type: "string"
         debug:
           type: "boolean"
-        playbook:
+        path:
           type: "string"
         environment:
           type: "string"

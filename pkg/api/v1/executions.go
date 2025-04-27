@@ -323,7 +323,7 @@ func (a *API) convertExecution(record *model.Execution) Execution {
 		Name:        ToPtr(record.Name),
 		Status:      ToPtr(string(record.Status)),
 		Debug:       ToPtr(record.Debug),
-		Playbook:    ToPtr(record.Playbook),
+		Path:        ToPtr(record.Path),
 		Environment: ToPtr(record.Environment),
 		Secret:      ToPtr(record.Secret),
 		Limit:       ToPtr(record.Limit),

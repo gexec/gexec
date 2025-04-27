@@ -19,8 +19,8 @@ Template: {{ .Slug }}
 {{ end -}}
 Status: {{ .Status }}
 Debug: {{ .Debug }}
-{{ with .Playbook -}}
-Playbook: {{ . }}
+{{ with .Path -}}
+Path: {{ . }}
 {{ end -}}
 {{ with .Environment -}}
 Environment: {{ . }}

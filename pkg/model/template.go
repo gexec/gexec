@@ -180,7 +180,7 @@ type Template struct {
 	Slug          string            `bun:"type:varchar(255)"`
 	Name          string            `bun:"type:varchar(255)"`
 	Description   string            `bun:"type:text"`
-	Playbook      string            `bun:"type:varchar(255)"`
+	Path          string            `bun:"type:varchar(255)"`
 	Arguments     string            `bun:"type:varchar(255)"`
 	Limit         string            `bun:"type:varchar(255)"`
 	Executor      string            `bun:"type:varchar(255)"`

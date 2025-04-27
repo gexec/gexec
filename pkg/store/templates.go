@@ -832,12 +832,12 @@ func (s *Templates) validate(ctx context.Context, record *model.Template, _ bool
 	}
 
 	if err := validation.Validate(
-		record.Playbook,
+		record.Path,
 		validation.Required,
 		validation.Length(3, 255),
 	); err != nil {
 		errs.Errors = append(errs.Errors, validate.Error{
-			Field: "playbook",
+			Field: "path",
 			Error: err,
 		})
 	}

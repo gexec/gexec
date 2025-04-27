@@ -20,7 +20,7 @@ type projectTemplateCreateBind struct {
 	Name           string
 	Executor       string
 	Description    string
-	Playbook       string
+	Path           string
 	Arguments      string
 	Limit          string
 	Branch         string
@@ -101,10 +101,10 @@ func init() {
 	)
 
 	projectTemplateCreateCmd.Flags().StringVar(
-		&projectTemplateCreateArgs.Playbook,
-		"playbook",
+		&projectTemplateCreateArgs.Path,
+		"path",
 		"",
-		"Playbook for project template",
+		"Path for project template",
 	)
 
 	projectTemplateCreateCmd.Flags().StringVar(
@@ -194,8 +194,8 @@ func projectTemplateCreateAction(ccmd *cobra.Command, _ []string, client *Client
 		changed = true
 	}
 
-	if val := projectTemplateCreateArgs.Playbook; val != "" {
-		body.Playbook = v1.ToPtr(val)
+	if val := projectTemplateCreateArgs.Path; val != "" {
+		body.Path = v1.ToPtr(val)
 		changed = true
 	}
 
