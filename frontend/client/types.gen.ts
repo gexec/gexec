@@ -1145,13 +1145,7 @@ export type UpdateProjectScheduleBody = {
  */
 export type CreateProjectExecutionBody = {
   template_id?: string
-  status?: string
   debug?: boolean
-  playbook?: string
-  environment?: string
-  secret?: string
-  limit?: string
-  branch?: string
 }
 
 /**

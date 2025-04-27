@@ -2951,6 +2951,7 @@ components:
                 type: "string"
                 x-omitempty: true
                 x-nullable: true
+                x-go-name: "URL"
               branch:
                 type: "string"
                 x-omitempty: true
@@ -2980,6 +2981,7 @@ components:
                 type: "string"
                 x-omitempty: true
                 x-nullable: true
+                x-go-name: "URL"
               branch:
                 type: "string"
                 x-omitempty: true
@@ -3528,32 +3530,8 @@ components:
                 x-omitempty: true
                 x-nullable: true
                 x-go-name: "TemplateID"
-              status:
-                type: "string"
-                x-omitempty: true
-                x-nullable: true
               debug:
                 type: "boolean"
-                x-omitempty: true
-                x-nullable: true
-              playbook:
-                type: "string"
-                x-omitempty: true
-                x-nullable: true
-              environment:
-                type: "string"
-                x-omitempty: true
-                x-nullable: true
-              secret:
-                type: "string"
-                x-omitempty: true
-                x-nullable: true
-              limit:
-                type: "string"
-                x-omitempty: true
-                x-nullable: true
-              branch:
-                type: "string"
                 x-omitempty: true
                 x-nullable: true
 
@@ -4900,6 +4878,7 @@ components:
           type: "string"
         url:
           type: "string"
+          x-go-name: "URL"
         branch:
           type: "string"
         created_at:
