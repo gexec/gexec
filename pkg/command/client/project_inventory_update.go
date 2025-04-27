@@ -12,16 +12,19 @@ import (
 )
 
 type projectInventoryUpdateBind struct {
-	ProjectID    string
-	InventoryID  string
-	RepositoryID string
-	CredentialID string
-	BecomeID     string
-	Slug         string
-	Name         string
-	Kind         string
-	Content      string
-	Format       string
+	ProjectID      string
+	InventoryID    string
+	RepositoryID   string
+	NoRepositoryID bool
+	CredentialID   string
+	NoCredentialID bool
+	BecomeID       string
+	NoBecomeID     bool
+	Slug           string
+	Name           string
+	Kind           string
+	Content        string
+	Format         string
 }
 
 var (
@@ -61,6 +64,13 @@ func init() {
 		"Repository for project inventory",
 	)
 
+	projectInventoryUpdateCmd.Flags().BoolVar(
+		&projectInventoryUpdateArgs.NoRepositoryID,
+		"no-repository-id",
+		false,
+		"Remove repository for project inventory",
+	)
+
 	projectInventoryUpdateCmd.Flags().StringVar(
 		&projectInventoryUpdateArgs.CredentialID,
 		"credential-id",
@@ -68,11 +78,25 @@ func init() {
 		"Credential for project inventory",
 	)
 
+	projectInventoryUpdateCmd.Flags().BoolVar(
+		&projectInventoryUpdateArgs.NoCredentialID,
+		"no-credential-id",
+		false,
+		"Remove credential for project inventory",
+	)
+
 	projectInventoryUpdateCmd.Flags().StringVar(
 		&projectInventoryUpdateArgs.BecomeID,
 		"become-id",
 		"",
 		"Become for project inventory",
+	)
+
+	projectInventoryUpdateCmd.Flags().BoolVar(
+		&projectInventoryUpdateArgs.NoBecomeID,
+		"no-become-id",
+		false,
+		"Remove become for project inventory",
 	)
 
 	projectInventoryUpdateCmd.Flags().StringVar(
@@ -128,13 +152,28 @@ func projectInventoryUpdateAction(ccmd *cobra.Command, _ []string, client *Clien
 		changed = true
 	}
 
+	if val := projectInventoryUpdateArgs.NoRepositoryID; val {
+		body.RepositoryID = v1.ToPtr("")
+		changed = true
+	}
+
 	if val := projectInventoryUpdateArgs.CredentialID; val != "" {
 		body.CredentialID = v1.ToPtr(val)
 		changed = true
 	}
 
+	if val := projectInventoryUpdateArgs.NoCredentialID; val {
+		body.CredentialID = v1.ToPtr("")
+		changed = true
+	}
+
 	if val := projectInventoryUpdateArgs.BecomeID; val != "" {
 		body.BecomeID = v1.ToPtr(val)
+		changed = true
+	}
+
+	if val := projectInventoryUpdateArgs.NoBecomeID; val {
+		body.BecomeID = v1.ToPtr("")
 		changed = true
 	}
 

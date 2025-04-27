@@ -12,14 +12,15 @@ import (
 )
 
 type projectRepositoryUpdateBind struct {
-	ProjectID    string
-	RepositoryID string
-	CredentialID string
-	Slug         string
-	Name         string
-	URL          string
-	Branch       string
-	Format       string
+	ProjectID      string
+	RepositoryID   string
+	CredentialID   string
+	NoCredentialID bool
+	Slug           string
+	Name           string
+	URL            string
+	Branch         string
+	Format         string
 }
 
 var (
@@ -57,6 +58,13 @@ func init() {
 		"credential-id",
 		"",
 		"Credential for project repository",
+	)
+
+	projectRepositoryUpdateCmd.Flags().BoolVar(
+		&projectRepositoryUpdateArgs.NoCredentialID,
+		"no-credential-id",
+		false,
+		"Remove credential for project repository",
 	)
 
 	projectRepositoryUpdateCmd.Flags().StringVar(
@@ -109,6 +117,11 @@ func projectRepositoryUpdateAction(ccmd *cobra.Command, _ []string, client *Clie
 
 	if val := projectRepositoryUpdateArgs.CredentialID; val != "" {
 		body.CredentialID = v1.ToPtr(val)
+		changed = true
+	}
+
+	if val := projectRepositoryUpdateArgs.NoCredentialID; val {
+		body.CredentialID = v1.ToPtr("")
 		changed = true
 	}
 

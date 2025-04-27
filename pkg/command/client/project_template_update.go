@@ -15,8 +15,11 @@ type projectTemplateUpdateBind struct {
 	ProjectID        string
 	TemplateID       string
 	RepositoryID     string
+	NoRepositoryID   bool
 	InventoryID      string
+	NoInventoryID    bool
 	EnvironmentID    string
+	NoEnvironmentID  bool
 	Slug             string
 	Name             string
 	Description      string
@@ -66,6 +69,13 @@ func init() {
 		"Repository for project template",
 	)
 
+	projectTemplateUpdateCmd.Flags().BoolVar(
+		&projectTemplateUpdateArgs.NoRepositoryID,
+		"no-repository-id",
+		false,
+		"Remove repository for project template",
+	)
+
 	projectTemplateUpdateCmd.Flags().StringVar(
 		&projectTemplateUpdateArgs.InventoryID,
 		"inventory-id",
@@ -73,11 +83,25 @@ func init() {
 		"Inventory for project template",
 	)
 
+	projectTemplateUpdateCmd.Flags().BoolVar(
+		&projectTemplateUpdateArgs.NoInventoryID,
+		"no-inventory-id",
+		false,
+		"Remove inventory for project template",
+	)
+
 	projectTemplateUpdateCmd.Flags().StringVar(
 		&projectTemplateUpdateArgs.EnvironmentID,
 		"environment-id",
 		"",
 		"Environment for project template",
+	)
+
+	projectTemplateUpdateCmd.Flags().BoolVar(
+		&projectTemplateUpdateArgs.NoEnvironmentID,
+		"no-environment-id",
+		false,
+		"Remove environment for project template",
 	)
 
 	projectTemplateUpdateCmd.Flags().StringVar(
@@ -168,13 +192,28 @@ func projectTemplateUpdateAction(ccmd *cobra.Command, _ []string, client *Client
 		changed = true
 	}
 
+	if val := projectTemplateUpdateArgs.NoRepositoryID; val {
+		body.RepositoryID = v1.ToPtr("")
+		changed = true
+	}
+
 	if val := projectTemplateUpdateArgs.InventoryID; val != "" {
 		body.InventoryID = v1.ToPtr(val)
 		changed = true
 	}
 
+	if val := projectTemplateUpdateArgs.NoInventoryID; val {
+		body.InventoryID = v1.ToPtr("")
+		changed = true
+	}
+
 	if val := projectTemplateUpdateArgs.EnvironmentID; val != "" {
 		body.EnvironmentID = v1.ToPtr(val)
+		changed = true
+	}
+
+	if val := projectTemplateUpdateArgs.NoEnvironmentID; val {
+		body.EnvironmentID = v1.ToPtr("")
 		changed = true
 	}
 
