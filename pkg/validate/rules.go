@@ -41,6 +41,7 @@ func IsGitURL(str string) bool {
 		"ftp",
 		"ftps",
 		"rsync",
+		"file",
 	).Valid(u.Scheme) {
 		return false
 	}
