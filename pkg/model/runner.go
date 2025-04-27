@@ -18,7 +18,7 @@ type Runner struct {
 	bun.BaseModel `bun:"table:runners"`
 
 	ID        string    `bun:",pk,type:varchar(20)"`
-	ProjectID string    `bun:"type:varchar(20)"`
+	ProjectID string    `bun:",nullzero,type:varchar(20)"`
 	Project   *Project  `bun:"rel:belongs-to,join:project_id=id"`
 	Slug      string    `bun:"type:varchar(255)"`
 	Name      string    `bun:"type:varchar(255)"`

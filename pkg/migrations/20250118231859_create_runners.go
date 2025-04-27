@@ -13,7 +13,7 @@ func init() {
 			bun.BaseModel `bun:"table:runners"`
 
 			ID        string    `bun:",pk,type:varchar(20)"`
-			ProjectID string    `bun:"type:varchar(20)"`
+			ProjectID string    `bun:",nullzero,type:varchar(20)"`
 			Slug      string    `bun:"type:varchar(255)"`
 			Name      string    `bun:"type:varchar(255)"`
 			Token     string    `bun:"type:varchar(255)"`

@@ -20,7 +20,7 @@ type Repository struct {
 	ID           string      `bun:",pk,type:varchar(20)"`
 	ProjectID    string      `bun:"type:varchar(20)"`
 	Project      *Project    `bun:"rel:belongs-to,join:project_id=id"`
-	CredentialID string      `bun:"type:varchar(20)"`
+	CredentialID string      `bun:",nullzero,type:varchar(20)"`
 	Credential   *Credential `bun:"rel:belongs-to,join:credential_id=id"`
 	Slug         string      `bun:"type:varchar(255)"`
 	Name         string      `bun:"type:varchar(255)"`

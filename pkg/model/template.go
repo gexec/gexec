@@ -171,11 +171,11 @@ type Template struct {
 	ID            string            `bun:",pk,type:varchar(20)"`
 	ProjectID     string            `bun:"type:varchar(20)"`
 	Project       *Project          `bun:"rel:belongs-to,join:project_id=id"`
-	RepositoryID  string            `bun:"type:varchar(20)"`
+	RepositoryID  string            `bun:",nullzero,type:varchar(20)"`
 	Repository    *Repository       `bun:"rel:belongs-to,join:repository_id=id"`
-	InventoryID   string            `bun:"type:varchar(20)"`
+	InventoryID   string            `bun:",nullzero,type:varchar(20)"`
 	Inventory     *Inventory        `bun:"rel:belongs-to,join:inventory_id=id"`
-	EnvironmentID string            `bun:"type:varchar(20)"`
+	EnvironmentID string            `bun:",nullzero,type:varchar(20)"`
 	Environment   *Environment      `bun:"rel:belongs-to,join:environment_id=id"`
 	Slug          string            `bun:"type:varchar(255)"`
 	Name          string            `bun:"type:varchar(255)"`

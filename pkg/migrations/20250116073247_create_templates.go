@@ -14,9 +14,9 @@ func init() {
 
 			ID            string    `bun:",pk,type:varchar(20)"`
 			ProjectID     string    `bun:"type:varchar(20)"`
-			RepositoryID  string    `bun:"type:varchar(20)"`
-			InventoryID   string    `bun:"type:varchar(20)"`
-			EnvironmentID string    `bun:"type:varchar(20)"`
+			RepositoryID  string    `bun:",nullzero,type:varchar(20)"`
+			InventoryID   string    `bun:",nullzero,type:varchar(20)"`
+			EnvironmentID string    `bun:",nullzero,type:varchar(20)"`
 			Slug          string    `bun:"type:varchar(255)"`
 			Name          string    `bun:"type:varchar(255)"`
 			Description   string    `bun:"type:text"`

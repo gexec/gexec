@@ -14,7 +14,7 @@ func init() {
 
 			ID           string    `bun:",pk,type:varchar(20)"`
 			ProjectID    string    `bun:"type:varchar(20)"`
-			CredentialID string    `bun:"type:varchar(20)"`
+			CredentialID string    `bun:",nullzero,type:varchar(20)"`
 			Slug         string    `bun:"type:varchar(255)"`
 			Name         string    `bun:"type:varchar(255)"`
 			URL          string    `bun:"type:text"`
