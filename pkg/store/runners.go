@@ -90,7 +90,7 @@ func (s *Runners) Show(ctx context.Context, project *model.Project, name string)
 }
 
 // Create implements the create of a new runner.
-func (s *Runners) Create(ctx context.Context, project *model.Project, record *model.Runner) error {
+func (s *Runners) Create(ctx context.Context, project *model.Project, record *model.Runner) (*model.Runner, error) {
 	if record.Slug == "" {
 		record.Slug = s.slugify(
 			ctx,
@@ -102,13 +102,13 @@ func (s *Runners) Create(ctx context.Context, project *model.Project, record *mo
 	}
 
 	if err := s.validate(ctx, record, false); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := s.client.handle.NewInsert().
 		Model(record).
 		Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := s.client.handle.NewInsert().
@@ -124,14 +124,14 @@ func (s *Runners) Create(ctx context.Context, project *model.Project, record *mo
 			},
 		)).
 		Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return s.Show(ctx, project, record.ID)
 }
 
 // Update implements the update of an existing runner.
-func (s *Runners) Update(ctx context.Context, project *model.Project, record *model.Runner) error {
+func (s *Runners) Update(ctx context.Context, project *model.Project, record *model.Runner) (*model.Runner, error) {
 	if record.Slug == "" {
 		record.Slug = s.slugify(
 			ctx,
@@ -143,7 +143,7 @@ func (s *Runners) Update(ctx context.Context, project *model.Project, record *mo
 	}
 
 	if err := s.validate(ctx, record, true); err != nil {
-		return err
+		return nil, err
 	}
 
 	q := s.client.handle.NewUpdate().
@@ -155,7 +155,7 @@ func (s *Runners) Update(ctx context.Context, project *model.Project, record *mo
 	}
 
 	if _, err := q.Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := s.client.handle.NewInsert().
@@ -171,10 +171,10 @@ func (s *Runners) Update(ctx context.Context, project *model.Project, record *mo
 			},
 		)).
 		Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return s.Show(ctx, project, record.ID)
 }
 
 // Delete implements the deletion of a runner.
@@ -227,7 +227,7 @@ func (s *Runners) ValidateExists(ctx context.Context, projectID string) func(val
 
 		q := s.client.handle.NewSelect().
 			Model((*model.Runner)(nil)).
-			Where("id = ?", val)
+			Where("id = ? OR slug = ?", val, val)
 
 		if projectID != "" {
 			q = q.Where("project_id = ?", projectID)

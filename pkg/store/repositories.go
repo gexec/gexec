@@ -86,7 +86,7 @@ func (s *Repositories) Show(ctx context.Context, project *model.Project, name st
 }
 
 // Create implements the create of a new repository.
-func (s *Repositories) Create(ctx context.Context, project *model.Project, record *model.Repository) error {
+func (s *Repositories) Create(ctx context.Context, project *model.Project, record *model.Repository) (*model.Repository, error) {
 	if record.Slug == "" {
 		record.Slug = s.slugify(
 			ctx,
@@ -98,13 +98,13 @@ func (s *Repositories) Create(ctx context.Context, project *model.Project, recor
 	}
 
 	if err := s.validate(ctx, record, false); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := s.client.handle.NewInsert().
 		Model(record).
 		Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := s.client.handle.NewInsert().
@@ -120,14 +120,14 @@ func (s *Repositories) Create(ctx context.Context, project *model.Project, recor
 			},
 		)).
 		Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return s.Show(ctx, project, record.ID)
 }
 
 // Update implements the update of an existing repository.
-func (s *Repositories) Update(ctx context.Context, project *model.Project, record *model.Repository) error {
+func (s *Repositories) Update(ctx context.Context, project *model.Project, record *model.Repository) (*model.Repository, error) {
 	if record.Slug == "" {
 		record.Slug = s.slugify(
 			ctx,
@@ -139,7 +139,7 @@ func (s *Repositories) Update(ctx context.Context, project *model.Project, recor
 	}
 
 	if err := s.validate(ctx, record, true); err != nil {
-		return err
+		return nil, err
 	}
 
 	q := s.client.handle.NewUpdate().
@@ -148,7 +148,7 @@ func (s *Repositories) Update(ctx context.Context, project *model.Project, recor
 		Where("id = ?", record.ID)
 
 	if _, err := q.Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := s.client.handle.NewInsert().
@@ -164,10 +164,10 @@ func (s *Repositories) Update(ctx context.Context, project *model.Project, recor
 			},
 		)).
 		Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return s.Show(ctx, project, record.ID)
 }
 
 // Delete implements the deletion of a repository.
@@ -218,7 +218,7 @@ func (s *Repositories) ValidateExists(ctx context.Context, projectID string) fun
 		q := s.client.handle.NewSelect().
 			Model((*model.Repository)(nil)).
 			Where("project_id = ?", projectID).
-			Where("id = ?", val)
+			Where("id = ? OR slug = ?", val, val)
 
 		exists, err := q.Exists(ctx)
 
@@ -257,17 +257,6 @@ func (s *Repositories) validate(ctx context.Context, record *model.Repository, _
 	); err != nil {
 		errs.Errors = append(errs.Errors, validate.Error{
 			Field: "name",
-			Error: err,
-		})
-	}
-
-	if err := validation.Validate(
-		record.CredentialID,
-		validation.Required,
-		validation.By(s.client.Credentials.ValidateExists(ctx, record.ProjectID)),
-	); err != nil {
-		errs.Errors = append(errs.Errors, validate.Error{
-			Field: "credential_id",
 			Error: err,
 		})
 	}

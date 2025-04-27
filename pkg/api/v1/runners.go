@@ -128,27 +128,27 @@ func (a *API) CreateProjectRunner(w http.ResponseWriter, r *http.Request, _ Proj
 		return
 	}
 
-	record := &model.Runner{
+	incoming := &model.Runner{
 		ProjectID: project.ID,
 	}
 
 	if body.Slug != nil {
-		record.Slug = FromPtr(body.Slug)
+		incoming.Slug = FromPtr(body.Slug)
 	}
 
 	if body.Name != nil {
-		record.Name = FromPtr(body.Name)
+		incoming.Name = FromPtr(body.Name)
 	}
 
 	if body.Token != nil {
-		record.Token = FromPtr(body.Token)
+		incoming.Token = FromPtr(body.Token)
 	}
 
-	if record.Token == "" {
-		record.Token = secret.Generate(32)
+	if incoming.Token == "" {
+		incoming.Token = secret.Generate(32)
 	}
 
-	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to encrypt secrets",
 			slog.Any("error", err),
@@ -164,13 +164,15 @@ func (a *API) CreateProjectRunner(w http.ResponseWriter, r *http.Request, _ Proj
 		return
 	}
 
-	if err := a.storage.WithPrincipal(
+	record, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Runners.Create(
 		ctx,
 		project,
-		record,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 
@@ -217,7 +219,7 @@ func (a *API) CreateProjectRunner(w http.ResponseWriter, r *http.Request, _ Proj
 func (a *API) UpdateProjectRunner(w http.ResponseWriter, r *http.Request, _ ProjectID, _ RunnerID) {
 	ctx := r.Context()
 	project := a.ProjectFromContext(ctx)
-	record := a.ProjectRunnerFromContext(ctx)
+	incoming := a.ProjectRunnerFromContext(ctx)
 	body := &UpdateProjectRunnerBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
@@ -225,7 +227,7 @@ func (a *API) UpdateProjectRunner(w http.ResponseWriter, r *http.Request, _ Proj
 			"Failed to decode request body",
 			slog.Any("error", err),
 			slog.String("project", project.ID),
-			slog.String("runner", record.ID),
+			slog.String("runner", incoming.ID),
 			slog.String("action", "UpdateProjectRunner"),
 		)
 
@@ -237,12 +239,12 @@ func (a *API) UpdateProjectRunner(w http.ResponseWriter, r *http.Request, _ Proj
 		return
 	}
 
-	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to decrypt secrets",
 			slog.Any("error", err),
 			slog.String("project", project.ID),
-			slog.String("runner", project.ID),
+			slog.String("runner", incoming.ID),
 			slog.String("action", "UpdateProjectRunner"),
 		)
 
@@ -255,27 +257,27 @@ func (a *API) UpdateProjectRunner(w http.ResponseWriter, r *http.Request, _ Proj
 	}
 
 	if body.Slug != nil {
-		record.Slug = FromPtr(body.Slug)
+		incoming.Slug = FromPtr(body.Slug)
 	}
 
 	if body.Name != nil {
-		record.Name = FromPtr(body.Name)
+		incoming.Name = FromPtr(body.Name)
 	}
 
 	if body.Token != nil {
-		record.Token = FromPtr(body.Token)
+		incoming.Token = FromPtr(body.Token)
 	}
 
-	if record.Token == "" {
-		record.Token = secret.Generate(32)
+	if incoming.Token == "" {
+		incoming.Token = secret.Generate(32)
 	}
 
-	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to encrypt secrets",
 			slog.Any("error", err),
 			slog.String("project", project.ID),
-			slog.String("runner", record.ID),
+			slog.String("runner", incoming.ID),
 			slog.String("action", "UpdateProjectRunner"),
 		)
 
@@ -287,13 +289,15 @@ func (a *API) UpdateProjectRunner(w http.ResponseWriter, r *http.Request, _ Proj
 		return
 	}
 
-	if err := a.storage.WithPrincipal(
+	record, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Runners.Update(
 		ctx,
 		project,
-		record,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 

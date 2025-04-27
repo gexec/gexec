@@ -127,31 +127,31 @@ func (a *API) CreateProjectRepository(w http.ResponseWriter, r *http.Request, _ 
 		return
 	}
 
-	record := &model.Repository{
+	incoming := &model.Repository{
 		ProjectID: project.ID,
 	}
 
 	if body.CredentialID != nil {
-		record.CredentialID = FromPtr(body.CredentialID)
+		incoming.CredentialID = FromPtr(body.CredentialID)
 	}
 
 	if body.Slug != nil {
-		record.Slug = FromPtr(body.Slug)
+		incoming.Slug = FromPtr(body.Slug)
 	}
 
 	if body.Name != nil {
-		record.Name = FromPtr(body.Name)
+		incoming.Name = FromPtr(body.Name)
 	}
 
-	if body.Url != nil {
-		record.URL = FromPtr(body.Url)
+	if body.URL != nil {
+		incoming.URL = FromPtr(body.URL)
 	}
 
 	if body.Branch != nil {
-		record.Branch = FromPtr(body.Branch)
+		incoming.Branch = FromPtr(body.Branch)
 	}
 
-	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to encrypt secrets",
 			slog.Any("error", err),
@@ -167,13 +167,15 @@ func (a *API) CreateProjectRepository(w http.ResponseWriter, r *http.Request, _ 
 		return
 	}
 
-	if err := a.storage.WithPrincipal(
+	record, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Repositories.Create(
 		ctx,
 		project,
-		record,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 
@@ -220,7 +222,7 @@ func (a *API) CreateProjectRepository(w http.ResponseWriter, r *http.Request, _ 
 func (a *API) UpdateProjectRepository(w http.ResponseWriter, r *http.Request, _ ProjectID, _ RepositoryID) {
 	ctx := r.Context()
 	project := a.ProjectFromContext(ctx)
-	record := a.ProjectRepositoryFromContext(ctx)
+	incoming := a.ProjectRepositoryFromContext(ctx)
 	body := &UpdateProjectRepositoryBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
@@ -228,7 +230,7 @@ func (a *API) UpdateProjectRepository(w http.ResponseWriter, r *http.Request, _ 
 			"Failed to decode request body",
 			slog.Any("error", err),
 			slog.String("project", project.ID),
-			slog.String("repository", record.ID),
+			slog.String("repository", incoming.ID),
 			slog.String("action", "UpdateProjectRepository"),
 		)
 
@@ -240,7 +242,7 @@ func (a *API) UpdateProjectRepository(w http.ResponseWriter, r *http.Request, _ 
 		return
 	}
 
-	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to decrypt secrets",
 			slog.Any("error", err),
@@ -258,31 +260,31 @@ func (a *API) UpdateProjectRepository(w http.ResponseWriter, r *http.Request, _ 
 	}
 
 	if body.CredentialID != nil {
-		record.CredentialID = FromPtr(body.CredentialID)
+		incoming.CredentialID = FromPtr(body.CredentialID)
 	}
 
 	if body.Slug != nil {
-		record.Slug = FromPtr(body.Slug)
+		incoming.Slug = FromPtr(body.Slug)
 	}
 
 	if body.Name != nil {
-		record.Name = FromPtr(body.Name)
+		incoming.Name = FromPtr(body.Name)
 	}
 
-	if body.Url != nil {
-		record.URL = FromPtr(body.Url)
+	if body.URL != nil {
+		incoming.URL = FromPtr(body.URL)
 	}
 
 	if body.Branch != nil {
-		record.Branch = FromPtr(body.Branch)
+		incoming.Branch = FromPtr(body.Branch)
 	}
 
-	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to encrypt secrets",
 			slog.Any("error", err),
 			slog.String("project", project.ID),
-			slog.String("repository", record.ID),
+			slog.String("repository", incoming.ID),
 			slog.String("action", "UpdateProjectRepository"),
 		)
 
@@ -294,13 +296,15 @@ func (a *API) UpdateProjectRepository(w http.ResponseWriter, r *http.Request, _ 
 		return
 	}
 
-	if err := a.storage.WithPrincipal(
+	record, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Repositories.Update(
 		ctx,
 		project,
-		record,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 
@@ -348,7 +352,7 @@ func (a *API) UpdateProjectRepository(w http.ResponseWriter, r *http.Request, _ 
 func (a *API) DeleteProjectRepository(w http.ResponseWriter, r *http.Request, _ ProjectID, _ RepositoryID) {
 	ctx := r.Context()
 	project := a.ProjectFromContext(ctx)
-	record := a.ProjectScheduleFromContext(ctx)
+	record := a.ProjectRepositoryFromContext(ctx)
 
 	if err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
@@ -384,7 +388,7 @@ func (a *API) convertRepository(record *model.Repository) Repository {
 		ID:        ToPtr(record.ID),
 		Slug:      ToPtr(record.Slug),
 		Name:      ToPtr(record.Name),
-		Url:       ToPtr(record.URL),
+		URL:       ToPtr(record.URL),
 		Branch:    ToPtr(record.Branch),
 		CreatedAt: ToPtr(record.CreatedAt),
 		UpdatedAt: ToPtr(record.UpdatedAt),

@@ -89,7 +89,7 @@ func (s *Environments) Show(ctx context.Context, project *model.Project, name st
 }
 
 // Create implements the create of a new environment.
-func (s *Environments) Create(ctx context.Context, project *model.Project, record *model.Environment) error {
+func (s *Environments) Create(ctx context.Context, project *model.Project, record *model.Environment) (*model.Environment, error) {
 	if record.Slug == "" {
 		record.Slug = s.slugify(
 			ctx,
@@ -101,7 +101,7 @@ func (s *Environments) Create(ctx context.Context, project *model.Project, recor
 	}
 
 	if err := s.validate(ctx, record, false); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
@@ -133,7 +133,7 @@ func (s *Environments) Create(ctx context.Context, project *model.Project, recor
 
 		return nil
 	}); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := s.client.handle.NewInsert().
@@ -149,14 +149,14 @@ func (s *Environments) Create(ctx context.Context, project *model.Project, recor
 			},
 		)).
 		Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return s.Show(ctx, project, record.ID)
 }
 
 // Update implements the update of an existing environment.
-func (s *Environments) Update(ctx context.Context, project *model.Project, record *model.Environment) error {
+func (s *Environments) Update(ctx context.Context, project *model.Project, record *model.Environment) (*model.Environment, error) {
 	if record.Slug == "" {
 		record.Slug = s.slugify(
 			ctx,
@@ -168,7 +168,7 @@ func (s *Environments) Update(ctx context.Context, project *model.Project, recor
 	}
 
 	if err := s.validate(ctx, record, true); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
@@ -279,7 +279,7 @@ func (s *Environments) Update(ctx context.Context, project *model.Project, recor
 
 		return nil
 	}); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := s.client.handle.NewInsert().
@@ -295,10 +295,10 @@ func (s *Environments) Update(ctx context.Context, project *model.Project, recor
 			},
 		)).
 		Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return s.Show(ctx, project, record.ID)
 }
 
 // Delete implements the deletion of a environment.
@@ -358,9 +358,9 @@ func (s *Environments) ShowSecret(ctx context.Context, environment *model.Enviro
 }
 
 // CreateSecret implements the create of a new environment secret.
-func (s *Environments) CreateSecret(ctx context.Context, environment *model.Environment, record *model.EnvironmentSecret) error {
+func (s *Environments) CreateSecret(ctx context.Context, environment *model.Environment, record *model.EnvironmentSecret) (*model.EnvironmentSecret, error) {
 	if err := s.validateSecret(ctx, environment, record, false); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
@@ -372,7 +372,7 @@ func (s *Environments) CreateSecret(ctx context.Context, environment *model.Envi
 
 		return nil
 	}); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := s.client.handle.NewInsert().
@@ -392,16 +392,16 @@ func (s *Environments) CreateSecret(ctx context.Context, environment *model.Envi
 			},
 		)).
 		Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return s.ShowSecret(ctx, environment, record.ID)
 }
 
 // UpdateSecret implements the update of an existing environment secret.
-func (s *Environments) UpdateSecret(ctx context.Context, environment *model.Environment, record *model.EnvironmentSecret) error {
+func (s *Environments) UpdateSecret(ctx context.Context, environment *model.Environment, record *model.EnvironmentSecret) (*model.EnvironmentSecret, error) {
 	if err := s.validateSecret(ctx, environment, record, true); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
@@ -416,7 +416,7 @@ func (s *Environments) UpdateSecret(ctx context.Context, environment *model.Envi
 
 		return nil
 	}); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := s.client.handle.NewInsert().
@@ -436,10 +436,10 @@ func (s *Environments) UpdateSecret(ctx context.Context, environment *model.Envi
 			},
 		)).
 		Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return s.ShowSecret(ctx, environment, record.ID)
 }
 
 // DeleteSecret implements the deletion of a environment secret.
@@ -503,9 +503,9 @@ func (s *Environments) ShowValue(ctx context.Context, environment *model.Environ
 }
 
 // CreateValue implements the create of a new environment value.
-func (s *Environments) CreateValue(ctx context.Context, environment *model.Environment, record *model.EnvironmentValue) error {
+func (s *Environments) CreateValue(ctx context.Context, environment *model.Environment, record *model.EnvironmentValue) (*model.EnvironmentValue, error) {
 	if err := s.validateValue(ctx, environment, record, false); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
@@ -517,7 +517,7 @@ func (s *Environments) CreateValue(ctx context.Context, environment *model.Envir
 
 		return nil
 	}); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := s.client.handle.NewInsert().
@@ -537,16 +537,16 @@ func (s *Environments) CreateValue(ctx context.Context, environment *model.Envir
 			},
 		)).
 		Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return s.ShowValue(ctx, environment, record.ID)
 }
 
 // UpdateValue implements the update of an existing environment value.
-func (s *Environments) UpdateValue(ctx context.Context, environment *model.Environment, record *model.EnvironmentValue) error {
+func (s *Environments) UpdateValue(ctx context.Context, environment *model.Environment, record *model.EnvironmentValue) (*model.EnvironmentValue, error) {
 	if err := s.validateValue(ctx, environment, record, true); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
@@ -561,7 +561,7 @@ func (s *Environments) UpdateValue(ctx context.Context, environment *model.Envir
 
 		return nil
 	}); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := s.client.handle.NewInsert().
@@ -581,10 +581,10 @@ func (s *Environments) UpdateValue(ctx context.Context, environment *model.Envir
 			},
 		)).
 		Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return s.ShowValue(ctx, environment, record.ID)
 }
 
 // DeleteValue implements the deletion of a environment value.
@@ -639,7 +639,7 @@ func (s *Environments) ValidateExists(ctx context.Context, projectID string) fun
 		q := s.client.handle.NewSelect().
 			Model((*model.Environment)(nil)).
 			Where("project_id = ?", projectID).
-			Where("id = ?", val)
+			Where("id = ? OR slug = ?", val, val)
 
 		exists, err := q.Exists(ctx)
 

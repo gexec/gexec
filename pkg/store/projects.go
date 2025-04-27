@@ -110,7 +110,7 @@ func (s *Projects) Show(ctx context.Context, name string) (*model.Project, error
 }
 
 // Create implements the create of a new project.
-func (s *Projects) Create(ctx context.Context, record *model.Project) error {
+func (s *Projects) Create(ctx context.Context, record *model.Project) (*model.Project, error) {
 	if record.Slug == "" {
 		record.Slug = s.slugify(
 			ctx,
@@ -121,7 +121,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 	}
 
 	if err := s.validate(ctx, record, false); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
@@ -616,7 +616,7 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 
 		return nil
 	}); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := s.client.handle.NewInsert().
@@ -632,14 +632,14 @@ func (s *Projects) Create(ctx context.Context, record *model.Project) error {
 			},
 		)).
 		Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return s.Show(ctx, record.ID)
 }
 
 // Update implements the update of an existing project.
-func (s *Projects) Update(ctx context.Context, record *model.Project) error {
+func (s *Projects) Update(ctx context.Context, record *model.Project) (*model.Project, error) {
 	if record.Slug == "" {
 		record.Slug = s.slugify(
 			ctx,
@@ -650,7 +650,7 @@ func (s *Projects) Update(ctx context.Context, record *model.Project) error {
 	}
 
 	if err := s.validate(ctx, record, true); err != nil {
-		return err
+		return nil, err
 	}
 
 	q := s.client.handle.NewUpdate().
@@ -658,7 +658,7 @@ func (s *Projects) Update(ctx context.Context, record *model.Project) error {
 		Where("id = ?", record.ID)
 
 	if _, err := q.Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := s.client.handle.NewInsert().
@@ -674,10 +674,10 @@ func (s *Projects) Update(ctx context.Context, record *model.Project) error {
 			},
 		)).
 		Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return s.Show(ctx, record.ID)
 }
 
 // Delete implements the deletion of a project.

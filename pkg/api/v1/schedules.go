@@ -127,31 +127,31 @@ func (a *API) CreateProjectSchedule(w http.ResponseWriter, r *http.Request, _ Pr
 		return
 	}
 
-	record := &model.Schedule{
+	incoming := &model.Schedule{
 		ProjectID: project.ID,
 	}
 
 	if body.TemplateID != nil {
-		record.TemplateID = FromPtr(body.TemplateID)
+		incoming.TemplateID = FromPtr(body.TemplateID)
 	}
 
 	if body.Slug != nil {
-		record.Slug = FromPtr(body.Slug)
+		incoming.Slug = FromPtr(body.Slug)
 	}
 
 	if body.Name != nil {
-		record.Name = FromPtr(body.Name)
+		incoming.Name = FromPtr(body.Name)
 	}
 
 	if body.Cron != nil {
-		record.Cron = FromPtr(body.Cron)
+		incoming.Cron = FromPtr(body.Cron)
 	}
 
 	if body.Active != nil {
-		record.Active = FromPtr(body.Active)
+		incoming.Active = FromPtr(body.Active)
 	}
 
-	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to encrypt secrets",
 			slog.Any("error", err),
@@ -167,13 +167,15 @@ func (a *API) CreateProjectSchedule(w http.ResponseWriter, r *http.Request, _ Pr
 		return
 	}
 
-	if err := a.storage.WithPrincipal(
+	record, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Schedules.Create(
 		ctx,
 		project,
-		record,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 
@@ -220,7 +222,7 @@ func (a *API) CreateProjectSchedule(w http.ResponseWriter, r *http.Request, _ Pr
 func (a *API) UpdateProjectSchedule(w http.ResponseWriter, r *http.Request, _ ProjectID, _ ScheduleID) {
 	ctx := r.Context()
 	project := a.ProjectFromContext(ctx)
-	record := a.ProjectScheduleFromContext(ctx)
+	incoming := a.ProjectScheduleFromContext(ctx)
 	body := &UpdateProjectScheduleBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
@@ -228,7 +230,7 @@ func (a *API) UpdateProjectSchedule(w http.ResponseWriter, r *http.Request, _ Pr
 			"Failed to decode request body",
 			slog.Any("error", err),
 			slog.String("project", project.ID),
-			slog.String("schedule", record.ID),
+			slog.String("schedule", incoming.ID),
 			slog.String("action", "UpdateProjectSchedule"),
 		)
 
@@ -240,12 +242,12 @@ func (a *API) UpdateProjectSchedule(w http.ResponseWriter, r *http.Request, _ Pr
 		return
 	}
 
-	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to decrypt secrets",
 			slog.Any("error", err),
 			slog.String("project", project.ID),
-			slog.String("schedule", project.ID),
+			slog.String("schedule", incoming.ID),
 			slog.String("action", "UpdateProjectSchedule"),
 		)
 
@@ -258,31 +260,31 @@ func (a *API) UpdateProjectSchedule(w http.ResponseWriter, r *http.Request, _ Pr
 	}
 
 	if body.TemplateID != nil {
-		record.TemplateID = FromPtr(body.TemplateID)
+		incoming.TemplateID = FromPtr(body.TemplateID)
 	}
 
 	if body.Slug != nil {
-		record.Slug = FromPtr(body.Slug)
+		incoming.Slug = FromPtr(body.Slug)
 	}
 
 	if body.Name != nil {
-		record.Name = FromPtr(body.Name)
+		incoming.Name = FromPtr(body.Name)
 	}
 
 	if body.Cron != nil {
-		record.Cron = FromPtr(body.Cron)
+		incoming.Cron = FromPtr(body.Cron)
 	}
 
 	if body.Active != nil {
-		record.Active = FromPtr(body.Active)
+		incoming.Active = FromPtr(body.Active)
 	}
 
-	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to encrypt secrets",
 			slog.Any("error", err),
 			slog.String("project", project.ID),
-			slog.String("schedule", record.ID),
+			slog.String("schedule", incoming.ID),
 			slog.String("action", "UpdateProjectSchedule"),
 		)
 
@@ -294,13 +296,15 @@ func (a *API) UpdateProjectSchedule(w http.ResponseWriter, r *http.Request, _ Pr
 		return
 	}
 
-	if err := a.storage.WithPrincipal(
+	record, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Schedules.Update(
 		ctx,
 		project,
-		record,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 

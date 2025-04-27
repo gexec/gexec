@@ -165,29 +165,29 @@ func (a *API) CreateGlobalRunner(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	record := &model.Runner{}
+	incoming := &model.Runner{}
 
 	if body.ProjectID != nil {
-		record.ProjectID = FromPtr(body.ProjectID)
+		incoming.ProjectID = FromPtr(body.ProjectID)
 	}
 
 	if body.Slug != nil {
-		record.Slug = FromPtr(body.Slug)
+		incoming.Slug = FromPtr(body.Slug)
 	}
 
 	if body.Name != nil {
-		record.Name = FromPtr(body.Name)
+		incoming.Name = FromPtr(body.Name)
 	}
 
 	if body.Token != nil {
-		record.Token = FromPtr(body.Token)
+		incoming.Token = FromPtr(body.Token)
 	}
 
-	if record.Token == "" {
-		record.Token = secret.Generate(32)
+	if incoming.Token == "" {
+		incoming.Token = secret.Generate(32)
 	}
 
-	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to encrypt secrets",
 			slog.Any("error", err),
@@ -202,13 +202,15 @@ func (a *API) CreateGlobalRunner(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := a.storage.WithPrincipal(
+	record, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Runners.Create(
 		ctx,
 		&model.Project{},
-		record,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 
@@ -253,7 +255,7 @@ func (a *API) CreateGlobalRunner(w http.ResponseWriter, r *http.Request) {
 // UpdateGlobalRunner implements the v1.ServerInterface.
 func (a *API) UpdateGlobalRunner(w http.ResponseWriter, r *http.Request, _ RunnerID) {
 	ctx := r.Context()
-	record := a.GlobalRunnerFromContext(ctx)
+	incoming := a.GlobalRunnerFromContext(ctx)
 	body := &UpdateGlobalRunnerBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
@@ -261,7 +263,7 @@ func (a *API) UpdateGlobalRunner(w http.ResponseWriter, r *http.Request, _ Runne
 			"Failed to decode request body",
 			slog.Any("error", err),
 			slog.String("action", "UpdateGlobalRunner"),
-			slog.String("runner", record.ID),
+			slog.String("runner", incoming.ID),
 		)
 
 		a.RenderNotify(w, r, Notification{
@@ -272,12 +274,12 @@ func (a *API) UpdateGlobalRunner(w http.ResponseWriter, r *http.Request, _ Runne
 		return
 	}
 
-	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to decrypt secrets",
 			slog.Any("error", err),
 			slog.String("action", "UpdateGlobalRunner"),
-			slog.String("runner", record.ID),
+			slog.String("runner", incoming.ID),
 		)
 
 		a.RenderNotify(w, r, Notification{
@@ -289,31 +291,31 @@ func (a *API) UpdateGlobalRunner(w http.ResponseWriter, r *http.Request, _ Runne
 	}
 
 	if body.ProjectID != nil {
-		record.ProjectID = FromPtr(body.ProjectID)
+		incoming.ProjectID = FromPtr(body.ProjectID)
 	}
 
 	if body.Slug != nil {
-		record.Slug = FromPtr(body.Slug)
+		incoming.Slug = FromPtr(body.Slug)
 	}
 
 	if body.Name != nil {
-		record.Name = FromPtr(body.Name)
+		incoming.Name = FromPtr(body.Name)
 	}
 
 	if body.Token != nil {
-		record.Token = FromPtr(body.Token)
+		incoming.Token = FromPtr(body.Token)
 	}
 
-	if record.Token == "" {
-		record.Token = secret.Generate(32)
+	if incoming.Token == "" {
+		incoming.Token = secret.Generate(32)
 	}
 
-	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to encrypt secrets",
 			slog.Any("error", err),
 			slog.String("action", "UpdateGlobalRunner"),
-			slog.String("runner", record.ID),
+			slog.String("runner", incoming.ID),
 		)
 
 		a.RenderNotify(w, r, Notification{
@@ -324,13 +326,15 @@ func (a *API) UpdateGlobalRunner(w http.ResponseWriter, r *http.Request, _ Runne
 		return
 	}
 
-	if err := a.storage.WithPrincipal(
+	record, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Runners.Update(
 		ctx,
 		&model.Project{},
-		record,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 

@@ -82,15 +82,15 @@ func (s *Executions) Show(ctx context.Context, project *model.Project, name stri
 }
 
 // Create implements the create of a new execution.
-func (s *Executions) Create(ctx context.Context, project *model.Project, record *model.Execution) error {
+func (s *Executions) Create(ctx context.Context, project *model.Project, record *model.Execution) (*model.Execution, error) {
 	if err := s.validate(ctx, record, false); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := s.client.handle.NewInsert().
 		Model(record).
 		Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := s.client.handle.NewInsert().
@@ -106,16 +106,16 @@ func (s *Executions) Create(ctx context.Context, project *model.Project, record 
 			},
 		)).
 		Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return s.Show(ctx, project, record.ID)
 }
 
 // Update implements the update of an existing execution.
-func (s *Executions) Update(ctx context.Context, project *model.Project, record *model.Execution) error {
+func (s *Executions) Update(ctx context.Context, project *model.Project, record *model.Execution) (*model.Execution, error) {
 	if err := s.validate(ctx, record, true); err != nil {
-		return err
+		return nil, err
 	}
 
 	q := s.client.handle.NewUpdate().
@@ -124,7 +124,7 @@ func (s *Executions) Update(ctx context.Context, project *model.Project, record 
 		Where("id = ?", record.ID)
 
 	if _, err := q.Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := s.client.handle.NewInsert().
@@ -140,10 +140,10 @@ func (s *Executions) Update(ctx context.Context, project *model.Project, record 
 			},
 		)).
 		Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return s.Show(ctx, project, record.ID)
 }
 
 // Delete implements the deletion of a execution.

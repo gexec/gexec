@@ -89,26 +89,28 @@ func (a *API) CreateProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	record := &model.Project{}
+	incoming := &model.Project{}
 
 	if body.Slug != nil {
-		record.Slug = FromPtr(body.Slug)
+		incoming.Slug = FromPtr(body.Slug)
 	}
 
 	if body.Name != nil {
-		record.Name = FromPtr(body.Name)
+		incoming.Name = FromPtr(body.Name)
 	}
 
 	if body.Demo != nil {
-		record.Demo = FromPtr(body.Demo)
+		incoming.Demo = FromPtr(body.Demo)
 	}
 
-	if err := a.storage.WithPrincipal(
+	record, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Projects.Create(
 		ctx,
-		record,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 
@@ -153,14 +155,14 @@ func (a *API) CreateProject(w http.ResponseWriter, r *http.Request) {
 // UpdateProject implements the v1.ServerInterface.
 func (a *API) UpdateProject(w http.ResponseWriter, r *http.Request, _ ProjectID) {
 	ctx := r.Context()
-	record := a.ProjectFromContext(ctx)
+	incoming := a.ProjectFromContext(ctx)
 	body := &UpdateProjectBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
 		slog.Error(
 			"Failed to decode request body",
 			slog.Any("error", err),
-			slog.String("project", record.ID),
+			slog.String("project", incoming.ID),
 			slog.String("action", "UpdateProject"),
 		)
 
@@ -173,19 +175,21 @@ func (a *API) UpdateProject(w http.ResponseWriter, r *http.Request, _ ProjectID)
 	}
 
 	if body.Slug != nil {
-		record.Slug = FromPtr(body.Slug)
+		incoming.Slug = FromPtr(body.Slug)
 	}
 
 	if body.Name != nil {
-		record.Name = FromPtr(body.Name)
+		incoming.Name = FromPtr(body.Name)
 	}
 
-	if err := a.storage.WithPrincipal(
+	record, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Projects.Update(
 		ctx,
-		record,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 

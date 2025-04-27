@@ -66,7 +66,7 @@ func (a *API) ShowProfile(w http.ResponseWriter, r *http.Request) {
 
 // UpdateProfile implements the v1.ServerInterface.
 func (a *API) UpdateProfile(w http.ResponseWriter, r *http.Request) {
-	record := current.GetUser(
+	incoming := current.GetUser(
 		r.Context(),
 	)
 
@@ -76,8 +76,8 @@ func (a *API) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 		slog.Error(
 			"Failed to decode request body",
 			slog.Any("error", err),
-			slog.String("username", record.Username),
-			slog.String("uid", record.ID),
+			slog.String("username", incoming.Username),
+			slog.String("uid", incoming.ID),
 			slog.String("action", "UpdateProfile"),
 		)
 
@@ -90,25 +90,27 @@ func (a *API) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if body.Username != nil {
-		record.Username = FromPtr(body.Username)
+		incoming.Username = FromPtr(body.Username)
 	}
 
 	if body.Password != nil {
-		record.Password = FromPtr(body.Password)
+		incoming.Password = FromPtr(body.Password)
 	}
 
 	if body.Email != nil {
-		record.Email = FromPtr(body.Email)
+		incoming.Email = FromPtr(body.Email)
 	}
 
 	if body.Fullname != nil {
-		record.Fullname = FromPtr(body.Fullname)
+		incoming.Fullname = FromPtr(body.Fullname)
 	}
 
-	if err := a.storage.Users.Update(
+	record, err := a.storage.Users.Update(
 		r.Context(),
-		record,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 

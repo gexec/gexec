@@ -127,39 +127,39 @@ func (a *API) CreateProjectInventory(w http.ResponseWriter, r *http.Request, _ P
 		return
 	}
 
-	record := &model.Inventory{
+	incoming := &model.Inventory{
 		ProjectID: project.ID,
 	}
 
 	if body.RepositoryID != nil {
-		record.RepositoryID = FromPtr(body.RepositoryID)
+		incoming.RepositoryID = FromPtr(body.RepositoryID)
 	}
 
 	if body.CredentialID != nil {
-		record.CredentialID = FromPtr(body.CredentialID)
+		incoming.CredentialID = FromPtr(body.CredentialID)
 	}
 
 	if body.BecomeID != nil {
-		record.BecomeID = FromPtr(body.BecomeID)
+		incoming.BecomeID = FromPtr(body.BecomeID)
 	}
 
 	if body.Slug != nil {
-		record.Slug = FromPtr(body.Slug)
+		incoming.Slug = FromPtr(body.Slug)
 	}
 
 	if body.Name != nil {
-		record.Name = FromPtr(body.Name)
+		incoming.Name = FromPtr(body.Name)
 	}
 
 	if body.Kind != nil {
-		record.Kind = FromPtr(body.Kind)
+		incoming.Kind = FromPtr(body.Kind)
 	}
 
 	if body.Content != nil {
-		record.Content = FromPtr(body.Content)
+		incoming.Content = FromPtr(body.Content)
 	}
 
-	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to encrypt secrets",
 			slog.Any("error", err),
@@ -175,13 +175,15 @@ func (a *API) CreateProjectInventory(w http.ResponseWriter, r *http.Request, _ P
 		return
 	}
 
-	if err := a.storage.WithPrincipal(
+	record, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Inventories.Create(
 		ctx,
 		project,
-		record,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 
@@ -228,7 +230,7 @@ func (a *API) CreateProjectInventory(w http.ResponseWriter, r *http.Request, _ P
 func (a *API) UpdateProjectInventory(w http.ResponseWriter, r *http.Request, _ ProjectID, _ InventoryID) {
 	ctx := r.Context()
 	project := a.ProjectFromContext(ctx)
-	record := a.ProjectInventoryFromContext(ctx)
+	incoming := a.ProjectInventoryFromContext(ctx)
 	body := &UpdateProjectInventoryBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
@@ -236,7 +238,7 @@ func (a *API) UpdateProjectInventory(w http.ResponseWriter, r *http.Request, _ P
 			"Failed to decode request body",
 			slog.Any("error", err),
 			slog.String("project", project.ID),
-			slog.String("inventory", record.ID),
+			slog.String("inventory", incoming.ID),
 			slog.String("action", "UpdateProjectInventory"),
 		)
 
@@ -248,7 +250,7 @@ func (a *API) UpdateProjectInventory(w http.ResponseWriter, r *http.Request, _ P
 		return
 	}
 
-	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to decrypt secrets",
 			slog.Any("error", err),
@@ -266,39 +268,39 @@ func (a *API) UpdateProjectInventory(w http.ResponseWriter, r *http.Request, _ P
 	}
 
 	if body.RepositoryID != nil {
-		record.RepositoryID = FromPtr(body.RepositoryID)
+		incoming.RepositoryID = FromPtr(body.RepositoryID)
 	}
 
 	if body.CredentialID != nil {
-		record.CredentialID = FromPtr(body.CredentialID)
+		incoming.CredentialID = FromPtr(body.CredentialID)
 	}
 
 	if body.BecomeID != nil {
-		record.BecomeID = FromPtr(body.BecomeID)
+		incoming.BecomeID = FromPtr(body.BecomeID)
 	}
 
 	if body.Slug != nil {
-		record.Slug = FromPtr(body.Slug)
+		incoming.Slug = FromPtr(body.Slug)
 	}
 
 	if body.Name != nil {
-		record.Name = FromPtr(body.Name)
+		incoming.Name = FromPtr(body.Name)
 	}
 
 	if body.Kind != nil {
-		record.Kind = FromPtr(body.Kind)
+		incoming.Kind = FromPtr(body.Kind)
 	}
 
 	if body.Content != nil {
-		record.Content = FromPtr(body.Content)
+		incoming.Content = FromPtr(body.Content)
 	}
 
-	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to encrypt secrets",
 			slog.Any("error", err),
 			slog.String("project", project.ID),
-			slog.String("inventory", record.ID),
+			slog.String("inventory", incoming.ID),
 			slog.String("action", "UpdateProjectIntenvory"),
 		)
 
@@ -310,13 +312,15 @@ func (a *API) UpdateProjectInventory(w http.ResponseWriter, r *http.Request, _ P
 		return
 	}
 
-	if err := a.storage.WithPrincipal(
+	record, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Inventories.Update(
 		ctx,
 		project,
-		record,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 

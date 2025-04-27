@@ -89,38 +89,40 @@ func (a *API) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	record := &model.User{}
+	incoming := &model.User{}
 
 	if body.Username != nil {
-		record.Username = FromPtr(body.Username)
+		incoming.Username = FromPtr(body.Username)
 	}
 
 	if body.Password != nil {
-		record.Password = FromPtr(body.Password)
+		incoming.Password = FromPtr(body.Password)
 	}
 
 	if body.Email != nil {
-		record.Email = FromPtr(body.Email)
+		incoming.Email = FromPtr(body.Email)
 	}
 
 	if body.Fullname != nil {
-		record.Fullname = FromPtr(body.Fullname)
+		incoming.Fullname = FromPtr(body.Fullname)
 	}
 
 	if body.Admin != nil {
-		record.Admin = FromPtr(body.Admin)
+		incoming.Admin = FromPtr(body.Admin)
 	}
 
 	if body.Active != nil {
-		record.Active = FromPtr(body.Active)
+		incoming.Active = FromPtr(body.Active)
 	}
 
-	if err := a.storage.WithPrincipal(
+	record, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Users.Create(
 		ctx,
-		record,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 
@@ -165,14 +167,14 @@ func (a *API) CreateUser(w http.ResponseWriter, r *http.Request) {
 // UpdateUser implements the v1.ServerInterface.
 func (a *API) UpdateUser(w http.ResponseWriter, r *http.Request, _ UserID) {
 	ctx := r.Context()
-	record := a.UserFromContext(ctx)
+	incoming := a.UserFromContext(ctx)
 	body := &UpdateUserBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
 		slog.Error(
 			"Failed to decode request body",
 			slog.Any("error", err),
-			slog.String("user", record.ID),
+			slog.String("user", incoming.ID),
 			slog.String("action", "UpdateUser"),
 		)
 
@@ -185,35 +187,37 @@ func (a *API) UpdateUser(w http.ResponseWriter, r *http.Request, _ UserID) {
 	}
 
 	if body.Username != nil {
-		record.Username = FromPtr(body.Username)
+		incoming.Username = FromPtr(body.Username)
 	}
 
 	if body.Password != nil {
-		record.Password = FromPtr(body.Password)
+		incoming.Password = FromPtr(body.Password)
 	}
 
 	if body.Email != nil {
-		record.Email = FromPtr(body.Email)
+		incoming.Email = FromPtr(body.Email)
 	}
 
 	if body.Fullname != nil {
-		record.Fullname = FromPtr(body.Fullname)
+		incoming.Fullname = FromPtr(body.Fullname)
 	}
 
 	if body.Admin != nil {
-		record.Admin = FromPtr(body.Admin)
+		incoming.Admin = FromPtr(body.Admin)
 	}
 
 	if body.Active != nil {
-		record.Active = FromPtr(body.Active)
+		incoming.Active = FromPtr(body.Active)
 	}
 
-	if err := a.storage.WithPrincipal(
+	record, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Users.Update(
 		ctx,
-		record,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 

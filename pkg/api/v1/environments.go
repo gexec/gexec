@@ -127,20 +127,20 @@ func (a *API) CreateProjectEnvironment(w http.ResponseWriter, r *http.Request, _
 		return
 	}
 
-	record := &model.Environment{
+	incoming := &model.Environment{
 		ProjectID: project.ID,
 	}
 
 	if body.Slug != nil {
-		record.Slug = FromPtr(body.Slug)
+		incoming.Slug = FromPtr(body.Slug)
 	}
 
 	if body.Name != nil {
-		record.Name = FromPtr(body.Name)
+		incoming.Name = FromPtr(body.Name)
 	}
 
 	if body.Secrets != nil {
-		record.Secrets = make([]*model.EnvironmentSecret, 0)
+		incoming.Secrets = make([]*model.EnvironmentSecret, 0)
 
 		for _, row := range FromPtr(body.Secrets) {
 			secret := &model.EnvironmentSecret{}
@@ -157,12 +157,12 @@ func (a *API) CreateProjectEnvironment(w http.ResponseWriter, r *http.Request, _
 				secret.Content = FromPtr(row.Content)
 			}
 
-			record.Secrets = append(record.Secrets, secret)
+			incoming.Secrets = append(incoming.Secrets, secret)
 		}
 	}
 
 	if body.Values != nil {
-		record.Values = make([]*model.EnvironmentValue, 0)
+		incoming.Values = make([]*model.EnvironmentValue, 0)
 
 		for _, row := range FromPtr(body.Values) {
 			value := &model.EnvironmentValue{}
@@ -179,11 +179,11 @@ func (a *API) CreateProjectEnvironment(w http.ResponseWriter, r *http.Request, _
 				value.Content = FromPtr(row.Content)
 			}
 
-			record.Values = append(record.Values, value)
+			incoming.Values = append(incoming.Values, value)
 		}
 	}
 
-	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to encrypt secrets",
 			slog.Any("error", err),
@@ -199,13 +199,15 @@ func (a *API) CreateProjectEnvironment(w http.ResponseWriter, r *http.Request, _
 		return
 	}
 
-	if err := a.storage.WithPrincipal(
+	record, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Environments.Create(
 		ctx,
 		project,
-		record,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 
@@ -252,7 +254,7 @@ func (a *API) CreateProjectEnvironment(w http.ResponseWriter, r *http.Request, _
 func (a *API) UpdateProjectEnvironment(w http.ResponseWriter, r *http.Request, _ ProjectID, _ EnvironmentID) {
 	ctx := r.Context()
 	project := a.ProjectFromContext(ctx)
-	record := a.ProjectEnvironmentFromContext(ctx)
+	incoming := a.ProjectEnvironmentFromContext(ctx)
 	body := &UpdateProjectEnvironmentBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
@@ -260,7 +262,7 @@ func (a *API) UpdateProjectEnvironment(w http.ResponseWriter, r *http.Request, _
 			"Failed to decode request body",
 			slog.Any("error", err),
 			slog.String("project", project.ID),
-			slog.String("environment", record.ID),
+			slog.String("environment", incoming.ID),
 			slog.String("action", "UpdateProjectEnvironment"),
 		)
 
@@ -272,12 +274,12 @@ func (a *API) UpdateProjectEnvironment(w http.ResponseWriter, r *http.Request, _
 		return
 	}
 
-	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to decrypt secrets",
 			slog.Any("error", err),
 			slog.String("project", project.ID),
-			slog.String("environment", record.ID),
+			slog.String("environment", incoming.ID),
 			slog.String("action", "UpdateProjectEnvironment"),
 		)
 
@@ -290,15 +292,15 @@ func (a *API) UpdateProjectEnvironment(w http.ResponseWriter, r *http.Request, _
 	}
 
 	if body.Slug != nil {
-		record.Slug = FromPtr(body.Slug)
+		incoming.Slug = FromPtr(body.Slug)
 	}
 
 	if body.Name != nil {
-		record.Name = FromPtr(body.Name)
+		incoming.Name = FromPtr(body.Name)
 	}
 
 	if body.Secrets != nil {
-		record.Secrets = make([]*model.EnvironmentSecret, 0)
+		incoming.Secrets = make([]*model.EnvironmentSecret, 0)
 
 		for _, row := range FromPtr(body.Secrets) {
 			secret := &model.EnvironmentSecret{}
@@ -319,12 +321,12 @@ func (a *API) UpdateProjectEnvironment(w http.ResponseWriter, r *http.Request, _
 				secret.Content = FromPtr(row.Content)
 			}
 
-			record.Secrets = append(record.Secrets, secret)
+			incoming.Secrets = append(incoming.Secrets, secret)
 		}
 	}
 
 	if body.Values != nil {
-		record.Values = make([]*model.EnvironmentValue, 0)
+		incoming.Values = make([]*model.EnvironmentValue, 0)
 
 		for _, row := range FromPtr(body.Values) {
 			value := &model.EnvironmentValue{}
@@ -345,16 +347,16 @@ func (a *API) UpdateProjectEnvironment(w http.ResponseWriter, r *http.Request, _
 				value.Content = FromPtr(row.Content)
 			}
 
-			record.Values = append(record.Values, value)
+			incoming.Values = append(incoming.Values, value)
 		}
 	}
 
-	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to encrypt secrets",
 			slog.Any("error", err),
 			slog.String("project", project.ID),
-			slog.String("environment", record.ID),
+			slog.String("environment", incoming.ID),
 			slog.String("action", "UpdateProjectEnvironment"),
 		)
 
@@ -366,13 +368,15 @@ func (a *API) UpdateProjectEnvironment(w http.ResponseWriter, r *http.Request, _
 		return
 	}
 
-	if err := a.storage.WithPrincipal(
+	record, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Environments.Update(
 		ctx,
 		project,
-		record,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 
@@ -475,23 +479,23 @@ func (a *API) CreateProjectEnvironmentSecret(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	child := &model.EnvironmentSecret{
+	incoming := &model.EnvironmentSecret{
 		EnvironmentID: record.ID,
 	}
 
 	if body.Kind != nil {
-		child.Kind = string(FromPtr(body.Kind))
+		incoming.Kind = string(FromPtr(body.Kind))
 	}
 
 	if body.Name != nil {
-		child.Name = FromPtr(body.Name)
+		incoming.Name = FromPtr(body.Name)
 	}
 
 	if body.Content != nil {
-		child.Content = FromPtr(body.Content)
+		incoming.Content = FromPtr(body.Content)
 	}
 
-	if err := child.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to encrypt secrets",
 			slog.Any("error", err),
@@ -508,13 +512,15 @@ func (a *API) CreateProjectEnvironmentSecret(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if err := a.storage.WithPrincipal(
+	child, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Environments.CreateSecret(
 		ctx,
 		record,
-		child,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 
@@ -581,7 +587,7 @@ func (a *API) UpdateProjectEnvironmentSecret(w http.ResponseWriter, r *http.Requ
 	ctx := r.Context()
 	project := a.ProjectFromContext(ctx)
 	record := a.ProjectEnvironmentFromContext(ctx)
-	child := a.ProjectEnvironmentSecretFromContext(ctx)
+	incoming := a.ProjectEnvironmentSecretFromContext(ctx)
 	body := &UpdateProjectEnvironmentSecretBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
@@ -590,7 +596,7 @@ func (a *API) UpdateProjectEnvironmentSecret(w http.ResponseWriter, r *http.Requ
 			slog.Any("error", err),
 			slog.String("project", project.ID),
 			slog.String("environment", record.ID),
-			slog.String("secret", child.ID),
+			slog.String("secret", incoming.ID),
 			slog.String("action", "UpdateProjectEnvironmentSecret"),
 		)
 
@@ -602,13 +608,13 @@ func (a *API) UpdateProjectEnvironmentSecret(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if err := child.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to decrypt secrets",
 			slog.Any("error", err),
 			slog.String("project", project.ID),
 			slog.String("environment", record.ID),
-			slog.String("secret", child.ID),
+			slog.String("secret", incoming.ID),
 			slog.String("action", "UpdateProjectEnvironmentSecret"),
 		)
 
@@ -621,24 +627,24 @@ func (a *API) UpdateProjectEnvironmentSecret(w http.ResponseWriter, r *http.Requ
 	}
 
 	if body.Kind != nil {
-		child.Kind = string(FromPtr(body.Kind))
+		incoming.Kind = string(FromPtr(body.Kind))
 	}
 
 	if body.Name != nil {
-		child.Name = FromPtr(body.Name)
+		incoming.Name = FromPtr(body.Name)
 	}
 
 	if body.Content != nil {
-		child.Content = FromPtr(body.Content)
+		incoming.Content = FromPtr(body.Content)
 	}
 
-	if err := child.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to encrypt secrets",
 			slog.Any("error", err),
 			slog.String("project", project.ID),
 			slog.String("environment", record.ID),
-			slog.String("secret", child.ID),
+			slog.String("secret", incoming.ID),
 			slog.String("action", "UpdateProjectEnvironmentSecret"),
 		)
 
@@ -650,13 +656,15 @@ func (a *API) UpdateProjectEnvironmentSecret(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if err := a.storage.WithPrincipal(
+	child, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Environments.UpdateSecret(
 		ctx,
 		record,
-		child,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 
@@ -780,23 +788,23 @@ func (a *API) CreateProjectEnvironmentValue(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	child := &model.EnvironmentValue{
+	incoming := &model.EnvironmentValue{
 		EnvironmentID: record.ID,
 	}
 
 	if body.Kind != nil {
-		child.Kind = string(FromPtr(body.Kind))
+		incoming.Kind = string(FromPtr(body.Kind))
 	}
 
 	if body.Name != nil {
-		child.Name = FromPtr(body.Name)
+		incoming.Name = FromPtr(body.Name)
 	}
 
 	if body.Content != nil {
-		child.Content = FromPtr(body.Content)
+		incoming.Content = FromPtr(body.Content)
 	}
 
-	if err := child.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to encrypt secrets",
 			slog.Any("error", err),
@@ -813,13 +821,15 @@ func (a *API) CreateProjectEnvironmentValue(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if err := a.storage.WithPrincipal(
+	child, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Environments.CreateValue(
 		ctx,
 		record,
-		child,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 
@@ -886,7 +896,7 @@ func (a *API) UpdateProjectEnvironmentValue(w http.ResponseWriter, r *http.Reque
 	ctx := r.Context()
 	project := a.ProjectFromContext(ctx)
 	record := a.ProjectEnvironmentFromContext(ctx)
-	child := a.ProjectEnvironmentValueFromContext(ctx)
+	incoming := a.ProjectEnvironmentValueFromContext(ctx)
 	body := &UpdateProjectEnvironmentValueBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
@@ -895,7 +905,7 @@ func (a *API) UpdateProjectEnvironmentValue(w http.ResponseWriter, r *http.Reque
 			slog.Any("error", err),
 			slog.String("project", project.ID),
 			slog.String("environment", record.ID),
-			slog.String("value", child.ID),
+			slog.String("value", incoming.ID),
 			slog.String("action", "UpdateProjectEnvironmentValue"),
 		)
 
@@ -907,13 +917,13 @@ func (a *API) UpdateProjectEnvironmentValue(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if err := child.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to decrypt secrets",
 			slog.Any("error", err),
 			slog.String("project", project.ID),
 			slog.String("environment", record.ID),
-			slog.String("value", child.ID),
+			slog.String("value", incoming.ID),
 			slog.String("action", "UpdateProjectEnvironmentValue"),
 		)
 
@@ -926,24 +936,24 @@ func (a *API) UpdateProjectEnvironmentValue(w http.ResponseWriter, r *http.Reque
 	}
 
 	if body.Kind != nil {
-		child.Kind = string(FromPtr(body.Kind))
+		incoming.Kind = string(FromPtr(body.Kind))
 	}
 
 	if body.Name != nil {
-		child.Name = FromPtr(body.Name)
+		incoming.Name = FromPtr(body.Name)
 	}
 
 	if body.Content != nil {
-		child.Content = FromPtr(body.Content)
+		incoming.Content = FromPtr(body.Content)
 	}
 
-	if err := child.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to encrypt secrets",
 			slog.Any("error", err),
 			slog.String("project", project.ID),
 			slog.String("environment", record.ID),
-			slog.String("value", child.ID),
+			slog.String("value", incoming.ID),
 			slog.String("action", "UpdateProjectEnvironmentValue"),
 		)
 
@@ -955,13 +965,15 @@ func (a *API) UpdateProjectEnvironmentValue(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if err := a.storage.WithPrincipal(
+	child, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Environments.UpdateValue(
 		ctx,
 		record,
-		child,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 

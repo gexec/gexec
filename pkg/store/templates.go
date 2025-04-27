@@ -95,7 +95,7 @@ func (s *Templates) Show(ctx context.Context, project *model.Project, name strin
 }
 
 // Create implements the create of a new template.
-func (s *Templates) Create(ctx context.Context, project *model.Project, record *model.Template) error {
+func (s *Templates) Create(ctx context.Context, project *model.Project, record *model.Template) (*model.Template, error) {
 	if record.Slug == "" {
 		record.Slug = s.slugify(
 			ctx,
@@ -107,7 +107,7 @@ func (s *Templates) Create(ctx context.Context, project *model.Project, record *
 	}
 
 	if err := s.validate(ctx, record, false); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
@@ -149,7 +149,7 @@ func (s *Templates) Create(ctx context.Context, project *model.Project, record *
 
 		return nil
 	}); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := s.client.handle.NewInsert().
@@ -165,14 +165,14 @@ func (s *Templates) Create(ctx context.Context, project *model.Project, record *
 			},
 		)).
 		Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return s.Show(ctx, project, record.ID)
 }
 
 // Update implements the update of an existing template.
-func (s *Templates) Update(ctx context.Context, project *model.Project, record *model.Template) error {
+func (s *Templates) Update(ctx context.Context, project *model.Project, record *model.Template) (*model.Template, error) {
 	if record.Slug == "" {
 		record.Slug = s.slugify(
 			ctx,
@@ -184,7 +184,7 @@ func (s *Templates) Update(ctx context.Context, project *model.Project, record *
 	}
 
 	if err := s.validate(ctx, record, true); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
@@ -361,7 +361,7 @@ func (s *Templates) Update(ctx context.Context, project *model.Project, record *
 
 		return nil
 	}); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := s.client.handle.NewInsert().
@@ -377,10 +377,10 @@ func (s *Templates) Update(ctx context.Context, project *model.Project, record *
 			},
 		)).
 		Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return s.Show(ctx, project, record.ID)
 }
 
 // Delete implements the deletion of a template.
@@ -441,9 +441,9 @@ func (s *Templates) ShowSurvey(ctx context.Context, template *model.Template, na
 }
 
 // CreateSurvey implements the create of a new template survey.
-func (s *Templates) CreateSurvey(ctx context.Context, template *model.Template, record *model.TemplateSurvey) error {
+func (s *Templates) CreateSurvey(ctx context.Context, template *model.Template, record *model.TemplateSurvey) (*model.TemplateSurvey, error) {
 	if err := s.validateSurvey(ctx, template, record, false); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
@@ -465,7 +465,7 @@ func (s *Templates) CreateSurvey(ctx context.Context, template *model.Template, 
 
 		return nil
 	}); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := s.client.handle.NewInsert().
@@ -485,16 +485,16 @@ func (s *Templates) CreateSurvey(ctx context.Context, template *model.Template, 
 			},
 		)).
 		Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return s.ShowSurvey(ctx, template, record.ID)
 }
 
 // UpdateSurvey implements the update of an existing template survey.
-func (s *Templates) UpdateSurvey(ctx context.Context, template *model.Template, record *model.TemplateSurvey) error {
+func (s *Templates) UpdateSurvey(ctx context.Context, template *model.Template, record *model.TemplateSurvey) (*model.TemplateSurvey, error) {
 	if err := s.validateSurvey(ctx, template, record, true); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
@@ -521,7 +521,7 @@ func (s *Templates) UpdateSurvey(ctx context.Context, template *model.Template, 
 
 		return nil
 	}); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := s.client.handle.NewInsert().
@@ -541,10 +541,10 @@ func (s *Templates) UpdateSurvey(ctx context.Context, template *model.Template, 
 			},
 		)).
 		Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return s.ShowSurvey(ctx, template, record.ID)
 }
 
 // DeleteSurvey implements the deletion of a template survey.
@@ -608,9 +608,9 @@ func (s *Templates) ShowVault(ctx context.Context, template *model.Template, nam
 }
 
 // CreateVault implements the create of a new template vault.
-func (s *Templates) CreateVault(ctx context.Context, template *model.Template, record *model.TemplateVault) error {
+func (s *Templates) CreateVault(ctx context.Context, template *model.Template, record *model.TemplateVault) (*model.TemplateVault, error) {
 	if err := s.validateVault(ctx, template, record, false); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
@@ -622,7 +622,7 @@ func (s *Templates) CreateVault(ctx context.Context, template *model.Template, r
 
 		return nil
 	}); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := s.client.handle.NewInsert().
@@ -642,16 +642,16 @@ func (s *Templates) CreateVault(ctx context.Context, template *model.Template, r
 			},
 		)).
 		Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return s.ShowVault(ctx, template, record.ID)
 }
 
 // UpdateVault implements the update of an existing template vault.
-func (s *Templates) UpdateVault(ctx context.Context, template *model.Template, record *model.TemplateVault) error {
+func (s *Templates) UpdateVault(ctx context.Context, template *model.Template, record *model.TemplateVault) (*model.TemplateVault, error) {
 	if err := s.validateVault(ctx, template, record, true); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
@@ -666,7 +666,7 @@ func (s *Templates) UpdateVault(ctx context.Context, template *model.Template, r
 
 		return nil
 	}); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := s.client.handle.NewInsert().
@@ -686,10 +686,10 @@ func (s *Templates) UpdateVault(ctx context.Context, template *model.Template, r
 			},
 		)).
 		Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return s.ShowVault(ctx, template, record.ID)
 }
 
 // DeleteVault implements the deletion of a template vault.
@@ -744,7 +744,7 @@ func (s *Templates) ValidateExists(ctx context.Context, projectID string) func(v
 		q := s.client.handle.NewSelect().
 			Model((*model.Template)(nil)).
 			Where("project_id = ?", projectID).
-			Where("id = ?", val)
+			Where("id = ? OR slug = ?", val, val)
 
 		exists, err := q.Exists(ctx)
 

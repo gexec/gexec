@@ -89,22 +89,24 @@ func (a *API) CreateGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	record := &model.Group{}
+	incoming := &model.Group{}
 
 	if body.Slug != nil {
-		record.Slug = FromPtr(body.Slug)
+		incoming.Slug = FromPtr(body.Slug)
 	}
 
 	if body.Name != nil {
-		record.Name = FromPtr(body.Name)
+		incoming.Name = FromPtr(body.Name)
 	}
 
-	if err := a.storage.WithPrincipal(
+	record, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Groups.Create(
 		ctx,
-		record,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 
@@ -149,14 +151,14 @@ func (a *API) CreateGroup(w http.ResponseWriter, r *http.Request) {
 // UpdateGroup implements the v1.ServerInterface.
 func (a *API) UpdateGroup(w http.ResponseWriter, r *http.Request, _ GroupID) {
 	ctx := r.Context()
-	record := a.GroupFromContext(ctx)
+	incoming := a.GroupFromContext(ctx)
 	body := &CreateGroupBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
 		slog.Error(
 			"Failed to decode request body",
 			slog.Any("error", err),
-			slog.String("group", record.ID),
+			slog.String("group", incoming.ID),
 			slog.String("action", "UpdateGroup"),
 		)
 
@@ -169,19 +171,21 @@ func (a *API) UpdateGroup(w http.ResponseWriter, r *http.Request, _ GroupID) {
 	}
 
 	if body.Slug != nil {
-		record.Slug = FromPtr(body.Slug)
+		incoming.Slug = FromPtr(body.Slug)
 	}
 
 	if body.Name != nil {
-		record.Name = FromPtr(body.Name)
+		incoming.Name = FromPtr(body.Name)
 	}
 
-	if err := a.storage.WithPrincipal(
+	record, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Groups.Update(
 		ctx,
-		record,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 
@@ -946,9 +950,9 @@ func (a *API) convertGroup(record *model.Group) Group {
 
 func (a *API) convertGroupUser(record *model.UserGroup) UserGroup {
 	result := UserGroup{
+		GroupID:   record.GroupID,
 		UserID:    record.UserID,
 		User:      ToPtr(a.convertUser(record.User)),
-		GroupID:   record.GroupID,
 		Perm:      ToPtr(UserGroupPerm(record.Perm)),
 		CreatedAt: ToPtr(record.CreatedAt),
 		UpdatedAt: ToPtr(record.UpdatedAt),

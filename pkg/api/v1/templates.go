@@ -127,60 +127,60 @@ func (a *API) CreateProjectTemplate(w http.ResponseWriter, r *http.Request, _ Pr
 		return
 	}
 
-	record := &model.Template{
+	incoming := &model.Template{
 		ProjectID: project.ID,
 	}
 
 	if body.Executor != nil {
-		record.Executor = FromPtr(body.Executor)
+		incoming.Executor = FromPtr(body.Executor)
 	}
 
 	if body.RepositoryID != nil {
-		record.RepositoryID = FromPtr(body.RepositoryID)
+		incoming.RepositoryID = FromPtr(body.RepositoryID)
 	}
 
 	if body.InventoryID != nil {
-		record.InventoryID = FromPtr(body.InventoryID)
+		incoming.InventoryID = FromPtr(body.InventoryID)
 	}
 
 	if body.EnvironmentID != nil {
-		record.EnvironmentID = FromPtr(body.EnvironmentID)
+		incoming.EnvironmentID = FromPtr(body.EnvironmentID)
 	}
 
 	if body.Slug != nil {
-		record.Slug = FromPtr(body.Slug)
+		incoming.Slug = FromPtr(body.Slug)
 	}
 
 	if body.Name != nil {
-		record.Name = FromPtr(body.Name)
+		incoming.Name = FromPtr(body.Name)
 	}
 
 	if body.Description != nil {
-		record.Description = FromPtr(body.Description)
+		incoming.Description = FromPtr(body.Description)
 	}
 
 	if body.Playbook != nil {
-		record.Playbook = FromPtr(body.Playbook)
+		incoming.Playbook = FromPtr(body.Playbook)
 	}
 
 	if body.Arguments != nil {
-		record.Arguments = FromPtr(body.Arguments)
+		incoming.Arguments = FromPtr(body.Arguments)
 	}
 
 	if body.Limit != nil {
-		record.Limit = FromPtr(body.Limit)
+		incoming.Limit = FromPtr(body.Limit)
 	}
 
 	if body.Branch != nil {
-		record.Branch = FromPtr(body.Branch)
+		incoming.Branch = FromPtr(body.Branch)
 	}
 
 	if body.AllowOverride != nil {
-		record.Override = FromPtr(body.AllowOverride)
+		incoming.Override = FromPtr(body.AllowOverride)
 	}
 
 	if body.Surveys != nil {
-		record.Surveys = make([]*model.TemplateSurvey, 0)
+		incoming.Surveys = make([]*model.TemplateSurvey, 0)
 
 		for _, row := range FromPtr(body.Surveys) {
 			survey := &model.TemplateSurvey{}
@@ -223,12 +223,12 @@ func (a *API) CreateProjectTemplate(w http.ResponseWriter, r *http.Request, _ Pr
 				}
 			}
 
-			record.Surveys = append(record.Surveys, survey)
+			incoming.Surveys = append(incoming.Surveys, survey)
 		}
 	}
 
 	if body.Vaults != nil {
-		record.Vaults = make([]*model.TemplateVault, 0)
+		incoming.Vaults = make([]*model.TemplateVault, 0)
 
 		for _, row := range FromPtr(body.Vaults) {
 			vault := &model.TemplateVault{}
@@ -249,11 +249,11 @@ func (a *API) CreateProjectTemplate(w http.ResponseWriter, r *http.Request, _ Pr
 				vault.Script = FromPtr(row.Script)
 			}
 
-			record.Vaults = append(record.Vaults, vault)
+			incoming.Vaults = append(incoming.Vaults, vault)
 		}
 	}
 
-	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to encrypt secrets",
 			slog.Any("error", err),
@@ -269,13 +269,15 @@ func (a *API) CreateProjectTemplate(w http.ResponseWriter, r *http.Request, _ Pr
 		return
 	}
 
-	if err := a.storage.WithPrincipal(
+	record, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Templates.Create(
 		ctx,
 		project,
-		record,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 
@@ -322,7 +324,7 @@ func (a *API) CreateProjectTemplate(w http.ResponseWriter, r *http.Request, _ Pr
 func (a *API) UpdateProjectTemplate(w http.ResponseWriter, r *http.Request, _ ProjectID, _ TemplateID) {
 	ctx := r.Context()
 	project := a.ProjectFromContext(ctx)
-	record := a.ProjectTemplateFromContext(ctx)
+	incoming := a.ProjectTemplateFromContext(ctx)
 	body := &UpdateProjectTemplateBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
@@ -330,7 +332,7 @@ func (a *API) UpdateProjectTemplate(w http.ResponseWriter, r *http.Request, _ Pr
 			"Failed to decode request body",
 			slog.Any("error", err),
 			slog.String("project", project.ID),
-			slog.String("template", record.ID),
+			slog.String("template", incoming.ID),
 			slog.String("action", "UpdateProjectTemplate"),
 		)
 
@@ -342,12 +344,12 @@ func (a *API) UpdateProjectTemplate(w http.ResponseWriter, r *http.Request, _ Pr
 		return
 	}
 
-	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to decrypt secrets",
 			slog.Any("error", err),
 			slog.String("project", project.ID),
-			slog.String("template", record.ID),
+			slog.String("template", incoming.ID),
 			slog.String("action", "UpdateProjectTemplate"),
 		)
 
@@ -360,51 +362,51 @@ func (a *API) UpdateProjectTemplate(w http.ResponseWriter, r *http.Request, _ Pr
 	}
 
 	if body.RepositoryID != nil {
-		record.RepositoryID = FromPtr(body.RepositoryID)
+		incoming.RepositoryID = FromPtr(body.RepositoryID)
 	}
 
 	if body.InventoryID != nil {
-		record.InventoryID = FromPtr(body.InventoryID)
+		incoming.InventoryID = FromPtr(body.InventoryID)
 	}
 
 	if body.EnvironmentID != nil {
-		record.EnvironmentID = FromPtr(body.EnvironmentID)
+		incoming.EnvironmentID = FromPtr(body.EnvironmentID)
 	}
 
 	if body.Slug != nil {
-		record.Slug = FromPtr(body.Slug)
+		incoming.Slug = FromPtr(body.Slug)
 	}
 
 	if body.Name != nil {
-		record.Name = FromPtr(body.Name)
+		incoming.Name = FromPtr(body.Name)
 	}
 
 	if body.Description != nil {
-		record.Description = FromPtr(body.Description)
+		incoming.Description = FromPtr(body.Description)
 	}
 
 	if body.Playbook != nil {
-		record.Playbook = FromPtr(body.Playbook)
+		incoming.Playbook = FromPtr(body.Playbook)
 	}
 
 	if body.Arguments != nil {
-		record.Arguments = FromPtr(body.Arguments)
+		incoming.Arguments = FromPtr(body.Arguments)
 	}
 
 	if body.Limit != nil {
-		record.Limit = FromPtr(body.Limit)
+		incoming.Limit = FromPtr(body.Limit)
 	}
 
 	if body.Branch != nil {
-		record.Branch = FromPtr(body.Branch)
+		incoming.Branch = FromPtr(body.Branch)
 	}
 
 	if body.AllowOverride != nil {
-		record.Override = FromPtr(body.AllowOverride)
+		incoming.Override = FromPtr(body.AllowOverride)
 	}
 
 	if body.Surveys != nil {
-		record.Surveys = make([]*model.TemplateSurvey, 0)
+		incoming.Surveys = make([]*model.TemplateSurvey, 0)
 
 		for _, row := range FromPtr(body.Surveys) {
 			survey := &model.TemplateSurvey{}
@@ -455,12 +457,12 @@ func (a *API) UpdateProjectTemplate(w http.ResponseWriter, r *http.Request, _ Pr
 				}
 			}
 
-			record.Surveys = append(record.Surveys, survey)
+			incoming.Surveys = append(incoming.Surveys, survey)
 		}
 	}
 
 	if body.Vaults != nil {
-		record.Vaults = make([]*model.TemplateVault, 0)
+		incoming.Vaults = make([]*model.TemplateVault, 0)
 
 		for _, row := range FromPtr(body.Vaults) {
 			vault := &model.TemplateVault{}
@@ -485,16 +487,16 @@ func (a *API) UpdateProjectTemplate(w http.ResponseWriter, r *http.Request, _ Pr
 				vault.Script = FromPtr(row.Script)
 			}
 
-			record.Vaults = append(record.Vaults, vault)
+			incoming.Vaults = append(incoming.Vaults, vault)
 		}
 	}
 
-	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to encrypt secrets",
 			slog.Any("error", err),
 			slog.String("project", project.ID),
-			slog.String("template", record.ID),
+			slog.String("template", incoming.ID),
 			slog.String("action", "UpdateProjectTemplate"),
 		)
 
@@ -506,13 +508,15 @@ func (a *API) UpdateProjectTemplate(w http.ResponseWriter, r *http.Request, _ Pr
 		return
 	}
 
-	if err := a.storage.WithPrincipal(
+	record, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Templates.Update(
 		ctx,
 		project,
-		record,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 
@@ -560,7 +564,7 @@ func (a *API) UpdateProjectTemplate(w http.ResponseWriter, r *http.Request, _ Pr
 func (a *API) DeleteProjectTemplate(w http.ResponseWriter, r *http.Request, _ ProjectID, _ TemplateID) {
 	ctx := r.Context()
 	project := a.ProjectFromContext(ctx)
-	record := a.ProjectScheduleFromContext(ctx)
+	record := a.ProjectTemplateFromContext(ctx)
 
 	if err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
@@ -615,32 +619,32 @@ func (a *API) CreateProjectTemplateSurvey(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	child := &model.TemplateSurvey{
+	incoming := &model.TemplateSurvey{
 		TemplateID: record.ID,
 	}
 
 	if body.Kind != nil {
-		child.Kind = string(FromPtr(body.Kind))
+		incoming.Kind = string(FromPtr(body.Kind))
 	}
 
 	if body.Name != nil {
-		child.Name = FromPtr(body.Name)
+		incoming.Name = FromPtr(body.Name)
 	}
 
 	if body.Title != nil {
-		child.Title = FromPtr(body.Title)
+		incoming.Title = FromPtr(body.Title)
 	}
 
 	if body.Description != nil {
-		child.Description = FromPtr(body.Description)
+		incoming.Description = FromPtr(body.Description)
 	}
 
 	if body.Required != nil {
-		child.Required = FromPtr(body.Required)
+		incoming.Required = FromPtr(body.Required)
 	}
 
 	if body.Values != nil {
-		child.Values = make([]*model.TemplateValue, 0)
+		incoming.Values = make([]*model.TemplateValue, 0)
 
 		for _, val := range FromPtr(body.Values) {
 			value := &model.TemplateValue{}
@@ -653,11 +657,11 @@ func (a *API) CreateProjectTemplateSurvey(w http.ResponseWriter, r *http.Request
 				value.Value = FromPtr(val.Value)
 			}
 
-			child.Values = append(child.Values, value)
+			incoming.Values = append(incoming.Values, value)
 		}
 	}
 
-	if err := child.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to encrypt secrets",
 			slog.Any("error", err),
@@ -674,13 +678,15 @@ func (a *API) CreateProjectTemplateSurvey(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if err := a.storage.WithPrincipal(
+	child, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Templates.CreateSurvey(
 		ctx,
 		record,
-		child,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 
@@ -746,7 +752,7 @@ func (a *API) UpdateProjectTemplateSurvey(w http.ResponseWriter, r *http.Request
 	ctx := r.Context()
 	project := a.ProjectFromContext(ctx)
 	record := a.ProjectTemplateFromContext(ctx)
-	child := a.ProjectTemplateSurveyFromContext(ctx)
+	incoming := a.ProjectTemplateSurveyFromContext(ctx)
 	body := &UpdateProjectTemplateSurveyBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
@@ -755,7 +761,7 @@ func (a *API) UpdateProjectTemplateSurvey(w http.ResponseWriter, r *http.Request
 			slog.Any("error", err),
 			slog.String("project", project.ID),
 			slog.String("template", record.ID),
-			slog.String("survey", child.ID),
+			slog.String("survey", incoming.ID),
 			slog.String("action", "UpdateProjectTemplateSurvey"),
 		)
 
@@ -767,13 +773,13 @@ func (a *API) UpdateProjectTemplateSurvey(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if err := child.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to decrypt secrets",
 			slog.Any("error", err),
 			slog.String("project", project.ID),
 			slog.String("template", record.ID),
-			slog.String("survey", child.ID),
+			slog.String("survey", incoming.ID),
 			slog.String("action", "UpdateProjectTemplateSurvey"),
 		)
 
@@ -786,27 +792,27 @@ func (a *API) UpdateProjectTemplateSurvey(w http.ResponseWriter, r *http.Request
 	}
 
 	if body.Kind != nil {
-		child.Kind = string(FromPtr(body.Kind))
+		incoming.Kind = string(FromPtr(body.Kind))
 	}
 
 	if body.Name != nil {
-		child.Name = FromPtr(body.Name)
+		incoming.Name = FromPtr(body.Name)
 	}
 
 	if body.Title != nil {
-		child.Title = FromPtr(body.Title)
+		incoming.Title = FromPtr(body.Title)
 	}
 
 	if body.Description != nil {
-		child.Description = FromPtr(body.Description)
+		incoming.Description = FromPtr(body.Description)
 	}
 
 	if body.Required != nil {
-		child.Required = FromPtr(body.Required)
+		incoming.Required = FromPtr(body.Required)
 	}
 
 	if body.Values != nil {
-		child.Values = make([]*model.TemplateValue, 0)
+		incoming.Values = make([]*model.TemplateValue, 0)
 
 		for _, val := range FromPtr(body.Values) {
 			value := &model.TemplateValue{}
@@ -819,17 +825,17 @@ func (a *API) UpdateProjectTemplateSurvey(w http.ResponseWriter, r *http.Request
 				value.Value = FromPtr(val.Value)
 			}
 
-			child.Values = append(child.Values, value)
+			incoming.Values = append(incoming.Values, value)
 		}
 	}
 
-	if err := child.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to encrypt secrets",
 			slog.Any("error", err),
 			slog.String("project", project.ID),
 			slog.String("template", record.ID),
-			slog.String("survey", child.ID),
+			slog.String("survey", incoming.ID),
 			slog.String("action", "UpdateProjectTemplateSurvey"),
 		)
 
@@ -841,13 +847,15 @@ func (a *API) UpdateProjectTemplateSurvey(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if err := a.storage.WithPrincipal(
+	child, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Templates.UpdateSurvey(
 		ctx,
 		record,
-		child,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 
@@ -971,27 +979,27 @@ func (a *API) CreateProjectTemplateVault(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	child := &model.TemplateVault{
+	incoming := &model.TemplateVault{
 		TemplateID: record.ID,
 	}
 
 	if body.CredentialID != nil {
-		child.CredentialID = FromPtr(body.CredentialID)
+		incoming.CredentialID = FromPtr(body.CredentialID)
 	}
 
 	if body.Kind != nil {
-		child.Kind = string(FromPtr(body.Kind))
+		incoming.Kind = string(FromPtr(body.Kind))
 	}
 
 	if body.Name != nil {
-		child.Name = FromPtr(body.Name)
+		incoming.Name = FromPtr(body.Name)
 	}
 
 	if body.Script != nil {
-		child.Script = FromPtr(body.Script)
+		incoming.Script = FromPtr(body.Script)
 	}
 
-	if err := child.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to encrypt secrets",
 			slog.Any("error", err),
@@ -1008,13 +1016,15 @@ func (a *API) CreateProjectTemplateVault(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	if err := a.storage.WithPrincipal(
+	child, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Templates.CreateVault(
 		ctx,
 		record,
-		child,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 
@@ -1080,7 +1090,7 @@ func (a *API) UpdateProjectTemplateVault(w http.ResponseWriter, r *http.Request,
 	ctx := r.Context()
 	project := a.ProjectFromContext(ctx)
 	record := a.ProjectTemplateFromContext(ctx)
-	child := a.ProjectTemplateVaultFromContext(ctx)
+	incoming := a.ProjectTemplateVaultFromContext(ctx)
 	body := &UpdateProjectTemplateVaultBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
@@ -1089,7 +1099,7 @@ func (a *API) UpdateProjectTemplateVault(w http.ResponseWriter, r *http.Request,
 			slog.Any("error", err),
 			slog.String("project", project.ID),
 			slog.String("template", record.ID),
-			slog.String("vault", child.ID),
+			slog.String("vault", incoming.ID),
 			slog.String("action", "UpdateProjectTemplateVault"),
 		)
 
@@ -1101,13 +1111,13 @@ func (a *API) UpdateProjectTemplateVault(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	if err := child.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to decrypt secrets",
 			slog.Any("error", err),
 			slog.String("project", project.ID),
 			slog.String("template", record.ID),
-			slog.String("vault", child.ID),
+			slog.String("vault", incoming.ID),
 			slog.String("action", "UpdateProjectTemplateVault"),
 		)
 
@@ -1120,28 +1130,28 @@ func (a *API) UpdateProjectTemplateVault(w http.ResponseWriter, r *http.Request,
 	}
 
 	if body.CredentialID != nil {
-		child.CredentialID = FromPtr(body.CredentialID)
+		incoming.CredentialID = FromPtr(body.CredentialID)
 	}
 
 	if body.Kind != nil {
-		child.Kind = string(FromPtr(body.Kind))
+		incoming.Kind = string(FromPtr(body.Kind))
 	}
 
 	if body.Name != nil {
-		child.Name = FromPtr(body.Name)
+		incoming.Name = FromPtr(body.Name)
 	}
 
 	if body.Script != nil {
-		child.Script = FromPtr(body.Script)
+		incoming.Script = FromPtr(body.Script)
 	}
 
-	if err := child.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to encrypt secrets",
 			slog.Any("error", err),
 			slog.String("project", project.ID),
 			slog.String("template", record.ID),
-			slog.String("vault", child.ID),
+			slog.String("vault", incoming.ID),
 			slog.String("action", "UpdateProjectTemplateVault"),
 		)
 
@@ -1153,13 +1163,15 @@ func (a *API) UpdateProjectTemplateVault(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	if err := a.storage.WithPrincipal(
+	child, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Templates.UpdateVault(
 		ctx,
 		record,
-		child,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 

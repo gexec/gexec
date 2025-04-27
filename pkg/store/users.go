@@ -83,15 +83,15 @@ func (s *Users) Show(ctx context.Context, name string) (*model.User, error) {
 }
 
 // Create implements the create of a new user.
-func (s *Users) Create(ctx context.Context, record *model.User) error {
+func (s *Users) Create(ctx context.Context, record *model.User) (*model.User, error) {
 	if err := s.validate(ctx, record, false); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := s.client.handle.NewInsert().
 		Model(record).
 		Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := s.client.handle.NewInsert().
@@ -105,23 +105,23 @@ func (s *Users) Create(ctx context.Context, record *model.User) error {
 			},
 		)).
 		Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return s.Show(ctx, record.ID)
 }
 
 // Update implements the update of an existing user.
-func (s *Users) Update(ctx context.Context, record *model.User) error {
+func (s *Users) Update(ctx context.Context, record *model.User) (*model.User, error) {
 	if err := s.validate(ctx, record, true); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := s.client.handle.NewUpdate().
 		Model(record).
 		Where("id = ?", record.ID).
 		Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := s.client.handle.NewInsert().
@@ -135,10 +135,10 @@ func (s *Users) Update(ctx context.Context, record *model.User) error {
 			},
 		)).
 		Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return s.Show(ctx, record.ID)
 }
 
 // Delete implements the deletion of an user.

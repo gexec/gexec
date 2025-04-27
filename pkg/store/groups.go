@@ -81,7 +81,7 @@ func (s *Groups) Show(ctx context.Context, name string) (*model.Group, error) {
 }
 
 // Create implements the create of a new group.
-func (s *Groups) Create(ctx context.Context, record *model.Group) error {
+func (s *Groups) Create(ctx context.Context, record *model.Group) (*model.Group, error) {
 	if record.Slug == "" {
 		record.Slug = s.slugify(
 			ctx,
@@ -92,7 +92,7 @@ func (s *Groups) Create(ctx context.Context, record *model.Group) error {
 	}
 
 	if err := s.validate(ctx, record, false); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := s.client.handle.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
@@ -114,7 +114,7 @@ func (s *Groups) Create(ctx context.Context, record *model.Group) error {
 
 		return nil
 	}); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := s.client.handle.NewInsert().
@@ -128,14 +128,14 @@ func (s *Groups) Create(ctx context.Context, record *model.Group) error {
 			},
 		)).
 		Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return s.Show(ctx, record.ID)
 }
 
 // Update implements the update of an existing group.
-func (s *Groups) Update(ctx context.Context, record *model.Group) error {
+func (s *Groups) Update(ctx context.Context, record *model.Group) (*model.Group, error) {
 	if record.Slug == "" {
 		record.Slug = s.slugify(
 			ctx,
@@ -146,14 +146,14 @@ func (s *Groups) Update(ctx context.Context, record *model.Group) error {
 	}
 
 	if err := s.validate(ctx, record, true); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := s.client.handle.NewUpdate().
 		Model(record).
 		Where("id = ?", record.ID).
 		Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := s.client.handle.NewInsert().
@@ -167,10 +167,10 @@ func (s *Groups) Update(ctx context.Context, record *model.Group) error {
 			},
 		)).
 		Exec(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return s.Show(ctx, record.ID)
 }
 
 // Delete implements the deletion of a group.

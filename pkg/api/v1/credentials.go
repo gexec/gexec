@@ -127,54 +127,54 @@ func (a *API) CreateProjectCredential(w http.ResponseWriter, r *http.Request, _ 
 		return
 	}
 
-	record := &model.Credential{
+	incoming := &model.Credential{
 		ProjectID: project.ID,
 	}
 
 	if body.Slug != nil {
-		record.Slug = FromPtr(body.Slug)
+		incoming.Slug = FromPtr(body.Slug)
 	}
 
 	if body.Name != nil {
-		record.Name = FromPtr(body.Name)
+		incoming.Name = FromPtr(body.Name)
 	}
 
 	if body.Kind != nil {
-		record.Kind = FromPtr(body.Kind)
+		incoming.Kind = FromPtr(body.Kind)
 	}
 
 	if body.Override != nil {
-		record.Override = FromPtr(body.Override)
+		incoming.Override = FromPtr(body.Override)
 	}
 
-	switch record.Kind {
+	switch incoming.Kind {
 	case "shell":
 		if body.Shell != nil {
 			if body.Shell.Username != nil {
-				record.Shell.Username = FromPtr(body.Shell.Username)
+				incoming.Shell.Username = FromPtr(body.Shell.Username)
 			}
 
 			if body.Shell.Password != nil {
-				record.Shell.Password = FromPtr(body.Shell.Password)
+				incoming.Shell.Password = FromPtr(body.Shell.Password)
 			}
 
 			if body.Shell.PrivateKey != nil {
-				record.Shell.PrivateKey = FromPtr(body.Shell.PrivateKey)
+				incoming.Shell.PrivateKey = FromPtr(body.Shell.PrivateKey)
 			}
 		}
 	case "login":
 		if body.Login != nil {
 			if body.Login.Username != nil {
-				record.Login.Username = FromPtr(body.Login.Username)
+				incoming.Login.Username = FromPtr(body.Login.Username)
 			}
 
 			if body.Login.Password != nil {
-				record.Login.Password = FromPtr(body.Login.Password)
+				incoming.Login.Password = FromPtr(body.Login.Password)
 			}
 		}
 	}
 
-	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to encrypt secrets",
 			slog.Any("error", err),
@@ -190,13 +190,15 @@ func (a *API) CreateProjectCredential(w http.ResponseWriter, r *http.Request, _ 
 		return
 	}
 
-	if err := a.storage.WithPrincipal(
+	record, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Credentials.Create(
 		ctx,
 		project,
-		record,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 
@@ -260,7 +262,7 @@ func (a *API) CreateProjectCredential(w http.ResponseWriter, r *http.Request, _ 
 func (a *API) UpdateProjectCredential(w http.ResponseWriter, r *http.Request, _ ProjectID, _ CredentialID) {
 	ctx := r.Context()
 	project := a.ProjectFromContext(ctx)
-	record := a.ProjectCredentialFromContext(ctx)
+	incoming := a.ProjectCredentialFromContext(ctx)
 	body := &UpdateProjectCredentialBody{}
 
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
@@ -268,7 +270,7 @@ func (a *API) UpdateProjectCredential(w http.ResponseWriter, r *http.Request, _ 
 			"Failed to decode request body",
 			slog.Any("error", err),
 			slog.String("project", project.ID),
-			slog.String("credential", record.ID),
+			slog.String("credential", incoming.ID),
 			slog.String("action", "UpdateProjectCredential"),
 		)
 
@@ -280,7 +282,7 @@ func (a *API) UpdateProjectCredential(w http.ResponseWriter, r *http.Request, _ 
 		return
 	}
 
-	if err := record.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.DeserializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to decrypt secrets",
 			slog.Any("error", err),
@@ -298,61 +300,61 @@ func (a *API) UpdateProjectCredential(w http.ResponseWriter, r *http.Request, _ 
 	}
 
 	if body.Slug != nil {
-		record.Slug = FromPtr(body.Slug)
+		incoming.Slug = FromPtr(body.Slug)
 	}
 
 	if body.Name != nil {
-		record.Name = FromPtr(body.Name)
+		incoming.Name = FromPtr(body.Name)
 	}
 
 	if body.Kind != nil {
-		record.Kind = FromPtr(body.Kind)
+		incoming.Kind = FromPtr(body.Kind)
 	}
 
 	if body.Override != nil {
-		record.Override = FromPtr(body.Override)
+		incoming.Override = FromPtr(body.Override)
 	}
 
-	switch record.Kind {
+	switch incoming.Kind {
 	case "shell":
-		record.Login = model.CredentialLogin{}
+		incoming.Login = model.CredentialLogin{}
 
 		if body.Shell != nil {
 			if body.Shell.Username != nil {
-				record.Shell.Username = FromPtr(body.Shell.Username)
+				incoming.Shell.Username = FromPtr(body.Shell.Username)
 			}
 
 			if body.Shell.Password != nil {
-				record.Shell.Password = FromPtr(body.Shell.Password)
+				incoming.Shell.Password = FromPtr(body.Shell.Password)
 			}
 
 			if body.Shell.PrivateKey != nil {
-				record.Shell.PrivateKey = FromPtr(body.Shell.PrivateKey)
+				incoming.Shell.PrivateKey = FromPtr(body.Shell.PrivateKey)
 			}
 		}
 	case "login":
-		record.Shell = model.CredentialShell{}
+		incoming.Shell = model.CredentialShell{}
 
 		if body.Login != nil {
 			if body.Login.Username != nil {
-				record.Login.Username = FromPtr(body.Login.Username)
+				incoming.Login.Username = FromPtr(body.Login.Username)
 			}
 
 			if body.Login.Password != nil {
-				record.Login.Password = FromPtr(body.Login.Password)
+				incoming.Login.Password = FromPtr(body.Login.Password)
 			}
 		}
 	default:
-		record.Shell = model.CredentialShell{}
-		record.Login = model.CredentialLogin{}
+		incoming.Shell = model.CredentialShell{}
+		incoming.Login = model.CredentialLogin{}
 	}
 
-	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if err := incoming.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to encrypt secrets",
 			slog.Any("error", err),
 			slog.String("project", project.ID),
-			slog.String("credential", record.ID),
+			slog.String("credential", incoming.ID),
 			slog.String("action", "UpdateProjectCredential"),
 		)
 
@@ -364,13 +366,15 @@ func (a *API) UpdateProjectCredential(w http.ResponseWriter, r *http.Request, _ 
 		return
 	}
 
-	if err := a.storage.WithPrincipal(
+	record, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Credentials.Update(
 		ctx,
 		project,
-		record,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 

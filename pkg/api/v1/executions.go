@@ -127,15 +127,19 @@ func (a *API) CreateProjectExecution(w http.ResponseWriter, r *http.Request, _ P
 		return
 	}
 
-	record := &model.Execution{
+	incoming := &model.Execution{
 		ProjectID: project.ID,
 	}
 
 	if body.TemplateID != nil {
-		record.TemplateID = FromPtr(body.TemplateID)
+		incoming.TemplateID = FromPtr(body.TemplateID)
 	}
 
-	if err := record.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
+	if body.Debug != nil {
+		incoming.Debug = FromPtr(body.Debug)
+	}
+
+	if err := incoming.SerializeSecret(a.config.Encrypt.Passphrase); err != nil {
 		slog.Error(
 			"Failed to encrypt secrets",
 			slog.Any("error", err),
@@ -151,13 +155,15 @@ func (a *API) CreateProjectExecution(w http.ResponseWriter, r *http.Request, _ P
 		return
 	}
 
-	if err := a.storage.WithPrincipal(
+	record, err := a.storage.WithPrincipal(
 		current.GetUser(ctx),
 	).Executions.Create(
 		ctx,
 		project,
-		record,
-	); err != nil {
+		incoming,
+	)
+
+	if err != nil {
 		if v, ok := err.(validate.Errors); ok {
 			errors := make([]Validation, 0)
 
@@ -313,11 +319,17 @@ func (a *API) OutputProjectExecution(w http.ResponseWriter, r *http.Request, _ P
 
 func (a *API) convertExecution(record *model.Execution) Execution {
 	result := Execution{
-		ID:        ToPtr(record.ID),
-		Name:      ToPtr(record.Name),
-		Status:    ToPtr(record.Status),
-		CreatedAt: ToPtr(record.CreatedAt),
-		UpdatedAt: ToPtr(record.UpdatedAt),
+		ID:          ToPtr(record.ID),
+		Name:        ToPtr(record.Name),
+		Status:      ToPtr(string(record.Status)),
+		Debug:       ToPtr(record.Debug),
+		Playbook:    ToPtr(record.Playbook),
+		Environment: ToPtr(record.Environment),
+		Secret:      ToPtr(record.Secret),
+		Limit:       ToPtr(record.Limit),
+		Branch:      ToPtr(record.Branch),
+		CreatedAt:   ToPtr(record.CreatedAt),
+		UpdatedAt:   ToPtr(record.UpdatedAt),
 	}
 
 	if record.Template != nil {
