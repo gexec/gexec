@@ -11,85 +11,77 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type projectRunnerUpdateBind struct {
-	ProjectID string
-	RunnerID  string
-	Slug      string
-	Name      string
-	Format    string
+type projectExecutionCreateBind struct {
+	ProjectID  string
+	TemplateID string
+	Debug      bool
+	Format     string
 }
 
 var (
-	projectRunnerUpdateCmd = &cobra.Command{
-		Use:   "update",
-		Short: "Update a project runner",
+	projectExecutionCreateCmd = &cobra.Command{
+		Use:   "create",
+		Short: "Create a project execution",
 		Run: func(ccmd *cobra.Command, args []string) {
-			Handle(ccmd, args, projectRunnerUpdateAction)
+			Handle(ccmd, args, projectExecutionCreateAction)
 		},
 		Args: cobra.NoArgs,
 	}
 
-	projectRunnerUpdateArgs = projectRunnerUpdateBind{}
+	projectExecutionCreateArgs = projectExecutionCreateBind{}
 )
 
 func init() {
-	projectRunnerCmd.AddCommand(projectRunnerUpdateCmd)
+	projectExecutionCmd.AddCommand(projectExecutionCreateCmd)
 
-	projectRunnerUpdateCmd.Flags().StringVar(
-		&projectRunnerUpdateArgs.ProjectID,
+	projectExecutionCreateCmd.Flags().StringVar(
+		&projectExecutionCreateArgs.ProjectID,
 		"project-id",
 		"",
 		"Project ID or slug",
 	)
 
-	projectRunnerUpdateCmd.Flags().StringVar(
-		&projectRunnerUpdateArgs.RunnerID,
-		"runner-id",
+	projectExecutionCreateCmd.Flags().StringVar(
+		&projectExecutionCreateArgs.TemplateID,
+		"template-id",
 		"",
-		"Runner ID or slug",
+		"Template for project execution",
 	)
 
-	projectRunnerUpdateCmd.Flags().StringVar(
-		&projectRunnerUpdateArgs.Slug,
-		"slug",
-		"",
-		"Slug for project runner",
+	projectExecutionCreateCmd.Flags().BoolVar(
+		&projectExecutionCreateArgs.Debug,
+		"debug",
+		false,
+		"Debug for project execution",
 	)
 
-	projectRunnerUpdateCmd.Flags().StringVar(
-		&projectRunnerUpdateArgs.Name,
-		"name",
-		"",
-		"Name for project runner",
-	)
-
-	projectRunnerUpdateCmd.Flags().StringVar(
-		&projectRunnerUpdateArgs.Format,
+	projectExecutionCreateCmd.Flags().StringVar(
+		&projectExecutionCreateArgs.Format,
 		"format",
-		tmplProjectRunnerShow,
+		tmplProjectExecutionShow,
 		"Custom output format",
 	)
 }
 
-func projectRunnerUpdateAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if projectRunnerUpdateArgs.ProjectID == "" {
+func projectExecutionCreateAction(ccmd *cobra.Command, _ []string, client *Client) error {
+	if projectExecutionCreateArgs.ProjectID == "" {
 		return fmt.Errorf("you must provide a project ID or a slug")
 	}
 
-	if projectRunnerUpdateArgs.RunnerID == "" {
-		return fmt.Errorf("you must provide a runner ID or a slug")
+	if projectExecutionCreateArgs.TemplateID == "" {
+		return fmt.Errorf("you must provide a template")
 	}
 
-	body := v1.UpdateProjectRunnerJSONRequestBody{}
+	body := v1.CreateProjectExecutionJSONRequestBody{}
 	changed := false
 
-	if val := projectRunnerUpdateArgs.Slug; val != "" {
-		body.Slug = v1.ToPtr(val)
+	if val := projectExecutionCreateArgs.TemplateID; val != "" {
+		body.TemplateID = v1.ToPtr(val)
 		changed = true
 	}
 
-	if val := projectRunnerUpdateArgs.Name; val != "" {
-		body.Name = v1.ToPtr(val)
+	if val := projectExecutionCreateArgs.Debug; val {
+		body.Debug = v1.ToPtr(val)
 		changed = true
 	}
 
@@ -105,17 +97,16 @@ func projectRunnerUpdateAction(ccmd *cobra.Command, _ []string, client *Client) 
 	).Funcs(
 		basicFuncMap,
 	).Parse(
-		fmt.Sprintln(projectRunnerUpdateArgs.Format),
+		fmt.Sprintln(projectExecutionCreateArgs.Format),
 	)
 
 	if err != nil {
 		return fmt.Errorf("failed to process template: %w", err)
 	}
 
-	resp, err := client.UpdateProjectRunnerWithResponse(
+	resp, err := client.CreateProjectExecutionWithResponse(
 		ccmd.Context(),
-		projectRunnerUpdateArgs.ProjectID,
-		projectRunnerUpdateArgs.RunnerID,
+		projectExecutionCreateArgs.ProjectID,
 		body,
 	)
 

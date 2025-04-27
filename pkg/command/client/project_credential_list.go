@@ -11,58 +11,61 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// tmplGroupShow represents a user within details view.
-var tmplGroupShow = "Slug: \x1b[33m{{ .Slug }} \x1b[0m" + `
-ID: {{ .ID }}
-Name: {{ .Name }}
-Created: {{ .CreatedAt }}
-Updated: {{ .UpdatedAt }}
-`
-
-type groupShowBind struct {
-	GroupID string
-	Format  string
+type projectCredentialListBind struct {
+	ProjectID string
+	Format    string
 }
 
+// tmplProjectCredentialList represents a row within project credential listing.
+var tmplProjectCredentialList = "{{ range . }}Slug: \x1b[33m{{ .Slug }} \x1b[0m" + `
+ID: {{ .ID }}
+Name: {{ .Name }}
+
+{{ end -}}`
+
 var (
-	groupShowCmd = &cobra.Command{
-		Use:   "show",
-		Short: "Show a group",
+	projectCredentialListCmd = &cobra.Command{
+		Use:   "list",
+		Short: "List all credentials for a project",
 		Run: func(ccmd *cobra.Command, args []string) {
-			Handle(ccmd, args, groupShowAction)
+			Handle(ccmd, args, projectCredentialListAction)
 		},
 		Args: cobra.NoArgs,
 	}
 
-	groupShowArgs = groupShowBind{}
+	projectCredentialListArgs = projectCredentialListBind{}
 )
 
 func init() {
-	groupCmd.AddCommand(groupShowCmd)
+	projectCredentialCmd.AddCommand(projectCredentialListCmd)
 
-	groupShowCmd.Flags().StringVar(
-		&groupShowArgs.GroupID,
-		"group-id",
+	projectCredentialListCmd.Flags().StringVar(
+		&projectCredentialListArgs.ProjectID,
+		"project-id",
 		"",
-		"Group ID or slug",
+		"Project ID or slug",
 	)
 
-	groupShowCmd.Flags().StringVar(
-		&groupShowArgs.Format,
+	projectCredentialListCmd.Flags().StringVar(
+		&projectCredentialListArgs.Format,
 		"format",
-		tmplGroupShow,
+		tmplProjectCredentialList,
 		"Custom output format",
 	)
 }
 
-func groupShowAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if groupShowArgs.GroupID == "" {
-		return fmt.Errorf("you must provide a group ID or a slug")
+func projectCredentialListAction(ccmd *cobra.Command, _ []string, client *Client) error {
+	if projectCredentialListArgs.ProjectID == "" {
+		return fmt.Errorf("you must provide a project ID or a slug")
 	}
 
-	resp, err := client.ShowGroupWithResponse(
+	resp, err := client.ListProjectCredentialsWithResponse(
 		ccmd.Context(),
-		groupShowArgs.GroupID,
+		projectCredentialListArgs.ProjectID,
+		&v1.ListProjectCredentialsParams{
+			Limit:  v1.ToPtr(10000),
+			Offset: v1.ToPtr(0),
+		},
 	)
 
 	if err != nil {
@@ -76,7 +79,7 @@ func groupShowAction(ccmd *cobra.Command, _ []string, client *Client) error {
 	).Funcs(
 		basicFuncMap,
 	).Parse(
-		fmt.Sprintln(groupShowArgs.Format),
+		fmt.Sprintln(projectCredentialListArgs.Format),
 	)
 
 	if err != nil {
@@ -85,9 +88,16 @@ func groupShowAction(ccmd *cobra.Command, _ []string, client *Client) error {
 
 	switch resp.StatusCode() {
 	case http.StatusOK:
+		records := resp.JSON200.Credentials
+
+		if len(records) == 0 {
+			fmt.Fprintln(os.Stderr, "Empty result")
+			return nil
+		}
+
 		if err := tmpl.Execute(
 			os.Stdout,
-			resp.JSON200,
+			records,
 		); err != nil {
 			return fmt.Errorf("failed to render template: %w", err)
 		}

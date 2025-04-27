@@ -11,58 +11,76 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// tmplGroupShow represents a user within details view.
-var tmplGroupShow = "Slug: \x1b[33m{{ .Slug }} \x1b[0m" + `
+// tmplProjectScheduleShow represents a project schedule within details view.
+var tmplProjectScheduleShow = "Slug: \x1b[33m{{ .Slug }} \x1b[0m" + `
 ID: {{ .ID }}
 Name: {{ .Name }}
+{{ with .Template -}}
+Template: {{ .Slug }}
+{{ end -}}
+Cron: {{ .Cron }}
+Active: {{ .Active }}
 Created: {{ .CreatedAt }}
 Updated: {{ .UpdatedAt }}
 `
 
-type groupShowBind struct {
-	GroupID string
-	Format  string
+type projectScheduleShowBind struct {
+	ProjectID  string
+	ScheduleID string
+	Format     string
 }
 
 var (
-	groupShowCmd = &cobra.Command{
+	projectScheduleShowCmd = &cobra.Command{
 		Use:   "show",
-		Short: "Show a group",
+		Short: "Show a project schedule",
 		Run: func(ccmd *cobra.Command, args []string) {
-			Handle(ccmd, args, groupShowAction)
+			Handle(ccmd, args, projectScheduleShowAction)
 		},
 		Args: cobra.NoArgs,
 	}
 
-	groupShowArgs = groupShowBind{}
+	projectScheduleShowArgs = projectScheduleShowBind{}
 )
 
 func init() {
-	groupCmd.AddCommand(groupShowCmd)
+	projectScheduleCmd.AddCommand(projectScheduleShowCmd)
 
-	groupShowCmd.Flags().StringVar(
-		&groupShowArgs.GroupID,
-		"group-id",
+	projectScheduleShowCmd.Flags().StringVar(
+		&projectScheduleShowArgs.ProjectID,
+		"project-id",
 		"",
-		"Group ID or slug",
+		"Project ID or slug",
 	)
 
-	groupShowCmd.Flags().StringVar(
-		&groupShowArgs.Format,
+	projectScheduleShowCmd.Flags().StringVar(
+		&projectScheduleShowArgs.ScheduleID,
+		"schedule-id",
+		"",
+		"Schedule ID or slug",
+	)
+
+	projectScheduleShowCmd.Flags().StringVar(
+		&projectScheduleShowArgs.Format,
 		"format",
-		tmplGroupShow,
+		tmplProjectScheduleShow,
 		"Custom output format",
 	)
 }
 
-func groupShowAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if groupShowArgs.GroupID == "" {
-		return fmt.Errorf("you must provide a group ID or a slug")
+func projectScheduleShowAction(ccmd *cobra.Command, _ []string, client *Client) error {
+	if projectScheduleShowArgs.ProjectID == "" {
+		return fmt.Errorf("you must provide a project ID or a slug")
 	}
 
-	resp, err := client.ShowGroupWithResponse(
+	if projectScheduleShowArgs.ScheduleID == "" {
+		return fmt.Errorf("you must provide a schedule ID or a slug")
+	}
+
+	resp, err := client.ShowProjectScheduleWithResponse(
 		ccmd.Context(),
-		groupShowArgs.GroupID,
+		projectScheduleShowArgs.ProjectID,
+		projectScheduleShowArgs.ScheduleID,
 	)
 
 	if err != nil {
@@ -76,7 +94,7 @@ func groupShowAction(ccmd *cobra.Command, _ []string, client *Client) error {
 	).Funcs(
 		basicFuncMap,
 	).Parse(
-		fmt.Sprintln(groupShowArgs.Format),
+		fmt.Sprintln(projectScheduleShowArgs.Format),
 	)
 
 	if err != nil {

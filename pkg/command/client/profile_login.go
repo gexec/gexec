@@ -13,7 +13,8 @@ import (
 
 // tmplProfileLogin represents a expiring login token.
 var tmplProfileLogin = "Token: \x1b[33m{{ .Token }} \x1b[0m" + `
-Expires: {{ .ExpiresAt }}`
+Expires: {{ .ExpiresAt }}
+`
 
 type profileLoginBind struct {
 	Username string

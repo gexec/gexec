@@ -11,87 +11,68 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type projectRunnerUpdateBind struct {
-	ProjectID string
-	RunnerID  string
-	Slug      string
-	Name      string
-	Format    string
+type projectTemplateSurveyCreateBind struct {
+	ProjectID  string
+	TemplateID string
+
+	// TODO: add attributes
+
+	Format string
 }
 
 var (
-	projectRunnerUpdateCmd = &cobra.Command{
-		Use:   "update",
-		Short: "Update a project runner",
+	projectTemplateSurveyCreateCmd = &cobra.Command{
+		Use:   "create",
+		Short: "Create an template survey",
 		Run: func(ccmd *cobra.Command, args []string) {
-			Handle(ccmd, args, projectRunnerUpdateAction)
+			Handle(ccmd, args, projectTemplateSurveyCreateAction)
 		},
 		Args: cobra.NoArgs,
 	}
 
-	projectRunnerUpdateArgs = projectRunnerUpdateBind{}
+	projectTemplateSurveyCreateArgs = projectTemplateSurveyCreateBind{}
 )
 
 func init() {
-	projectRunnerCmd.AddCommand(projectRunnerUpdateCmd)
+	projectTemplateSurveyCmd.AddCommand(projectTemplateSurveyCreateCmd)
 
-	projectRunnerUpdateCmd.Flags().StringVar(
-		&projectRunnerUpdateArgs.ProjectID,
+	projectTemplateSurveyCreateCmd.Flags().StringVar(
+		&projectTemplateSurveyCreateArgs.ProjectID,
 		"project-id",
 		"",
 		"Project ID or slug",
 	)
 
-	projectRunnerUpdateCmd.Flags().StringVar(
-		&projectRunnerUpdateArgs.RunnerID,
-		"runner-id",
+	projectTemplateSurveyCreateCmd.Flags().StringVar(
+		&projectTemplateSurveyCreateArgs.TemplateID,
+		"template-id",
 		"",
-		"Runner ID or slug",
+		"Template ID or slug",
 	)
 
-	projectRunnerUpdateCmd.Flags().StringVar(
-		&projectRunnerUpdateArgs.Slug,
-		"slug",
-		"",
-		"Slug for project runner",
-	)
+	// TODO: add attributes
 
-	projectRunnerUpdateCmd.Flags().StringVar(
-		&projectRunnerUpdateArgs.Name,
-		"name",
-		"",
-		"Name for project runner",
-	)
-
-	projectRunnerUpdateCmd.Flags().StringVar(
-		&projectRunnerUpdateArgs.Format,
+	projectTemplateSurveyCreateCmd.Flags().StringVar(
+		&projectTemplateSurveyCreateArgs.Format,
 		"format",
-		tmplProjectRunnerShow,
+		tmplProjectTemplateSurveyShow,
 		"Custom output format",
 	)
 }
 
-func projectRunnerUpdateAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if projectRunnerUpdateArgs.ProjectID == "" {
+func projectTemplateSurveyCreateAction(ccmd *cobra.Command, _ []string, client *Client) error {
+	if projectTemplateSurveyCreateArgs.ProjectID == "" {
 		return fmt.Errorf("you must provide a project ID or a slug")
 	}
 
-	if projectRunnerUpdateArgs.RunnerID == "" {
-		return fmt.Errorf("you must provide a runner ID or a slug")
+	if projectTemplateSurveyCreateArgs.TemplateID == "" {
+		return fmt.Errorf("you must provide a template ID or a slug")
 	}
 
-	body := v1.UpdateProjectRunnerJSONRequestBody{}
+	body := v1.CreateProjectTemplateSurveyJSONRequestBody{}
 	changed := false
 
-	if val := projectRunnerUpdateArgs.Slug; val != "" {
-		body.Slug = v1.ToPtr(val)
-		changed = true
-	}
-
-	if val := projectRunnerUpdateArgs.Name; val != "" {
-		body.Name = v1.ToPtr(val)
-		changed = true
-	}
+	// TODO: add attributes
 
 	if !changed {
 		fmt.Fprintln(os.Stderr, "Nothing to create...")
@@ -105,17 +86,17 @@ func projectRunnerUpdateAction(ccmd *cobra.Command, _ []string, client *Client) 
 	).Funcs(
 		basicFuncMap,
 	).Parse(
-		fmt.Sprintln(projectRunnerUpdateArgs.Format),
+		fmt.Sprintln(projectTemplateSurveyCreateArgs.Format),
 	)
 
 	if err != nil {
 		return fmt.Errorf("failed to process template: %w", err)
 	}
 
-	resp, err := client.UpdateProjectRunnerWithResponse(
+	resp, err := client.CreateProjectTemplateSurveyWithResponse(
 		ccmd.Context(),
-		projectRunnerUpdateArgs.ProjectID,
-		projectRunnerUpdateArgs.RunnerID,
+		projectTemplateSurveyCreateArgs.ProjectID,
+		projectTemplateSurveyCreateArgs.TemplateID,
 		body,
 	)
 

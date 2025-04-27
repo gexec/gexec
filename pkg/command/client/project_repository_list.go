@@ -11,58 +11,62 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// tmplGroupShow represents a user within details view.
-var tmplGroupShow = "Slug: \x1b[33m{{ .Slug }} \x1b[0m" + `
-ID: {{ .ID }}
-Name: {{ .Name }}
-Created: {{ .CreatedAt }}
-Updated: {{ .UpdatedAt }}
-`
-
-type groupShowBind struct {
-	GroupID string
-	Format  string
+type projectRepositoryListBind struct {
+	ProjectID string
+	Format    string
 }
 
+// tmplProjectRepositoryList represents a row within project repository listing.
+var tmplProjectRepositoryList = "{{ range . }}Slug: \x1b[33m{{ .Slug }} \x1b[0m" + `
+ID: {{ .ID }}
+Name: {{ .Name }}
+
+{{ end -}}
+`
+
 var (
-	groupShowCmd = &cobra.Command{
-		Use:   "show",
-		Short: "Show a group",
+	projectRepositoryListCmd = &cobra.Command{
+		Use:   "list",
+		Short: "List all repositories for a project",
 		Run: func(ccmd *cobra.Command, args []string) {
-			Handle(ccmd, args, groupShowAction)
+			Handle(ccmd, args, projectRepositoryListAction)
 		},
 		Args: cobra.NoArgs,
 	}
 
-	groupShowArgs = groupShowBind{}
+	projectRepositoryListArgs = projectRepositoryListBind{}
 )
 
 func init() {
-	groupCmd.AddCommand(groupShowCmd)
+	projectRepositoryCmd.AddCommand(projectRepositoryListCmd)
 
-	groupShowCmd.Flags().StringVar(
-		&groupShowArgs.GroupID,
-		"group-id",
+	projectRepositoryListCmd.Flags().StringVar(
+		&projectRepositoryListArgs.ProjectID,
+		"project-id",
 		"",
-		"Group ID or slug",
+		"Project ID or slug",
 	)
 
-	groupShowCmd.Flags().StringVar(
-		&groupShowArgs.Format,
+	projectRepositoryListCmd.Flags().StringVar(
+		&projectRepositoryListArgs.Format,
 		"format",
-		tmplGroupShow,
+		tmplProjectRepositoryList,
 		"Custom output format",
 	)
 }
 
-func groupShowAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if groupShowArgs.GroupID == "" {
-		return fmt.Errorf("you must provide a group ID or a slug")
+func projectRepositoryListAction(ccmd *cobra.Command, _ []string, client *Client) error {
+	if projectRepositoryListArgs.ProjectID == "" {
+		return fmt.Errorf("you must provide a project ID or a slug")
 	}
 
-	resp, err := client.ShowGroupWithResponse(
+	resp, err := client.ListProjectRepositoriesWithResponse(
 		ccmd.Context(),
-		groupShowArgs.GroupID,
+		projectRepositoryListArgs.ProjectID,
+		&v1.ListProjectRepositoriesParams{
+			Limit:  v1.ToPtr(10000),
+			Offset: v1.ToPtr(0),
+		},
 	)
 
 	if err != nil {
@@ -76,7 +80,7 @@ func groupShowAction(ccmd *cobra.Command, _ []string, client *Client) error {
 	).Funcs(
 		basicFuncMap,
 	).Parse(
-		fmt.Sprintln(groupShowArgs.Format),
+		fmt.Sprintln(projectRepositoryListArgs.Format),
 	)
 
 	if err != nil {
@@ -85,9 +89,16 @@ func groupShowAction(ccmd *cobra.Command, _ []string, client *Client) error {
 
 	switch resp.StatusCode() {
 	case http.StatusOK:
+		records := resp.JSON200.Repositories
+
+		if len(records) == 0 {
+			fmt.Fprintln(os.Stderr, "Empty result")
+			return nil
+		}
+
 		if err := tmpl.Execute(
 			os.Stdout,
-			resp.JSON200,
+			records,
 		); err != nil {
 			return fmt.Errorf("failed to render template: %w", err)
 		}

@@ -11,84 +11,84 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type projectRunnerUpdateBind struct {
-	ProjectID string
-	RunnerID  string
-	Slug      string
-	Name      string
-	Format    string
+type projectEnvironmentUpdateBind struct {
+	ProjectID     string
+	EnvironmentID string
+	Slug          string
+	Name          string
+	Format        string
 }
 
 var (
-	projectRunnerUpdateCmd = &cobra.Command{
+	projectEnvironmentUpdateCmd = &cobra.Command{
 		Use:   "update",
-		Short: "Update a project runner",
+		Short: "Update a project environment",
 		Run: func(ccmd *cobra.Command, args []string) {
-			Handle(ccmd, args, projectRunnerUpdateAction)
+			Handle(ccmd, args, projectEnvironmentUpdateAction)
 		},
 		Args: cobra.NoArgs,
 	}
 
-	projectRunnerUpdateArgs = projectRunnerUpdateBind{}
+	projectEnvironmentUpdateArgs = projectEnvironmentUpdateBind{}
 )
 
 func init() {
-	projectRunnerCmd.AddCommand(projectRunnerUpdateCmd)
+	projectEnvironmentCmd.AddCommand(projectEnvironmentUpdateCmd)
 
-	projectRunnerUpdateCmd.Flags().StringVar(
-		&projectRunnerUpdateArgs.ProjectID,
+	projectEnvironmentUpdateCmd.Flags().StringVar(
+		&projectEnvironmentUpdateArgs.ProjectID,
 		"project-id",
 		"",
 		"Project ID or slug",
 	)
 
-	projectRunnerUpdateCmd.Flags().StringVar(
-		&projectRunnerUpdateArgs.RunnerID,
-		"runner-id",
+	projectEnvironmentUpdateCmd.Flags().StringVar(
+		&projectEnvironmentUpdateArgs.EnvironmentID,
+		"environment-id",
 		"",
-		"Runner ID or slug",
+		"Environment ID or slug",
 	)
 
-	projectRunnerUpdateCmd.Flags().StringVar(
-		&projectRunnerUpdateArgs.Slug,
+	projectEnvironmentUpdateCmd.Flags().StringVar(
+		&projectEnvironmentUpdateArgs.Slug,
 		"slug",
 		"",
-		"Slug for project runner",
+		"Slug for project tunner",
 	)
 
-	projectRunnerUpdateCmd.Flags().StringVar(
-		&projectRunnerUpdateArgs.Name,
+	projectEnvironmentUpdateCmd.Flags().StringVar(
+		&projectEnvironmentUpdateArgs.Name,
 		"name",
 		"",
-		"Name for project runner",
+		"Name for project environment",
 	)
 
-	projectRunnerUpdateCmd.Flags().StringVar(
-		&projectRunnerUpdateArgs.Format,
+	projectEnvironmentUpdateCmd.Flags().StringVar(
+		&projectEnvironmentUpdateArgs.Format,
 		"format",
-		tmplProjectRunnerShow,
+		tmplProjectEnvironmentShow,
 		"Custom output format",
 	)
 }
 
-func projectRunnerUpdateAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if projectRunnerUpdateArgs.ProjectID == "" {
+func projectEnvironmentUpdateAction(ccmd *cobra.Command, _ []string, client *Client) error {
+	if projectEnvironmentUpdateArgs.ProjectID == "" {
 		return fmt.Errorf("you must provide a project ID or a slug")
 	}
 
-	if projectRunnerUpdateArgs.RunnerID == "" {
-		return fmt.Errorf("you must provide a runner ID or a slug")
+	if projectEnvironmentUpdateArgs.EnvironmentID == "" {
+		return fmt.Errorf("you must provide a environment ID or a slug")
 	}
 
-	body := v1.UpdateProjectRunnerJSONRequestBody{}
+	body := v1.UpdateProjectEnvironmentJSONRequestBody{}
 	changed := false
 
-	if val := projectRunnerUpdateArgs.Slug; val != "" {
+	if val := projectEnvironmentUpdateArgs.Slug; val != "" {
 		body.Slug = v1.ToPtr(val)
 		changed = true
 	}
 
-	if val := projectRunnerUpdateArgs.Name; val != "" {
+	if val := projectEnvironmentUpdateArgs.Name; val != "" {
 		body.Name = v1.ToPtr(val)
 		changed = true
 	}
@@ -105,17 +105,17 @@ func projectRunnerUpdateAction(ccmd *cobra.Command, _ []string, client *Client) 
 	).Funcs(
 		basicFuncMap,
 	).Parse(
-		fmt.Sprintln(projectRunnerUpdateArgs.Format),
+		fmt.Sprintln(projectEnvironmentUpdateArgs.Format),
 	)
 
 	if err != nil {
 		return fmt.Errorf("failed to process template: %w", err)
 	}
 
-	resp, err := client.UpdateProjectRunnerWithResponse(
+	resp, err := client.UpdateProjectEnvironmentWithResponse(
 		ccmd.Context(),
-		projectRunnerUpdateArgs.ProjectID,
-		projectRunnerUpdateArgs.RunnerID,
+		projectEnvironmentUpdateArgs.ProjectID,
+		projectEnvironmentUpdateArgs.EnvironmentID,
 		body,
 	)
 

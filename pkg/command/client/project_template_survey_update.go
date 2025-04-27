@@ -11,87 +11,80 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type projectRunnerUpdateBind struct {
-	ProjectID string
-	RunnerID  string
-	Slug      string
-	Name      string
-	Format    string
+type projectTemplateSurveyUpdateBind struct {
+	ProjectID  string
+	TemplateID string
+	SurveyID   string
+
+	// TODO: add attributes
+
+	Format string
 }
 
 var (
-	projectRunnerUpdateCmd = &cobra.Command{
+	projectTemplateSurveyUpdateCmd = &cobra.Command{
 		Use:   "update",
-		Short: "Update a project runner",
+		Short: "Update an template survey",
 		Run: func(ccmd *cobra.Command, args []string) {
-			Handle(ccmd, args, projectRunnerUpdateAction)
+			Handle(ccmd, args, projectTemplateSurveyUpdateAction)
 		},
 		Args: cobra.NoArgs,
 	}
 
-	projectRunnerUpdateArgs = projectRunnerUpdateBind{}
+	projectTemplateSurveyUpdateArgs = projectTemplateSurveyUpdateBind{}
 )
 
 func init() {
-	projectRunnerCmd.AddCommand(projectRunnerUpdateCmd)
+	projectTemplateSurveyCmd.AddCommand(projectTemplateSurveyUpdateCmd)
 
-	projectRunnerUpdateCmd.Flags().StringVar(
-		&projectRunnerUpdateArgs.ProjectID,
+	projectTemplateSurveyUpdateCmd.Flags().StringVar(
+		&projectTemplateSurveyUpdateArgs.ProjectID,
 		"project-id",
 		"",
 		"Project ID or slug",
 	)
 
-	projectRunnerUpdateCmd.Flags().StringVar(
-		&projectRunnerUpdateArgs.RunnerID,
-		"runner-id",
+	projectTemplateSurveyUpdateCmd.Flags().StringVar(
+		&projectTemplateSurveyUpdateArgs.TemplateID,
+		"template-id",
 		"",
-		"Runner ID or slug",
+		"Template ID or slug",
 	)
 
-	projectRunnerUpdateCmd.Flags().StringVar(
-		&projectRunnerUpdateArgs.Slug,
-		"slug",
+	projectTemplateSurveyUpdateCmd.Flags().StringVar(
+		&projectTemplateSurveyUpdateArgs.SurveyID,
+		"survey-id",
 		"",
-		"Slug for project runner",
+		"Survey ID or slug",
 	)
 
-	projectRunnerUpdateCmd.Flags().StringVar(
-		&projectRunnerUpdateArgs.Name,
-		"name",
-		"",
-		"Name for project runner",
-	)
+	// TODO: add attributes kind/name/content
 
-	projectRunnerUpdateCmd.Flags().StringVar(
-		&projectRunnerUpdateArgs.Format,
+	projectTemplateSurveyUpdateCmd.Flags().StringVar(
+		&projectTemplateSurveyUpdateArgs.Format,
 		"format",
-		tmplProjectRunnerShow,
+		tmplProjectTemplateSurveyShow,
 		"Custom output format",
 	)
 }
 
-func projectRunnerUpdateAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if projectRunnerUpdateArgs.ProjectID == "" {
+func projectTemplateSurveyUpdateAction(ccmd *cobra.Command, _ []string, client *Client) error {
+	if projectTemplateSurveyUpdateArgs.ProjectID == "" {
 		return fmt.Errorf("you must provide a project ID or a slug")
 	}
 
-	if projectRunnerUpdateArgs.RunnerID == "" {
-		return fmt.Errorf("you must provide a runner ID or a slug")
+	if projectTemplateSurveyUpdateArgs.TemplateID == "" {
+		return fmt.Errorf("you must provide an template ID or a slug")
 	}
 
-	body := v1.UpdateProjectRunnerJSONRequestBody{}
+	if projectTemplateSurveyUpdateArgs.SurveyID == "" {
+		return fmt.Errorf("you must provide a survey ID or a slug")
+	}
+
+	body := v1.UpdateProjectTemplateSurveyJSONRequestBody{}
 	changed := false
 
-	if val := projectRunnerUpdateArgs.Slug; val != "" {
-		body.Slug = v1.ToPtr(val)
-		changed = true
-	}
-
-	if val := projectRunnerUpdateArgs.Name; val != "" {
-		body.Name = v1.ToPtr(val)
-		changed = true
-	}
+	// TODO: add attributes
 
 	if !changed {
 		fmt.Fprintln(os.Stderr, "Nothing to create...")
@@ -105,17 +98,18 @@ func projectRunnerUpdateAction(ccmd *cobra.Command, _ []string, client *Client) 
 	).Funcs(
 		basicFuncMap,
 	).Parse(
-		fmt.Sprintln(projectRunnerUpdateArgs.Format),
+		fmt.Sprintln(projectTemplateSurveyUpdateArgs.Format),
 	)
 
 	if err != nil {
 		return fmt.Errorf("failed to process template: %w", err)
 	}
 
-	resp, err := client.UpdateProjectRunnerWithResponse(
+	resp, err := client.UpdateProjectTemplateSurveyWithResponse(
 		ccmd.Context(),
-		projectRunnerUpdateArgs.ProjectID,
-		projectRunnerUpdateArgs.RunnerID,
+		projectTemplateSurveyUpdateArgs.ProjectID,
+		projectTemplateSurveyUpdateArgs.TemplateID,
+		projectTemplateSurveyUpdateArgs.SurveyID,
 		body,
 	)
 

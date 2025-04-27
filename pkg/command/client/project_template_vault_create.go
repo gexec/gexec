@@ -11,87 +11,68 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type projectRunnerUpdateBind struct {
-	ProjectID string
-	RunnerID  string
-	Slug      string
-	Name      string
-	Format    string
+type projectTemplateVaultCreateBind struct {
+	ProjectID  string
+	TemplateID string
+
+	// TODO: add attributes
+
+	Format string
 }
 
 var (
-	projectRunnerUpdateCmd = &cobra.Command{
-		Use:   "update",
-		Short: "Update a project runner",
+	projectTemplateVaultCreateCmd = &cobra.Command{
+		Use:   "create",
+		Short: "Create an template vault",
 		Run: func(ccmd *cobra.Command, args []string) {
-			Handle(ccmd, args, projectRunnerUpdateAction)
+			Handle(ccmd, args, projectTemplateVaultCreateAction)
 		},
 		Args: cobra.NoArgs,
 	}
 
-	projectRunnerUpdateArgs = projectRunnerUpdateBind{}
+	projectTemplateVaultCreateArgs = projectTemplateVaultCreateBind{}
 )
 
 func init() {
-	projectRunnerCmd.AddCommand(projectRunnerUpdateCmd)
+	projectTemplateVaultCmd.AddCommand(projectTemplateVaultCreateCmd)
 
-	projectRunnerUpdateCmd.Flags().StringVar(
-		&projectRunnerUpdateArgs.ProjectID,
+	projectTemplateVaultCreateCmd.Flags().StringVar(
+		&projectTemplateVaultCreateArgs.ProjectID,
 		"project-id",
 		"",
 		"Project ID or slug",
 	)
 
-	projectRunnerUpdateCmd.Flags().StringVar(
-		&projectRunnerUpdateArgs.RunnerID,
-		"runner-id",
+	projectTemplateVaultCreateCmd.Flags().StringVar(
+		&projectTemplateVaultCreateArgs.TemplateID,
+		"template-id",
 		"",
-		"Runner ID or slug",
+		"Template ID or slug",
 	)
 
-	projectRunnerUpdateCmd.Flags().StringVar(
-		&projectRunnerUpdateArgs.Slug,
-		"slug",
-		"",
-		"Slug for project runner",
-	)
+	// TODO: add attributes
 
-	projectRunnerUpdateCmd.Flags().StringVar(
-		&projectRunnerUpdateArgs.Name,
-		"name",
-		"",
-		"Name for project runner",
-	)
-
-	projectRunnerUpdateCmd.Flags().StringVar(
-		&projectRunnerUpdateArgs.Format,
+	projectTemplateVaultCreateCmd.Flags().StringVar(
+		&projectTemplateVaultCreateArgs.Format,
 		"format",
-		tmplProjectRunnerShow,
+		tmplProjectTemplateVaultShow,
 		"Custom output format",
 	)
 }
 
-func projectRunnerUpdateAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if projectRunnerUpdateArgs.ProjectID == "" {
+func projectTemplateVaultCreateAction(ccmd *cobra.Command, _ []string, client *Client) error {
+	if projectTemplateVaultCreateArgs.ProjectID == "" {
 		return fmt.Errorf("you must provide a project ID or a slug")
 	}
 
-	if projectRunnerUpdateArgs.RunnerID == "" {
-		return fmt.Errorf("you must provide a runner ID or a slug")
+	if projectTemplateVaultCreateArgs.TemplateID == "" {
+		return fmt.Errorf("you must provide a template ID or a slug")
 	}
 
-	body := v1.UpdateProjectRunnerJSONRequestBody{}
+	body := v1.CreateProjectTemplateVaultJSONRequestBody{}
 	changed := false
 
-	if val := projectRunnerUpdateArgs.Slug; val != "" {
-		body.Slug = v1.ToPtr(val)
-		changed = true
-	}
-
-	if val := projectRunnerUpdateArgs.Name; val != "" {
-		body.Name = v1.ToPtr(val)
-		changed = true
-	}
+	// TODO: add attributes
 
 	if !changed {
 		fmt.Fprintln(os.Stderr, "Nothing to create...")
@@ -105,17 +86,17 @@ func projectRunnerUpdateAction(ccmd *cobra.Command, _ []string, client *Client) 
 	).Funcs(
 		basicFuncMap,
 	).Parse(
-		fmt.Sprintln(projectRunnerUpdateArgs.Format),
+		fmt.Sprintln(projectTemplateVaultCreateArgs.Format),
 	)
 
 	if err != nil {
 		return fmt.Errorf("failed to process template: %w", err)
 	}
 
-	resp, err := client.UpdateProjectRunnerWithResponse(
+	resp, err := client.CreateProjectTemplateVaultWithResponse(
 		ccmd.Context(),
-		projectRunnerUpdateArgs.ProjectID,
-		projectRunnerUpdateArgs.RunnerID,
+		projectTemplateVaultCreateArgs.ProjectID,
+		projectTemplateVaultCreateArgs.TemplateID,
 		body,
 	)
 

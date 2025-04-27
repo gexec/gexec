@@ -11,58 +11,76 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// tmplGroupShow represents a user within details view.
-var tmplGroupShow = "Slug: \x1b[33m{{ .Slug }} \x1b[0m" + `
+// tmplProjectRepositoryShow represents a project repository within details view.
+var tmplProjectRepositoryShow = "Slug: \x1b[33m{{ .Slug }} \x1b[0m" + `
 ID: {{ .ID }}
 Name: {{ .Name }}
+{{ with .Credential -}}
+Credential: {{ .Slug }}
+{{ end -}}
+URL: {{ .URL }}
+Branch: {{ .Branch }}
 Created: {{ .CreatedAt }}
 Updated: {{ .UpdatedAt }}
 `
 
-type groupShowBind struct {
-	GroupID string
-	Format  string
+type projectRepositoryShowBind struct {
+	ProjectID    string
+	RepositoryID string
+	Format       string
 }
 
 var (
-	groupShowCmd = &cobra.Command{
+	projectRepositoryShowCmd = &cobra.Command{
 		Use:   "show",
-		Short: "Show a group",
+		Short: "Show a project repository",
 		Run: func(ccmd *cobra.Command, args []string) {
-			Handle(ccmd, args, groupShowAction)
+			Handle(ccmd, args, projectRepositoryShowAction)
 		},
 		Args: cobra.NoArgs,
 	}
 
-	groupShowArgs = groupShowBind{}
+	projectRepositoryShowArgs = projectRepositoryShowBind{}
 )
 
 func init() {
-	groupCmd.AddCommand(groupShowCmd)
+	projectRepositoryCmd.AddCommand(projectRepositoryShowCmd)
 
-	groupShowCmd.Flags().StringVar(
-		&groupShowArgs.GroupID,
-		"group-id",
+	projectRepositoryShowCmd.Flags().StringVar(
+		&projectRepositoryShowArgs.ProjectID,
+		"project-id",
 		"",
-		"Group ID or slug",
+		"Project ID or slug",
 	)
 
-	groupShowCmd.Flags().StringVar(
-		&groupShowArgs.Format,
+	projectRepositoryShowCmd.Flags().StringVar(
+		&projectRepositoryShowArgs.RepositoryID,
+		"repository-id",
+		"",
+		"Repository ID or slug",
+	)
+
+	projectRepositoryShowCmd.Flags().StringVar(
+		&projectRepositoryShowArgs.Format,
 		"format",
-		tmplGroupShow,
+		tmplProjectRepositoryShow,
 		"Custom output format",
 	)
 }
 
-func groupShowAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if groupShowArgs.GroupID == "" {
-		return fmt.Errorf("you must provide a group ID or a slug")
+func projectRepositoryShowAction(ccmd *cobra.Command, _ []string, client *Client) error {
+	if projectRepositoryShowArgs.ProjectID == "" {
+		return fmt.Errorf("you must provide a project ID or a slug")
 	}
 
-	resp, err := client.ShowGroupWithResponse(
+	if projectRepositoryShowArgs.RepositoryID == "" {
+		return fmt.Errorf("you must provide a repository ID or a slug")
+	}
+
+	resp, err := client.ShowProjectRepositoryWithResponse(
 		ccmd.Context(),
-		groupShowArgs.GroupID,
+		projectRepositoryShowArgs.ProjectID,
+		projectRepositoryShowArgs.RepositoryID,
 	)
 
 	if err != nil {
@@ -76,7 +94,7 @@ func groupShowAction(ccmd *cobra.Command, _ []string, client *Client) error {
 	).Funcs(
 		basicFuncMap,
 	).Parse(
-		fmt.Sprintln(groupShowArgs.Format),
+		fmt.Sprintln(projectRepositoryShowArgs.Format),
 	)
 
 	if err != nil {

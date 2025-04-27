@@ -37,14 +37,14 @@ func init() {
 
 	runnerUpdateCmd.Flags().StringVar(
 		&runnerUpdateArgs.RunnerID,
-		"id",
+		"runner-id",
 		"",
 		"Runner ID or slug",
 	)
 
 	runnerUpdateCmd.Flags().StringVar(
 		&runnerUpdateArgs.Project,
-		"project",
+		"project-id",
 		"",
 		"Project for runner",
 	)
@@ -53,7 +53,7 @@ func init() {
 		&runnerUpdateArgs.Slug,
 		"slug",
 		"",
-		"Slug for tunner",
+		"Slug for runner",
 	)
 
 	runnerUpdateCmd.Flags().StringVar(

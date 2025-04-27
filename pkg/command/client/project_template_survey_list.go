@@ -3,78 +3,78 @@ package command
 import (
 	"errors"
 	"fmt"
+	"html/template"
 	"net/http"
 	"os"
-	"text/template"
 
 	v1 "github.com/gexec/gexec/pkg/api/v1"
 	"github.com/spf13/cobra"
 )
 
-type projectEventListBind struct {
-	ProjectID string
-	Format    string
+type projectTemplateSurveyListBind struct {
+	ProjectID  string
+	TemplateID string
+	Format     string
 }
 
-// tmplProjectEventList represents a row within project event listing.
-var tmplProjectEventList = "{{ range . }}Created: \x1b[33m{{ .CreatedAt }} \x1b[0m" + `
-{{ with .UserDisplay -}}
-User: {{ . }}
+// tmplProjectTemplateSurveyList represents the list of project template surveys.
+var tmplProjectTemplateSurveyList = "{{ range . }}ID: \x1b[33m{{ .ID }} \x1b[0m" + `
+Name: {{ .Name }}
+
 {{ end -}}
-{{ with .ObjectDisplay -}}
-Object: {{ . }}
-{{ end -}}
-Action: {{ .Action }}
-{{ with .Attrs -}}
-{{ range $key, $val := . -}}
-{{ $key | camelize }}: {{ $val }}
-{{ end -}}
-{{ end }}
-{{ end -}}`
+`
 
 var (
-	projectEventListCmd = &cobra.Command{
+	projectTemplateSurveyListCmd = &cobra.Command{
 		Use:   "list",
-		Short: "List all events for a project",
+		Short: "List all template surveys",
 		Run: func(ccmd *cobra.Command, args []string) {
-			Handle(ccmd, args, projectEventListAction)
+			Handle(ccmd, args, projectTemplateSurveyListAction)
 		},
 		Args: cobra.NoArgs,
 	}
 
-	projectEventListArgs = projectEventListBind{}
+	projectTemplateSurveyListArgs = projectTemplateSurveyListBind{}
 )
 
 func init() {
-	projectEventCmd.AddCommand(projectEventListCmd)
+	projectTemplateSurveyCmd.AddCommand(projectTemplateSurveyListCmd)
 
-	projectEventListCmd.Flags().StringVar(
-		&projectEventListArgs.ProjectID,
+	projectTemplateSurveyListCmd.Flags().StringVar(
+		&projectTemplateSurveyListArgs.ProjectID,
 		"project-id",
 		"",
 		"Project ID or slug",
 	)
 
-	projectEventListCmd.Flags().StringVar(
-		&projectEventListArgs.Format,
+	projectTemplateSurveyListCmd.Flags().StringVar(
+		&projectTemplateSurveyListArgs.TemplateID,
+		"template-id",
+		"",
+		"Template ID or slug",
+	)
+
+	projectTemplateSurveyListCmd.Flags().StringVar(
+		&projectTemplateSurveyListArgs.Format,
 		"format",
-		tmplProjectEventList,
+		tmplProjectTemplateSurveyList,
 		"Custom output format",
 	)
 }
 
-func projectEventListAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if projectEventListArgs.ProjectID == "" {
+func projectTemplateSurveyListAction(ccmd *cobra.Command, _ []string, client *Client) error {
+	if projectTemplateSurveyListArgs.ProjectID == "" {
 		return fmt.Errorf("you must provide a project ID or a slug")
 	}
 
-	resp, err := client.ListProjectEventsWithResponse(
+	if projectTemplateSurveyListArgs.TemplateID == "" {
+		return fmt.Errorf("you must provide an template ID or a slug")
+	}
+
+	resp, err := client.ShowProjectTemplateWithResponse(
 		ccmd.Context(),
-		projectEventListArgs.ProjectID,
-		&v1.ListProjectEventsParams{
-			Limit:  v1.ToPtr(10000),
-			Offset: v1.ToPtr(0),
-		},
+		projectTemplateSurveyListArgs.ProjectID,
+		projectTemplateSurveyListArgs.TemplateID,
 	)
 
 	if err != nil {
@@ -88,7 +88,7 @@ func projectEventListAction(ccmd *cobra.Command, _ []string, client *Client) err
 	).Funcs(
 		basicFuncMap,
 	).Parse(
-		fmt.Sprintln(projectEventListArgs.Format),
+		fmt.Sprintln(projectTemplateSurveyListArgs.Format),
 	)
 
 	if err != nil {
@@ -97,9 +97,9 @@ func projectEventListAction(ccmd *cobra.Command, _ []string, client *Client) err
 
 	switch resp.StatusCode() {
 	case http.StatusOK:
-		records := resp.JSON200.Events
+		records := resp.JSON200.Surveys
 
-		if len(records) == 0 {
+		if records == nil || len(v1.FromPtr(records)) == 0 {
 			fmt.Fprintln(os.Stderr, "Empty result")
 			return nil
 		}

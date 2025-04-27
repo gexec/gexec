@@ -11,67 +11,61 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type projectEventListBind struct {
+type projectExecutionListBind struct {
 	ProjectID string
 	Format    string
 }
 
-// tmplProjectEventList represents a row within project event listing.
-var tmplProjectEventList = "{{ range . }}Created: \x1b[33m{{ .CreatedAt }} \x1b[0m" + `
-{{ with .UserDisplay -}}
-User: {{ . }}
+// tmplProjectExecutionList represents a row within project execution listing.
+var tmplProjectExecutionList = "{{ range . }}Name: \x1b[33m{{ .Template.Slug }}{{ .Name }} \x1b[0m" + `
+ID: {{ .ID }}
+{{ with .Template -}}
+Template: {{ .Slug }}
 {{ end -}}
-{{ with .ObjectDisplay -}}
-Object: {{ . }}
-{{ end -}}
-Action: {{ .Action }}
-{{ with .Attrs -}}
-{{ range $key, $val := . -}}
-{{ $key | camelize }}: {{ $val }}
-{{ end -}}
-{{ end }}
+Status: {{ .Status }}
+
 {{ end -}}`
 
 var (
-	projectEventListCmd = &cobra.Command{
+	projectExecutionListCmd = &cobra.Command{
 		Use:   "list",
-		Short: "List all events for a project",
+		Short: "List all executions for a project",
 		Run: func(ccmd *cobra.Command, args []string) {
-			Handle(ccmd, args, projectEventListAction)
+			Handle(ccmd, args, projectExecutionListAction)
 		},
 		Args: cobra.NoArgs,
 	}
 
-	projectEventListArgs = projectEventListBind{}
+	projectExecutionListArgs = projectExecutionListBind{}
 )
 
 func init() {
-	projectEventCmd.AddCommand(projectEventListCmd)
+	projectExecutionCmd.AddCommand(projectExecutionListCmd)
 
-	projectEventListCmd.Flags().StringVar(
-		&projectEventListArgs.ProjectID,
+	projectExecutionListCmd.Flags().StringVar(
+		&projectExecutionListArgs.ProjectID,
 		"project-id",
 		"",
 		"Project ID or slug",
 	)
 
-	projectEventListCmd.Flags().StringVar(
-		&projectEventListArgs.Format,
+	projectExecutionListCmd.Flags().StringVar(
+		&projectExecutionListArgs.Format,
 		"format",
-		tmplProjectEventList,
+		tmplProjectExecutionList,
 		"Custom output format",
 	)
 }
 
-func projectEventListAction(ccmd *cobra.Command, _ []string, client *Client) error {
-	if projectEventListArgs.ProjectID == "" {
+func projectExecutionListAction(ccmd *cobra.Command, _ []string, client *Client) error {
+	if projectExecutionListArgs.ProjectID == "" {
 		return fmt.Errorf("you must provide a project ID or a slug")
 	}
 
-	resp, err := client.ListProjectEventsWithResponse(
+	resp, err := client.ListProjectExecutionsWithResponse(
 		ccmd.Context(),
-		projectEventListArgs.ProjectID,
-		&v1.ListProjectEventsParams{
+		projectExecutionListArgs.ProjectID,
+		&v1.ListProjectExecutionsParams{
 			Limit:  v1.ToPtr(10000),
 			Offset: v1.ToPtr(0),
 		},
@@ -88,7 +82,7 @@ func projectEventListAction(ccmd *cobra.Command, _ []string, client *Client) err
 	).Funcs(
 		basicFuncMap,
 	).Parse(
-		fmt.Sprintln(projectEventListArgs.Format),
+		fmt.Sprintln(projectExecutionListArgs.Format),
 	)
 
 	if err != nil {
@@ -97,7 +91,7 @@ func projectEventListAction(ccmd *cobra.Command, _ []string, client *Client) err
 
 	switch resp.StatusCode() {
 	case http.StatusOK:
-		records := resp.JSON200.Events
+		records := resp.JSON200.Executions
 
 		if len(records) == 0 {
 			fmt.Fprintln(os.Stderr, "Empty result")

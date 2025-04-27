@@ -19,7 +19,8 @@ Fullname: {{ .Fullname }}
 Active: {{ .Active }}
 Admin: {{ .Admin }}
 Created: {{ .CreatedAt }}
-Updated: {{ .UpdatedAt }}`
+Updated: {{ .UpdatedAt }}
+`
 
 type profileShowBind struct {
 	Format string

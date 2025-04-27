@@ -33,7 +33,7 @@ func init() {
 
 	projectUserRemoveCmd.Flags().StringVar(
 		&projectUserRemoveArgs.ProjectID,
-		"id",
+		"project-id",
 		"",
 		"Project ID or slug",
 	)

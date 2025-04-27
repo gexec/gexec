@@ -36,7 +36,7 @@ func init() {
 
 	projectUpdateCmd.Flags().StringVar(
 		&projectUpdateArgs.ProjectID,
-		"id",
+		"project-id",
 		"",
 		"Project ID or slug",
 	)
