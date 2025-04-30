@@ -18,7 +18,7 @@ require (
 	github.com/drone/funcmap v0.0.0-20240227160611-7e19e9cd5a1c
 	github.com/elimity-com/scim v0.0.0-20240320110924-172bf2aee9c8
 	github.com/gabriel-vasile/mimetype v1.4.9
-	github.com/getkin/kin-openapi v0.131.0
+	github.com/getkin/kin-openapi v0.132.0
 	github.com/go-chi/chi/v5 v5.2.1
 	github.com/go-chi/render v1.0.3
 	github.com/go-openapi/runtime v0.28.0
@@ -29,7 +29,7 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/jeffry-luqman/zlog v0.0.3
 	github.com/joho/godotenv v1.5.1
-	github.com/oapi-codegen/nethttp-middleware v1.1.1
+	github.com/oapi-codegen/nethttp-middleware v1.1.2
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/oklog/run v1.1.0
 	github.com/prometheus/client_golang v1.22.0
