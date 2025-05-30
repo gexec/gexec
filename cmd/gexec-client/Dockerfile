@@ -16,7 +16,7 @@ RUN --mount=type=cache,target=/go/pkg \
     --mount=type=cache,target=/root/.cache/go-build \
     task be:generate build:client GOOS=${TARGETOS} GOARCH=${TARGETARCH}
 
-FROM alpine:3.21
+FROM alpine:3.22
 
 RUN apk add --no-cache ca-certificates mailcap && \
     addgroup -g 1337 gexec && \
