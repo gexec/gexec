@@ -14,7 +14,7 @@ export type AuthVerify = {
  * Profile
  * Model to represent profile
  */
-export type ProfileReadable = {
+export type Profile = {
     id?: string;
     username?: string;
     password?: string;
@@ -25,29 +25,16 @@ export type ProfileReadable = {
     readonly active?: boolean;
     readonly created_at?: string;
     readonly updated_at?: string;
-    readonly auths?: Array<UserAuthReadable>;
-    readonly groups?: Array<UserGroupReadable>;
-    readonly projects?: Array<UserProjectReadable>;
-};
-
-/**
- * Profile
- * Model to represent profile
- */
-export type ProfileWritable = {
-    id?: string;
-    username?: string;
-    password?: string;
-    email?: string;
-    fullname?: string;
-    profile?: string;
+    readonly auths?: Array<UserAuth>;
+    readonly groups?: Array<UserGroup>;
+    readonly projects?: Array<UserProject>;
 };
 
 /**
  * Event
  * Model to represent event
  */
-export type EventReadable = {
+export type Event = {
     user_id?: string;
     user_handle?: string;
     user_display?: string;
@@ -64,49 +51,21 @@ export type EventReadable = {
 };
 
 /**
- * Event
- * Model to represent event
- */
-export type EventWritable = {
-    user_id?: string;
-    user_handle?: string;
-    user_display?: string;
-    project_id?: string;
-    project_display?: string;
-    object_id?: string;
-    object_display?: string;
-    object_type?: 'credential' | 'environment' | 'execution' | 'group_project' | 'group_user' | 'group' | 'inventory' | 'project_group' | 'project_user' | 'project' | 'repository' | 'runner' | 'schedule' | 'template' | 'user_group' | 'user_project' | 'user';
-    action?: 'create' | 'update' | 'delete';
-    attrs?: {
-        [key: string]: unknown;
-    };
-};
-
-/**
  * Output
  * Model to represent output
  */
-export type OutputReadable = {
+export type Output = {
     execution_id?: string;
-    execution?: ExecutionReadable;
+    execution?: Execution;
     readonly content?: string;
     readonly created_at?: string;
 };
 
 /**
- * Output
- * Model to represent output
- */
-export type OutputWritable = {
-    execution_id?: string;
-    execution?: ExecutionWritable;
-};
-
-/**
  * Project
  * Model to represent project
  */
-export type ProjectReadable = {
+export type Project = {
     id?: string;
     slug?: string;
     name?: string;
@@ -115,20 +74,10 @@ export type ProjectReadable = {
 };
 
 /**
- * Project
- * Model to represent project
- */
-export type ProjectWritable = {
-    id?: string;
-    slug?: string;
-    name?: string;
-};
-
-/**
  * Credential
  * Model to represent credential
  */
-export type CredentialReadable = {
+export type Credential = {
     id?: string;
     project_id?: string;
     slug?: string;
@@ -139,21 +88,6 @@ export type CredentialReadable = {
     login?: CredentialLogin;
     readonly created_at?: string;
     readonly updated_at?: string;
-};
-
-/**
- * Credential
- * Model to represent credential
- */
-export type CredentialWritable = {
-    id?: string;
-    project_id?: string;
-    slug?: string;
-    name?: string;
-    kind?: 'empty' | 'shell' | 'login';
-    override?: boolean;
-    shell?: CredentialShell;
-    login?: CredentialLogin;
 };
 
 /**
@@ -179,11 +113,11 @@ export type CredentialLogin = {
  * Repository
  * Model to represent repository
  */
-export type RepositoryReadable = {
+export type Repository = {
     id?: string;
     project_id?: string;
     credential_id?: string;
-    credential?: CredentialReadable;
+    credential?: Credential;
     slug?: string;
     name?: string;
     url?: string;
@@ -193,33 +127,18 @@ export type RepositoryReadable = {
 };
 
 /**
- * Repository
- * Model to represent repository
- */
-export type RepositoryWritable = {
-    id?: string;
-    project_id?: string;
-    credential_id?: string;
-    credential?: CredentialWritable;
-    slug?: string;
-    name?: string;
-    url?: string;
-    branch?: string;
-};
-
-/**
  * Inventory
  * Model to represent inventory
  */
-export type InventoryReadable = {
+export type Inventory = {
     id?: string;
     project_id?: string;
     repository_id?: string;
-    repository?: RepositoryReadable;
+    repository?: Repository;
     credential_id?: string;
-    credential?: CredentialReadable;
+    credential?: Credential;
     become_id?: string;
-    become?: CredentialReadable;
+    become?: Credential;
     slug?: string;
     name?: string;
     kind?: 'static' | 'file';
@@ -229,29 +148,10 @@ export type InventoryReadable = {
 };
 
 /**
- * Inventory
- * Model to represent inventory
- */
-export type InventoryWritable = {
-    id?: string;
-    project_id?: string;
-    repository_id?: string;
-    repository?: RepositoryWritable;
-    credential_id?: string;
-    credential?: CredentialWritable;
-    become_id?: string;
-    become?: CredentialWritable;
-    slug?: string;
-    name?: string;
-    kind?: 'static' | 'file';
-    content?: string;
-};
-
-/**
  * Environment
  * Model to represent environment
  */
-export type EnvironmentReadable = {
+export type Environment = {
     id?: string;
     project_id?: string;
     slug?: string;
@@ -260,19 +160,6 @@ export type EnvironmentReadable = {
     values?: Array<EnvironmentValue>;
     readonly created_at?: string;
     readonly updated_at?: string;
-};
-
-/**
- * Environment
- * Model to represent environment
- */
-export type EnvironmentWritable = {
-    id?: string;
-    project_id?: string;
-    slug?: string;
-    name?: string;
-    secrets?: Array<EnvironmentSecret>;
-    values?: Array<EnvironmentValue>;
 };
 
 /**
@@ -301,15 +188,15 @@ export type EnvironmentValue = {
  * Template
  * Model to represent template
  */
-export type TemplateReadable = {
+export type Template = {
     id?: string;
     project_id?: string;
     repository_id?: string;
-    repository?: RepositoryReadable;
+    repository?: Repository;
     inventory_id?: string;
-    inventory?: InventoryReadable;
+    inventory?: Inventory;
     environment_id?: string;
-    environment?: EnvironmentReadable;
+    environment?: Environment;
     slug?: string;
     name?: string;
     description?: string;
@@ -320,35 +207,9 @@ export type TemplateReadable = {
     branch?: string;
     allow_override?: boolean;
     surveys?: Array<TemplateSurvey>;
-    vaults?: Array<TemplateVaultReadable>;
+    vaults?: Array<TemplateVault>;
     readonly created_at?: string;
     readonly updated_at?: string;
-};
-
-/**
- * Template
- * Model to represent template
- */
-export type TemplateWritable = {
-    id?: string;
-    project_id?: string;
-    repository_id?: string;
-    repository?: RepositoryWritable;
-    inventory_id?: string;
-    inventory?: InventoryWritable;
-    environment_id?: string;
-    environment?: EnvironmentWritable;
-    slug?: string;
-    name?: string;
-    description?: string;
-    path?: string;
-    arguments?: string;
-    limit?: string;
-    executor?: string;
-    branch?: string;
-    allow_override?: boolean;
-    surveys?: Array<TemplateSurvey>;
-    vaults?: Array<TemplateVaultWritable>;
 };
 
 /**
@@ -379,23 +240,10 @@ export type TemplateValue = {
  * Template Vault
  * Model to represent template vault
  */
-export type TemplateVaultReadable = {
+export type TemplateVault = {
     id?: string;
     credential_id?: string;
-    credential?: CredentialReadable;
-    name?: string;
-    kind?: 'password' | 'script';
-    script?: string;
-};
-
-/**
- * Template Vault
- * Model to represent template vault
- */
-export type TemplateVaultWritable = {
-    id?: string;
-    credential_id?: string;
-    credential?: CredentialWritable;
+    credential?: Credential;
     name?: string;
     kind?: 'password' | 'script';
     script?: string;
@@ -405,11 +253,11 @@ export type TemplateVaultWritable = {
  * Schedule
  * Model to represent schedule
  */
-export type ScheduleReadable = {
+export type Schedule = {
     id?: string;
     project_id?: string;
     template_id?: string;
-    template?: TemplateReadable;
+    template?: Template;
     slug?: string;
     name?: string;
     cron?: string;
@@ -419,57 +267,29 @@ export type ScheduleReadable = {
 };
 
 /**
- * Schedule
- * Model to represent schedule
- */
-export type ScheduleWritable = {
-    id?: string;
-    project_id?: string;
-    template_id?: string;
-    template?: TemplateWritable;
-    slug?: string;
-    name?: string;
-    cron?: string;
-    active?: boolean;
-};
-
-/**
  * Runner
  * Model to represent runner
  */
-export type RunnerReadable = {
+export type Runner = {
     id?: string;
     project_id?: string;
-    project?: ProjectReadable;
+    project?: Project;
     slug?: string;
     name?: string;
     token?: string;
     readonly created_at?: string;
     readonly updated_at?: string;
-};
-
-/**
- * Runner
- * Model to represent runner
- */
-export type RunnerWritable = {
-    id?: string;
-    project_id?: string;
-    project?: ProjectWritable;
-    slug?: string;
-    name?: string;
-    token?: string;
 };
 
 /**
  * Execution
  * Model to represent execution
  */
-export type ExecutionReadable = {
+export type Execution = {
     id?: string;
     project_id?: string;
     template_id?: string;
-    template?: TemplateReadable;
+    template?: Template;
     name?: string;
     status?: string;
     debug?: boolean;
@@ -483,29 +303,10 @@ export type ExecutionReadable = {
 };
 
 /**
- * Execution
- * Model to represent execution
- */
-export type ExecutionWritable = {
-    id?: string;
-    project_id?: string;
-    template_id?: string;
-    template?: TemplateWritable;
-    name?: string;
-    status?: string;
-    debug?: boolean;
-    path?: string;
-    environment?: string;
-    secret?: string;
-    limit?: string;
-    branch?: string;
-};
-
-/**
  * Group
  * Model to represent group
  */
-export type GroupReadable = {
+export type Group = {
     id?: string;
     slug?: string;
     name?: string;
@@ -514,46 +315,24 @@ export type GroupReadable = {
 };
 
 /**
- * Group
- * Model to represent group
- */
-export type GroupWritable = {
-    id?: string;
-    slug?: string;
-    name?: string;
-};
-
-/**
  * Group Project
  * Model to represent group project
  */
-export type GroupProjectReadable = {
+export type GroupProject = {
     group_id: string;
-    group?: GroupReadable;
+    group?: Group;
     project_id: string;
-    project?: ProjectReadable;
+    project?: Project;
     perm?: 'owner' | 'user' | 'admin';
     readonly created_at?: string;
     readonly updated_at?: string;
-};
-
-/**
- * Group Project
- * Model to represent group project
- */
-export type GroupProjectWritable = {
-    group_id: string;
-    group?: GroupWritable;
-    project_id: string;
-    project?: ProjectWritable;
-    perm?: 'owner' | 'user' | 'admin';
 };
 
 /**
  * User
  * Model to represent user
  */
-export type UserReadable = {
+export type User = {
     id?: string;
     username?: string;
     password?: string;
@@ -564,54 +343,16 @@ export type UserReadable = {
     active?: boolean;
     readonly created_at?: string;
     readonly updated_at?: string;
-    readonly auths?: Array<UserAuthReadable>;
-};
-
-/**
- * User
- * Model to represent user
- */
-export type UserWritable = {
-    id?: string;
-    username?: string;
-    password?: string;
-    email?: string;
-    fullname?: string;
-    profile?: string;
-    admin?: boolean;
-    active?: boolean;
+    readonly auths?: Array<UserAuth>;
 };
 
 /**
  * User Auth
  * Model to represent user auth
  */
-export type UserAuthReadable = {
+export type UserAuth = {
     provider?: string;
     ref?: string;
-    readonly created_at?: string;
-    readonly updated_at?: string;
-};
-
-/**
- * User Auth
- * Model to represent user auth
- */
-export type UserAuthWritable = {
-    provider?: string;
-    ref?: string;
-};
-
-/**
- * User Group
- * Model to represent user group
- */
-export type UserGroupReadable = {
-    user_id: string;
-    user?: UserReadable;
-    group_id: string;
-    group?: GroupReadable;
-    perm?: 'owner' | 'user' | 'admin';
     readonly created_at?: string;
     readonly updated_at?: string;
 };
@@ -620,23 +361,11 @@ export type UserGroupReadable = {
  * User Group
  * Model to represent user group
  */
-export type UserGroupWritable = {
+export type UserGroup = {
     user_id: string;
-    user?: UserWritable;
+    user?: User;
     group_id: string;
-    group?: GroupWritable;
-    perm?: 'owner' | 'user' | 'admin';
-};
-
-/**
- * User Project
- * Model to represent user project
- */
-export type UserProjectReadable = {
-    user_id: string;
-    user?: UserReadable;
-    project_id: string;
-    project?: ProjectReadable;
+    group?: Group;
     perm?: 'owner' | 'user' | 'admin';
     readonly created_at?: string;
     readonly updated_at?: string;
@@ -646,12 +375,14 @@ export type UserProjectReadable = {
  * User Project
  * Model to represent user project
  */
-export type UserProjectWritable = {
+export type UserProject = {
     user_id: string;
-    user?: UserWritable;
+    user?: User;
     project_id: string;
-    project?: ProjectWritable;
+    project?: Project;
     perm?: 'owner' | 'user' | 'admin';
+    readonly created_at?: string;
+    readonly updated_at?: string;
 };
 
 /**
@@ -1066,7 +797,7 @@ export type CreateProjectTemplateBody = {
     branch?: string;
     allow_override?: boolean;
     surveys?: Array<TemplateSurvey>;
-    vaults?: Array<TemplateVaultWritable>;
+    vaults?: Array<TemplateVault>;
 };
 
 /**
@@ -1085,7 +816,7 @@ export type UpdateProjectTemplateBody = {
     branch?: string;
     allow_override?: boolean;
     surveys?: Array<TemplateSurvey>;
-    vaults?: Array<TemplateVaultWritable>;
+    vaults?: Array<TemplateVault>;
 };
 
 /**
@@ -1547,7 +1278,7 @@ export type ShowProfileResponses = {
     /**
      * The current profile details
      */
-    200: ProfileReadable;
+    200: Profile;
 };
 
 export type ShowProfileResponse = ShowProfileResponses[keyof ShowProfileResponses];
@@ -1587,7 +1318,7 @@ export type UpdateProfileResponses = {
     /**
      * The current profile details
      */
-    200: ProfileReadable;
+    200: Profile;
 };
 
 export type UpdateProfileResponse = UpdateProfileResponses[keyof UpdateProfileResponses];
@@ -1641,7 +1372,7 @@ export type ListProjectsResponses = {
         total: number;
         limit: number;
         offset: number;
-        projects: Array<ProjectReadable>;
+        projects: Array<Project>;
     };
 };
 
@@ -1682,7 +1413,7 @@ export type CreateProjectResponses = {
     /**
      * The details for a project
      */
-    200: ProjectReadable;
+    200: Project;
 };
 
 export type CreateProjectResponse = CreateProjectResponses[keyof CreateProjectResponses];
@@ -1762,7 +1493,7 @@ export type ShowProjectResponses = {
     /**
      * The details for a project
      */
-    200: ProjectReadable;
+    200: Project;
 };
 
 export type ShowProjectResponse = ShowProjectResponses[keyof ShowProjectResponses];
@@ -1811,7 +1542,7 @@ export type UpdateProjectResponses = {
     /**
      * The details for a project
      */
-    200: ProjectReadable;
+    200: Project;
 };
 
 export type UpdateProjectResponse = UpdateProjectResponses[keyof UpdateProjectResponses];
@@ -1923,8 +1654,8 @@ export type ListProjectUsersResponses = {
         total: number;
         limit: number;
         offset: number;
-        project?: ProjectReadable;
-        users: Array<UserProjectReadable>;
+        project?: Project;
+        users: Array<UserProject>;
     };
 };
 
@@ -2143,8 +1874,8 @@ export type ListProjectGroupsResponses = {
         total: number;
         limit: number;
         offset: number;
-        project?: ProjectReadable;
-        groups: Array<GroupProjectReadable>;
+        project?: Project;
+        groups: Array<GroupProject>;
     };
 };
 
@@ -2306,8 +2037,8 @@ export type ListProjectEventsResponses = {
         total: number;
         limit: number;
         offset: number;
-        project?: ProjectReadable;
-        events: Array<EventReadable>;
+        project?: Project;
+        events: Array<Event>;
     };
 };
 
@@ -2371,8 +2102,8 @@ export type ListProjectRunnersResponses = {
         total: number;
         limit: number;
         offset: number;
-        project?: ProjectReadable;
-        runners: Array<RunnerReadable>;
+        project?: Project;
+        runners: Array<Runner>;
     };
 };
 
@@ -2422,7 +2153,7 @@ export type CreateProjectRunnerResponses = {
     /**
      * The details for a runner of a project
      */
-    200: RunnerReadable;
+    200: Runner;
 };
 
 export type CreateProjectRunnerResponse = CreateProjectRunnerResponses[keyof CreateProjectRunnerResponses];
@@ -2510,7 +2241,7 @@ export type ShowProjectRunnerResponses = {
     /**
      * The details for a runner of a project
      */
-    200: RunnerReadable;
+    200: Runner;
 };
 
 export type ShowProjectRunnerResponse = ShowProjectRunnerResponses[keyof ShowProjectRunnerResponses];
@@ -2563,7 +2294,7 @@ export type UpdateProjectRunnerResponses = {
     /**
      * The details for a runner of a project
      */
-    200: RunnerReadable;
+    200: Runner;
 };
 
 export type UpdateProjectRunnerResponse = UpdateProjectRunnerResponses[keyof UpdateProjectRunnerResponses];
@@ -2626,8 +2357,8 @@ export type ListProjectCredentialsResponses = {
         total: number;
         limit: number;
         offset: number;
-        project?: ProjectReadable;
-        credentials: Array<CredentialReadable>;
+        project?: Project;
+        credentials: Array<Credential>;
     };
 };
 
@@ -2677,7 +2408,7 @@ export type CreateProjectCredentialResponses = {
     /**
      * The details for a credential of a project
      */
-    200: CredentialReadable;
+    200: Credential;
 };
 
 export type CreateProjectCredentialResponse = CreateProjectCredentialResponses[keyof CreateProjectCredentialResponses];
@@ -2765,7 +2496,7 @@ export type ShowProjectCredentialResponses = {
     /**
      * The details for a credential of a project
      */
-    200: CredentialReadable;
+    200: Credential;
 };
 
 export type ShowProjectCredentialResponse = ShowProjectCredentialResponses[keyof ShowProjectCredentialResponses];
@@ -2818,7 +2549,7 @@ export type UpdateProjectCredentialResponses = {
     /**
      * The details for a credential of a project
      */
-    200: CredentialReadable;
+    200: Credential;
 };
 
 export type UpdateProjectCredentialResponse = UpdateProjectCredentialResponses[keyof UpdateProjectCredentialResponses];
@@ -2881,8 +2612,8 @@ export type ListProjectRepositoriesResponses = {
         total: number;
         limit: number;
         offset: number;
-        project?: ProjectReadable;
-        repositories: Array<RepositoryReadable>;
+        project?: Project;
+        repositories: Array<Repository>;
     };
 };
 
@@ -2932,7 +2663,7 @@ export type CreateProjectRepositoryResponses = {
     /**
      * The details for a repository of a project
      */
-    200: RepositoryReadable;
+    200: Repository;
 };
 
 export type CreateProjectRepositoryResponse = CreateProjectRepositoryResponses[keyof CreateProjectRepositoryResponses];
@@ -3020,7 +2751,7 @@ export type ShowProjectRepositoryResponses = {
     /**
      * The details for a repository of a project
      */
-    200: RepositoryReadable;
+    200: Repository;
 };
 
 export type ShowProjectRepositoryResponse = ShowProjectRepositoryResponses[keyof ShowProjectRepositoryResponses];
@@ -3073,7 +2804,7 @@ export type UpdateProjectRepositoryResponses = {
     /**
      * The details for a repository of a project
      */
-    200: RepositoryReadable;
+    200: Repository;
 };
 
 export type UpdateProjectRepositoryResponse = UpdateProjectRepositoryResponses[keyof UpdateProjectRepositoryResponses];
@@ -3136,8 +2867,8 @@ export type ListProjectInventoriesResponses = {
         total: number;
         limit: number;
         offset: number;
-        project?: ProjectReadable;
-        inventories: Array<InventoryReadable>;
+        project?: Project;
+        inventories: Array<Inventory>;
     };
 };
 
@@ -3187,7 +2918,7 @@ export type CreateProjectInventoryResponses = {
     /**
      * The details for a inventory of a project
      */
-    200: InventoryReadable;
+    200: Inventory;
 };
 
 export type CreateProjectInventoryResponse = CreateProjectInventoryResponses[keyof CreateProjectInventoryResponses];
@@ -3275,7 +3006,7 @@ export type ShowProjectInventoryResponses = {
     /**
      * The details for a inventory of a project
      */
-    200: InventoryReadable;
+    200: Inventory;
 };
 
 export type ShowProjectInventoryResponse = ShowProjectInventoryResponses[keyof ShowProjectInventoryResponses];
@@ -3328,7 +3059,7 @@ export type UpdateProjectInventoryResponses = {
     /**
      * The details for a inventory of a project
      */
-    200: InventoryReadable;
+    200: Inventory;
 };
 
 export type UpdateProjectInventoryResponse = UpdateProjectInventoryResponses[keyof UpdateProjectInventoryResponses];
@@ -3391,8 +3122,8 @@ export type ListProjectEnvironmentsResponses = {
         total: number;
         limit: number;
         offset: number;
-        project?: ProjectReadable;
-        environments: Array<EnvironmentReadable>;
+        project?: Project;
+        environments: Array<Environment>;
     };
 };
 
@@ -3442,7 +3173,7 @@ export type CreateProjectEnvironmentResponses = {
     /**
      * The details for a environment of a project
      */
-    200: EnvironmentReadable;
+    200: Environment;
 };
 
 export type CreateProjectEnvironmentResponse = CreateProjectEnvironmentResponses[keyof CreateProjectEnvironmentResponses];
@@ -3530,7 +3261,7 @@ export type ShowProjectEnvironmentResponses = {
     /**
      * The details for a environment of a project
      */
-    200: EnvironmentReadable;
+    200: Environment;
 };
 
 export type ShowProjectEnvironmentResponse = ShowProjectEnvironmentResponses[keyof ShowProjectEnvironmentResponses];
@@ -3583,7 +3314,7 @@ export type UpdateProjectEnvironmentResponses = {
     /**
      * The details for a environment of a project
      */
-    200: EnvironmentReadable;
+    200: Environment;
 };
 
 export type UpdateProjectEnvironmentResponse = UpdateProjectEnvironmentResponses[keyof UpdateProjectEnvironmentResponses];
@@ -3966,8 +3697,8 @@ export type ListProjectTemplatesResponses = {
         total: number;
         limit: number;
         offset: number;
-        project?: ProjectReadable;
-        templates: Array<TemplateReadable>;
+        project?: Project;
+        templates: Array<Template>;
     };
 };
 
@@ -4017,7 +3748,7 @@ export type CreateProjectTemplateResponses = {
     /**
      * The details for a template of a project
      */
-    200: TemplateReadable;
+    200: Template;
 };
 
 export type CreateProjectTemplateResponse = CreateProjectTemplateResponses[keyof CreateProjectTemplateResponses];
@@ -4105,7 +3836,7 @@ export type ShowProjectTemplateResponses = {
     /**
      * The details for a template of a project
      */
-    200: TemplateReadable;
+    200: Template;
 };
 
 export type ShowProjectTemplateResponse = ShowProjectTemplateResponses[keyof ShowProjectTemplateResponses];
@@ -4158,7 +3889,7 @@ export type UpdateProjectTemplateResponses = {
     /**
      * The details for a template of a project
      */
-    200: TemplateReadable;
+    200: Template;
 };
 
 export type UpdateProjectTemplateResponse = UpdateProjectTemplateResponses[keyof UpdateProjectTemplateResponses];
@@ -4371,7 +4102,7 @@ export type CreateProjectTemplateVaultResponses = {
     /**
      * The details for a template vault of a project
      */
-    200: TemplateVaultReadable;
+    200: TemplateVault;
 };
 
 export type CreateProjectTemplateVaultResponse = CreateProjectTemplateVaultResponses[keyof CreateProjectTemplateVaultResponses];
@@ -4478,7 +4209,7 @@ export type UpdateProjectTemplateVaultResponses = {
     /**
      * The details for a template vault of a project
      */
-    200: TemplateVaultReadable;
+    200: TemplateVault;
 };
 
 export type UpdateProjectTemplateVaultResponse = UpdateProjectTemplateVaultResponses[keyof UpdateProjectTemplateVaultResponses];
@@ -4541,8 +4272,8 @@ export type ListProjectSchedulesResponses = {
         total: number;
         limit: number;
         offset: number;
-        project?: ProjectReadable;
-        schedules: Array<ScheduleReadable>;
+        project?: Project;
+        schedules: Array<Schedule>;
     };
 };
 
@@ -4592,7 +4323,7 @@ export type CreateProjectScheduleResponses = {
     /**
      * The details for a schedule of a project
      */
-    200: ScheduleReadable;
+    200: Schedule;
 };
 
 export type CreateProjectScheduleResponse = CreateProjectScheduleResponses[keyof CreateProjectScheduleResponses];
@@ -4680,7 +4411,7 @@ export type ShowProjectScheduleResponses = {
     /**
      * The details for a schedule of a project
      */
-    200: ScheduleReadable;
+    200: Schedule;
 };
 
 export type ShowProjectScheduleResponse = ShowProjectScheduleResponses[keyof ShowProjectScheduleResponses];
@@ -4733,7 +4464,7 @@ export type UpdateProjectScheduleResponses = {
     /**
      * The details for a schedule of a project
      */
-    200: ScheduleReadable;
+    200: Schedule;
 };
 
 export type UpdateProjectScheduleResponse = UpdateProjectScheduleResponses[keyof UpdateProjectScheduleResponses];
@@ -4796,8 +4527,8 @@ export type ListProjectExecutionsResponses = {
         total: number;
         limit: number;
         offset: number;
-        project?: ProjectReadable;
-        executions: Array<ExecutionReadable>;
+        project?: Project;
+        executions: Array<Execution>;
     };
 };
 
@@ -4847,7 +4578,7 @@ export type CreateProjectExecutionResponses = {
     /**
      * The details for a schedule of a project
      */
-    200: ExecutionReadable;
+    200: Execution;
 };
 
 export type CreateProjectExecutionResponse = CreateProjectExecutionResponses[keyof CreateProjectExecutionResponses];
@@ -4935,7 +4666,7 @@ export type ShowProjectExecutionResponses = {
     /**
      * The details for a schedule of a project
      */
-    200: ExecutionReadable;
+    200: Execution;
 };
 
 export type ShowProjectExecutionResponse = ShowProjectExecutionResponses[keyof ShowProjectExecutionResponses];
@@ -5023,7 +4754,7 @@ export type OutputProjectExecutionResponses = {
     /**
      * The logging for a execution of a project
      */
-    200: Array<OutputReadable>;
+    200: Array<Output>;
 };
 
 export type OutputProjectExecutionResponse = OutputProjectExecutionResponses[keyof OutputProjectExecutionResponses];
@@ -5069,7 +4800,7 @@ export type ListGlobalEventsResponses = {
         total: number;
         limit: number;
         offset: number;
-        events: Array<EventReadable>;
+        events: Array<Event>;
     };
 };
 
@@ -5124,7 +4855,7 @@ export type ListGlobalRunnersResponses = {
         total: number;
         limit: number;
         offset: number;
-        runners: Array<RunnerReadable>;
+        runners: Array<Runner>;
     };
 };
 
@@ -5165,7 +4896,7 @@ export type CreateGlobalRunnerResponses = {
     /**
      * The details for a runner
      */
-    200: RunnerReadable;
+    200: Runner;
 };
 
 export type CreateGlobalRunnerResponse = CreateGlobalRunnerResponses[keyof CreateGlobalRunnerResponses];
@@ -5245,7 +4976,7 @@ export type ShowGlobalRunnerResponses = {
     /**
      * The details for a runner
      */
-    200: RunnerReadable;
+    200: Runner;
 };
 
 export type ShowGlobalRunnerResponse = ShowGlobalRunnerResponses[keyof ShowGlobalRunnerResponses];
@@ -5294,7 +5025,7 @@ export type UpdateGlobalRunnerResponses = {
     /**
      * The details for a runner
      */
-    200: RunnerReadable;
+    200: Runner;
 };
 
 export type UpdateGlobalRunnerResponse = UpdateGlobalRunnerResponses[keyof UpdateGlobalRunnerResponses];
@@ -5348,7 +5079,7 @@ export type ListGroupsResponses = {
         total: number;
         limit: number;
         offset: number;
-        groups: Array<GroupReadable>;
+        groups: Array<Group>;
     };
 };
 
@@ -5389,7 +5120,7 @@ export type CreateGroupResponses = {
     /**
      * The details for a group
      */
-    200: GroupReadable;
+    200: Group;
 };
 
 export type CreateGroupResponse = CreateGroupResponses[keyof CreateGroupResponses];
@@ -5469,7 +5200,7 @@ export type ShowGroupResponses = {
     /**
      * The details for a group
      */
-    200: GroupReadable;
+    200: Group;
 };
 
 export type ShowGroupResponse = ShowGroupResponses[keyof ShowGroupResponses];
@@ -5518,7 +5249,7 @@ export type UpdateGroupResponses = {
     /**
      * The details for a group
      */
-    200: GroupReadable;
+    200: Group;
 };
 
 export type UpdateGroupResponse = UpdateGroupResponses[keyof UpdateGroupResponses];
@@ -5630,8 +5361,8 @@ export type ListGroupUsersResponses = {
         total: number;
         limit: number;
         offset: number;
-        group?: GroupReadable;
-        users: Array<UserGroupReadable>;
+        group?: Group;
+        users: Array<UserGroup>;
     };
 };
 
@@ -5850,8 +5581,8 @@ export type ListGroupProjectsResponses = {
         total: number;
         limit: number;
         offset: number;
-        group?: GroupReadable;
-        projects: Array<GroupProjectReadable>;
+        group?: Group;
+        projects: Array<GroupProject>;
     };
 };
 
@@ -6012,7 +5743,7 @@ export type ListUsersResponses = {
         total: number;
         limit: number;
         offset: number;
-        users: Array<UserReadable>;
+        users: Array<User>;
     };
 };
 
@@ -6053,7 +5784,7 @@ export type CreateUserResponses = {
     /**
      * The details for an user
      */
-    200: UserReadable;
+    200: User;
 };
 
 export type CreateUserResponse = CreateUserResponses[keyof CreateUserResponses];
@@ -6133,7 +5864,7 @@ export type ShowUserResponses = {
     /**
      * The details for an user
      */
-    200: UserReadable;
+    200: User;
 };
 
 export type ShowUserResponse = ShowUserResponses[keyof ShowUserResponses];
@@ -6182,7 +5913,7 @@ export type UpdateUserResponses = {
     /**
      * The details for an user
      */
-    200: UserReadable;
+    200: User;
 };
 
 export type UpdateUserResponse = UpdateUserResponses[keyof UpdateUserResponses];
@@ -6294,8 +6025,8 @@ export type ListUserGroupsResponses = {
         total: number;
         limit: number;
         offset: number;
-        user?: UserReadable;
-        groups: Array<UserGroupReadable>;
+        user?: User;
+        groups: Array<UserGroup>;
     };
 };
 
@@ -6514,8 +6245,8 @@ export type ListUserProjectsResponses = {
         total: number;
         limit: number;
         offset: number;
-        user?: UserReadable;
-        projects: Array<UserProjectReadable>;
+        user?: User;
+        projects: Array<UserProject>;
     };
 };
 
