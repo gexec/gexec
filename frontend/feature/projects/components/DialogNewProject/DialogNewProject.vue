@@ -8,7 +8,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { toTypedSchema } from '@vee-validate/zod'
 import { z } from 'zod'
 import {
   FormControl,
@@ -28,12 +27,10 @@ import { formatSlug } from '@/lib/utils'
 
 const { addProject } = useProjectsStore()
 
-const formSchema = toTypedSchema(
-  z.object({
-    name: z.string().min(3).max(255),
-    slug: z.string().min(3).max(255),
-  })
-)
+const formSchema = z.object({
+  name: z.string().min(3).max(255),
+  slug: z.string().min(3).max(255),
+})
 
 const {
   handleSubmit,

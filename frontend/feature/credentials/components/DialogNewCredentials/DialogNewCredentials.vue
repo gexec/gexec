@@ -8,7 +8,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { toTypedSchema } from '@vee-validate/zod'
 import { z } from 'zod'
 import {
   FormControl,
@@ -38,26 +37,24 @@ import { useCredentials } from '../../providers/CredentialsProvider'
 const projectsStore = useProjectsStore()
 const { addCredentials } = useCredentials()
 
-const formSchema = toTypedSchema(
-  z.object({
-    name: z.string().min(3).max(255),
-    slug: z.string().min(3).max(255),
-    kind: z.enum(['empty', 'shell', 'login']),
-    shell: z
-      .object({
-        username: z.string().min(3).max(255).optional(),
-        password: z.string().min(3).max(255).optional(),
-        private_key: z.string().min(3).max(255).optional(),
-      })
-      .optional(),
-    login: z
-      .object({
-        username: z.string().min(3).max(255).optional(),
-        password: z.string().min(3).max(255).optional(),
-      })
-      .optional(),
-  })
-)
+const formSchema = z.object({
+  name: z.string().min(3).max(255),
+  slug: z.string().min(3).max(255),
+  kind: z.enum(['empty', 'shell', 'login']),
+  shell: z
+    .object({
+      username: z.string().min(3).max(255).optional(),
+      password: z.string().min(3).max(255).optional(),
+      private_key: z.string().min(3).max(255).optional(),
+    })
+    .optional(),
+  login: z
+    .object({
+      username: z.string().min(3).max(255).optional(),
+      password: z.string().min(3).max(255).optional(),
+    })
+    .optional(),
+})
 
 const {
   handleSubmit,
