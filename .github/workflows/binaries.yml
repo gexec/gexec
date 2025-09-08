@@ -88,27 +88,21 @@ jobs:
           aws s3 sync --exclude "*" --include "gexec-runner-*" dist s3://dl.gexec.eu/runner/testing/
           aws s3 sync --exclude "*" --include "gexec-client-*" dist s3://dl.gexec.eu/client/testing/
 
+      - name: Install cloudsmith
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: cloudsmith-io/cloudsmith-cli-action@v1.0.4
+        with:
+          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+
       - name: Upload packages
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           for PACKAGE in dist/gexec-*.deb; do
-            echo "> uploading $PACKAGE"
-            curl  -sSL \
-              --header "Authorization: Bearer $BALTOREPO_TOKEN" \
-              --form "package=@$PACKAGE" \
-              --form "distribution=all" \
-              https://gexec.baltorepo.com/stable/debian/upload/
-            echo "> done"
+            cloudsmith push deb gexec/general/any-distro/any-version "${PACKAGE}"
           done
 
           for PACKAGE in dist/gexec-*.rpm; do
-            echo "> uploading $PACKAGE"
-            curl  -sSL \
-              --header "Authorization: Bearer $BALTOREPO_TOKEN" \
-              --form "package=@$PACKAGE" \
-              --form "distribution=all" \
-              https://gexec.baltorepo.com/stable/redhat/upload/
-            echo "> done"
+            cloudsmith push rpm gexec/general/any-distro/any-version "${PACKAGE}"
           done
 
 ...
