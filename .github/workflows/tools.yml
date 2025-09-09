@@ -6,6 +6,10 @@ name: tools
   schedule:
     - cron: "0 8 * * 1"
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   tools:
     runs-on: ubuntu-latest
