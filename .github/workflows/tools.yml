@@ -38,28 +38,36 @@ jobs:
           TOOL="github.com/golangci/golangci-lint/v2/cmd/golangci-lint"
           MOD="$(go list -mod=readonly -f '{{.Module.Path}}' ${TOOL})"
           VERSION="$(go list -mod=readonly -u -json -m ${MOD} | jq -r .Update.Version)"
-          [[ "${VERSION}" != "null" ]] && go get -tool "${TOOL}@${VERSION}" && go mod tidy
+          if [[ "${VERSION}" != "null" ]]; then
+            go get -tool "${TOOL}@${VERSION}" && go mod tidy
+          fi
 
       - name: Update revive
         run: |
           TOOL="github.com/mgechev/revive"
           MOD="$(go list -mod=readonly -f '{{.Module.Path}}' ${TOOL})"
           VERSION="$(go list -mod=readonly -u -json -m ${MOD} | jq -r .Update.Version)"
-          [[ "${VERSION}" != "null" ]] && go get -tool "${TOOL}@${VERSION}" && go mod tidy
+          if [[ "${VERSION}" != "null" ]]; then
+            go get -tool "${TOOL}@${VERSION}" && go mod tidy
+          fi
 
       - name: Update mockgen
         run: |
           TOOL="github.com/golang/mock/mockgen"
           MOD="$(go list -mod=readonly -f '{{.Module.Path}}' ${TOOL})"
           VERSION="$(go list -mod=readonly -u -json -m ${MOD} | jq -r .Update.Version)"
-          [[ "${VERSION}" != "null" ]] && go get -tool "${TOOL}@${VERSION}" && go mod tidy
+          if [[ "${VERSION}" != "null" ]]; then
+            go get -tool "${TOOL}@${VERSION}" && go mod tidy
+          fi
 
       - name: Update codegen
         run: |
           TOOL="github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen"
           MOD="$(go list -mod=readonly -f '{{.Module.Path}}' ${TOOL})"
           VERSION="$(go list -mod=readonly -u -json -m ${MOD} | jq -r .Update.Version)"
-          [[ "${VERSION}" != "null" ]] && go get -tool "${TOOL}@${VERSION}" && go mod tidy
+          if [[ "${VERSION}" != "null" ]]; then
+            go get -tool "${TOOL}@${VERSION}" && go mod tidy
+          fi
 
       - name: Create request
         id: request
