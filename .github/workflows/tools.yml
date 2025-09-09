@@ -73,25 +73,15 @@ jobs:
             go get -tool "${TOOL}@${VERSION}" && go mod tidy
           fi
 
-      - name: Commit changes
-        uses: EndBug/add-and-commit@v9
-        with:
-          author_name: GitHub Actions
-          author_email: github@webhippie.de
-          add: |
-            - go.mod
-            - go.sum
-          message: "ci: automated tool updates"
-          push: true
-          commit: --signoff
-          new_branch: update/tools
-
       - name: Create request
         id: request
         uses: peter-evans/create-pull-request@v7
         with:
           branch: update/tools
           delete-branch: true
+          committer: "GitHub Actions <github@webhippie.de>"
+          commit-message: "ci: automated tool updates"
+          signoff: true
           title: "ci: automated tool updates"
           body: "New versions updated, automerge should handle that!"
           labels: tools
