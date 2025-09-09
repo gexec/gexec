@@ -84,6 +84,7 @@ jobs:
           message: "ci: automated tool updates"
           push: true
           commit: --signoff
+          new_branch: update/tools
 
       - name: Create request
         id: request
