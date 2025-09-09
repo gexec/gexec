@@ -73,6 +73,18 @@ jobs:
             go get -tool "${TOOL}@${VERSION}" && go mod tidy
           fi
 
+      - name: Commit changes
+        uses: EndBug/add-and-commit@v9
+        with:
+          author_name: GitHub Actions
+          author_email: github@webhippie.de
+          add: |
+            - go.mod
+            - go.sum
+          message: "ci: automated tool updates"
+          push: true
+          commit: --signoff
+
       - name: Create request
         id: request
         uses: peter-evans/create-pull-request@v7
