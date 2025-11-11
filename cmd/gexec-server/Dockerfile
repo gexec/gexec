@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM golang:1.25.4-alpine3.21 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.25.4-alpine3.21@sha256:3289aac2aac769e031d644313d094dbda745f28af81cd7a94137e73eefd58b33 AS builder
 
 RUN apk add --no-cache -U nodejs npm git curl
 RUN sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
@@ -21,7 +21,7 @@ RUN --mount=type=cache,target=/go/pkg \
     GOOS=${TARGETOS} GOARCH=${TARGETARCH} go install -ldflags="-s -X main.version=${ASDF_VERSION}" github.com/asdf-vm/asdf/cmd/asdf@${ASDF_VERSION} && \
     mv $(find /go/bin -iname asdf) /go/bin # doing this as multi-arch is using different target paths
 
-FROM alpine:3.22
+FROM alpine:3.22@sha256:4b7ce07002c69e8f3d704a9c5d6fd3053be500b7f1c69fc0d80990c2ad8dd412
 
 RUN apk add --no-cache ca-certificates mailcap python3 python3-dev coreutils openssh-client-default bash git gnupg curl wget tar rsync sshpass tini tzdata zip unzip jq && \
     addgroup -g 1337 gexec && \
