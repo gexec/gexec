@@ -1,4 +1,5 @@
 ---
+# yaml-language-server: $schema=https://www.schemastore.org/github-workflow.json
 name: tools
 
 "on":
@@ -97,6 +98,6 @@ jobs:
         if: steps.request.outputs.pull-request-operation == 'created'
         run: gh pr merge --rebase --auto "${{ steps.request.outputs.pull-request-number }}"
         env:
-          GH_TOKEN: ${{ steps.token.outputs.token }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 ...

@@ -1,4 +1,5 @@
 ---
+# yaml-language-server: $schema=https://www.schemastore.org/github-workflow.json
 name: docker
 
 "on":
@@ -13,6 +14,7 @@ name: docker
       - master
 
 permissions:
+  contents: read
   packages: write
 
 jobs:
