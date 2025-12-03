@@ -49,8 +49,6 @@ rulesets:
         parameters:
           strict_required_status_checks_policy: true
           required_status_checks:
-            - context: Semantic PR
-              integration_id: 198092
             - context: server
               integration_id: 15368
             - context: runner
@@ -65,10 +63,10 @@ rulesets:
       - actor_id: 1
         actor_type: OrganizationAdmin
         bypass_mode: always
-      - actor_id: 1130928 # gexec
+      - actor_id: 1130928  # gexec
         actor_type: Integration
         bypass_mode: always
-      - actor_id: 12094995 # bots
+      - actor_id: 12094995  # bots
         actor_type: Team
         bypass_mode: always
 
@@ -95,10 +93,10 @@ rulesets:
       - actor_id: 1
         actor_type: OrganizationAdmin
         bypass_mode: always
-      - actor_id: 1130928 # gexec
+      - actor_id: 1130928  # gexec
         actor_type: Integration
         bypass_mode: always
-      - actor_id: 12094995 # bots
+      - actor_id: 12094995  # bots
         actor_type: Team
         bypass_mode: always
 
