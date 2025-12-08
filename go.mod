@@ -47,7 +47,7 @@ require (
 	github.com/uptrace/bun/extra/bunslog v1.2.16
 	github.com/whilp/git-urls v1.0.0
 	golang.org/x/crypto v0.45.0
-	golang.org/x/oauth2 v0.33.0
+	golang.org/x/oauth2 v0.34.0
 )
 
 require (
