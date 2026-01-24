@@ -45,7 +45,7 @@
     "zod": "^4.0.17"
   },
   "devDependencies": {
-    "@hey-api/openapi-ts": "0.90.7",
+    "@hey-api/openapi-ts": "0.90.8",
     "@types/node": "24.10.9",
     "@vitejs/plugin-vue": "6.0.3",
     "@vue/tsconfig": "0.8.1",
