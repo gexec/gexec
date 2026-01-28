@@ -20,7 +20,7 @@ RUN --mount=type=cache,target=/go/pkg \
     GOOS=${TARGETOS} GOARCH=${TARGETARCH} go install -ldflags="-s -X main.version=${ASDF_VERSION}" github.com/asdf-vm/asdf/cmd/asdf@${ASDF_VERSION} && \
     mv $(find /go/bin -iname asdf) /go/bin # doing this as multi-arch is using different target paths
 
-FROM alpine:3.23@sha256:865b95f46d98cf867a156fe4a135ad3fe50d2056aa3f25ed31662dff6da4eb62
+FROM alpine:3.23@sha256:25109184c71bdad752c8312a8623239686a9a2071e8825f20acb8f2198c3f659
 
 RUN apk add --no-cache ca-certificates mailcap python3 python3-dev coreutils openssh-client-default bash git gnupg curl wget tar rsync sshpass tini tzdata zip unzip jq && \
     addgroup -g 1337 gexec && \
