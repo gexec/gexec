@@ -51,7 +51,7 @@ func (s *Projects) List(ctx context.Context, params model.ListParams) ([]*model.
 	if !s.client.principal.Admin {
 		q = q.Where(
 			"project.id IN (?)",
-			bun.In(s.AllowedIDs()),
+			bun.List(s.AllowedIDs()),
 		)
 	}
 

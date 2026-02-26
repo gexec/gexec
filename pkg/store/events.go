@@ -25,7 +25,7 @@ func (s *Events) List(ctx context.Context, projectID string, params model.ListPa
 	} else if !s.client.principal.Admin {
 		q = q.Where(
 			"event.project_id IN (?)",
-			bun.In(s.client.Projects.AllowedIDs()),
+			bun.List(s.client.Projects.AllowedIDs()),
 		)
 	}
 
