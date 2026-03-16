@@ -5,6 +5,30 @@ Claude, etc.) working in this repository.
 
 ---
 
+## Shell Environment
+
+This repository uses a **Nix flake** (`flake.nix`) to provide all required
+tools and packages (Go, Node.js, task, golangci-lint, etc.).
+
+**Always run bash commands inside the Nix dev shell:**
+
+```bash
+nix develop --command bash -c "<command>"
+```
+
+Examples:
+```bash
+nix develop --command bash -c "task fe:build"
+nix develop --command bash -c "go test ./..."
+nix develop --command bash -c "task be:lint"
+```
+
+Do **not** assume system-installed versions of `go`, `node`, `npm`, `task`, or
+any other tool — they may be absent or wrong. All tools must be invoked through
+`nix develop`.
+
+---
+
 ## Project Overview
 
 **Gexec** is a generic execution platform for Ansible, OpenTofu, and Terraform,
@@ -237,7 +261,40 @@ go test -coverprofile coverage.out ./...
 - In-memory SQLite is used for store tests
 
 ### Frontend
-No automated tests are defined yet (`npm run test` is a no-op).
+
+**Runner:** [Vitest](https://vitest.dev/) with the `happy-dom` environment.  
+**Component utilities:** `@vue/test-utils`  
+**Config:** `vitest.config.ts` at the repo root (separate from `vite.config.ts`).
+
+```bash
+task fe:test
+# or directly:
+npm run test        # vitest run (single pass)
+npx vitest          # watch mode during development
+```
+
+Tests live **co-located** with the source file they test, using a `.test.ts`
+suffix:
+
+```
+frontend/lib/utils.test.ts
+frontend/feature/auth/store/auth.test.ts
+frontend/feature/projects/store/projects.test.ts
+frontend/composables/useNavigationLinks.test.ts
+frontend/feature/not-found/views/NotFound.test.ts
+```
+
+**Conventions:**
+- Import test helpers explicitly from `vitest` (`describe`, `it`, `expect`,
+  `vi`, `beforeEach`, …) — do not rely on globals.
+- Use `setActivePinia(createPinia())` in `beforeEach` for every Pinia store
+  test.
+- Mock `vue-router` with `vi.mock('vue-router', ...)` when testing stores or
+  composables that call `useRouter()`.
+- Mock the generated API client (`frontend/client/`) with `vi.mock` — never
+  make real HTTP calls from tests.
+- Use `@vue/test-utils` `mount` for component tests; assert on
+  `wrapper.text()` and DOM queries rather than internal component state.
 
 ---
 
@@ -340,3 +397,17 @@ Compose files in `hack/compose/`:
 
 6. **Frontend features**: follow the `frontend/feature/` structure. Use the
    generated `frontend/client/` for all API calls — never hand-roll `fetch`.
+
+7. **Frontend tests — mandatory**: every piece of frontend code you generate
+   **must** be accompanied by a Vitest test file. This applies to:
+   - Utility functions (`frontend/lib/`) → test all exported functions
+   - Pinia stores (`frontend/feature/*/store/`) → test all actions and key
+     computed properties; mock `vue-router` and the API client
+   - Composables (`frontend/composables/`) → test returned values and
+     reactivity; mock any store dependencies with `vi.mock`
+   - Vue components (`frontend/feature/*/views/`, `frontend/components/`) →
+     mount with `@vue/test-utils` and assert on rendered text/DOM
+
+   Place the test file next to the source file with a `.test.ts` suffix and
+   follow the conventions in the **Testing → Frontend** section above.
+   Run `npm run test` to verify all tests pass before considering a task done.
