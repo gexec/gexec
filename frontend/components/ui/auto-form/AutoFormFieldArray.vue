@@ -16,7 +16,6 @@ import * as z from 'zod'
 import AutoFormField from './AutoFormField.vue'
 import AutoFormLabel from './AutoFormLabel.vue'
 import { beautifyObjectName, getBaseType } from './utils'
-import { ZodTypeAny } from 'zod'
 
 const props = defineProps<{
   fieldName: string
@@ -27,14 +26,14 @@ const props = defineProps<{
 }>()
 
 function isZodArray(
-  item: z.ZodArray<ZodTypeAny> | z.ZodDefault<ZodTypeAny>
-): item is z.ZodArray<ZodTypeAny> {
+  item: z.ZodArray<z.ZodType> | z.ZodDefault<z.ZodType>
+): item is z.ZodArray<z.ZodType> {
   return item instanceof z.ZodArray
 }
 
 function isZodDefault(
-  item: z.ZodArray<ZodTypeAny> | z.ZodDefault<ZodTypeAny>
-): item is z.ZodDefault<ZodTypeAny> {
+  item: z.ZodArray<z.ZodType> | z.ZodDefault<z.ZodType>
+): item is z.ZodDefault<z.ZodType> {
   return item instanceof z.ZodDefault
 }
 
