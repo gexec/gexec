@@ -1,6 +1,6 @@
 module github.com/gexec/gexec
 
-go 1.25.0
+go 1.26
 
 require (
 	github.com/Machiel/slugify v1.0.1
@@ -34,7 +34,7 @@ require (
 	github.com/oklog/run v1.2.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/rrivera/identicon v0.0.0-20240116195454-d5ba35832c0d
-	github.com/scim2/filter-parser/v2 v2.2.0
+	github.com/scim2/filter-parser/v2 v2.2.1
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
