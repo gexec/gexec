@@ -10,9 +10,8 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
 
-    "baseUrl": "./frontend/",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./frontend/*"]
     },
     "lib": ["ES2023", "DOM"]
   },
