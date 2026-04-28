@@ -27,7 +27,7 @@ require (
 	github.com/gobwas/glob v0.2.3
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/golang/mock v1.6.0
-	github.com/jeffry-luqman/zlog v0.0.3
+	github.com/jeffry-luqman/zlog v0.0.4
 	github.com/joho/godotenv v1.5.1
 	github.com/oapi-codegen/nethttp-middleware v1.1.2
 	github.com/oapi-codegen/runtime v1.4.0
