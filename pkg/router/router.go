@@ -102,7 +102,7 @@ func Server(
 		}
 
 		root.Route("/api/v1", func(r chi.Router) {
-			swagger, err := v1.GetSwagger()
+			swagger, err := v1.GetSpec()
 
 			if err != nil {
 				slog.Error(
