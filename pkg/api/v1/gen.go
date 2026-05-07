@@ -23,13 +23,10 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
-// contextKey provides a type for use with context.WithValue.
-type contextKey string
-
 const (
-	BasicScopes  contextKey = "Basic.Scopes"
-	BearerScopes contextKey = "Bearer.Scopes"
-	HeaderScopes contextKey = "Header.Scopes"
+	BasicScopes  basicContextKey  = "Basic.Scopes"
+	BearerScopes bearerContextKey = "Bearer.Scopes"
+	HeaderScopes headerContextKey = "Header.Scopes"
 )
 
 // Defines values for CredentialKind.
@@ -38,6 +35,20 @@ const (
 	Login CredentialKind = "login"
 	Shell CredentialKind = "shell"
 )
+
+// Valid indicates whether the value is a known member of the CredentialKind enum.
+func (e CredentialKind) Valid() bool {
+	switch e {
+	case Empty:
+		return true
+	case Login:
+		return true
+	case Shell:
+		return true
+	default:
+		return false
+	}
+}
 
 var (
 	// ErrCredentialKind defines an error if an invalid value gets mapped.
@@ -65,6 +76,18 @@ const (
 	EnvironmentSecretKindVar EnvironmentSecretKind = "var"
 )
 
+// Valid indicates whether the value is a known member of the EnvironmentSecretKind enum.
+func (e EnvironmentSecretKind) Valid() bool {
+	switch e {
+	case EnvironmentSecretKindEnv:
+		return true
+	case EnvironmentSecretKindVar:
+		return true
+	default:
+		return false
+	}
+}
+
 var (
 	// ErrEnvironmentSecretKind defines an error if an invalid value gets mapped.
 	ErrEnvironmentSecretKind = fmt.Errorf("invalid type for EnvironmentSecretKind")
@@ -89,6 +112,18 @@ const (
 	EnvironmentValueKindEnv EnvironmentValueKind = "env"
 	EnvironmentValueKindVar EnvironmentValueKind = "var"
 )
+
+// Valid indicates whether the value is a known member of the EnvironmentValueKind enum.
+func (e EnvironmentValueKind) Valid() bool {
+	switch e {
+	case EnvironmentValueKindEnv:
+		return true
+	case EnvironmentValueKindVar:
+		return true
+	default:
+		return false
+	}
+}
 
 var (
 	// ErrEnvironmentValueKind defines an error if an invalid value gets mapped.
@@ -115,6 +150,20 @@ const (
 	Delete EventAction = "delete"
 	Update EventAction = "update"
 )
+
+// Valid indicates whether the value is a known member of the EventAction enum.
+func (e EventAction) Valid() bool {
+	switch e {
+	case Create:
+		return true
+	case Delete:
+		return true
+	case Update:
+		return true
+	default:
+		return false
+	}
+}
 
 var (
 	// ErrEventAction defines an error if an invalid value gets mapped.
@@ -157,6 +206,48 @@ const (
 	EventObjectTypeUserProject  EventObjectType = "user_project"
 )
 
+// Valid indicates whether the value is a known member of the EventObjectType enum.
+func (e EventObjectType) Valid() bool {
+	switch e {
+	case EventObjectTypeCredential:
+		return true
+	case EventObjectTypeEnvironment:
+		return true
+	case EventObjectTypeExecution:
+		return true
+	case EventObjectTypeGroup:
+		return true
+	case EventObjectTypeGroupProject:
+		return true
+	case EventObjectTypeGroupUser:
+		return true
+	case EventObjectTypeInventory:
+		return true
+	case EventObjectTypeProject:
+		return true
+	case EventObjectTypeProjectGroup:
+		return true
+	case EventObjectTypeProjectUser:
+		return true
+	case EventObjectTypeRepository:
+		return true
+	case EventObjectTypeRunner:
+		return true
+	case EventObjectTypeSchedule:
+		return true
+	case EventObjectTypeTemplate:
+		return true
+	case EventObjectTypeUser:
+		return true
+	case EventObjectTypeUserGroup:
+		return true
+	case EventObjectTypeUserProject:
+		return true
+	default:
+		return false
+	}
+}
+
 var (
 	// ErrEventObjectType defines an error if an invalid value gets mapped.
 	ErrEventObjectType = fmt.Errorf("invalid type for EventObjectType")
@@ -198,6 +289,20 @@ const (
 	GroupProjectPermUser  GroupProjectPerm = "user"
 )
 
+// Valid indicates whether the value is a known member of the GroupProjectPerm enum.
+func (e GroupProjectPerm) Valid() bool {
+	switch e {
+	case GroupProjectPermAdmin:
+		return true
+	case GroupProjectPermOwner:
+		return true
+	case GroupProjectPermUser:
+		return true
+	default:
+		return false
+	}
+}
+
 var (
 	// ErrGroupProjectPerm defines an error if an invalid value gets mapped.
 	ErrGroupProjectPerm = fmt.Errorf("invalid type for GroupProjectPerm")
@@ -223,6 +328,18 @@ const (
 	File   InventoryKind = "file"
 	Static InventoryKind = "static"
 )
+
+// Valid indicates whether the value is a known member of the InventoryKind enum.
+func (e InventoryKind) Valid() bool {
+	switch e {
+	case File:
+		return true
+	case Static:
+		return true
+	default:
+		return false
+	}
+}
 
 var (
 	// ErrInventoryKind defines an error if an invalid value gets mapped.
@@ -251,6 +368,22 @@ const (
 	String TemplateSurveyKind = "string"
 )
 
+// Valid indicates whether the value is a known member of the TemplateSurveyKind enum.
+func (e TemplateSurveyKind) Valid() bool {
+	switch e {
+	case Enum:
+		return true
+	case Number:
+		return true
+	case Secret:
+		return true
+	case String:
+		return true
+	default:
+		return false
+	}
+}
+
 var (
 	// ErrTemplateSurveyKind defines an error if an invalid value gets mapped.
 	ErrTemplateSurveyKind = fmt.Errorf("invalid type for TemplateSurveyKind")
@@ -278,6 +411,18 @@ const (
 	Script   TemplateVaultKind = "script"
 )
 
+// Valid indicates whether the value is a known member of the TemplateVaultKind enum.
+func (e TemplateVaultKind) Valid() bool {
+	switch e {
+	case Password:
+		return true
+	case Script:
+		return true
+	default:
+		return false
+	}
+}
+
 var (
 	// ErrTemplateVaultKind defines an error if an invalid value gets mapped.
 	ErrTemplateVaultKind = fmt.Errorf("invalid type for TemplateVaultKind")
@@ -303,6 +448,20 @@ const (
 	UserGroupPermOwner UserGroupPerm = "owner"
 	UserGroupPermUser  UserGroupPerm = "user"
 )
+
+// Valid indicates whether the value is a known member of the UserGroupPerm enum.
+func (e UserGroupPerm) Valid() bool {
+	switch e {
+	case UserGroupPermAdmin:
+		return true
+	case UserGroupPermOwner:
+		return true
+	case UserGroupPermUser:
+		return true
+	default:
+		return false
+	}
+}
 
 var (
 	// ErrUserGroupPerm defines an error if an invalid value gets mapped.
@@ -331,6 +490,20 @@ const (
 	UserProjectPermUser  UserProjectPerm = "user"
 )
 
+// Valid indicates whether the value is a known member of the UserProjectPerm enum.
+func (e UserProjectPerm) Valid() bool {
+	switch e {
+	case UserProjectPermAdmin:
+		return true
+	case UserProjectPermOwner:
+		return true
+	case UserProjectPermUser:
+		return true
+	default:
+		return false
+	}
+}
+
 var (
 	// ErrUserProjectPerm defines an error if an invalid value gets mapped.
 	ErrUserProjectPerm = fmt.Errorf("invalid type for UserProjectPerm")
@@ -357,6 +530,18 @@ const (
 	SortOrderParamDesc SortOrderParam = "desc"
 )
 
+// Valid indicates whether the value is a known member of the SortOrderParam enum.
+func (e SortOrderParam) Valid() bool {
+	switch e {
+	case SortOrderParamAsc:
+		return true
+	case SortOrderParamDesc:
+		return true
+	default:
+		return false
+	}
+}
+
 var (
 	// ErrSortOrderParam defines an error if an invalid value gets mapped.
 	ErrSortOrderParam = fmt.Errorf("invalid type for SortOrderParam")
@@ -381,6 +566,18 @@ const (
 	ListGroupsParamsOrderAsc  ListGroupsParamsOrder = "asc"
 	ListGroupsParamsOrderDesc ListGroupsParamsOrder = "desc"
 )
+
+// Valid indicates whether the value is a known member of the ListGroupsParamsOrder enum.
+func (e ListGroupsParamsOrder) Valid() bool {
+	switch e {
+	case ListGroupsParamsOrderAsc:
+		return true
+	case ListGroupsParamsOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
 
 var (
 	// ErrListGroupsParamsOrder defines an error if an invalid value gets mapped.
@@ -407,6 +604,18 @@ const (
 	ListGroupProjectsParamsOrderDesc ListGroupProjectsParamsOrder = "desc"
 )
 
+// Valid indicates whether the value is a known member of the ListGroupProjectsParamsOrder enum.
+func (e ListGroupProjectsParamsOrder) Valid() bool {
+	switch e {
+	case ListGroupProjectsParamsOrderAsc:
+		return true
+	case ListGroupProjectsParamsOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
+
 var (
 	// ErrListGroupProjectsParamsOrder defines an error if an invalid value gets mapped.
 	ErrListGroupProjectsParamsOrder = fmt.Errorf("invalid type for ListGroupProjectsParamsOrder")
@@ -431,6 +640,18 @@ const (
 	ListGroupUsersParamsOrderAsc  ListGroupUsersParamsOrder = "asc"
 	ListGroupUsersParamsOrderDesc ListGroupUsersParamsOrder = "desc"
 )
+
+// Valid indicates whether the value is a known member of the ListGroupUsersParamsOrder enum.
+func (e ListGroupUsersParamsOrder) Valid() bool {
+	switch e {
+	case ListGroupUsersParamsOrderAsc:
+		return true
+	case ListGroupUsersParamsOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
 
 var (
 	// ErrListGroupUsersParamsOrder defines an error if an invalid value gets mapped.
@@ -457,6 +678,18 @@ const (
 	ListProjectsParamsOrderDesc ListProjectsParamsOrder = "desc"
 )
 
+// Valid indicates whether the value is a known member of the ListProjectsParamsOrder enum.
+func (e ListProjectsParamsOrder) Valid() bool {
+	switch e {
+	case ListProjectsParamsOrderAsc:
+		return true
+	case ListProjectsParamsOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
+
 var (
 	// ErrListProjectsParamsOrder defines an error if an invalid value gets mapped.
 	ErrListProjectsParamsOrder = fmt.Errorf("invalid type for ListProjectsParamsOrder")
@@ -481,6 +714,18 @@ const (
 	ListProjectCredentialsParamsOrderAsc  ListProjectCredentialsParamsOrder = "asc"
 	ListProjectCredentialsParamsOrderDesc ListProjectCredentialsParamsOrder = "desc"
 )
+
+// Valid indicates whether the value is a known member of the ListProjectCredentialsParamsOrder enum.
+func (e ListProjectCredentialsParamsOrder) Valid() bool {
+	switch e {
+	case ListProjectCredentialsParamsOrderAsc:
+		return true
+	case ListProjectCredentialsParamsOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
 
 var (
 	// ErrListProjectCredentialsParamsOrder defines an error if an invalid value gets mapped.
@@ -507,6 +752,18 @@ const (
 	ListProjectEnvironmentsParamsOrderDesc ListProjectEnvironmentsParamsOrder = "desc"
 )
 
+// Valid indicates whether the value is a known member of the ListProjectEnvironmentsParamsOrder enum.
+func (e ListProjectEnvironmentsParamsOrder) Valid() bool {
+	switch e {
+	case ListProjectEnvironmentsParamsOrderAsc:
+		return true
+	case ListProjectEnvironmentsParamsOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
+
 var (
 	// ErrListProjectEnvironmentsParamsOrder defines an error if an invalid value gets mapped.
 	ErrListProjectEnvironmentsParamsOrder = fmt.Errorf("invalid type for ListProjectEnvironmentsParamsOrder")
@@ -531,6 +788,18 @@ const (
 	ListProjectExecutionsParamsOrderAsc  ListProjectExecutionsParamsOrder = "asc"
 	ListProjectExecutionsParamsOrderDesc ListProjectExecutionsParamsOrder = "desc"
 )
+
+// Valid indicates whether the value is a known member of the ListProjectExecutionsParamsOrder enum.
+func (e ListProjectExecutionsParamsOrder) Valid() bool {
+	switch e {
+	case ListProjectExecutionsParamsOrderAsc:
+		return true
+	case ListProjectExecutionsParamsOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
 
 var (
 	// ErrListProjectExecutionsParamsOrder defines an error if an invalid value gets mapped.
@@ -557,6 +826,18 @@ const (
 	ListProjectGroupsParamsOrderDesc ListProjectGroupsParamsOrder = "desc"
 )
 
+// Valid indicates whether the value is a known member of the ListProjectGroupsParamsOrder enum.
+func (e ListProjectGroupsParamsOrder) Valid() bool {
+	switch e {
+	case ListProjectGroupsParamsOrderAsc:
+		return true
+	case ListProjectGroupsParamsOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
+
 var (
 	// ErrListProjectGroupsParamsOrder defines an error if an invalid value gets mapped.
 	ErrListProjectGroupsParamsOrder = fmt.Errorf("invalid type for ListProjectGroupsParamsOrder")
@@ -581,6 +862,18 @@ const (
 	ListProjectInventoriesParamsOrderAsc  ListProjectInventoriesParamsOrder = "asc"
 	ListProjectInventoriesParamsOrderDesc ListProjectInventoriesParamsOrder = "desc"
 )
+
+// Valid indicates whether the value is a known member of the ListProjectInventoriesParamsOrder enum.
+func (e ListProjectInventoriesParamsOrder) Valid() bool {
+	switch e {
+	case ListProjectInventoriesParamsOrderAsc:
+		return true
+	case ListProjectInventoriesParamsOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
 
 var (
 	// ErrListProjectInventoriesParamsOrder defines an error if an invalid value gets mapped.
@@ -607,6 +900,18 @@ const (
 	ListProjectRepositoriesParamsOrderDesc ListProjectRepositoriesParamsOrder = "desc"
 )
 
+// Valid indicates whether the value is a known member of the ListProjectRepositoriesParamsOrder enum.
+func (e ListProjectRepositoriesParamsOrder) Valid() bool {
+	switch e {
+	case ListProjectRepositoriesParamsOrderAsc:
+		return true
+	case ListProjectRepositoriesParamsOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
+
 var (
 	// ErrListProjectRepositoriesParamsOrder defines an error if an invalid value gets mapped.
 	ErrListProjectRepositoriesParamsOrder = fmt.Errorf("invalid type for ListProjectRepositoriesParamsOrder")
@@ -631,6 +936,18 @@ const (
 	ListProjectRunnersParamsOrderAsc  ListProjectRunnersParamsOrder = "asc"
 	ListProjectRunnersParamsOrderDesc ListProjectRunnersParamsOrder = "desc"
 )
+
+// Valid indicates whether the value is a known member of the ListProjectRunnersParamsOrder enum.
+func (e ListProjectRunnersParamsOrder) Valid() bool {
+	switch e {
+	case ListProjectRunnersParamsOrderAsc:
+		return true
+	case ListProjectRunnersParamsOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
 
 var (
 	// ErrListProjectRunnersParamsOrder defines an error if an invalid value gets mapped.
@@ -657,6 +974,18 @@ const (
 	ListProjectSchedulesParamsOrderDesc ListProjectSchedulesParamsOrder = "desc"
 )
 
+// Valid indicates whether the value is a known member of the ListProjectSchedulesParamsOrder enum.
+func (e ListProjectSchedulesParamsOrder) Valid() bool {
+	switch e {
+	case ListProjectSchedulesParamsOrderAsc:
+		return true
+	case ListProjectSchedulesParamsOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
+
 var (
 	// ErrListProjectSchedulesParamsOrder defines an error if an invalid value gets mapped.
 	ErrListProjectSchedulesParamsOrder = fmt.Errorf("invalid type for ListProjectSchedulesParamsOrder")
@@ -681,6 +1010,18 @@ const (
 	ListProjectTemplatesParamsOrderAsc  ListProjectTemplatesParamsOrder = "asc"
 	ListProjectTemplatesParamsOrderDesc ListProjectTemplatesParamsOrder = "desc"
 )
+
+// Valid indicates whether the value is a known member of the ListProjectTemplatesParamsOrder enum.
+func (e ListProjectTemplatesParamsOrder) Valid() bool {
+	switch e {
+	case ListProjectTemplatesParamsOrderAsc:
+		return true
+	case ListProjectTemplatesParamsOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
 
 var (
 	// ErrListProjectTemplatesParamsOrder defines an error if an invalid value gets mapped.
@@ -707,6 +1048,18 @@ const (
 	ListProjectUsersParamsOrderDesc ListProjectUsersParamsOrder = "desc"
 )
 
+// Valid indicates whether the value is a known member of the ListProjectUsersParamsOrder enum.
+func (e ListProjectUsersParamsOrder) Valid() bool {
+	switch e {
+	case ListProjectUsersParamsOrderAsc:
+		return true
+	case ListProjectUsersParamsOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
+
 var (
 	// ErrListProjectUsersParamsOrder defines an error if an invalid value gets mapped.
 	ErrListProjectUsersParamsOrder = fmt.Errorf("invalid type for ListProjectUsersParamsOrder")
@@ -731,6 +1084,18 @@ const (
 	ListGlobalRunnersParamsOrderAsc  ListGlobalRunnersParamsOrder = "asc"
 	ListGlobalRunnersParamsOrderDesc ListGlobalRunnersParamsOrder = "desc"
 )
+
+// Valid indicates whether the value is a known member of the ListGlobalRunnersParamsOrder enum.
+func (e ListGlobalRunnersParamsOrder) Valid() bool {
+	switch e {
+	case ListGlobalRunnersParamsOrderAsc:
+		return true
+	case ListGlobalRunnersParamsOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
 
 var (
 	// ErrListGlobalRunnersParamsOrder defines an error if an invalid value gets mapped.
@@ -757,6 +1122,18 @@ const (
 	ListUsersParamsOrderDesc ListUsersParamsOrder = "desc"
 )
 
+// Valid indicates whether the value is a known member of the ListUsersParamsOrder enum.
+func (e ListUsersParamsOrder) Valid() bool {
+	switch e {
+	case ListUsersParamsOrderAsc:
+		return true
+	case ListUsersParamsOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
+
 var (
 	// ErrListUsersParamsOrder defines an error if an invalid value gets mapped.
 	ErrListUsersParamsOrder = fmt.Errorf("invalid type for ListUsersParamsOrder")
@@ -782,6 +1159,18 @@ const (
 	ListUserGroupsParamsOrderDesc ListUserGroupsParamsOrder = "desc"
 )
 
+// Valid indicates whether the value is a known member of the ListUserGroupsParamsOrder enum.
+func (e ListUserGroupsParamsOrder) Valid() bool {
+	switch e {
+	case ListUserGroupsParamsOrderAsc:
+		return true
+	case ListUserGroupsParamsOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
+
 var (
 	// ErrListUserGroupsParamsOrder defines an error if an invalid value gets mapped.
 	ErrListUserGroupsParamsOrder = fmt.Errorf("invalid type for ListUserGroupsParamsOrder")
@@ -806,6 +1195,18 @@ const (
 	Asc  ListUserProjectsParamsOrder = "asc"
 	Desc ListUserProjectsParamsOrder = "desc"
 )
+
+// Valid indicates whether the value is a known member of the ListUserProjectsParamsOrder enum.
+func (e ListUserProjectsParamsOrder) Valid() bool {
+	switch e {
+	case Asc:
+		return true
+	case Desc:
+		return true
+	default:
+		return false
+	}
+}
 
 var (
 	// ErrListUserProjectsParamsOrder defines an error if an invalid value gets mapped.

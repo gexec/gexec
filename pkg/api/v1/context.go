@@ -11,6 +11,9 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// contextKey provides a type for use with context.WithValue.
+type contextKey string
+
 const (
 	projectContext           contextKey = "project"
 	executionContext         contextKey = "execution"
