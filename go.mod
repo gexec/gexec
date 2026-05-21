@@ -4,7 +4,7 @@ go 1.26
 
 require (
 	github.com/Machiel/slugify v1.0.1
-	github.com/adhocore/gronx v1.19.7
+	github.com/adhocore/gronx v1.20.0
 	github.com/aws/aws-sdk-go-v2 v1.41.7
 	github.com/aws/aws-sdk-go-v2/config v1.32.17
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.16
