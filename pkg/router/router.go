@@ -38,7 +38,7 @@ func Server(
 
 	mux.Use(middleware.Timeout(60 * time.Second))
 	mux.Use(middleware.RequestID)
-	mux.Use(middleware.RealIP)
+	mux.Use(middleware.ClientIPFromRemoteAddr)
 	mux.Use(middleware.Recoverer)
 	mux.Use(header.Version)
 	mux.Use(header.Cache)
@@ -522,7 +522,7 @@ func Metrics(
 
 	mux.Use(middleware.Timeout(60 * time.Second))
 	mux.Use(middleware.RequestID)
-	mux.Use(middleware.RealIP)
+	mux.Use(middleware.ClientIPFromRemoteAddr)
 	mux.Use(middleware.Recoverer)
 	mux.Use(header.Version)
 	mux.Use(header.Cache)
