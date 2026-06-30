@@ -8,7 +8,7 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/cenkalti/backoff/v6"
+	"github.com/cenkalti/backoff/v7"
 	"github.com/gexec/gexec/pkg/authn"
 	"github.com/gexec/gexec/pkg/config"
 	"github.com/gexec/gexec/pkg/metrics"
