@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cenkalti/backoff/v6"
+	"github.com/cenkalti/backoff/v7"
 	"github.com/gexec/gexec/pkg/store"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
