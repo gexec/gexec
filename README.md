@@ -26,13 +26,22 @@ Cloudsmith is the only fully hosted, cloud-native, universal package management
 solution, that enables your organization to create, store and share packages in
 any format, to any place, with total confidence.
 
+## Prerequisites
+
+We use [mise][mise] to manage all required tools and their versions. Install it
+by following the [official installation instructions][mise-install], then run
+the following commands inside the repository to activate mise and install all
+tools defined in `mise.toml`:
+
+```console
+mise trust
+mise install
+```
+
 ## Build
 
-If you are not familiar with [Nix][nix] it is up to you to have a working
-environment for Go (>= 1.24.0) and Nodejs (22.x) as the setup won't we covered
-within this guide. Please follow the official install instructions for
-[Go][golang] and [Nodejs][nodejs]. Beside that we are using [go-task][gotask] to
-define all commands to build this project.
+Since all required commands ar part of our [go-task][gotask] taskfile the
+commands you got to execute are quite simple:
 
 ```console
 git clone https://github.com/gexec/gexec.git
@@ -42,26 +51,17 @@ task fe:install fe:build be:build
 ./bin/gexec-server -h
 ```
 
-If you got [Nix][nix] and [Direnv][direnv] configured you can simply execute
-the following commands to get al dependencies including [go-task][gotask] and
-the required runtimes installed. You are also able to directly use the process
-manager of [devenv][devenv]:
-
-```console
-cat << EOF > .envrc
-use flake . --impure --extra-experimental-features nix-command
-EOF
-
-direnv allow
-```
-
 We are embedding all the static assets into the binary so there is no need for
 any webserver or anything else beside launching this binary.
 
 ## Development
 
-To start developing on this project you have to execute only a few commands. To
-start development just execute those commands in different terminals:
+If you are using the provided [DevContainers][devcontainer] you could directly
+start without installing [mise][mise] on your system since it will launch a
+feature for it.
+
+To start developing on this project you have to execute only a few commands in
+multiple terminal tabs or windows:
 
 ```console
 task watch:server
@@ -75,13 +75,6 @@ running on [http://localhost:5173](http://localhost:5173). Generally it supports
 hot reloading which means the services are automatically restarted/reloaded on
 code changes.
 
-If you got [Nix][nix] configured you can simply execute the [devenv][devenv]
-command to start the frontend, backend, MariaDB, PostgreSQL and Minio:
-
-```console
-devenv up
-```
-
 ## Security
 
 If you find a security issue please contact
@@ -89,7 +82,37 @@ If you find a security issue please contact
 
 ## Contributing
 
-Fork -> Patch -> Push -> Pull Request
+Generally we are following [conventional commits][commits] when we apply
+changes. That way we are able to generate proper changelogs for every release.
+Please use always pull requests to integrate new functionalities or to fix
+issues.
+
+For the release process we are following [semantic versioning][semver] which
+clearly indicates if a new version just resolves bugs, includes new features or
+even includes breaking changes.
+
+After installing the tools via `mise install` as described above set up the
+pre-commit hooks so they run automatically on every commit:
+
+```console
+pre-commit install --hook-type pre-commit --hook-type commit-msg
+```
+
+> `pre-commit` is managed by mise and will be available after `mise install`.
+
+If you have changed something on the source you should simply commit following
+the mentioned conventions:
+
+```console
+git checkout -b feat/new-feature
+git add --all
+git commit -m 'feat: added awesome new feature'
+git push --set-upstream origin feat/new-feature
+```
+
+After pushing your changes into the Git repository you should create a pull
+request on GitHub. If the pull request have been merged and everything built
+fine it will also create automatically a new release at least once a week.
 
 ## Authors
 
@@ -108,14 +131,14 @@ Copyright (c) 2025 Thomas Boerger <thomas@webhippie.de>
 [asdf]: https://asdf-vm.com/
 [releases]: https://github.com/gexec/gexec/releases
 [downloads]: http://dl.gexec.eu
+[pkgrepo]: https://cloudsmith.io/~gexec/repos/general/groups/
 [ghcr]: https://github.com/orgs/gexec/packages
 [homebrew]: https://github.com/gexec/homebrew-gexec
 [docs]: https://gexec.eu
-[nix]: https://nixos.org/
-[golang]: http://golang.org/doc/install.html
-[nodejs]: https://nodejs.org/en/download/package-manager/
-[gotask]: https://taskfile.dev/installation/
-[direnv]: https://direnv.net/
-[devenv]: https://devenv.sh/
-[pkgrepo]: https://cloudsmith.io/~gexec/repos/general/groups/
 [cloudsmith]: https://cloudsmith.com/
+[gotask]: https://taskfile.dev/installation/
+[devcontainer]: https://containers.dev/
+[mise]: https://mise.jdx.dev/
+[mise-install]: https://mise.jdx.dev/getting-started.html
+[commits]: https://www.conventionalcommits.org/en/v1.0.0/
+[semver]: https://semver.org/

@@ -1,4 +1,5 @@
 ---
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
 version: "3.40"
 
 tasks:
@@ -62,9 +63,9 @@ tasks:
   be:build:
     desc: Build all required binary artifacts
     deps:
-      - build:client
       - build:server
       - build:runner
+      - build:client
 
   fe:install:
     desc: Install dependencies for frontend
@@ -106,23 +107,6 @@ tasks:
     cmds:
       - goreleaser release --clean --snapshot
 
-  build:client:
-    desc: Build client component
-    cmds:
-      - go build -v
-          -tags 'netgo'
-          -ldflags '-s -w -extldflags "-static" -X "{{ .IMPORT }}/pkg/version.String={{ .VERSION }}" -X "{{ .IMPORT }}/pkg/version.Revision={{ .REVISION }}" -X "{{ .IMPORT }}/pkg/version.Date={{ now | date "20060102" }}"'
-          -o bin/gexec-client{{if eq OS "windows"}}.exe{{end}}
-          ./cmd/gexec-client
-    env:
-      CGO_ENABLED: "0"
-    vars:
-      IMPORT: github.com/gexec/gexec
-      VERSION:
-        sh: if [[ -z "${CI_COMMIT_TAG}" ]]; then git rev-parse --short HEAD; else echo "${CI_COMMIT_TAG#v}"; fi
-      REVISION:
-        sh: git rev-parse --short HEAD
-
   build:server:
     desc: Build server component
     cmds:
@@ -157,16 +141,22 @@ tasks:
       REVISION:
         sh: git rev-parse --short HEAD
 
-  watch:client:
-    desc: Run reloading development client
+  build:client:
+    desc: Build client component
     cmds:
-      - task: build:client
-    watch: true
-    method: none
-    sources:
-      - 'cmd/**/*.go'
-      - 'pkg/**/*.go'
-      - 'pkg/**/*.tmpl'
+      - go build -v
+          -tags 'netgo'
+          -ldflags '-s -w -extldflags "-static" -X "{{ .IMPORT }}/pkg/version.String={{ .VERSION }}" -X "{{ .IMPORT }}/pkg/version.Revision={{ .REVISION }}" -X "{{ .IMPORT }}/pkg/version.Date={{ now | date "20060102" }}"'
+          -o bin/gexec-client{{if eq OS "windows"}}.exe{{end}}
+          ./cmd/gexec-client
+    env:
+      CGO_ENABLED: "0"
+    vars:
+      IMPORT: github.com/gexec/gexec
+      VERSION:
+        sh: if [[ -z "${CI_COMMIT_TAG}" ]]; then git rev-parse --short HEAD; else echo "${CI_COMMIT_TAG#v}"; fi
+      REVISION:
+        sh: git rev-parse --short HEAD
 
   watch:server:
     desc: Run reloading development server
@@ -199,6 +189,17 @@ tasks:
       GEXEC_LOG_LEVEL: "{{ .GEXEC_LOG_LEVEL | default \"debug\" }}"
       GEXEC_TOKEN_SECRET: "NTaCR5JztYujaOZNgesaUzaVPmoxkGo0"
       GEXEC_ENCRYPT_PASSPHRASE: "aZRNei17y80b9iDR9fSqryhLzlk28OHZ"
+
+  watch:client:
+    desc: Run reloading development client
+    cmds:
+      - task: build:client
+    watch: true
+    method: none
+    sources:
+      - 'cmd/**/*.go'
+      - 'pkg/**/*.go'
+      - 'pkg/**/*.tmpl'
 
   watch:frontend:
     desc: Run reloading development frontend

@@ -1,0 +1,19 @@
+---
+# yaml-language-server: $schema=https://www.schemastore.org/chart.json
+apiVersion: v2
+version: 0.0.0
+appVersion: 0.0.0
+type: application
+name: gexec
+description: Generic execution platform for Ansible/OpenTofu/Terraform
+home: https://gexec.eu
+
+maintainers:
+  - email: thomas@webhippie.de
+    name: tboerger
+    url: https://github.com/tboerger
+
+sources:
+  - https://github.com/gexec/gexec
+
+...

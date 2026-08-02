@@ -1,4 +1,5 @@
 {
+  "$schema": "https://dl.gexec.eu/schema/config.schema.json",
   "server": {
     "addr": "0.0.0.0:8080",
     "host": "http://localhost:8080",

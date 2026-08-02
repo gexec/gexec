@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: {{ include "gexec.fullname" . }}-runner
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "gexec.labels" . | nindent 4 }}
+{{- if .Values.runner.service.labels }}
+    {{- toYaml .Values.runner.service.labels | nindent 4 }}
+{{- end }}
+{{- if  .Values.runner.service.annotations }}
+  annotations:
+    {{- toYaml .Values.runner.service.annotations | nindent 4 }}
+{{- end }}
+
+spec:
+  type: {{ .Values.runner.service.type }}
+
+  ports:
+    - name: http
+      port: {{ .Values.runner.service.port }}
+      targetPort: http
+      protocol: TCP
+    - name: metrics
+      port: {{ .Values.runner.metrics.port }}
+      targetPort: metrics
+      protocol: TCP
+
+  selector:
+    {{- include "gexec.runner.selectorLabels" . | nindent 4 }}

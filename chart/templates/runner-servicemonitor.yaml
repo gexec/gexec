@@ -1,0 +1,49 @@
+{{- if and .Values.runner.metrics.enabled .Values.runner.metrics.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+
+metadata:
+  name: {{ include "gexec.fullname" . }}-runner
+  namespace: {{ default .Release.Namespace .Values.runner.metrics.serviceMonitor.namespace }}
+  labels:
+    {{- include "gexec.labels" . | nindent 4 }}
+{{- if .Values.runner.metrics.serviceMonitor.labels }}
+    {{- toYaml .Values.runner.metrics.serviceMonitor.labels | nindent 4 }}
+{{- end }}
+{{- if  .Values.runner.metrics.serviceMonitor.annotations }}
+  annotations:
+    {{- toYaml .Values.runner.metrics.serviceMonitor.annotations | nindent 4 }}
+{{- end }}
+
+spec:
+  {{- if .Values.runner.metrics.serviceMonitor.jobLabel }}
+  jobLabel: {{ .Values.runner.metrics.serviceMonitor.jobLabel }}
+  {{- end }}
+
+  selector:
+    matchLabels:
+      {{- include "gexec.runner.selectorLabels" . | nindent 6 }}
+
+  endpoints:
+    - port: metrics
+      scheme: http
+      {{- if .Values.runner.metrics.serviceMonitor.interval }}
+      interval: {{ .Values.runner.metrics.serviceMonitor.interval }}
+      {{- end }}
+      {{- if .Values.runner.metrics.serviceMonitor.scrapeTimeout }}
+      scrapeTimeout: {{ .Values.runner.metrics.serviceMonitor.scrapeTimeout }}
+      {{- end }}
+      {{- if .Values.runner.metrics.serviceMonitor.honorLabels }}
+      honorLabels: {{ .Values.runner.metrics.serviceMonitor.honorLabels }}
+      {{- end }}
+      {{- if .Values.runner.metrics.serviceMonitor.metricRelabelings }}
+      metricRelabelings: {{- toYaml .Values.runner.metrics.serviceMonitor.metricRelabelings | nindent 6 }}
+      {{- end }}
+      {{- if .Values.runner.metrics.serviceMonitor.relabelings }}
+      relabelings: {{- toYaml .Values.runner.metrics.serviceMonitor.relabelings | nindent 6 }}
+      {{- end }}
+
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+{{- end }}
