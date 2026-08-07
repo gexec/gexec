@@ -8,10 +8,11 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import {
+  columnFilteringFeature,
+  createFilteredRowModel,
   FlexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  useVueTable,
+  tableFeatures,
+  useTable,
   type ColumnDef,
   type ColumnFiltersState,
 } from '@tanstack/vue-table'
@@ -26,7 +27,12 @@ import { valueUpdater } from '@/lib/utils'
 const projectsStore = useProjectsStore()
 const { projects } = storeToRefs(projectsStore)
 
-const columns: ColumnDef<Project>[] = [
+const features = tableFeatures({
+  columnFilteringFeature,
+  filteredRowModel: createFilteredRowModel(),
+})
+
+const columns: ColumnDef<typeof features, Project>[] = [
   {
     accessorKey: 'name',
     header: 'Name',
@@ -54,11 +60,10 @@ const columns: ColumnDef<Project>[] = [
 
 const columnFilters = ref<ColumnFiltersState>([])
 
-const table = useVueTable({
+const table = useTable({
+  features,
   data: projects,
   columns,
-  getCoreRowModel: getCoreRowModel(),
-  getFilteredRowModel: getFilteredRowModel(),
   onColumnFiltersChange: (updaterOrValue) =>
     valueUpdater(updaterOrValue, columnFilters),
   state: {
@@ -88,28 +93,16 @@ const table = useVueTable({
             :key="headerGroup.id"
           >
             <TableHead v-for="header in headerGroup.headers" :key="header.id">
-              <FlexRender
-                v-if="!header.isPlaceholder"
-                :render="header.column.columnDef.header"
-                :props="header.getContext()"
-              />
+              <FlexRender v-if="!header.isPlaceholder" :header="header" />
             </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           <template v-if="table.getRowModel().rows?.length">
             <template v-for="row in table.getRowModel().rows" :key="row.id">
-              <TableRow :data-state="row.getIsSelected() && 'selected'">
-                <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id">
-                  <FlexRender
-                    :render="cell.column.columnDef.cell"
-                    :props="cell.getContext()"
-                  />
-                </TableCell>
-              </TableRow>
-              <TableRow v-if="row.getIsExpanded()">
-                <TableCell :colspan="row.getAllCells().length">
-                  {{ JSON.stringify(row.original) }}
+              <TableRow>
+                <TableCell v-for="cell in row.getAllCells()" :key="cell.id">
+                  <FlexRender :cell="cell" />
                 </TableCell>
               </TableRow>
             </template>
