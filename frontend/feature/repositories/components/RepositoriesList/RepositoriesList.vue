@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import {
+  columnFilteringFeature,
+  createFilteredRowModel,
   FlexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  useVueTable,
+  tableFeatures,
+  useTable,
   type ColumnDef,
   type ColumnFiltersState,
 } from '@tanstack/vue-table'
@@ -24,7 +25,12 @@ import DialogNewRepository from '../DialogNewRepository'
 
 const { repositories, loadRepositories } = useRepositories()
 
-const columns: ColumnDef<Repository>[] = [
+const features = tableFeatures({
+  columnFilteringFeature,
+  filteredRowModel: createFilteredRowModel(),
+})
+
+const columns: ColumnDef<typeof features, Repository>[] = [
   {
     accessorKey: 'name',
     header: 'Name',
@@ -73,7 +79,8 @@ const columns: ColumnDef<Repository>[] = [
 
 const columnFilters = ref<ColumnFiltersState>([])
 
-const table = useVueTable({
+const table = useTable({
+  features,
   // Using data directly without a getter was not reactive...
   // Might be due to the data coming from context
   // Not really worth the effort to investigate further since the getter works fine
@@ -81,8 +88,6 @@ const table = useVueTable({
     return unref(repositories)
   },
   columns,
-  getCoreRowModel: getCoreRowModel(),
-  getFilteredRowModel: getFilteredRowModel(),
   onColumnFiltersChange: (updaterOrValue) =>
     valueUpdater(updaterOrValue, columnFilters),
   state: {
@@ -122,28 +127,16 @@ loadRepositories()
             :key="headerGroup.id"
           >
             <TableHead v-for="header in headerGroup.headers" :key="header.id">
-              <FlexRender
-                v-if="!header.isPlaceholder"
-                :render="header.column.columnDef.header"
-                :props="header.getContext()"
-              />
+              <FlexRender v-if="!header.isPlaceholder" :header="header" />
             </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           <template v-if="table.getRowModel().rows?.length">
             <template v-for="row in table.getRowModel().rows" :key="row.id">
-              <TableRow :data-state="row.getIsSelected() && 'selected'">
-                <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id">
-                  <FlexRender
-                    :render="cell.column.columnDef.cell"
-                    :props="cell.getContext()"
-                  />
-                </TableCell>
-              </TableRow>
-              <TableRow v-if="row.getIsExpanded()">
-                <TableCell :colspan="row.getAllCells().length">
-                  {{ JSON.stringify(row.original) }}
+              <TableRow>
+                <TableCell v-for="cell in row.getAllCells()" :key="cell.id">
+                  <FlexRender :cell="cell" />
                 </TableCell>
               </TableRow>
             </template>
