@@ -19,7 +19,7 @@ import (
 	"github.com/go-chi/render"
 )
 
-//go:generate go tool github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=config.yaml ../../../openapi/v1.yaml
+//go:generate oapi-codegen --config=config.yaml ../../../openapi/v1.yaml
 
 var (
 	_ ServerInterface = (*API)(nil)
