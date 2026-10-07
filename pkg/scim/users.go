@@ -74,11 +74,11 @@ func (us *userHandlers) GetAll(r *http.Request, params scim.ListRequestParams) (
 		return result, err
 	}
 
-	result.TotalResults = counter
+	result.TotalResults = int(counter)
 
 	if params.Count > 0 {
 		q = q.Limit(
-			params.Count,
+			int64(params.Count),
 		)
 
 		if params.StartIndex < 1 {
@@ -87,7 +87,7 @@ func (us *userHandlers) GetAll(r *http.Request, params scim.ListRequestParams) (
 
 		if params.StartIndex > 1 {
 			q = q.Offset(
-				params.StartIndex * params.Count,
+				int64(params.StartIndex * params.Count),
 			)
 		}
 

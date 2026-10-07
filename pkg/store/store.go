@@ -217,15 +217,6 @@ func (s *Store) Open() (bool, error) {
 		return false, err
 	}
 
-	s.handle.AddQueryHook(
-		bunslog.NewQueryHook(
-			bunslog.WithQueryLogLevel(slog.LevelDebug),
-			bunslog.WithSlowQueryLogLevel(slog.LevelWarn),
-			bunslog.WithErrorQueryLogLevel(slog.LevelError),
-			bunslog.WithSlowQueryThreshold(3*time.Second),
-		),
-	)
-
 	if err = s.Prepare(); err != nil {
 		return false, err
 	}
@@ -308,6 +299,13 @@ func (s *Store) Rollback(ctx context.Context) (*migrate.MigrationGroup, error) {
 }
 
 func (s *Store) open() error {
+	logging := bunslog.NewQueryHook(
+		bunslog.WithQueryLogLevel(slog.LevelDebug),
+		bunslog.WithSlowQueryLogLevel(slog.LevelWarn),
+		bunslog.WithErrorQueryLogLevel(slog.LevelError),
+		bunslog.WithSlowQueryThreshold(3*time.Second),
+	)
+
 	switch s.driver {
 	case "sqlite", "sqlite3":
 		sqldb, err := sql.Open(
@@ -326,6 +324,8 @@ func (s *Store) open() error {
 		s.handle = bun.NewDB(
 			sqldb,
 			sqlitedialect.New(),
+		).WithQueryHook(
+			logging,
 		)
 
 		return nil
@@ -369,6 +369,8 @@ func (s *Store) open() error {
 		s.handle = bun.NewDB(
 			sqldb,
 			mysqldialect.New(),
+		).WithQueryHook(
+			logging,
 		)
 
 		return nil
@@ -413,6 +415,8 @@ func (s *Store) open() error {
 		s.handle = bun.NewDB(
 			sqldb,
 			pgdialect.New(),
+		).WithQueryHook(
+			logging,
 		)
 
 		return nil
