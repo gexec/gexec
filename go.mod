@@ -29,7 +29,7 @@ require (
 	github.com/invopop/jsonschema v0.14.0
 	github.com/jeffry-luqman/zlog v0.0.4
 	github.com/joho/godotenv v1.5.1
-	github.com/oapi-codegen/nethttp-middleware v1.2.0
+	github.com/oapi-codegen/nethttp-middleware v1.3.1
 	github.com/oapi-codegen/runtime v1.7.0
 	github.com/oklog/run v1.2.0
 	github.com/prometheus/client_golang v1.25.0
