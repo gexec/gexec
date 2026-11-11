@@ -47,7 +47,7 @@ require (
 	github.com/uptrace/bun/extra/bunslog v1.3.0
 	github.com/whilp/git-urls v1.0.0
 	go.uber.org/mock v0.6.0
-	golang.org/x/crypto v0.58.0
+	golang.org/x/crypto v0.59.0
 	golang.org/x/oauth2 v0.38.0
 )
 
@@ -114,9 +114,9 @@ require (
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	go.yaml.in/yaml/v4 v4.0.0 // indirect
 	golang.org/x/exp v0.0.0-20260218203240-3dfff04db8fa // indirect
-	golang.org/x/mod v0.41.0 // indirect
-	golang.org/x/sys v0.49.0 // indirect
-	golang.org/x/text v0.43.0 // indirect
+	golang.org/x/mod v0.42.0 // indirect
+	golang.org/x/sys v0.50.0 // indirect
+	golang.org/x/text v0.44.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 	mellium.im/sasl v0.3.2 // indirect
 	modernc.org/libc v1.68.0 // indirect
